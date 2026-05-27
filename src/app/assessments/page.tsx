@@ -1,0 +1,46 @@
+import { AppShell } from "@/components/AppShell";
+import { StatusBadge } from "@/components/StatusBadge";
+import { listAssessments } from "@/lib/supabase/data";
+
+export default async function AssessmentsPage() {
+  const assessments = await listAssessments();
+
+  return (
+    <AppShell>
+      <div className="page-stack">
+        <header className="page-header">
+          <p className="section-label">Saved assessments</p>
+          <h1>Assessment register</h1>
+        </header>
+        <section className="table-panel">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Workflow</th>
+                <th>Area</th>
+                <th>Level</th>
+                <th>Score</th>
+                <th>Human review</th>
+              </tr>
+            </thead>
+            <tbody>
+              {assessments.map((assessment) => (
+                <tr key={assessment.id}>
+                  <td>{assessment.id}</td>
+                  <td>{assessment.workflow}</td>
+                  <td>{assessment.area}</td>
+                  <td>
+                    <StatusBadge level={assessment.level} />
+                  </td>
+                  <td>{assessment.score}</td>
+                  <td>{assessment.humanReviewRequired ? "Required" : "Routine"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      </div>
+    </AppShell>
+  );
+}

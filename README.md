@@ -1,0 +1,34 @@
+# PredictSafeBIO
+
+PredictSafeBIO is a 30-day MVP foundation for a biotech AI Engine platform. It is built from the local AI Engine artifacts in this folder and keeps deterministic risk scoring ahead of any LLM behavior.
+
+## Source Artifacts
+
+- `my-biotech-ai-engine-platform-blueprint.md`
+- `my-biotech-ai-engine-clean-start.json`
+- `my-ai-engine-platform-blueprint.md`
+- `my-ai-engine-clean-start.json`
+
+The biotech files define the v1 domain. The original AI Engine files preserve proven behavior: deterministic scoring, risk bands, missing-data handling, guarded explanations, escalation, and draft-only AI boundaries.
+
+## Local Setup
+
+```bash
+npm install
+npm run dev
+```
+
+Copy `.env.example` to `.env.local` and fill Supabase values when connecting a live project.
+
+## Verification
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+## MVP Boundary
+
+This is a demo/MVP foundation. It is not a validated FDA, GxP, GLP, GMP, GCP, CLIA, CAP, ISO, OSHA, CDC, NIH, EMA, Part 11, or product-release system. All recommendations remain `Draft - Human Review Required`.

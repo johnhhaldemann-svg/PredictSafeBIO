@@ -1,0 +1,12 @@
+.next
+node_modules
+coverage
+.env
+.env*.local
+.vercel
+*.tsbuildinfo
+dist
+out
+playwright-report
+test-results
+019e*/
