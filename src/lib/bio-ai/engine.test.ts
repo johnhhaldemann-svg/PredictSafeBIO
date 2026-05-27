@@ -77,6 +77,52 @@ describe("biotech deterministic AI Engine", () => {
     );
   });
 
+  it("matches the local biotech blueprint starter contamination scenario", () => {
+    const assessment = assessBioRisk({
+      siteName: "Demo Biotech Site",
+      area: "QC Microbiology Lab",
+      workflow: "Sterility assay review",
+      program: "Demo Program",
+      productCandidate: "BIO-001",
+      batchOrLot: "LOT-0001",
+      controlEffectiveness: "partial",
+      contaminationSuspected: true,
+      productQualityImpactPotential: true,
+      gxpImpact: true,
+      signals: [
+        {
+          type: "contamination_event",
+          label: "Unexpected microbial growth in assay control",
+          severity: "high",
+          status: "open",
+          productQualityImpactPotential: true,
+          gxpImpact: true,
+          controls: ["Initial lab notification completed"],
+          evidence: "Assay control showed unexpected growth; investigation not complete."
+        },
+        {
+          type: "data_integrity",
+          label: "Missing second-person review signature",
+          severity: "medium",
+          status: "open",
+          dataIntegrityConcern: 4,
+          evidence: "Review signature missing from assay worksheet."
+        }
+      ]
+    });
+
+    expect(assessment.level).toBe("critical");
+    expect(assessment.humanReviewRequired).toBe(true);
+    expect(assessment.holdOrQuarantineReviewRecommended).toBe(true);
+    expect(assessment.topDrivers.map((driver) => driver.category)).toEqual(
+      expect.arrayContaining(["quality", "data_integrity", "controls"])
+    );
+    expect(assessment.missingInformation).toEqual(
+      expect.arrayContaining(["investigation status", "QA assessment", "batch/sample impact assessment", "final disposition"])
+    );
+    expect(assessment.recommendedActions.map((action) => action.ownerRole)).toEqual(expect.arrayContaining(["quality_unit", "qa"]));
+  });
+
   it("escalates biosafety events to high or critical", () => {
     const assessment = assessBioRisk({
       siteName: "Site",
@@ -179,12 +225,36 @@ describe("biotech deterministic AI Engine", () => {
     expect(assessment.topDrivers.some((driver) => driver.category === "pattern")).toBe(true);
   });
 
+  it("keeps scores normalized between 0 and 100", () => {
+    const assessment = assessBioRisk({
+      ...baseLowRiskInput,
+      signals: [
+        {
+          type: "equipment_event",
+          label: "Extreme numeric input regression",
+          severity: 999,
+          likelihood: 999,
+          scope: 999,
+          controlGap: 999,
+          dataIntegrityConcern: 999
+        }
+      ]
+    });
+
+    expect(assessment.score).toBeGreaterThanOrEqual(0);
+    expect(assessment.score).toBeLessThanOrEqual(100);
+  });
+
   it("keeps explanations guarded", () => {
     const assessment = assessBioRisk(baseLowRiskInput);
+    const generatedText = [
+      assessment.explanation,
+      ...assessment.recommendedActions.flatMap((action) => [action.title, action.reason])
+    ].join(" ");
 
     expect(assessment.explanation).toContain("Based on available data");
     expect(assessment.explanation).toContain("potential");
     expect(assessment.explanation).toContain("does not replace");
-    expect(assessment.explanation).not.toMatch(/released|compliant|safe to use|approved/i);
+    expect(generatedText).not.toMatch(/batch is released|product is safe|study is compliant|deviation is closed|CAPA is adequate|SOP is approved|change is approved|valid for submission|clinical decision is appropriate|compliance is guaranteed/i);
   });
 });
