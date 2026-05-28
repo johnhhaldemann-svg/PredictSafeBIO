@@ -510,7 +510,9 @@ export async function persistDocumentRecommendations(document: DocumentMetadata)
   return { ok: true, gapRecommendations, updateRecommendations };
 }
 
-export async function seedDemoWorkspace(): Promise<{ ok: true; assessmentId: string; documentId: string } | { ok: false; message: string }> {
+export async function seedDemoWorkspace(): Promise<
+  { ok: true; assessmentId: string; documentId: string; seedLabel: string } | { ok: false; message: string }
+> {
   const context = await getProfileContext();
   if (!context) {
     return { ok: false, message: "Sign in and finish onboarding before seeding demo records." };
@@ -520,11 +522,13 @@ export async function seedDemoWorkspace(): Promise<{ ok: true; assessmentId: str
   }
 
   const supabase = await createSupabaseServerClient();
+  const seedRunId = randomUUID();
+  const seedLabel = `Demo seed ${seedRunId.slice(0, 8)}`;
   const input: BioAiInput = {
     siteName: "PredictSafeBIO Demo Biotech",
     area: "QC Microbiology Lab",
-    workflow: "Seeded sterility assay review",
-    batchOrLot: "DEMO-SEED-001",
+    workflow: `${seedLabel} sterility assay review`,
+    batchOrLot: seedLabel.toUpperCase().replace(/\s+/g, "-"),
     controlEffectiveness: "partial",
     contaminationSuspected: true,
     productQualityImpactPotential: true,
@@ -563,14 +567,14 @@ export async function seedDemoWorkspace(): Promise<{ ok: true; assessmentId: str
   );
 
   const documentInput: SaveDocumentMetadataInput = {
-    title: "Seeded Sterility Assay Review SOP",
+    title: `${seedLabel} Sterility Assay Review SOP`,
     documentType: "sop",
     status: "in_review",
     ownerRole: "qa",
     area: "QC Microbiology Lab",
-    relatedProcess: "Seeded sterility assay review",
+    relatedProcess: `${seedLabel} sterility assay review`,
     revision: "0.1",
-    gaps: ["Seeded batch impact wording needs owner review", "Seeded QA timing is not explicit"]
+    gaps: [`${seedLabel} batch impact wording needs owner review`, `${seedLabel} QA timing is not explicit`]
   };
   const documentResult = await saveDocumentMetadata(documentInput);
   if (!documentResult.ok || !documentResult.document?.id) {
@@ -582,11 +586,11 @@ export async function seedDemoWorkspace(): Promise<{ ok: true; assessmentId: str
     organization_id: context.organizationId,
     actor_id: context.userId,
     event_type: "demo_seed_created",
-    summary: "Demo assessment, document metadata, draft recommendations, and audit trail were seeded.",
-    payload: { assessmentId: assessmentRow.id, documentId: documentResult.document.id }
+    summary: `${seedLabel}: demo assessment, document metadata, draft recommendations, and audit trail were seeded.`,
+    payload: { assessmentId: assessmentRow.id, documentId: documentResult.document.id, seedRunId, seedLabel }
   });
 
-  return { ok: true, assessmentId: assessmentRow.id, documentId: documentResult.document.id };
+  return { ok: true, assessmentId: assessmentRow.id, documentId: documentResult.document.id, seedLabel };
 }
 
 export async function saveDocumentMetadata(input: SaveDocumentMetadataInput) {
