@@ -20,8 +20,12 @@ This checklist is for MVP/demo readiness only. It is not a validation plan for F
 
 - RLS remains enabled on all public MVP tables.
 - Auth uses Supabase email/password for MVP.
+- Email confirmation should be enabled after smoke testing.
+- Custom SMTP is required before heavier signup testing because built-in Supabase auth email is rate-limited.
+- Leaked-password protection should be enabled when available on the current plan.
 - Organization-scoped reads/writes are enforced through profiles.
-- Security advisors are clean before each demo.
+- The private `biotech-documents` bucket and storage policies are applied before testing file uploads.
+- Security advisors are reviewed before each demo; any warning is recorded with an owner and reason.
 
 ## Product Boundary
 
@@ -29,3 +33,4 @@ This checklist is for MVP/demo readiness only. It is not a validation plan for F
 - Deterministic engine tests pass before demo.
 - All assessment and document recommendations remain draft-only.
 - Human review is required before operational use.
+- Demo report downloads are convenience exports only, not controlled records.

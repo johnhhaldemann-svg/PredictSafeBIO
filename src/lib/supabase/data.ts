@@ -35,6 +35,7 @@ export type SaveDocumentMetadataInput = {
   effectiveDate?: string | null;
   nextReviewDate?: string | null;
   gaps?: string[];
+  file?: File | null;
 };
 
 type ProfileContext = {
@@ -382,6 +383,7 @@ export async function saveDocumentMetadata(input: SaveDocumentMetadataInput) {
   }
 
   const supabase = await createSupabaseServerClient();
+  const uploadFile = input.file && input.file.size > 0 ? input.file : null;
   const { data, error } = await supabase
     .from("document_metadata")
     .insert({
@@ -405,15 +407,47 @@ export async function saveDocumentMetadata(input: SaveDocumentMetadataInput) {
     return { ok: false, status: 500, message: error?.message ?? "Could not save document metadata." };
   }
 
+  let uploadWarning: string | undefined;
+  let storageBucket: string | null = null;
+  let storagePath: string | null = null;
+
+  if (uploadFile) {
+    storageBucket = "biotech-documents";
+    const safeName = uploadFile.name.replace(/[^a-zA-Z0-9._-]/g, "-").replace(/-+/g, "-");
+    storagePath = `${context.organizationId}/${data.id}/${safeName}`;
+    const buffer = Buffer.from(await uploadFile.arrayBuffer());
+    const { error: uploadError } = await supabase.storage.from(storageBucket).upload(storagePath, buffer, {
+      contentType: uploadFile.type || "application/octet-stream",
+      upsert: false
+    });
+
+    if (uploadError) {
+      uploadWarning = `Metadata saved, but file upload failed: ${uploadError.message}`;
+      storageBucket = null;
+      storagePath = null;
+    } else {
+      await supabase
+        .from("document_metadata")
+        .update({ storage_bucket: storageBucket, storage_path: storagePath, updated_at: new Date().toISOString() })
+        .eq("organization_id", context.organizationId)
+        .eq("id", data.id);
+    }
+  }
+
   await supabase.from("audit_events").insert({
     organization_id: context.organizationId,
     actor_id: context.userId,
     event_type: "document_metadata_created",
     summary: `Document metadata created for ${input.title}.`,
-    payload: { documentId: data.id, title: input.title, documentType: input.documentType }
+    payload: { documentId: data.id, title: input.title, documentType: input.documentType, storageBucket, storagePath }
   });
 
-  return { ok: true, status: 201, document: mapDocument(data) };
+  return {
+    ok: true,
+    status: 201,
+    document: mapDocument({ ...data, storage_bucket: storageBucket, storage_path: storagePath }),
+    message: uploadWarning
+  };
 }
 
 async function getProfileContext(): Promise<ProfileContext | null> {
@@ -500,6 +534,8 @@ function mapDocument(document: Record<string, any>): DocumentMetadata {
     effectiveDate: document.effective_date,
     nextReviewDate: document.next_review_date,
     lastReviewedAt: document.last_reviewed_at,
+    storageBucket: document.storage_bucket,
+    storagePath: document.storage_path,
     gaps: document.gaps ?? []
   };
 }

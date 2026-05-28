@@ -23,7 +23,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
             </div>
           </div>
           {params.message ? <p className="form-message">{params.message}</p> : null}
-          <form action={createDocumentMetadataAction} className="document-form">
+          <form action={createDocumentMetadataAction} className="document-form" encType="multipart/form-data">
             <div className="form-grid">
               <label>
                 Title
@@ -83,6 +83,10 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
                 <input name="nextReviewDate" type="date" />
               </label>
             </div>
+            <label>
+              Source file
+              <input name="documentFile" type="file" />
+            </label>
             <label>
               Known gaps
               <textarea

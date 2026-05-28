@@ -28,6 +28,7 @@ export async function createDocumentMetadataAction(formData: FormData) {
     redirectWithMessage("/documents", "Document title is required.");
   }
 
+  const documentFile = formData.get("documentFile");
   const result = await saveDocumentMetadata({
     title,
     documentType: field(formData, "documentType") as DocumentMetadata["documentType"],
@@ -38,7 +39,8 @@ export async function createDocumentMetadataAction(formData: FormData) {
     revision: field(formData, "revision") || null,
     effectiveDate: field(formData, "effectiveDate") || null,
     nextReviewDate: field(formData, "nextReviewDate") || null,
-    gaps: listField(formData, "gaps")
+    gaps: listField(formData, "gaps"),
+    file: documentFile instanceof File ? documentFile : null
   });
 
   const document = result.ok ? result.document : undefined;
@@ -48,6 +50,9 @@ export async function createDocumentMetadataAction(formData: FormData) {
 
   revalidatePath("/documents");
   revalidatePath(`/documents/${document.id}`);
+  if (result.message) {
+    redirectWithMessage(`/documents/${document.id}`, result.message);
+  }
   redirect(`/documents/${document.id}`);
 }
 

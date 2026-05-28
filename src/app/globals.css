@@ -690,6 +690,16 @@ th {
   line-height: 1.5;
 }
 
+.auth-note {
+  border: 1px solid #c9e7ee;
+  border-radius: 8px;
+  background: #f2fbfd;
+  color: #315963;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .auth-form,
 .onboarding-form,
 .document-form {

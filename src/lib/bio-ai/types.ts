@@ -178,6 +178,8 @@ export type DocumentMetadata = {
   effectiveDate?: string | null;
   nextReviewDate?: string | null;
   lastReviewedAt?: string | null;
+  storageBucket?: string | null;
+  storagePath?: string | null;
   gaps?: string[];
 };
 
