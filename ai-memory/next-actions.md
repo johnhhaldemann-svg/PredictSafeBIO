@@ -4,9 +4,7 @@ Last updated: 2026-05-28
 
 ## Immediate
 
-- Run signed-in product smoke for review status updates, recommendation history, Markdown reports, and admin demo seeding.
-- Merge the pre-release review/audit polish branch after CI and Vercel preview pass.
-- Create release tag `v1.1-demo-hardening` only after signed-in product smoke passes.
+- Create release tag `v1.1-demo-hardening` from the signed-in smoke-tested main commit.
 - Re-enable Supabase email confirmation in Auth provider settings.
 - Enable leaked-password protection if available on the current Supabase plan.
 - Test a signed-in upload now that the `biotech-documents` storage migration is applied.
@@ -23,6 +21,7 @@ Last updated: 2026-05-28
 
 ## v1.1 Demo Hardening
 
+- Signed-in production smoke passed for assessment review updates, audit links, document recommendation history, Markdown report downloads, and admin demo seeding.
 - Visible auth/signup status messages now cover email confirmation, rate-limit, existing-account, and already-signed-in states.
 - The smoke-test runbook now includes exact production steps, expected evidence counts, upload checks, and report checks.
 - Configure custom SMTP or document the no-SMTP demo limitation clearly.

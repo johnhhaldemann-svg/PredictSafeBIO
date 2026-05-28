@@ -6,7 +6,7 @@ Last checked: 2026-05-28
 
 - Project: `predictsafe-bio`
 - Production URL: `https://predictsafe-bio.vercel.app`
-- Latest production commit verified locally after review workflow UX polish: `649055e3f755a8de7a69604caf87409a68725785`
+- Latest production commit verified locally after review workflow UX polish: `90e97956cb3dbd943c8229620ebc6c2feca91bf8`
 - Latest passing CI run on `main`: `26583182299`
 
 Production routes verified with `200 OK`:
@@ -16,6 +16,7 @@ Production routes verified with `200 OK`:
 - `/company-profile`
 - `/documents`
 - `/admin/audit`
+- `/admin/demo`
 - `/login`
 
 ## Supabase
@@ -59,10 +60,10 @@ Remaining:
 - Enable leaked-password protection if available on the current Supabase plan.
 - Configure custom SMTP before heavier public signup testing.
 - Run signed-in document upload smoke and confirm `storage_bucket` and `storage_path` persist.
-- Create release `v1.1-demo-hardening` after signed-in smoke passes.
 - Assessment review workflow migration has been applied and verified.
-- Pre-release review/audit polish is staged separately from production: audit target links, short demo seed labels, and additional workflow helper tests.
-- Signed-in product smoke for review status updates, recommendation history, Markdown report downloads, and demo seeding is pending because this workspace does not have the existing test user password/session.
-- Create release `v1.1-demo-hardening` only after signed-in product smoke passes.
+- PR #21 merged audit target links, short demo seed labels, and additional workflow helper tests.
+- Signed-in product smoke passed: review status updates saved reviewer notes and audit events, audit links opened target records, document recommendation history and Markdown report download worked, and `/admin/demo` seeded labeled demo records.
+- Demo seed evidence: `Demo seed 6e0c12c4`, assessment `362e02bb-8a11-48f1-933c-1fddbacbf7cd`, document `e425c0c4-42fd-48df-87ab-648f9a4191c2`.
+- Create release `v1.1-demo-hardening` from the smoke-tested main commit.
 - Keep LLM draft assist disabled unless the gate in `docs/llm-draft-assist-gate.md` is intentionally opened later.
 - Keep ESLint 10 closed until the lint toolchain is intentionally upgraded.
