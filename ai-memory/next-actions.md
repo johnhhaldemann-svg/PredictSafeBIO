@@ -4,12 +4,11 @@ Last updated: 2026-05-28
 
 ## Immediate
 
-- Create release tag `v1.1-demo-hardening` from the signed-in smoke-tested main commit.
 - Re-enable Supabase email confirmation in Auth provider settings.
 - Enable leaked-password protection if available on the current Supabase plan.
 - Test a signed-in upload now that the `biotech-documents` storage migration is applied.
 - Configure custom SMTP before heavier signup testing.
-- Run a v1.1 smoke test that includes document upload and report downloads.
+- Run a v1.2 smoke test that includes assessment filters, document upload, and polished report downloads.
 
 ## Blockers And Watch Items
 
@@ -22,6 +21,7 @@ Last updated: 2026-05-28
 ## v1.1 Demo Hardening
 
 - Signed-in production smoke passed for assessment review updates, audit links, document recommendation history, Markdown report downloads, and admin demo seeding.
+- Release `v1.1-demo-hardening` was created from the smoke-tested main commit.
 - Visible auth/signup status messages now cover email confirmation, rate-limit, existing-account, and already-signed-in states.
 - The smoke-test runbook now includes exact production steps, expected evidence counts, upload checks, and report checks.
 - Configure custom SMTP or document the no-SMTP demo limitation clearly.
@@ -30,6 +30,7 @@ Last updated: 2026-05-28
 
 ## Next Product Increment Candidates
 
+- v1.2 in progress: assessment register filters, cleaner report sections, explicit LLM draft-assist gate details, and upload/auth hardening follow-up tracking.
 - Assessment review workflow is implemented with review status transitions, reviewer notes, and audit events.
 - Document recommendation history is implemented for persisted draft recommendation runs.
 - Demo report polish is implemented with Markdown downloads, timestamps, IDs, audit references, and MVP boundary text.

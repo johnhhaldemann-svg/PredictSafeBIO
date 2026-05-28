@@ -52,6 +52,7 @@ Completed:
 - Merged PR #15 to fix Supabase auth confirmation flow.
 - Merged dependency PRs #12, #13, and #10 one at a time after refreshed CI and Vercel checks.
 - Created release `mvp-demo-foundation`.
+- Created release `v1.1-demo-hardening` from commit `c49c54c76bb15cb395574c3f72dae90f4898f801`.
 - Restored required approving reviews to `1` after solo-owner merge workarounds.
 
 Remaining:
@@ -64,6 +65,6 @@ Remaining:
 - PR #21 merged audit target links, short demo seed labels, and additional workflow helper tests.
 - Signed-in product smoke passed: review status updates saved reviewer notes and audit events, audit links opened target records, document recommendation history and Markdown report download worked, and `/admin/demo` seeded labeled demo records.
 - Demo seed evidence: `Demo seed 6e0c12c4`, assessment `362e02bb-8a11-48f1-933c-1fddbacbf7cd`, document `e425c0c4-42fd-48df-87ab-648f9a4191c2`.
-- Create release `v1.1-demo-hardening` from the smoke-tested main commit.
+- v1.2 implementation is in progress for assessment filters, report polish, auth/upload hardening follow-up, and LLM draft-assist gate detail.
 - Keep LLM draft assist disabled unless the gate in `docs/llm-draft-assist-gate.md` is intentionally opened later.
 - Keep ESLint 10 closed until the lint toolchain is intentionally upgraded.
