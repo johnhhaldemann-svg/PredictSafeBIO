@@ -191,6 +191,19 @@ button {
   align-items: start;
 }
 
+.foundation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.mini-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
 .panel,
 .table-panel,
 .timeline,
@@ -423,6 +436,17 @@ textarea {
   padding: 18px;
   border-radius: 8px;
   background: var(--panel-soft);
+}
+
+.score-wrap.compact-score {
+  margin-top: 12px;
+  padding: 12px;
+}
+
+.compact-score .score {
+  width: 58px;
+  height: 58px;
+  font-size: 26px;
 }
 
 .score {
@@ -877,6 +901,8 @@ pre {
   .form-grid,
   .filter-grid,
   .toggle-grid,
+  .foundation-grid,
+  .mini-columns,
   .split-list,
   .snapshot-grid,
   .profile-grid,

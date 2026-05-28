@@ -12,6 +12,13 @@ import type {
 } from "@/lib/bio-ai/types";
 import { demoAuditEvents, demoCompanyProfile, demoDocuments } from "@/lib/demo-data";
 import { generateDocumentGapRecommendations, generateDocumentUpdateRecommendations } from "@/lib/documents/recommendations";
+import {
+  applyFoundationContext,
+  defaultApplicabilityRules,
+  foundationMethodNames,
+  foundationProgramNames,
+  northStarFoundationDemo
+} from "@/lib/foundation/engine";
 import { createSupabaseServerClient } from "./server";
 import { isSupabaseConfigured } from "./env";
 
@@ -106,6 +113,28 @@ export type MapOperationsSummary = {
     status: string;
     detail: string;
   }>;
+  latestAssessmentInput: BioAiInput;
+};
+
+export type IntelligenceFoundationSummary = {
+  companyName: string;
+  counts: Array<{ label: string; value: number }>;
+  intake: Array<{ question: string; answer: string; triggers: string }>;
+  programs: Array<{ name: string; status: string; owner: string }>;
+  methods: Array<{ name: string; type: string; purpose: string }>;
+  applicability: Array<{ rule: string; required: string; reviewer: string }>;
+  evidence: Array<{ requirement: string; status: string; auditReady: boolean }>;
+  changes: Array<{ type: string; summary: string; actions: string }>;
+  readiness: {
+    overallScore: number;
+    documentsScore: number;
+    trainingScore: number;
+    capaScore: number;
+    incidentsScore: number;
+    equipmentScore: number;
+    evidenceScore: number;
+    topGaps: string[];
+  };
   latestAssessmentInput: BioAiInput;
 };
 
@@ -577,6 +606,133 @@ export async function getMapAlignedWorkbenchInput(): Promise<BioAiInput> {
   return (await getMapOperationsSummary()).latestAssessmentInput;
 }
 
+export async function getIntelligenceFoundationSummary(): Promise<IntelligenceFoundationSummary> {
+  const context = await getProfileContext();
+  if (!context) return demoIntelligenceFoundationSummary();
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const [
+      intakeTemplates,
+      intakeResponses,
+      programs,
+      methods,
+      rules,
+      evidenceCount,
+      changesCount,
+      scoresCount,
+      latestScore,
+      programRows,
+      methodRows,
+      ruleRows,
+      evidenceRows,
+      changeRows,
+      responseRows
+    ] = await Promise.all([
+      countRows(supabase, "company_intake_templates", context.organizationId),
+      countRows(supabase, "company_intake_responses", context.organizationId),
+      countRows(supabase, "compliance_programs", context.organizationId),
+      countRows(supabase, "compliance_methods", context.organizationId),
+      countRows(supabase, "applicability_rules", context.organizationId),
+      countRows(supabase, "compliance_evidence_map", context.organizationId),
+      countRows(supabase, "change_impact_events", context.organizationId),
+      countRows(supabase, "audit_readiness_scores", context.organizationId),
+      latestRow(
+        supabase,
+        "audit_readiness_scores",
+        context.organizationId,
+        "id,overall_score,documents_score,training_score,capa_score,incidents_score,equipment_score,evidence_score,top_gaps"
+      ),
+      latestRows(supabase, "compliance_programs", context.organizationId, "id,program_name,status,owner_role", 8),
+      latestRows(supabase, "compliance_methods", context.organizationId, "id,method_name,method_type,purpose", 8),
+      latestRows(supabase, "applicability_rules", context.organizationId, "id,rule_code,name,required_programs,human_reviewer_role", 8),
+      latestRows(supabase, "compliance_evidence_map", context.organizationId, "id,requirement_name,evidence_status,audit_ready", 8),
+      latestRows(supabase, "change_impact_events", context.organizationId, "id,change_type,impact_summary,recommended_actions", 5),
+      latestRows(supabase, "company_intake_responses", context.organizationId, "id,question_key,answer_value,triggers_programs", 5)
+    ]);
+
+    const score = latestScore as Record<string, any> | null;
+    const readiness = score
+      ? {
+          overallScore: score.overall_score,
+          documentsScore: score.documents_score,
+          trainingScore: score.training_score,
+          capaScore: score.capa_score,
+          incidentsScore: score.incidents_score,
+          equipmentScore: score.equipment_score,
+          evidenceScore: score.evidence_score,
+          topGaps: score.top_gaps ?? []
+        }
+      : demoIntelligenceFoundationSummary().readiness;
+
+    const demo = northStarFoundationDemo();
+    const latestAssessmentInput = applyFoundationContext(
+      {
+        ...demo.aiInput,
+        siteName: programs > 0 ? "Live Intelligence Foundation workspace" : "NorthStar BioLabs",
+        workflow: changesCount > 0 ? "Foundation change-impact readiness review" : demo.aiInput.workflow
+      },
+      {
+        ...demo.foundationContext,
+        auditReadinessScore: readiness.overallScore,
+        evidenceGaps: Array.isArray(readiness.topGaps) ? readiness.topGaps : demo.foundationContext.evidenceGaps
+      }
+    );
+
+    return {
+      companyName: programs > 0 || scoresCount > 0 ? "Live organization workspace" : "NorthStar BioLabs",
+      counts: [
+        { label: "Intake templates", value: intakeTemplates },
+        { label: "Intake responses", value: intakeResponses },
+        { label: "Programs", value: programs },
+        { label: "Methods", value: methods },
+        { label: "Applicability rules", value: rules },
+        { label: "Evidence items", value: evidenceCount },
+        { label: "Change impacts", value: changesCount },
+        { label: "Readiness scores", value: scoresCount }
+      ],
+      intake: ((responseRows as Record<string, any>[]) ?? []).map((row) => ({
+        question: row.question_key,
+        answer: summarizeJson(row.answer_value),
+        triggers: summarizeJson(row.triggers_programs)
+      })),
+      programs: ((programRows as Record<string, any>[]) ?? []).map((row) => ({
+        name: row.program_name,
+        status: row.status,
+        owner: row.owner_role ?? "unassigned"
+      })),
+      methods: ((methodRows as Record<string, any>[]) ?? []).map((row) => ({
+        name: row.method_name,
+        type: row.method_type,
+        purpose: row.purpose ?? "Deterministic draft method"
+      })),
+      applicability: ((ruleRows as Record<string, any>[]) ?? []).map((row) => ({
+        rule: `${row.rule_code}: ${row.name}`,
+        required: summarizeJson(row.required_programs),
+        reviewer: row.human_reviewer_role ?? "human reviewer"
+      })),
+      evidence: ((evidenceRows as Record<string, any>[]) ?? []).map((row) => ({
+        requirement: row.requirement_name,
+        status: row.evidence_status,
+        auditReady: Boolean(row.audit_ready)
+      })),
+      changes: ((changeRows as Record<string, any>[]) ?? []).map((row) => ({
+        type: row.change_type,
+        summary: row.impact_summary,
+        actions: summarizeJson(row.recommended_actions)
+      })),
+      readiness,
+      latestAssessmentInput
+    };
+  } catch {
+    return demoIntelligenceFoundationSummary();
+  }
+}
+
+export async function getIntelligenceFoundationWorkbenchInput(): Promise<BioAiInput> {
+  return (await getIntelligenceFoundationSummary()).latestAssessmentInput;
+}
+
 export async function createMapOperationsBundle(
   input: MapOperationsBundleInput
 ): Promise<{ ok: true; incidentId: string; taskId: string; bundleLabel: string } | { ok: false; message: string }> {
@@ -986,6 +1142,440 @@ export async function createMapOperationsBundle(
   }
 }
 
+export async function seedIntelligenceFoundation(): Promise<{ ok: true; seedLabel: string; readinessScore: number } | { ok: false; message: string }> {
+  const context = await getProfileContext();
+  if (!context) {
+    return { ok: false, message: "Sign in and finish onboarding before seeding the Intelligence Foundation." };
+  }
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const seedRunId = randomUUID();
+    const seedSuffix = seedRunId.slice(0, 8);
+    const seedLabel = `NorthStar BioLabs ${seedSuffix}`;
+    const demo = northStarFoundationDemo();
+    const companyProfile = await getCompanyProfile();
+
+    const { data: site, error: siteError } = await supabase
+      .from("sites")
+      .insert({
+        organization_id: context.organizationId,
+        name: seedLabel,
+        location: "Pilot site",
+        metadata: { seedRunId, pilot: "NorthStar BioLabs" },
+        created_by: context.userId
+      })
+      .select("id")
+      .single();
+    if (siteError || !site) return { ok: false, message: siteError?.message ?? "Could not create foundation site." };
+
+    const { data: lab, error: labError } = await supabase
+      .from("labs")
+      .insert({
+        organization_id: context.organizationId,
+        site_id: site.id,
+        name: "BSL-2 Cell Culture Lab",
+        biosafety_level: "BSL-2",
+        controlled_area_type: "wet lab",
+        storage_path_prefix: `${context.organizationId}/${site.id}/bsl2-cell-culture`,
+        metadata: { seedRunId, materials: ["human-derived samples", "sharps", "hazardous chemicals"] },
+        created_by: context.userId
+      })
+      .select("id")
+      .single();
+    if (labError || !lab) return { ok: false, message: labError?.message ?? "Could not create foundation lab." };
+
+    const { data: template, error: templateError } = await supabase
+      .from("company_intake_templates")
+      .insert({
+        organization_id: context.organizationId,
+        name: "PredictSafeBIO Intelligence Foundation Intake",
+        version_label: `pilot-${seedSuffix}`,
+        active: true,
+        sections: [
+          { key: "materials", title: "Materials and samples" },
+          { key: "equipment", title: "Equipment and controls" },
+          { key: "readiness", title: "Documents, training, incidents, and evidence" }
+        ]
+      })
+      .select("id")
+      .single();
+    if (templateError || !template) return { ok: false, message: templateError?.message ?? "Could not create intake template." };
+
+    await supabase.from("company_intake_responses").insert(
+      Object.entries(demo.answers).map(([questionKey, answer]) => ({
+        organization_id: context.organizationId,
+        company_profile_id: companyProfile.id ?? null,
+        intake_template_id: template.id,
+        question_key: questionKey,
+        answer_value: { value: answer },
+        triggers_documents: demo.applicability.requiredDocuments,
+        triggers_programs: demo.applicability.requiredPrograms,
+        created_by: context.userId
+      }))
+    );
+
+    const programIds = new Map<string, string>();
+    for (const programName of foundationProgramNames) {
+      const { data: program } = await supabase
+        .from("compliance_programs")
+        .insert({
+          organization_id: context.organizationId,
+          program_name: `${programName} ${seedSuffix}`,
+          program_type: "pilot_mvp",
+          description: `${programName} pilot program generated from the PredictSafeBIO Intelligence Foundation packet.`,
+          owner_role: programName.includes("Biosafety") || programName.includes("Bloodborne") ? "biosafety_officer" : "qa",
+          reviewer_role: "quality_unit",
+          status: "draft_human_review_required",
+          review_frequency_months: 12,
+          linked_documents: demo.applicability.requiredDocuments.filter((document) => document.toLowerCase().includes(programName.split(" ")[0].toLowerCase())),
+          linked_training: demo.applicability.requiredTraining,
+          linked_methods: foundationMethodNames,
+          human_review_required: true,
+          created_by: context.userId
+        })
+        .select("id,program_name")
+        .single();
+      if (program?.id) programIds.set(programName, program.id);
+    }
+
+    const methodIds = new Map<string, string>();
+    for (const methodName of foundationMethodNames) {
+      const { data: method } = await supabase
+        .from("compliance_methods")
+        .insert({
+          organization_id: context.organizationId,
+          method_name: `${methodName} ${seedSuffix}`,
+          method_type: "deterministic",
+          purpose: `${methodName} draft method for pilot readiness. AI may recommend and draft only.`,
+          input_requirements: ["source records", "human-review status", "organization scope"],
+          decision_rules: ["deterministic scoring", "source traceability", "draft-only outputs"],
+          output_requirements: ["Draft - Human Review Required", "source links", "audit event"],
+          ai_allowed_actions: ["recommend", "draft", "summarize", "flag gaps"],
+          ai_prohibited_actions: ["approve", "certify compliance", "validate systems", "close CAPA", "mark training complete"],
+          human_review_required: true,
+          created_by: context.userId
+        })
+        .select("id,method_name")
+        .single();
+      if (method?.id) methodIds.set(methodName, method.id);
+    }
+
+    const linkRows = Array.from(programIds.entries()).flatMap(([programName, programId]) =>
+      Array.from(methodIds.entries())
+        .filter(([methodName]) => programMethodRequired(programName, methodName))
+        .map(([, methodId]) => ({
+          organization_id: context.organizationId,
+          program_id: programId,
+          method_id: methodId,
+          required: true,
+          created_by: context.userId
+        }))
+    );
+    if (linkRows.length > 0) await supabase.from("program_method_links").insert(linkRows);
+
+    await supabase.from("applicability_rules").insert(
+      defaultApplicabilityRules.map((rule) => ({
+        organization_id: context.organizationId,
+        rule_code: `${rule.ruleCode}-${seedSuffix}`,
+        name: rule.name,
+        condition: { any: rule.conditionKeys },
+        required_programs: rule.requiredPrograms,
+        required_documents: rule.requiredDocuments,
+        required_records: rule.requiredRecords,
+        required_training: rule.requiredTraining,
+        risk_level_if_missing: rule.riskLevelIfMissing,
+        human_reviewer_role: rule.humanReviewerRole,
+        draft_only: true,
+        human_review_required: true,
+        created_by: context.userId
+      }))
+    );
+
+    await supabase.from("biorisk_scoring_rules").insert([
+      {
+        organization_id: context.organizationId,
+        rule_code: `BIORISK-${seedSuffix}`,
+        risk_family: "biosafety_exposure_readiness",
+        severity_weight: 0.35,
+        likelihood_weight: 0.2,
+        detectability_weight: 0.1,
+        worker_exposure_weight: 0.15,
+        compliance_weight: 0.1,
+        sample_patient_weight: 0.05,
+        environmental_weight: 0.05,
+        repeat_issue_multiplier: 1.25,
+        missing_data_penalty: 10,
+        risk_band_thresholds: { low: 40, moderate: 60, high: 80 },
+        draft_only: true,
+        human_review_required: true,
+        created_by: context.userId
+      }
+    ]);
+
+    const documentResult = await saveDocumentMetadata({
+      title: `${seedLabel} Exposure Control Plan`,
+      documentType: "sop",
+      status: "in_review",
+      ownerRole: "biosafety_officer",
+      area: "BSL-2 Cell Culture Lab",
+      relatedProcess: "Human-derived sample processing",
+      revision: "0.1",
+      gaps: ["Sharps safety decision tree needs review", "BBP exposure response owner approval is pending"]
+    });
+
+    const { data: trainingRequirement } = await supabase
+      .from("training_requirements")
+      .insert({
+        organization_id: context.organizationId,
+        document_id: documentResult.ok ? documentResult.document?.id ?? null : null,
+        role_key: "lab_staff",
+        title: `${seedLabel} BBP and Biosafety Training`,
+        frequency_months: 12,
+        required_for: { labId: lab.id, programs: ["Biosafety", "Bloodborne Pathogens"] }
+      })
+      .select("id")
+      .single();
+    if (trainingRequirement?.id) {
+      const overdue = new Date(Date.now() - 2 * 86400000).toISOString();
+      await supabase.from("training_assignments").insert({
+        organization_id: context.organizationId,
+        training_requirement_id: trainingRequirement.id,
+        assigned_user_id: context.userId,
+        status: "expired",
+        due_date: overdue.slice(0, 10),
+        expires_at: overdue
+      });
+    }
+
+    const { data: biologicalMaterial } = await supabase
+      .from("biological_materials")
+      .insert({
+        organization_id: context.organizationId,
+        lab_id: lab.id,
+        name: `${seedLabel} human-derived samples`,
+        material_type: "human_derived_sample",
+        biosafety_level: "BSL-2",
+        storage_location: "Freezer-001",
+        risk_summary: "Human-derived sample handling requires BBP, sharps, exposure response, and biosafety review.",
+        metadata: { seedRunId, chainOfCustodyGap: true }
+      })
+      .select("id")
+      .single();
+
+    const { data: material } = await supabase
+      .from("materials")
+      .insert({
+        organization_id: context.organizationId,
+        material_code: `NSB-MAT-${seedSuffix}`,
+        name: "Human-derived sample kit",
+        material_type: "biological",
+        lot_number: seedSuffix.toUpperCase(),
+        status: "quarantine",
+        storage_location: "Freezer-001",
+        metadata: { biologicalMaterialId: biologicalMaterial?.id ?? null }
+      })
+      .select("id")
+      .single();
+
+    const { data: sample } = await supabase
+      .from("samples")
+      .insert({
+        organization_id: context.organizationId,
+        sample_identifier: `NSB-SAMPLE-${seedSuffix}`,
+        material_id: material?.id ?? null,
+        lab_id: lab.id,
+        status: "active",
+        storage_location: "Freezer-001",
+        metadata: { humanDerived: true, chainOfCustodyGap: true }
+      })
+      .select("id")
+      .single();
+    if (sample?.id) {
+      await supabase.from("sample_chain_of_custody").insert({
+        organization_id: context.organizationId,
+        sample_id: sample.id,
+        transfer_type: "receipt",
+        to_location: "Freezer-001",
+        transferred_by: context.userId,
+        condition_notes: "Receipt logged; second-person verification pending."
+      });
+    }
+
+    await supabase.from("chemical_inventory").insert({
+      organization_id: context.organizationId,
+      lab_id: lab.id,
+      chemical_name: "Paraformaldehyde pilot stock",
+      hazard_class: "toxic irritant",
+      quantity: "500 mL",
+      storage_location: "Chemical cabinet A"
+    });
+
+    const equipmentRows = [
+      ["BSC-001", "Class II Biosafety Cabinet", "BSC", "out_of_service"],
+      ["AUTO-001", "Steam Autoclave", "autoclave", "active"],
+      ["FRZ-001", "Sample Freezer", "freezer", "active"],
+      ["INC-001", "Cell Culture Incubator", "incubator", "active"]
+    ] as const;
+    let bscEventId: string | null = null;
+    for (const [equipmentTag, name, equipmentType, status] of equipmentRows) {
+      const { data: equipment } = await supabase
+        .from("equipment")
+        .insert({
+          organization_id: context.organizationId,
+          lab_id: lab.id,
+          equipment_tag: `${equipmentTag}-${seedSuffix}`,
+          name,
+          equipment_type: equipmentType,
+          status,
+          qualification_status: equipmentType === "BSC" ? "certification_overdue" : "current",
+          metadata: { seedRunId }
+        })
+        .select("id,equipment_type")
+        .single();
+      if (equipment?.id && equipmentType === "BSC") {
+        const { data: event } = await supabase
+          .from("equipment_events")
+          .insert({
+            organization_id: context.organizationId,
+            equipment_id: equipment.id,
+            event_type: "certification_overdue",
+            status: "open",
+            occurred_at: new Date().toISOString(),
+            impact_assessment: "BSC certification is overdue; impact review required before use.",
+            created_by: context.userId
+          })
+          .select("id")
+          .single();
+        bscEventId = event?.id ?? null;
+      }
+    }
+
+    const { data: incident, error: incidentError } = await supabase
+      .from("incidents")
+      .insert({
+        organization_id: context.organizationId,
+        lab_id: lab.id,
+        incident_type: "needlestick_exposure",
+        title: `${seedLabel} needlestick exposure`,
+        severity: "high",
+        status: "investigating",
+        occurred_at: new Date().toISOString(),
+        reported_by: context.userId,
+        summary: "Pilot exposure incident used for CAPA screening, training impact, and evidence mapping.",
+        metadata: { seedRunId, sampleId: sample?.id, biologicalMaterialId: biologicalMaterial?.id }
+      })
+      .select("id")
+      .single();
+    if (incidentError || !incident) return { ok: false, message: incidentError?.message ?? "Could not create foundation incident." };
+
+    const { data: capa } = await supabase
+      .from("capa_records")
+      .insert({
+        organization_id: context.organizationId,
+        source_incident_id: incident.id,
+        title: `${seedLabel} CAPA screening`,
+        status: "draft_human_review_required",
+        owner_role: "quality_unit",
+        due_date: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
+        created_by: context.userId
+      })
+      .select("id")
+      .single();
+
+    await supabase.from("compliance_evidence_map").insert(
+      demo.evidence.map((item) => ({
+        organization_id: context.organizationId,
+        site_id: site.id,
+        lab_id: lab.id,
+        requirement_name: item.requirementName,
+        control_name: item.controlName,
+        evidence_type: item.evidenceType,
+        source_table: item.sourceTable,
+        source_record_id:
+          item.sourceTable === "document_metadata" && documentResult.ok
+            ? documentResult.document?.id ?? null
+            : item.sourceTable === "incidents"
+              ? incident.id
+              : item.sourceTable === "equipment_events"
+                ? bscEventId
+                : null,
+        required_frequency: "annual or event-driven",
+        evidence_status: item.evidenceStatus,
+        audit_ready: item.auditReady,
+        human_review_required: true,
+        created_by: context.userId
+      }))
+    );
+
+    await supabase.from("change_impact_events").insert(
+      demo.changes.map((change) => ({
+        organization_id: context.organizationId,
+        change_type: change.changeType,
+        source_table: change.changeType === "incident" ? "incidents" : change.changeType === "equipment_event" ? "equipment_events" : "biological_materials",
+        source_record_id: change.changeType === "incident" ? incident.id : change.changeType === "equipment_event" ? bscEventId : biologicalMaterial?.id ?? null,
+        impact_summary: change.impactSummary,
+        document_impacts: change.documentImpacts,
+        training_impacts: change.trainingImpacts,
+        risk_impacts: change.riskImpacts,
+        equipment_impacts: change.equipmentImpacts,
+        recommended_actions: change.recommendedActions,
+        status: "draft_human_review_required",
+        human_review_required: true,
+        created_by: context.userId
+      }))
+    );
+
+    await supabase.from("audit_readiness_scores").insert({
+      organization_id: context.organizationId,
+      site_id: site.id,
+      lab_id: lab.id,
+      overall_score: demo.readiness.overallScore,
+      documents_score: demo.readiness.documentsScore,
+      training_score: demo.readiness.trainingScore,
+      capa_score: demo.readiness.capaScore,
+      incidents_score: demo.readiness.incidentsScore,
+      equipment_score: demo.readiness.equipmentScore,
+      evidence_score: demo.readiness.evidenceScore,
+      top_gaps: demo.readiness.topGaps,
+      draft_only: true,
+      human_review_required: true,
+      created_by: context.userId
+    });
+
+    await supabase.from("audit_events").insert({
+      organization_id: context.organizationId,
+      actor_id: context.userId,
+      event_type: "intelligence_foundation_seeded",
+      summary: `${seedLabel}: Intelligence Foundation pilot dataset created with intake, programs, methods, applicability, evidence, change impact, and audit readiness records.`,
+      payload: withAuditTrace(
+        {
+          seedRunId,
+          seedLabel,
+          siteId: site.id,
+          labId: lab.id,
+          incidentId: incident.id,
+          capaId: capa?.id ?? null,
+          readinessScore: demo.readiness.overallScore,
+          documentId: documentResult.ok ? documentResult.document?.id ?? null : null
+        },
+        {
+          sourceModule: "foundation",
+          sourceRecordId: template.id,
+          targetModule: "audit_readiness",
+          targetRecordId: lab.id,
+          runId: seedRunId,
+          draftOnly: true
+        }
+      )
+    });
+
+    return { ok: true, seedLabel, readinessScore: demo.readiness.overallScore };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Could not seed the Intelligence Foundation." };
+  }
+}
+
 export async function saveAssessment(input: BioAiInput) {
   const context = await getProfileContext();
   if (!context) {
@@ -1341,6 +1931,105 @@ async function latestRow(
 
   if (error) return null;
   return data;
+}
+
+async function latestRows(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  table: string,
+  organizationId: string,
+  columns: string,
+  limit = 10
+) {
+  const { data, error } = await supabase
+    .from(table)
+    .select(columns)
+    .eq("organization_id", organizationId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) return [];
+  return data ?? [];
+}
+
+function summarizeJson(value: unknown) {
+  if (Array.isArray(value)) return value.slice(0, 3).join(", ") || "none";
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>).slice(0, 3);
+    return entries.map(([key, item]) => `${key}: ${String(item)}`).join(", ");
+  }
+  if (value == null) return "none";
+  return String(value);
+}
+
+function programMethodRequired(programName: string, methodName: string) {
+  if (["AI Guardrail", "Audit Evidence", "Change Impact"].includes(methodName)) return true;
+  if (programName.includes("Training")) return ["Training Gap", "Control Verification"].includes(methodName);
+  if (programName.includes("CAPA") || programName.includes("Incident")) return ["Incident Screening", "CAPA Screening"].includes(methodName);
+  if (programName.includes("Equipment")) return ["Risk Assessment", "Control Verification"].includes(methodName);
+  if (programName.includes("Document")) return ["Document Gap", "Control Verification"].includes(methodName);
+  return ["Risk Assessment", "Document Gap", "Training Gap"].includes(methodName);
+}
+
+function demoIntelligenceFoundationSummary(): IntelligenceFoundationSummary {
+  const demo = northStarFoundationDemo();
+  const assessmentInput = demo.aiInput;
+
+  return {
+    companyName: "NorthStar BioLabs",
+    counts: [
+      { label: "Intake templates", value: 1 },
+      { label: "Intake responses", value: Object.keys(demo.answers).length },
+      { label: "Programs", value: foundationProgramNames.length },
+      { label: "Methods", value: foundationMethodNames.length },
+      { label: "Applicability rules", value: defaultApplicabilityRules.length },
+      { label: "Evidence items", value: demo.evidence.length },
+      { label: "Change impacts", value: demo.changes.length },
+      { label: "Readiness scores", value: 1 }
+    ],
+    intake: [
+      { question: "hazardousChemicals", answer: "true", triggers: "Chemical Hygiene, Waste Management" },
+      { question: "biologicalMaterials", answer: "true", triggers: "Biosafety, Waste Management" },
+      { question: "humanDerivedSamples", answer: "true", triggers: "Bloodborne Pathogens, Incident/Exposure Response" },
+      { question: "bscUsed", answer: "true", triggers: "Equipment/Calibration, Biosafety" }
+    ],
+    programs: foundationProgramNames.slice(0, 8).map((name) => ({
+      name,
+      status: "draft_human_review_required",
+      owner: name.includes("Biosafety") || name.includes("Bloodborne") ? "biosafety_officer" : "qa"
+    })),
+    methods: foundationMethodNames.slice(0, 8).map((name) => ({
+      name,
+      type: "deterministic",
+      purpose: `${name} method keeps AI outputs draft-only and source-backed.`
+    })),
+    applicability: demo.applicability.triggeredRules.map((rule) => ({
+      rule: `${rule.ruleCode}: ${rule.name}`,
+      required: rule.requiredPrograms.join(", "),
+      reviewer: rule.humanReviewerRole
+    })),
+    evidence: demo.evidence.slice(0, 8).map((item) => ({
+      requirement: item.requirementName,
+      status: item.evidenceStatus,
+      auditReady: item.auditReady
+    })),
+    changes: demo.changes.map((change) => ({
+      type: change.changeType,
+      summary: change.impactSummary,
+      actions: change.recommendedActions.slice(0, 3).join(", ")
+    })),
+    readiness: {
+      overallScore: demo.readiness.overallScore,
+      documentsScore: demo.readiness.documentsScore,
+      trainingScore: demo.readiness.trainingScore,
+      capaScore: demo.readiness.capaScore,
+      incidentsScore: demo.readiness.incidentsScore,
+      equipmentScore: demo.readiness.equipmentScore,
+      evidenceScore: demo.readiness.evidenceScore,
+      topGaps: demo.readiness.topGaps
+    },
+    latestAssessmentInput: assessmentInput
+  };
 }
 
 function demoMapOperationsSummary(): MapOperationsSummary {

@@ -1,9 +1,9 @@
 import { AppShell } from "@/components/AppShell";
 import { WorkbenchClient } from "@/components/WorkbenchClient";
-import { getMapAlignedWorkbenchInput } from "@/lib/supabase/data";
+import { getIntelligenceFoundationWorkbenchInput } from "@/lib/supabase/data";
 
 export default async function WorkbenchPage() {
-  const initialInput = await getMapAlignedWorkbenchInput();
+  const initialInput = await getIntelligenceFoundationWorkbenchInput();
 
   return (
     <AppShell>

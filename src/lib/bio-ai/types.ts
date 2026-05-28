@@ -66,6 +66,14 @@ export type RecommendedActionType =
 
 export type BioSourceModule =
   | "company_profile"
+  | "foundation"
+  | "intake"
+  | "applicability_rule"
+  | "compliance_program"
+  | "compliance_method"
+  | "evidence_map"
+  | "change_impact"
+  | "audit_readiness"
   | "site"
   | "lab"
   | "reference_rule"
@@ -117,6 +125,19 @@ export type SampleMaterialContext = {
   chainOfCustodyStatus?: MapDerivedStatus | null;
   storageConditionStatus?: MapDerivedStatus | null;
   wasteStatus?: MapDerivedStatus | null;
+};
+
+export type FoundationAiContext = {
+  applicablePrograms: string[];
+  requiredDocuments: string[];
+  requiredTraining: string[];
+  requiredEvidence: string[];
+  evidenceGaps: string[];
+  changeImpactSummaries: string[];
+  auditReadinessScore: number;
+  bioriskRuleDrivers: string[];
+  sourceRecords: BioSourceRecord[];
+  referenceRuleIds: string[];
 };
 
 export type BioAiSignal = {
@@ -194,6 +215,7 @@ export type BioAiInput = {
   sampleMaterialContext?: SampleMaterialContext | null;
   auditReadinessStatus?: MapDerivedStatus | null;
   detectability?: number | string | null;
+  foundationContext?: FoundationAiContext | null;
 };
 
 export type BioAiAssessment = {
@@ -295,7 +317,11 @@ export type AuditEvent = {
     | "document_recommendation_generated"
     | "human_review_status_changed"
     | "demo_seed_created"
-    | "map_operations_bundle_created";
+    | "map_operations_bundle_created"
+    | "intelligence_foundation_seeded"
+    | "intelligence_foundation_evaluated"
+    | "change_impact_generated"
+    | "audit_readiness_score_generated";
   summary: string;
   payload?: Record<string, unknown>;
   createdAt?: string;

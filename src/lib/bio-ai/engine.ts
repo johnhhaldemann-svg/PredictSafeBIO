@@ -107,6 +107,12 @@ export function detectMissingInformation(input: BioAiInput, signals: BioAiSignal
     missing.add("assessment-level detectability context");
   }
   if (input.sourceRecords != null && input.sourceRecords.length === 0) missing.add("source record traceability");
+  if (input.foundationContext) {
+    for (const gap of input.foundationContext.evidenceGaps.slice(0, 5)) {
+      missing.add(`foundation evidence gap: ${gap}`);
+    }
+    if (input.foundationContext.auditReadinessScore < 70) missing.add("foundation audit readiness score below pilot threshold");
+  }
 
   if (isGapStatus(input.trainingStatus)) missing.add("current training assignment evidence");
   if (isGapStatus(input.equipmentStatus)) missing.add("equipment status or calibration evidence");
@@ -205,6 +211,15 @@ function applyEscalationOverrides(input: BioAiInput, signals: BioAiSignal[], bas
     reasons.push("Map-derived readiness evidence shows a training, document, or audit-readiness gap.");
   }
 
+  if (input.foundationContext) {
+    if (input.foundationContext.auditReadinessScore < 50) {
+      raiseTo("high", "Intelligence Foundation audit readiness is below pilot threshold and requires human review.");
+    } else if (input.foundationContext.evidenceGaps.length > 0) {
+      level = increaseOneBand(level);
+      reasons.push("Intelligence Foundation evidence map contains unresolved document, training, or record gaps.");
+    }
+  }
+
   if (isGapStatus(input.equipmentStatus) || isGapStatus(input.sampleMaterialContext?.storageConditionStatus)) {
     raiseTo("high", "Map-derived equipment or storage condition evidence requires impact review.");
   }
@@ -235,6 +250,10 @@ function matchRiskFamilies(input: BioAiInput, signals: BioAiSignal[] = input.sig
     input.equipmentStatus,
     input.documentReadiness,
     input.auditReadinessStatus,
+    input.foundationContext?.applicablePrograms.join(" "),
+    input.foundationContext?.requiredDocuments.join(" "),
+    input.foundationContext?.requiredTraining.join(" "),
+    input.foundationContext?.bioriskRuleDrivers.join(" "),
     input.incidentContext?.status,
     input.sampleMaterialContext?.chainOfCustodyStatus,
     input.sampleMaterialContext?.storageConditionStatus,
@@ -327,6 +346,9 @@ function buildTopDrivers(
 
   const mapDrivers = mapDerivedDrivers(input);
   drivers.push(...mapDrivers);
+
+  const foundationDrivers = foundationContextDrivers(input);
+  drivers.push(...foundationDrivers);
 
   if (signals.some((signal) => signal.repeatFinding) || input.incidentContext?.repeatPattern) {
     drivers.push({
@@ -443,6 +465,18 @@ function buildRecommendedActions(
     });
   }
 
+  if (input.foundationContext && input.foundationContext.evidenceGaps.length > 0) {
+    actions.unshift({
+      title: "Review Intelligence Foundation evidence gaps",
+      priority,
+      ownerRole: "qa",
+      actionType: "documentation_review",
+      reason: "Applicability, evidence-map, change-impact, or readiness context generated draft-only gaps for human review.",
+      sourceRecords: sourceTrace.sourceRecords,
+      referenceRuleIds: sourceTrace.referenceRuleIds
+    });
+  }
+
   if (overrideReasons.length > 0 && actions.length === 0) {
     actions.push({
       title: "Escalate to responsible owner",
@@ -528,10 +562,15 @@ function buildSourceTrace(input: BioAiInput, signals: BioAiSignal[] = input.sign
       : []),
     ...(input.sampleMaterialContext?.materialId
       ? [{ module: "material" as const, recordId: input.sampleMaterialContext.materialId, label: "Linked material" }]
-      : [])
+      : []),
+    ...(input.foundationContext?.sourceRecords ?? [])
   ]);
   const referenceRuleIds = Array.from(
-    new Set([...(input.referenceRuleIds ?? []), ...signals.flatMap((signal) => signal.referenceRuleIds ?? [])])
+    new Set([
+      ...(input.referenceRuleIds ?? []),
+      ...signals.flatMap((signal) => signal.referenceRuleIds ?? []),
+      ...(input.foundationContext?.referenceRuleIds ?? [])
+    ])
   );
 
   return { sourceRecords, referenceRuleIds };
@@ -566,6 +605,47 @@ function mapDerivedDrivers(input: BioAiInput): BioAiAssessment["topDrivers"] {
   if (input.incidentContext?.capaRequired) add("Incident CAPA screening", "quality", "Linked incident context indicates CAPA screening is required.");
   if (isGapStatus(input.sampleMaterialContext?.chainOfCustodyStatus)) {
     add("Sample/material traceability context", "sample", "Mapped sample or material context indicates a chain-of-custody gap.");
+  }
+
+  return drivers;
+}
+
+function foundationContextDrivers(input: BioAiInput): BioAiAssessment["topDrivers"] {
+  const context = input.foundationContext;
+  if (!context) return [];
+
+  const drivers: BioAiAssessment["topDrivers"] = [];
+  if (context.applicablePrograms.length > 0) {
+    drivers.push({
+      label: "Applicability engine outputs",
+      category: "regulatory",
+      impact: "high",
+      explanation: `Applicable pilot programs include ${context.applicablePrograms.slice(0, 4).join(", ")}.`
+    });
+  }
+  if (context.evidenceGaps.length > 0) {
+    drivers.push({
+      label: "Evidence map gaps",
+      category: "controls",
+      impact: "high",
+      explanation: `Foundation evidence map has ${context.evidenceGaps.length} unresolved draft gap(s).`
+    });
+  }
+  if (context.changeImpactSummaries.length > 0) {
+    drivers.push({
+      label: "Change impact context",
+      category: "pattern",
+      impact: "high",
+      explanation: context.changeImpactSummaries[0]
+    });
+  }
+  if (context.auditReadinessScore < 70) {
+    drivers.push({
+      label: "Audit readiness score",
+      category: "regulatory",
+      impact: context.auditReadinessScore < 50 ? "critical" : "high",
+      explanation: `Foundation readiness score is ${context.auditReadinessScore}; draft gaps require human review.`
+    });
   }
 
   return drivers;

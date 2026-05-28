@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   Activity,
   Boxes,
+  BrainCircuit,
   ClipboardCheck,
   FileText,
   FlaskConical,
@@ -17,6 +18,7 @@ import { getAuthSummary } from "@/lib/supabase/data";
 
 const navItems = [
   { href: "/workbench", label: "Workbench", icon: FlaskConical },
+  { href: "/foundation", label: "Foundation", icon: BrainCircuit },
   { href: "/operations", label: "Operations", icon: Boxes },
   { href: "/assessments", label: "Assessments", icon: ClipboardCheck },
   { href: "/company-profile", label: "Company Profile", icon: LayoutDashboard },
