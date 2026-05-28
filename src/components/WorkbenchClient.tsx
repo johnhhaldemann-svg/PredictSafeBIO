@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { AlertTriangle, Beaker, CheckCircle2, ClipboardList, Save, Sparkles } from "lucide-react";
 import { assessBioRisk } from "@/lib/bio-ai/engine";
 import type { BioAiInput, BioSignalType } from "@/lib/bio-ai/types";
@@ -99,7 +100,11 @@ export function WorkbenchClient() {
       }
 
       setSaveState(response.status === 401 ? "blocked" : "error");
-      setSaveMessage(result.message ?? "Assessment could not be saved.");
+      setSaveMessage(
+        response.status === 401
+          ? "Sign in and finish onboarding to save assessments to Supabase."
+          : result.message ?? "Assessment could not be saved."
+      );
     } catch (error) {
       setSaveState("error");
       setSaveMessage(error instanceof Error ? error.message : "Assessment could not be saved.");
@@ -277,6 +282,16 @@ export function WorkbenchClient() {
             {saveState === "saving" ? "Saving..." : "Save assessment"}
           </button>
           <p className={`save-message save-${saveState}`}>{saveMessage}</p>
+          {saveState === "blocked" ? (
+            <div className="save-actions" aria-label="Save access actions">
+              <Link className="button-secondary compact" href="/login?next=/workbench">
+                Sign in
+              </Link>
+              <Link className="button-primary compact" href="/onboarding">
+                Onboarding
+              </Link>
+            </div>
+          ) : null}
         </div>
         <div className="guardrail-box">
           <CheckCircle2 size={18} />

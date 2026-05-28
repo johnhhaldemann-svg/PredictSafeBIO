@@ -21,6 +21,42 @@ type ProfileContext = {
   organizationId: string;
 };
 
+export type AuthSummary = {
+  configured: boolean;
+  signedIn: boolean;
+  userEmail?: string;
+  organizationId?: string;
+  needsOnboarding: boolean;
+};
+
+export async function getAuthSummary(): Promise<AuthSummary> {
+  if (!isSupabaseConfigured()) {
+    return { configured: false, signedIn: false, needsOnboarding: false };
+  }
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { configured: true, signedIn: false, needsOnboarding: false };
+    }
+
+    const { data } = await supabase.from("profiles").select("organization_id").eq("id", user.id).maybeSingle();
+    return {
+      configured: true,
+      signedIn: true,
+      userEmail: user.email ?? undefined,
+      organizationId: data?.organization_id ?? undefined,
+      needsOnboarding: !data?.organization_id
+    };
+  } catch {
+    return { configured: false, signedIn: false, needsOnboarding: false };
+  }
+}
+
 export async function getCompanyProfile(): Promise<CompanyProfile> {
   const context = await getProfileContext();
   if (!context) return demoCompanyProfile;
