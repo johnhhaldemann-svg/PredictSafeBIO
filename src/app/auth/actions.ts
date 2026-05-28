@@ -91,7 +91,7 @@ export async function signUpAction(formData: FormData) {
   revalidatePath("/", "layout");
 
   if (!data.session) {
-    redirect(authMessage("/login", "Check your email to confirm sign-up, then sign in to finish onboarding."));
+    redirect(authMessage("/login", "Account created. Check your email for the Supabase confirmation link, then finish onboarding."));
   }
 
   redirect("/onboarding");
