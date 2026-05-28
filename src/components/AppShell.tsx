@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, ClipboardCheck, FileText, FlaskConical, LayoutDashboard, LogOut, ShieldCheck, UserCircle } from "lucide-react";
+import { Activity, ClipboardCheck, FileText, FlaskConical, LayoutDashboard, LogOut, Settings, ShieldCheck, UserCircle } from "lucide-react";
 import type { ReactNode } from "react";
 import { signOutAction } from "@/app/auth/actions";
 import { getAuthSummary } from "@/lib/supabase/data";
@@ -9,7 +9,8 @@ const navItems = [
   { href: "/assessments", label: "Assessments", icon: ClipboardCheck },
   { href: "/company-profile", label: "Company Profile", icon: LayoutDashboard },
   { href: "/documents", label: "Documents", icon: FileText },
-  { href: "/admin/audit", label: "Audit", icon: Activity }
+  { href: "/admin/audit", label: "Audit", icon: Activity },
+  { href: "/admin/demo", label: "Demo Ops", icon: Settings }
 ];
 
 export async function AppShell({ children }: { children: ReactNode }) {

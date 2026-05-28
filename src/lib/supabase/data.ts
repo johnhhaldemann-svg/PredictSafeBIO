@@ -1,5 +1,14 @@
 import { assessBioRisk } from "@/lib/bio-ai/engine";
-import type { AuditEvent, BioAiAssessment, BioAiInput, BioAiSignal, CompanyProfile, DocumentMetadata } from "@/lib/bio-ai/types";
+import { randomUUID } from "node:crypto";
+import type {
+  AuditEvent,
+  BioAiAssessment,
+  BioAiInput,
+  BioAiSignal,
+  CompanyProfile,
+  DocumentMetadata,
+  HumanReviewStatus
+} from "@/lib/bio-ai/types";
 import { demoAuditEvents, demoCompanyProfile, demoDocuments } from "@/lib/demo-data";
 import { generateDocumentGapRecommendations, generateDocumentUpdateRecommendations } from "@/lib/documents/recommendations";
 import { createSupabaseServerClient } from "./server";
@@ -21,7 +30,28 @@ export type SavedAssessmentDetail = SavedAssessmentSummary & {
   output: BioAiAssessment;
   signals: BioAiSignal[];
   auditEvents: AuditEvent[];
-  humanReviewStatus: string;
+  humanReviewStatus: HumanReviewStatus | string;
+  reviewerNotes?: string | null;
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+};
+
+export type DocumentRecommendationRecord = {
+  id: string;
+  recommendationType: "gap" | "draft_update";
+  title: string;
+  label: string;
+  humanReviewRequired: boolean;
+  payload: Record<string, unknown>;
+  createdBy?: string | null;
+  createdAt?: string;
+};
+
+export type DocumentRecommendationRun = {
+  runKey: string;
+  createdAt?: string;
+  auditEvent?: AuditEvent;
+  recommendations: DocumentRecommendationRecord[];
 };
 
 export type SaveDocumentMetadataInput = {
@@ -41,6 +71,7 @@ export type SaveDocumentMetadataInput = {
 type ProfileContext = {
   userId: string;
   organizationId: string;
+  role: string;
 };
 
 export type AuthSummary = {
@@ -48,6 +79,7 @@ export type AuthSummary = {
   signedIn: boolean;
   userEmail?: string;
   organizationId?: string;
+  role?: string;
   needsOnboarding: boolean;
 };
 
@@ -66,12 +98,13 @@ export async function getAuthSummary(): Promise<AuthSummary> {
       return { configured: true, signedIn: false, needsOnboarding: false };
     }
 
-    const { data } = await supabase.from("profiles").select("organization_id").eq("id", user.id).maybeSingle();
+    const { data } = await supabase.from("profiles").select("organization_id,role").eq("id", user.id).maybeSingle();
     return {
       configured: true,
       signedIn: true,
       userEmail: user.email ?? undefined,
       organizationId: data?.organization_id ?? undefined,
+      role: data?.role ?? undefined,
       needsOnboarding: !data?.organization_id
     };
   } catch {
@@ -170,7 +203,7 @@ export async function getAssessmentDetail(assessmentId: string): Promise<SavedAs
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("assessments")
-    .select("id,input_snapshot,output_snapshot,score,level,confidence,human_review_required,human_review_status,created_at")
+    .select("id,input_snapshot,output_snapshot,score,level,confidence,human_review_required,human_review_status,reviewer_notes,reviewed_by,reviewed_at,created_at")
     .eq("organization_id", context.organizationId)
     .eq("id", assessmentId)
     .maybeSingle();
@@ -209,12 +242,55 @@ export async function getAssessmentDetail(assessmentId: string): Promise<SavedAs
     confidence: data.confidence,
     humanReviewRequired: data.human_review_required,
     humanReviewStatus: data.human_review_status,
+    reviewerNotes: data.reviewer_notes,
+    reviewedBy: data.reviewed_by,
+    reviewedAt: data.reviewed_at,
     createdAt: data.created_at,
     input,
     output,
     signals: (signals ?? []).map((signal) => signal.payload as BioAiSignal),
     auditEvents
   };
+}
+
+export async function updateAssessmentReview(
+  assessmentId: string,
+  status: HumanReviewStatus,
+  reviewerNotes: string
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const context = await getProfileContext();
+  if (!context) {
+    return { ok: false, message: "Sign in and finish onboarding before updating review status." };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const reviewedAt = new Date().toISOString();
+  const { data: assessment, error } = await supabase
+    .from("assessments")
+    .update({
+      human_review_status: status,
+      reviewer_notes: reviewerNotes || null,
+      reviewed_by: context.userId,
+      reviewed_at: reviewedAt
+    })
+    .eq("organization_id", context.organizationId)
+    .eq("id", assessmentId)
+    .select("id,score,level")
+    .single();
+
+  if (error || !assessment) {
+    return { ok: false, message: error?.message ?? "Assessment review status could not be updated." };
+  }
+
+  await supabase.from("audit_events").insert({
+    organization_id: context.organizationId,
+    actor_id: context.userId,
+    event_type: "human_review_status_changed",
+    summary: `Assessment review status changed to ${status}.`,
+    payload: { assessmentId, status, reviewerNotes, reviewedAt, level: assessment.level, score: assessment.score }
+  });
+
+  return { ok: true };
 }
 
 export async function listDocuments(): Promise<DocumentMetadata[]> {
@@ -250,6 +326,59 @@ export async function getDocument(documentId: string): Promise<DocumentMetadata 
 
   if (error || !data) return null;
   return mapDocument(data);
+}
+
+export async function getDocumentRecommendationHistory(documentId: string): Promise<DocumentRecommendationRun[]> {
+  const context = await getProfileContext();
+  if (!context) return [];
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("document_recommendations")
+    .select("*")
+    .eq("organization_id", context.organizationId)
+    .eq("document_id", documentId)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  const { data: auditRows } = await supabase
+    .from("audit_events")
+    .select("*")
+    .eq("organization_id", context.organizationId)
+    .eq("event_type", "document_recommendation_generated")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  const audits = (auditRows ?? []).map(mapAuditEvent).filter((event) => {
+    const payload = event.payload as Record<string, unknown> | undefined;
+    return payload?.documentId === documentId;
+  });
+
+  const grouped = new Map<string, DocumentRecommendationRecord[]>();
+  for (const row of data) {
+    const payload = (row.payload ?? {}) as Record<string, unknown>;
+    const runKey = typeof payload.runId === "string" ? payload.runId : row.created_at ?? row.id;
+    const record: DocumentRecommendationRecord = {
+      id: row.id,
+      recommendationType: row.recommendation_type,
+      title: row.title,
+      label: row.label,
+      humanReviewRequired: row.human_review_required,
+      payload,
+      createdBy: row.created_by,
+      createdAt: row.created_at
+    };
+    grouped.set(runKey, [...(grouped.get(runKey) ?? []), record]);
+  }
+
+  return [...grouped.entries()].map(([runKey, recommendations]) => {
+    const createdAt = recommendations[0]?.createdAt;
+    const auditEvent =
+      audits.find((event) => (event.payload as Record<string, unknown> | undefined)?.runId === runKey) ??
+      audits.find((event) => event.createdAt === createdAt);
+    return { runKey, createdAt, auditEvent, recommendations };
+  });
 }
 
 export async function listAuditEvents(): Promise<AuditEvent[]> {
@@ -357,17 +486,103 @@ export async function persistDocumentRecommendations(document: DocumentMetadata)
   ];
 
   if (rows.length > 0) {
-    await supabase.from("document_recommendations").insert(rows);
+    const runId = randomUUID();
+    const generatedAt = new Date().toISOString();
+    await supabase.from("document_recommendations").insert(
+      rows.map((row) => ({
+        ...row,
+        payload: { ...(row.payload as Record<string, unknown>), runId, generatedAt }
+      }))
+    );
     await supabase.from("audit_events").insert({
       organization_id: context.organizationId,
       actor_id: context.userId,
       event_type: "document_recommendation_generated",
       summary: `Generated draft document recommendations for ${document.title}.`,
-      payload: { documentId: document.id, count: rows.length }
+      payload: { documentId: document.id, count: rows.length, runId, generatedAt }
     });
   }
 
   return { ok: true, gapRecommendations, updateRecommendations };
+}
+
+export async function seedDemoWorkspace(): Promise<{ ok: true; assessmentId: string; documentId: string } | { ok: false; message: string }> {
+  const context = await getProfileContext();
+  if (!context) {
+    return { ok: false, message: "Sign in and finish onboarding before seeding demo records." };
+  }
+  if (context.role !== "owner") {
+    return { ok: false, message: "Only organization owners can seed demo records." };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const input: BioAiInput = {
+    siteName: "PredictSafeBIO Demo Biotech",
+    area: "QC Microbiology Lab",
+    workflow: "Seeded sterility assay review",
+    batchOrLot: "DEMO-SEED-001",
+    controlEffectiveness: "partial",
+    contaminationSuspected: true,
+    productQualityImpactPotential: true,
+    gxpImpact: true,
+    signals: [{ type: "contamination_event", label: "Seeded unexpected microbial growth", severity: "high" }]
+  };
+  const assessment = assessBioRisk(input);
+  const { data: assessmentRow, error: assessmentError } = await supabase
+    .from("assessments")
+    .insert({
+      organization_id: context.organizationId,
+      created_by: context.userId,
+      input_snapshot: input,
+      output_snapshot: assessment,
+      score: assessment.score,
+      level: assessment.level,
+      confidence: assessment.confidence,
+      human_review_required: assessment.humanReviewRequired,
+      human_review_status: "draft_human_review_required"
+    })
+    .select("id")
+    .single();
+
+  if (assessmentError || !assessmentRow) {
+    return { ok: false, message: assessmentError?.message ?? "Could not seed demo assessment." };
+  }
+
+  await supabase.from("assessment_signals").insert(
+    (input.signals ?? []).map((signal) => ({
+      organization_id: context.organizationId,
+      assessment_id: assessmentRow.id,
+      signal_type: signal.type,
+      label: signal.label,
+      payload: signal
+    }))
+  );
+
+  const documentInput: SaveDocumentMetadataInput = {
+    title: "Seeded Sterility Assay Review SOP",
+    documentType: "sop",
+    status: "in_review",
+    ownerRole: "qa",
+    area: "QC Microbiology Lab",
+    relatedProcess: "Seeded sterility assay review",
+    revision: "0.1",
+    gaps: ["Seeded batch impact wording needs owner review", "Seeded QA timing is not explicit"]
+  };
+  const documentResult = await saveDocumentMetadata(documentInput);
+  if (!documentResult.ok || !documentResult.document?.id) {
+    return { ok: false, message: documentResult.message ?? "Could not seed demo document." };
+  }
+  await persistDocumentRecommendations(documentResult.document);
+
+  await supabase.from("audit_events").insert({
+    organization_id: context.organizationId,
+    actor_id: context.userId,
+    event_type: "demo_seed_created",
+    summary: "Demo assessment, document metadata, draft recommendations, and audit trail were seeded.",
+    payload: { assessmentId: assessmentRow.id, documentId: documentResult.document.id }
+  });
+
+  return { ok: true, assessmentId: assessmentRow.id, documentId: documentResult.document.id };
 }
 
 export async function saveDocumentMetadata(input: SaveDocumentMetadataInput) {
@@ -461,10 +676,10 @@ async function getProfileContext(): Promise<ProfileContext | null> {
 
     if (!user) return null;
 
-    const { data } = await supabase.from("profiles").select("organization_id").eq("id", user.id).maybeSingle();
+    const { data } = await supabase.from("profiles").select("organization_id,role").eq("id", user.id).maybeSingle();
     if (!data?.organization_id) return null;
 
-    return { userId: user.id, organizationId: data.organization_id };
+    return { userId: user.id, organizationId: data.organization_id, role: data.role ?? "member" };
   } catch {
     return null;
   }

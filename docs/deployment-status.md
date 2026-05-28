@@ -60,4 +60,7 @@ Remaining:
 - Configure custom SMTP before heavier public signup testing.
 - Run signed-in document upload smoke and confirm `storage_bucket` and `storage_path` persist.
 - Create release `v1.1-demo-hardening` after signed-in smoke passes.
+- Assessment review workflow migration has been applied and verified.
+- Run signed-in product smoke for review status updates, recommendation history, Markdown report downloads, and demo seeding after deployment.
+- Keep LLM draft assist disabled unless the gate in `docs/llm-draft-assist-gate.md` is intentionally opened later.
 - Keep ESLint 10 closed until the lint toolchain is intentionally upgraded.

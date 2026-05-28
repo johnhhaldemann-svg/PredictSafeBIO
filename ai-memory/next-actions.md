@@ -29,8 +29,15 @@ Last updated: 2026-05-28
 
 ## Next Product Increment Candidates
 
-- Richer assessment review workflow with review status transitions and reviewer notes.
-- Document recommendation history with previous draft recommendation runs.
-- Demo report polish with clearer headers, timestamps, and audit references.
-- Admin-only demo seed/reset controls with no public destructive UI.
-- First gated LLM draft-assist spike only after deterministic engine tests stay green.
+- Assessment review workflow is implemented with review status transitions, reviewer notes, and audit events.
+- Document recommendation history is implemented for persisted draft recommendation runs.
+- Demo report polish is implemented with Markdown downloads, timestamps, IDs, audit references, and MVP boundary text.
+- Admin-only demo seed controls are implemented without public destructive reset controls.
+- LLM draft-assist remains gated off by default; see `docs/llm-draft-assist-gate.md`.
+
+## Later Product Increments
+
+- Add reviewer assignment and due-date filtering after the basic review workflow is stable.
+- Add richer report templates after Markdown exports are verified in demo.
+- Add a first LLM draft-assist spike only after deterministic engine, review workflow, and recommendation history tests stay green.
+- Run signed-in product smoke for review status updates, recommendation history, reports, and demo seeding after deployment.
