@@ -1,14 +1,13 @@
 # Deployment Status
 
-Last checked: 2026-05-27
+Last checked: 2026-05-28
 
 ## Vercel
 
 - Project: `predictsafe-bio`
 - Production URL: `https://predictsafe-bio.vercel.app`
-- Production deployment: `dpl_D7tYrecww4ReZ6BpoqX5oBjWwf9U`
-- Preview URL: `https://predictsafe-cwzxgl2xp-johnhhaldemann-5577s-projects.vercel.app`
-- Preview deployment: `dpl_FT2Eou5Ttca75YBSPCrfpwXcc2Um`
+- Production deployment: `https://vercel.com/johnhhaldemann-5577s-projects/predictsafe-bio/E1fGYfQcUJ6AKBefFTXXudkRe53L`
+- Production commit: `d1757cbc0ddc05253f304d6fc1938cb8062ae076`
 
 Production routes verified with `200 OK`:
 
@@ -19,14 +18,15 @@ Production routes verified with `200 OK`:
 - `/admin/audit`
 - `/login`
 
-The preview deployment is `Ready` by `vercel inspect`, but Vercel Authentication protects the preview URL, so unauthenticated route checks return `401 Unauthorized`.
+The production deployment for PR #9 is complete and public route checks return `200 OK`.
 
 ## Supabase
 
 - Project ref: `mygxjnvzdljmdriokvvx`
 - URL: `https://mygxjnvzdljmdriokvvx.supabase.co`
 - Applied migrations include `enable_auth_onboarding`.
-- Security advisors were clean after the onboarding RLS migration.
+- Supabase connector check passed.
+- RLS is enabled and policies are present on the eight MVP public tables.
 
 ## GitHub
 
@@ -41,3 +41,10 @@ Completed:
 - Verified GitHub Actions CI on `main`.
 - Connected the GitHub repository to Vercel.
 - Protected `main` with required PR review, stale review dismissal, required CI, no force pushes, and no deletions.
+- Merged PR #9 to recover the demo-ready MVP foundation and AI memory folder.
+- Restored required approving reviews to `1` after the solo-owner merge workaround.
+
+Remaining:
+
+- Run the real authenticated production smoke test.
+- Tag the MVP demo release after smoke test passes.
