@@ -8,6 +8,10 @@ export async function POST(request: Request) {
   }
 
   const document = await getDocument(documentId);
+  if (!document) {
+    return Response.json({ ok: false, message: "Document was not found." }, { status: 404 });
+  }
+
   const result = await persistDocumentRecommendations(document);
 
   return Response.json(result, { status: result.ok ? 201 : 200 });

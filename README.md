@@ -11,6 +11,10 @@ PredictSafeBIO is a 30-day MVP foundation for a biotech AI Engine platform. It i
 
 The biotech files define the v1 domain. The original AI Engine files preserve proven behavior: deterministic scoring, risk bands, missing-data handling, guarded explanations, escalation, and draft-only AI boundaries.
 
+## AI Memory
+
+Project memory for Codex and human handoff lives in `ai-memory/`. It captures current state, source-of-truth artifacts, key decisions, and next actions. It is documentation only for this MVP phase and must not contain secrets.
+
 ## Local Setup
 
 ```bash
