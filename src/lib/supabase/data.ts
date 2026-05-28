@@ -1,5 +1,5 @@
 import { assessBioRisk } from "@/lib/bio-ai/engine";
-import type { AuditEvent, BioAiAssessment, BioAiInput, CompanyProfile, DocumentMetadata } from "@/lib/bio-ai/types";
+import type { AuditEvent, BioAiAssessment, BioAiInput, BioAiSignal, CompanyProfile, DocumentMetadata } from "@/lib/bio-ai/types";
 import { demoAuditEvents, demoCompanyProfile, demoDocuments } from "@/lib/demo-data";
 import { generateDocumentGapRecommendations, generateDocumentUpdateRecommendations } from "@/lib/documents/recommendations";
 import { createSupabaseServerClient } from "./server";
@@ -14,6 +14,27 @@ export type SavedAssessmentSummary = {
   confidence: BioAiAssessment["confidence"];
   humanReviewRequired: boolean;
   createdAt?: string;
+};
+
+export type SavedAssessmentDetail = SavedAssessmentSummary & {
+  input: BioAiInput;
+  output: BioAiAssessment;
+  signals: BioAiSignal[];
+  auditEvents: AuditEvent[];
+  humanReviewStatus: string;
+};
+
+export type SaveDocumentMetadataInput = {
+  title: string;
+  documentType: DocumentMetadata["documentType"];
+  status: DocumentMetadata["status"];
+  ownerRole: DocumentMetadata["ownerRole"];
+  area?: string | null;
+  relatedProcess?: string | null;
+  revision?: string | null;
+  effectiveDate?: string | null;
+  nextReviewDate?: string | null;
+  gaps?: string[];
 };
 
 type ProfileContext = {
@@ -139,6 +160,62 @@ export async function listAssessments(): Promise<SavedAssessmentSummary[]> {
   });
 }
 
+export async function getAssessmentDetail(assessmentId: string): Promise<SavedAssessmentDetail | null> {
+  const context = await getProfileContext();
+  if (!context) {
+    return demoAssessmentDetail(assessmentId);
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("assessments")
+    .select("id,input_snapshot,output_snapshot,score,level,confidence,human_review_required,human_review_status,created_at")
+    .eq("organization_id", context.organizationId)
+    .eq("id", assessmentId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  const { data: signals } = await supabase
+    .from("assessment_signals")
+    .select("payload")
+    .eq("organization_id", context.organizationId)
+    .eq("assessment_id", assessmentId)
+    .order("created_at", { ascending: true });
+
+  const { data: auditRows } = await supabase
+    .from("audit_events")
+    .select("*")
+    .eq("organization_id", context.organizationId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  const input = data.input_snapshot as BioAiInput;
+  const output = data.output_snapshot as BioAiAssessment;
+  const auditEvents = (auditRows ?? [])
+    .filter((event) => {
+      const payload = event.payload as Record<string, unknown> | null;
+      return payload?.assessmentId === assessmentId;
+    })
+    .map(mapAuditEvent);
+
+  return {
+    id: data.id,
+    workflow: input.workflow ?? "Untitled workflow",
+    area: input.area ?? "Unassigned area",
+    score: data.score,
+    level: data.level,
+    confidence: data.confidence,
+    humanReviewRequired: data.human_review_required,
+    humanReviewStatus: data.human_review_status,
+    createdAt: data.created_at,
+    input,
+    output,
+    signals: (signals ?? []).map((signal) => signal.payload as BioAiSignal),
+    auditEvents
+  };
+}
+
 export async function listDocuments(): Promise<DocumentMetadata[]> {
   const context = await getProfileContext();
   if (!context) return demoDocuments;
@@ -151,28 +228,27 @@ export async function listDocuments(): Promise<DocumentMetadata[]> {
     .order("updated_at", { ascending: false })
     .limit(100);
 
-  if (error || !data) return demoDocuments;
+  if (error || !data) return [];
 
-  return data.map((document) => ({
-    id: document.id,
-    organizationId: document.organization_id,
-    title: document.title,
-    documentType: document.document_type,
-    status: document.status,
-    ownerRole: document.owner_role,
-    area: document.area,
-    relatedProcess: document.related_process,
-    revision: document.revision,
-    effectiveDate: document.effective_date,
-    nextReviewDate: document.next_review_date,
-    lastReviewedAt: document.last_reviewed_at,
-    gaps: document.gaps ?? []
-  }));
+  return data.map(mapDocument);
 }
 
-export async function getDocument(documentId: string): Promise<DocumentMetadata> {
-  const documents = await listDocuments();
-  return documents.find((document) => document.id === documentId) ?? documents[0] ?? demoDocuments[0];
+export async function getDocument(documentId: string): Promise<DocumentMetadata | null> {
+  const context = await getProfileContext();
+  if (!context) {
+    return demoDocuments.find((document) => document.id === documentId) ?? demoDocuments[0] ?? null;
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("document_metadata")
+    .select("*")
+    .eq("organization_id", context.organizationId)
+    .eq("id", documentId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return mapDocument(data);
 }
 
 export async function listAuditEvents(): Promise<AuditEvent[]> {
@@ -189,15 +265,7 @@ export async function listAuditEvents(): Promise<AuditEvent[]> {
 
   if (error || !data) return demoAuditEvents;
 
-  return data.map((event) => ({
-    id: event.id,
-    organizationId: event.organization_id,
-    actorId: event.actor_id,
-    eventType: event.event_type,
-    summary: event.summary,
-    payload: event.payload,
-    createdAt: event.created_at
-  }));
+  return data.map(mapAuditEvent);
 }
 
 export async function saveAssessment(input: BioAiInput) {
@@ -301,6 +369,53 @@ export async function persistDocumentRecommendations(document: DocumentMetadata)
   return { ok: true, gapRecommendations, updateRecommendations };
 }
 
+export async function saveDocumentMetadata(input: SaveDocumentMetadataInput) {
+  const context = await getProfileContext();
+  if (!context) {
+    return {
+      ok: false,
+      status: 401,
+      message: isSupabaseConfigured()
+        ? "Sign in and finish onboarding before saving document metadata."
+        : "Supabase environment variables are not configured; document metadata cannot be saved yet."
+    };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("document_metadata")
+    .insert({
+      organization_id: context.organizationId,
+      title: input.title,
+      document_type: input.documentType,
+      status: input.status,
+      owner_role: input.ownerRole,
+      area: input.area || null,
+      related_process: input.relatedProcess || null,
+      revision: input.revision || null,
+      effective_date: input.effectiveDate || null,
+      next_review_date: input.nextReviewDate || null,
+      gaps: input.gaps ?? [],
+      created_by: context.userId
+    })
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    return { ok: false, status: 500, message: error?.message ?? "Could not save document metadata." };
+  }
+
+  await supabase.from("audit_events").insert({
+    organization_id: context.organizationId,
+    actor_id: context.userId,
+    event_type: "document_metadata_created",
+    summary: `Document metadata created for ${input.title}.`,
+    payload: { documentId: data.id, title: input.title, documentType: input.documentType }
+  });
+
+  return { ok: true, status: 201, document: mapDocument(data) };
+}
+
 async function getProfileContext(): Promise<ProfileContext | null> {
   if (!isSupabaseConfigured()) return null;
 
@@ -331,5 +446,72 @@ function demoAssessmentSummary(id: string, input: BioAiInput): SavedAssessmentSu
     level: assessment.level,
     confidence: assessment.confidence,
     humanReviewRequired: assessment.humanReviewRequired
+  };
+}
+
+function demoAssessmentDetail(id: string): SavedAssessmentDetail | null {
+  const demoInputs: Record<string, BioAiInput> = {
+    "demo-critical-contamination": {
+      siteName: "Demo Biotech Site",
+      area: "QC Microbiology Lab",
+      workflow: "Sterility assay review",
+      batchOrLot: "LOT-0001",
+      controlEffectiveness: "partial",
+      contaminationSuspected: true,
+      productQualityImpactPotential: true,
+      gxpImpact: true,
+      signals: [{ type: "contamination_event", label: "Unexpected microbial growth", severity: "high" }]
+    },
+    "demo-training-gap": {
+      siteName: "Demo Biotech Site",
+      area: "Cell Therapy Suite",
+      workflow: "Media change",
+      controlEffectiveness: "effective",
+      missingRequiredTraining: true,
+      signals: [{ type: "training_gap", label: "Expired aseptic technique training", severity: "low" }]
+    }
+  };
+
+  const input = demoInputs[id];
+  if (!input) return null;
+
+  const output = assessBioRisk(input);
+  return {
+    ...demoAssessmentSummary(id, input),
+    input,
+    output,
+    signals: input.signals ?? [],
+    auditEvents: demoAuditEvents,
+    humanReviewStatus: output.humanReviewRequired ? "draft_human_review_required" : "routine_monitoring"
+  };
+}
+
+function mapDocument(document: Record<string, any>): DocumentMetadata {
+  return {
+    id: document.id,
+    organizationId: document.organization_id,
+    title: document.title,
+    documentType: document.document_type,
+    status: document.status,
+    ownerRole: document.owner_role,
+    area: document.area,
+    relatedProcess: document.related_process,
+    revision: document.revision,
+    effectiveDate: document.effective_date,
+    nextReviewDate: document.next_review_date,
+    lastReviewedAt: document.last_reviewed_at,
+    gaps: document.gaps ?? []
+  };
+}
+
+function mapAuditEvent(event: Record<string, any>): AuditEvent {
+  return {
+    id: event.id,
+    organizationId: event.organization_id,
+    actorId: event.actor_id,
+    eventType: event.event_type,
+    summary: event.summary,
+    payload: event.payload,
+    createdAt: event.created_at
   };
 }
