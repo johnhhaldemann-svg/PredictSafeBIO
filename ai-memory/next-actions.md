@@ -4,22 +4,22 @@ Last updated: 2026-05-28
 
 ## Immediate
 
-- Open one recovery PR from `codex/recover-demo-foundation`.
-- Confirm the recovery PR replaces closed-but-unmerged PRs #4, #5, #6, and #7.
-- Run local verification: `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`.
-- Confirm GitHub CI and Vercel preview pass.
-- Get approval from a different authorized GitHub account so protected `main` can merge.
-
-## After Merge
-
-- Pull `main` locally.
-- Confirm production deploy from `main`.
-- Verify production routes: `/workbench`, `/assessments`, `/company-profile`, `/documents`, `/admin/audit`, and `/login`.
-- Run a real auth and onboarding smoke test.
-- Save one assessment, create one document metadata record, persist draft recommendations, and confirm audit events.
+- Re-enable Supabase email confirmation in Auth provider settings.
+- Create the `mvp-demo-foundation` GitHub release tag from `main`.
+- Keep the smoke-test account flow documented without secrets.
+- Start a v1.1 demo hardening branch.
 
 ## Blockers And Watch Items
 
-- Supabase connector may need reauthentication before advisor checks can be rerun.
-- PR #3 should remain closed until ESLint 10 and related major app dependency upgrades are handled intentionally.
-- PR #1 and PR #2 can be reviewed later as separate GitHub Actions maintenance updates.
+- ESLint 10 should remain closed until it is handled as an intentional toolchain upgrade.
+- Individual Dependabot PRs for TypeScript, lucide-react, and Node types are green but should be reviewed separately.
+- Branch protection currently requires one approving review; solo-owner merges need a temporary settings adjustment or a second authorized reviewer.
+- Supabase built-in auth email sending is rate-limited; custom SMTP is required before heavier public signup testing.
+
+## v1.1 Demo Hardening
+
+- Improve visible auth/signup status messages for email confirmation and rate-limit cases.
+- Add a smoke-test runbook with exact production steps and expected Supabase evidence counts.
+- Configure custom SMTP or document the no-SMTP demo limitation clearly.
+- Enable the `biotech-documents` storage bucket and add document upload metadata.
+- Add assessment/document export or a shareable demo report.
