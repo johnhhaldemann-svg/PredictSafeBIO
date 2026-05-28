@@ -8,7 +8,7 @@ Last updated: 2026-05-28
 - Enable leaked-password protection if available on the current Supabase plan.
 - Test a signed-in upload now that the `biotech-documents` storage migration is applied.
 - Configure custom SMTP before heavier signup testing.
-- Run a v1.2 smoke test that includes assessment filters, document upload, and polished report downloads.
+- Run the remaining v1.2 signed-in browser smoke for document upload and polished report downloads.
 
 ## Blockers And Watch Items
 
@@ -16,7 +16,8 @@ Last updated: 2026-05-28
 - Dependabot PRs for TypeScript, lucide-react, and Node types were merged after refreshed CI/Vercel checks.
 - Branch protection currently requires one approving review; solo-owner merges need a temporary settings adjustment or a second authorized reviewer.
 - Supabase built-in auth email sending is rate-limited; custom SMTP is required before heavier public signup testing.
-- Local `.env.local` has no service-role key or database URL, so automated signed-in storage smoke requires either a real browser session or temporary test credentials.
+- Connector checks confirm the `biotech-documents` bucket is private and policies exist, but object count and persisted `storage_path` count are still `0`.
+- Automated signed-in storage smoke requires either a real browser session or temporary test credentials.
 
 ## v1.1 Demo Hardening
 
@@ -31,6 +32,7 @@ Last updated: 2026-05-28
 ## Next Product Increment Candidates
 
 - v1.2 in progress: assessment register filters, cleaner report sections, explicit LLM draft-assist gate details, and upload/auth hardening follow-up tracking.
+- v1.2 route smoke passed for the assessment filter URL, `/documents`, and `/admin/audit`.
 - Assessment review workflow is implemented with review status transitions, reviewer notes, and audit events.
 - Document recommendation history is implemented for persisted draft recommendation runs.
 - Demo report polish is implemented with Markdown downloads, timestamps, IDs, audit references, and MVP boundary text.
