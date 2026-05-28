@@ -7,7 +7,7 @@ Last updated: 2026-05-28
 - GitHub repository: `johnhhaldemann-svg/PredictSafeBIO`
 - Visibility: public
 - Protected branch: `main`
-- Latest main commit verified locally after v1.1 hardening: `2263ac561971f0a8ca600f66a0f65ff8edf2074c`
+- Latest main commit verified locally after review workflow: `026b295b87d6ccdb2c288672db3b94e53d98e76f`
 - PR #9 recovered the closed-but-unmerged MVP foundation work from PRs #4, #5, #6, and #7.
 - PR #15 fixed Supabase auth confirmation callbacks for both PKCE `code` links and `token_hash` links.
 - Branch protection is restored to require one approving review.
@@ -45,4 +45,5 @@ Last updated: 2026-05-28
 - Auth hardening still needs dashboard confirmation: re-enable email confirmation, enable leaked-password protection if available, and configure custom SMTP before heavier signup testing.
 - Current product increment adds assessment review workflow, document recommendation history, Markdown demo reports, signed-in demo seed operations, and an explicit LLM draft-assist gate.
 - Supabase migration `assessment_review_workflow` has been applied; `assessments` now includes reviewer notes, reviewer identity, reviewed timestamp, and constrained review statuses.
+- Signed-in product smoke for review updates, recommendation history, report downloads, and demo seeding is still pending because this workspace does not have the existing test user password/session.
 - Recommendations remain `Draft - Human Review Required`.

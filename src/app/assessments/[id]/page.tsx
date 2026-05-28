@@ -2,6 +2,12 @@ import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { updateAssessmentReviewAction } from "@/app/assessments/actions";
 import { getAssessmentDetail, getCompanyProfile } from "@/lib/supabase/data";
+import {
+  buildAssessmentReportMarkdown,
+  getHumanReviewStatusLabel,
+  getLatestReviewEvent,
+  humanReviewStatusOptions
+} from "@/lib/review-workflow";
 
 export default async function AssessmentDetailPage({
   params,
@@ -31,34 +37,12 @@ export default async function AssessmentDetailPage({
     );
   }
 
-  const reportText = [
-    "# PredictSafeBIO Assessment Demo Report",
-    "",
-    `Generated: ${new Date().toISOString()}`,
-    `Company: ${company.companyName}`,
-    `Assessment ID: ${assessment.id}`,
-    `Workflow: ${assessment.workflow}`,
-    `Area: ${assessment.area}`,
-    `Score: ${assessment.score}`,
-    `Risk level: ${assessment.level}`,
-    `Confidence: ${assessment.confidence}`,
-    `Human review status: ${assessment.humanReviewStatus}`,
-    `Reviewed at: ${assessment.reviewedAt ?? "Not reviewed"}`,
-    "",
-    "## Top Drivers",
-    ...assessment.output.topDrivers.map((driver) => `- **${driver.label}**: ${driver.explanation}`),
-    "",
-    "## Critical Gaps",
-    ...assessment.output.criticalControlGaps.map((gap) => `- ${gap}`),
-    "",
-    "## Audit References",
-    ...(assessment.auditEvents.length > 0
-      ? assessment.auditEvents.map((event) => `- ${event.createdAt ?? "Pending timestamp"}: ${event.eventType} - ${event.summary}`)
-      : ["- No linked audit events found."]),
-    "",
-    "## MVP Boundary",
-    "Draft - Human Review Required. No FDA, GxP, Part 11, approval, validation, regulatory acceptance, diagnosis, or release claim is made."
-  ].join("\n");
+  const latestReviewEvent = getLatestReviewEvent(assessment.auditEvents);
+  const reportText = buildAssessmentReportMarkdown({
+    assessment,
+    companyName: company.companyName,
+    generatedAt: new Date().toISOString()
+  });
 
   return (
     <AppShell>
@@ -83,8 +67,18 @@ export default async function AssessmentDetailPage({
           </article>
           <article className="profile-row">
             <span>Human review status</span>
-            <strong>{assessment.humanReviewStatus}</strong>
+            <strong>{getHumanReviewStatusLabel(assessment.humanReviewStatus)}</strong>
           </article>
+        </section>
+        <section className="panel">
+          <h2>Latest review event</h2>
+          {latestReviewEvent ? (
+            <p>
+              {latestReviewEvent.createdAt ?? "Pending timestamp"} - {latestReviewEvent.summary}
+            </p>
+          ) : (
+            <p className="muted">No review-status audit event has been recorded yet.</p>
+          )}
         </section>
         <form action={updateAssessmentReviewAction} className="panel">
           <input type="hidden" name="assessmentId" value={assessment.id} />
@@ -105,10 +99,11 @@ export default async function AssessmentDetailPage({
                 name="humanReviewStatus"
                 defaultValue={assessment.humanReviewStatus === "routine_monitoring" ? "reviewed_monitoring" : assessment.humanReviewStatus}
               >
-                <option value="draft_human_review_required">draft_human_review_required</option>
-                <option value="in_review">in_review</option>
-                <option value="reviewed_needs_action">reviewed_needs_action</option>
-                <option value="reviewed_monitoring">reviewed_monitoring</option>
+                {humanReviewStatusOptions.map((status) => (
+                  <option value={status} key={status}>
+                    {getHumanReviewStatusLabel(status)}
+                  </option>
+                ))}
               </select>
             </label>
             <label>

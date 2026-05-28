@@ -1,0 +1,136 @@
+import { describe, expect, it } from "vitest";
+import {
+  buildAssessmentReportMarkdown,
+  buildDocumentReportMarkdown,
+  buildReviewAuditPayload,
+  getHumanReviewStatusLabel,
+  getLatestReviewEvent
+} from "./review-workflow";
+import type { BioAiAssessment, DocumentMetadata } from "@/lib/bio-ai/types";
+import type { DocumentRecommendationRun } from "@/lib/supabase/data";
+
+const assessmentOutput: BioAiAssessment = {
+  score: 83,
+  level: "critical",
+  confidence: "medium",
+  topDrivers: [{ label: "Contamination suspected", category: "quality", impact: "critical", explanation: "Open sterility concern." }],
+  missingInformation: ["QA assessment"],
+  criticalControlGaps: ["QA assessment missing"],
+  recommendedActions: [
+    {
+      title: "QA review",
+      priority: "urgent",
+      ownerRole: "qa",
+      actionType: "qa_review",
+      reason: "Human quality review is required."
+    }
+  ],
+  explanation: "Based on available data, potential risk requires review and does not replace human judgment.",
+  escalationRequired: true,
+  holdOrQuarantineReviewRecommended: true,
+  humanReviewRequired: true,
+  humanReviewReason: "Critical risk requires human review.",
+  actionTimeframe: "immediate",
+  doNotClaim: ["approval", "release"]
+};
+
+describe("review workflow helpers", () => {
+  it("returns readable labels while preserving stored review status values", () => {
+    expect(getHumanReviewStatusLabel("draft_human_review_required")).toBe("Draft - human review required");
+    expect(getHumanReviewStatusLabel("reviewed_needs_action")).toBe("Reviewed - needs action");
+    expect(buildReviewAuditPayload({ workflow: "Sterility review" }, "in_review")).toEqual({
+      workflow: "Sterility review",
+      status: "in_review",
+      statusLabel: "In review"
+    });
+  });
+
+  it("selects the latest review audit event from ordered events", () => {
+    const event = {
+      eventType: "human_review_status_changed" as const,
+      summary: "Assessment review status changed to in_review.",
+      createdAt: "2026-05-28T17:00:00.000Z"
+    };
+
+    expect(
+      getLatestReviewEvent([
+        event,
+        { eventType: "assessment_saved", summary: "Saved.", createdAt: "2026-05-28T16:00:00.000Z" }
+      ])
+    ).toBe(event);
+  });
+
+  it("builds assessment report markdown with boundary language and audit references", () => {
+    const markdown = buildAssessmentReportMarkdown({
+      companyName: "PredictSafeBIO Demo",
+      generatedAt: "2026-05-28T17:00:00.000Z",
+      assessment: {
+        id: "assessment-1",
+        workflow: "Sterility review",
+        area: "QC Lab",
+        score: 83,
+        level: "critical",
+        confidence: "medium",
+        humanReviewStatus: "in_review",
+        reviewedAt: "2026-05-28T17:00:00.000Z",
+        output: assessmentOutput,
+        auditEvents: [{ eventType: "human_review_status_changed", summary: "Review updated.", createdAt: "2026-05-28T17:00:00.000Z" }]
+      }
+    });
+
+    expect(markdown).toContain("# PredictSafeBIO Assessment Demo Report");
+    expect(markdown).toContain("Human review status: In review");
+    expect(markdown).toContain("Review updated.");
+    expect(markdown).toContain("Draft - Human Review Required");
+    expect(markdown).not.toMatch(/is approved|is released|validated system|regulatory acceptance is granted/i);
+  });
+
+  it("builds document report markdown with recommendation history and boundary language", () => {
+    const document: DocumentMetadata = {
+      id: "document-1",
+      title: "Sterility SOP",
+      documentType: "sop",
+      status: "in_review",
+      ownerRole: "qa",
+      area: "QC Lab",
+      relatedProcess: "Sterility review"
+    };
+    const history: DocumentRecommendationRun[] = [
+      {
+        runKey: "run-1",
+        createdAt: "2026-05-28T17:00:00.000Z",
+        auditEvent: {
+          eventType: "document_recommendation_generated",
+          summary: "Generated draft document recommendations.",
+          payload: { runId: "run-1" }
+        },
+        recommendations: [
+          {
+            id: "recommendation-1",
+            recommendationType: "draft_update",
+            title: "Draft update",
+            label: "Draft - Human Review Required",
+            humanReviewRequired: true,
+            payload: {},
+            createdAt: "2026-05-28T17:00:00.000Z"
+          }
+        ]
+      }
+    ];
+
+    const markdown = buildDocumentReportMarkdown({
+      document,
+      companyName: "PredictSafeBIO Demo",
+      generatedAt: "2026-05-28T17:00:00.000Z",
+      currentGaps: [{ title: "Schedule human document review", reason: "Review date is missing." }],
+      currentUpdates: [{ label: "Draft - Human Review Required", proposedChange: "Add review date language." }],
+      history
+    });
+
+    expect(markdown).toContain("# PredictSafeBIO Document Demo Report");
+    expect(markdown).toContain("Run 2026-05-28T17:00:00.000Z: 1 recommendation(s)");
+    expect(markdown).toContain("Generated draft document recommendations.");
+    expect(markdown).toContain("Draft - Human Review Required");
+    expect(markdown).not.toMatch(/SOP is approved|change is approved|compliance is guaranteed/i);
+  });
+});

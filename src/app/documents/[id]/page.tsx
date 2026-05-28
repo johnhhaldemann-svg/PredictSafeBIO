@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/AppShell";
 import { persistDocumentRecommendationsAction } from "@/app/documents/actions";
 import { generateDocumentGapRecommendations, generateDocumentUpdateRecommendations } from "@/lib/documents/recommendations";
+import { buildDocumentReportMarkdown } from "@/lib/review-workflow";
 import { getCompanyProfile, getDocument, getDocumentRecommendationHistory } from "@/lib/supabase/data";
 
 export default async function DocumentDetailPage({
@@ -33,36 +34,14 @@ export default async function DocumentDetailPage({
 
   const gaps = generateDocumentGapRecommendations(document);
   const updates = generateDocumentUpdateRecommendations(document);
-  const reportText = [
-    "# PredictSafeBIO Document Demo Report",
-    "",
-    `Generated: ${new Date().toISOString()}`,
-    `Company: ${company.companyName}`,
-    `Document ID: ${document.id ?? "Demo document"}`,
-    `Title: ${document.title}`,
-    `Status: ${document.status}`,
-    `Owner role: ${document.ownerRole}`,
-    `Area: ${document.area ?? "Missing"}`,
-    `Related process: ${document.relatedProcess ?? "Missing"}`,
-    `Storage: ${document.storagePath ? `${document.storageBucket}/${document.storagePath}` : "No uploaded file linked"}`,
-    "",
-    "## Current Gap Recommendations",
-    ...gaps.map((gap) => `- **${gap.title}**: ${gap.reason}`),
-    "",
-    "## Current Draft Update Recommendations",
-    ...updates.map((update) => `- **${update.label}**: ${update.proposedChange}`),
-    "",
-    "## Persisted Recommendation History",
-    ...(history.length > 0
-      ? history.flatMap((run) => [
-          `- Run ${run.createdAt ?? run.runKey}: ${run.recommendations.length} recommendation(s)`,
-          ...(run.auditEvent ? [`  - Audit: ${run.auditEvent.summary}`] : [])
-        ])
-      : ["- No persisted recommendation runs found."]),
-    "",
-    "## MVP Boundary",
-    "Draft - Human Review Required. No FDA, GxP, Part 11, approval, validation, regulatory acceptance, diagnosis, or release claim is made."
-  ].join("\n");
+  const reportText = buildDocumentReportMarkdown({
+    document,
+    companyName: company.companyName,
+    generatedAt: new Date().toISOString(),
+    currentGaps: gaps,
+    currentUpdates: updates,
+    history
+  });
 
   return (
     <AppShell>

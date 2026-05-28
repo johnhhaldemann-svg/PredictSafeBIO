@@ -22,6 +22,8 @@ export type SavedAssessmentSummary = {
   level: BioAiAssessment["level"];
   confidence: BioAiAssessment["confidence"];
   humanReviewRequired: boolean;
+  humanReviewStatus: HumanReviewStatus | string;
+  reviewedAt?: string | null;
   createdAt?: string;
 };
 
@@ -172,7 +174,7 @@ export async function listAssessments(): Promise<SavedAssessmentSummary[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("assessments")
-    .select("id,input_snapshot,score,level,confidence,human_review_required,created_at")
+    .select("id,input_snapshot,score,level,confidence,human_review_required,human_review_status,reviewed_at,created_at")
     .eq("organization_id", context.organizationId)
     .order("created_at", { ascending: false })
     .limit(50);
@@ -189,6 +191,8 @@ export async function listAssessments(): Promise<SavedAssessmentSummary[]> {
       level: row.level,
       confidence: row.confidence,
       humanReviewRequired: row.human_review_required,
+      humanReviewStatus: row.human_review_status,
+      reviewedAt: row.reviewed_at,
       createdAt: row.created_at
     };
   });
@@ -694,7 +698,9 @@ function demoAssessmentSummary(id: string, input: BioAiInput): SavedAssessmentSu
     score: assessment.score,
     level: assessment.level,
     confidence: assessment.confidence,
-    humanReviewRequired: assessment.humanReviewRequired
+    humanReviewRequired: assessment.humanReviewRequired,
+    humanReviewStatus: assessment.humanReviewRequired ? "draft_human_review_required" : "reviewed_monitoring",
+    reviewedAt: null
   };
 }
 

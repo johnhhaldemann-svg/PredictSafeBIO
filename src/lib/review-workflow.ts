@@ -1,0 +1,130 @@
+import type { AuditEvent, BioAiAssessment, BioAiInput, DocumentMetadata, HumanReviewStatus } from "@/lib/bio-ai/types";
+import type { DocumentRecommendationRun } from "@/lib/supabase/data";
+
+export const humanReviewStatusLabels: Record<HumanReviewStatus | "routine_monitoring", string> = {
+  draft_human_review_required: "Draft - human review required",
+  in_review: "In review",
+  reviewed_needs_action: "Reviewed - needs action",
+  reviewed_monitoring: "Reviewed - monitoring",
+  routine_monitoring: "Routine monitoring"
+};
+
+export const humanReviewStatusOptions: HumanReviewStatus[] = [
+  "draft_human_review_required",
+  "in_review",
+  "reviewed_needs_action",
+  "reviewed_monitoring"
+];
+
+export function getHumanReviewStatusLabel(status: string) {
+  return humanReviewStatusLabels[status as keyof typeof humanReviewStatusLabels] ?? status;
+}
+
+export function getLatestReviewEvent(events: AuditEvent[]) {
+  return events.find((event) => event.eventType === "human_review_status_changed") ?? null;
+}
+
+export function buildAssessmentReportMarkdown({
+  assessment,
+  companyName,
+  generatedAt
+}: {
+  assessment: {
+    id: string;
+    workflow: string;
+    area: string;
+    score: number;
+    level: string;
+    confidence: string;
+    humanReviewStatus: string;
+    reviewedAt?: string | null;
+    output: BioAiAssessment;
+    auditEvents: AuditEvent[];
+  };
+  companyName: string;
+  generatedAt: string;
+}) {
+  return [
+    "# PredictSafeBIO Assessment Demo Report",
+    "",
+    `Generated: ${generatedAt}`,
+    `Company: ${companyName}`,
+    `Assessment ID: ${assessment.id}`,
+    `Workflow: ${assessment.workflow}`,
+    `Area: ${assessment.area}`,
+    `Score: ${assessment.score}`,
+    `Risk level: ${assessment.level}`,
+    `Confidence: ${assessment.confidence}`,
+    `Human review status: ${getHumanReviewStatusLabel(assessment.humanReviewStatus)}`,
+    `Reviewed at: ${assessment.reviewedAt ?? "Not reviewed"}`,
+    "",
+    "## Top Drivers",
+    ...assessment.output.topDrivers.map((driver) => `- **${driver.label}**: ${driver.explanation}`),
+    "",
+    "## Critical Gaps",
+    ...assessment.output.criticalControlGaps.map((gap) => `- ${gap}`),
+    "",
+    "## Audit References",
+    ...(assessment.auditEvents.length > 0
+      ? assessment.auditEvents.map((event) => `- ${event.createdAt ?? "Pending timestamp"}: ${event.eventType} - ${event.summary}`)
+      : ["- No linked audit events found."]),
+    "",
+    "## MVP Boundary",
+    "Draft - Human Review Required. No FDA, GxP, Part 11, approval, validation, regulatory acceptance, diagnosis, or release claim is made."
+  ].join("\n");
+}
+
+export function buildDocumentReportMarkdown({
+  document,
+  companyName,
+  generatedAt,
+  currentGaps,
+  currentUpdates,
+  history
+}: {
+  document: DocumentMetadata;
+  companyName: string;
+  generatedAt: string;
+  currentGaps: Array<{ title: string; reason: string }>;
+  currentUpdates: Array<{ label: string; proposedChange: string }>;
+  history: DocumentRecommendationRun[];
+}) {
+  return [
+    "# PredictSafeBIO Document Demo Report",
+    "",
+    `Generated: ${generatedAt}`,
+    `Company: ${companyName}`,
+    `Document ID: ${document.id ?? "Demo document"}`,
+    `Title: ${document.title}`,
+    `Status: ${document.status}`,
+    `Owner role: ${document.ownerRole}`,
+    `Area: ${document.area ?? "Missing"}`,
+    `Related process: ${document.relatedProcess ?? "Missing"}`,
+    `Storage: ${document.storagePath ? `${document.storageBucket}/${document.storagePath}` : "No uploaded file linked"}`,
+    "",
+    "## Current Gap Recommendations",
+    ...currentGaps.map((gap) => `- **${gap.title}**: ${gap.reason}`),
+    "",
+    "## Current Draft Update Recommendations",
+    ...currentUpdates.map((update) => `- **${update.label}**: ${update.proposedChange}`),
+    "",
+    "## Persisted Recommendation History",
+    ...(history.length > 0
+      ? history.flatMap((run) => [
+          `- Run ${run.createdAt ?? run.runKey}: ${run.recommendations.length} recommendation(s)`,
+          ...(run.auditEvent ? [`  - Audit: ${run.auditEvent.summary}`] : [])
+        ])
+      : ["- No persisted recommendation runs found."]),
+    "",
+    "## MVP Boundary",
+    "Draft - Human Review Required. No FDA, GxP, Part 11, approval, validation, regulatory acceptance, diagnosis, or release claim is made."
+  ].join("\n");
+}
+
+export function buildReviewAuditPayload(input: BioAiInput, status: HumanReviewStatus) {
+  return {
+    workflow: input.workflow ?? "Untitled workflow",
+    status,
+    statusLabel: getHumanReviewStatusLabel(status)
+  };
+}
