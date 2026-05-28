@@ -5,6 +5,7 @@ Last updated: 2026-05-28
 ## Immediate
 
 - Run signed-in product smoke for review status updates, recommendation history, Markdown reports, and admin demo seeding.
+- Merge the pre-release review/audit polish branch after CI and Vercel preview pass.
 - Create release tag `v1.1-demo-hardening` only after signed-in product smoke passes.
 - Re-enable Supabase email confirmation in Auth provider settings.
 - Enable leaked-password protection if available on the current Supabase plan.
@@ -34,6 +35,8 @@ Last updated: 2026-05-28
 - Document recommendation history is implemented for persisted draft recommendation runs.
 - Demo report polish is implemented with Markdown downloads, timestamps, IDs, audit references, and MVP boundary text.
 - Admin-only demo seed controls are implemented without public destructive reset controls.
+- Audit logs now include target links when audit payloads reference an assessment or document.
+- Demo seed runs now receive short labels so seeded assessments, documents, and audit events are easier to trace.
 - LLM draft-assist remains gated off by default; see `docs/llm-draft-assist-gate.md`.
 
 ## Later Product Increments

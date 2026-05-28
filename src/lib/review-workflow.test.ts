@@ -3,6 +3,8 @@ import {
   buildAssessmentReportMarkdown,
   buildDocumentReportMarkdown,
   buildReviewAuditPayload,
+  getAuditEventTarget,
+  getDemoSeedLabel,
   getHumanReviewStatusLabel,
   getLatestReviewEvent
 } from "./review-workflow";
@@ -58,6 +60,29 @@ describe("review workflow helpers", () => {
         { eventType: "assessment_saved", summary: "Saved.", createdAt: "2026-05-28T16:00:00.000Z" }
       ])
     ).toBe(event);
+  });
+
+  it("builds traceability links from audit payloads without changing stored payloads", () => {
+    expect(
+      getAuditEventTarget({
+        eventType: "human_review_status_changed",
+        summary: "Review updated.",
+        payload: { assessmentId: "assessment-1", status: "in_review" }
+      })
+    ).toEqual({ href: "/assessments/assessment-1", label: "Open assessment" });
+
+    expect(
+      getAuditEventTarget({
+        eventType: "document_recommendation_generated",
+        summary: "Recommendations generated.",
+        payload: { documentId: "document-1", runId: "run-1" }
+      })
+    ).toEqual({ href: "/documents/document-1", label: "Open document" });
+  });
+
+  it("creates short demo seed labels without exposing full identifiers", () => {
+    expect(getDemoSeedLabel("12345678-90ab-cdef")).toBe("Demo seed 12345678");
+    expect(getDemoSeedLabel()).toBe("Demo seed");
   });
 
   it("builds assessment report markdown with boundary language and audit references", () => {

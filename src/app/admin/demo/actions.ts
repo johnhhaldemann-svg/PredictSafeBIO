@@ -21,6 +21,6 @@ export async function seedDemoWorkspaceAction() {
   revalidatePath("/admin/audit");
   redirectWithMessage(
     "/admin/demo",
-    `Demo records seeded. Assessment ${result.assessmentId} and document ${result.documentId} are ready for review.`
+    `${result.seedLabel} created. Assessment ${result.assessmentId} and document ${result.documentId} are ready for review.`
   );
 }

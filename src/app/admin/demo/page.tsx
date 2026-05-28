@@ -21,6 +21,9 @@ export default async function AdminDemoPage({ searchParams }: { searchParams: Pr
             Creates one assessment, one document metadata record, draft recommendations, and audit events in the signed-in organization.
             This page does not expose destructive reset controls.
           </p>
+          <p className="muted">
+            Each run receives a short demo seed label so records can be traced across assessments, documents, and audit events.
+          </p>
           {auth.signedIn && !auth.needsOnboarding && auth.role === "owner" ? (
             <form action={seedDemoWorkspaceAction} className="save-actions">
               <button className="button-primary" type="submit">

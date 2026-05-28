@@ -24,6 +24,26 @@ export function getLatestReviewEvent(events: AuditEvent[]) {
   return events.find((event) => event.eventType === "human_review_status_changed") ?? null;
 }
 
+export function getAuditEventTarget(event: AuditEvent): { href: string; label: string } | null {
+  const payload = event.payload ?? {};
+  const assessmentId = typeof payload.assessmentId === "string" ? payload.assessmentId : null;
+  const documentId = typeof payload.documentId === "string" ? payload.documentId : null;
+
+  if (assessmentId) {
+    return { href: `/assessments/${assessmentId}`, label: "Open assessment" };
+  }
+
+  if (documentId) {
+    return { href: `/documents/${documentId}`, label: "Open document" };
+  }
+
+  return null;
+}
+
+export function getDemoSeedLabel(value?: string | null) {
+  return value ? `Demo seed ${value.slice(0, 8)}` : "Demo seed";
+}
+
 export function buildAssessmentReportMarkdown({
   assessment,
   companyName,

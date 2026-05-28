@@ -778,6 +778,18 @@ pre {
   font-weight: 800;
 }
 
+.text-link {
+  color: #007d96;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.text-link:hover,
+.text-link:focus-visible {
+  text-decoration: underline;
+  outline: none;
+}
+
 .wide-fields {
   margin-top: 4px;
 }

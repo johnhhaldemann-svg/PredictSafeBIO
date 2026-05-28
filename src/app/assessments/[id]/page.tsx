@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { updateAssessmentReviewAction } from "@/app/assessments/actions";
 import { getAssessmentDetail, getCompanyProfile } from "@/lib/supabase/data";
 import {
   buildAssessmentReportMarkdown,
+  getAuditEventTarget,
   getHumanReviewStatusLabel,
   getLatestReviewEvent,
   humanReviewStatusOptions
@@ -197,13 +199,21 @@ export default async function AssessmentDetailPage({
               <p>Newly saved assessments write an audit event with the assessment ID in the payload.</p>
             </article>
           ) : null}
-          {assessment.auditEvents.map((event) => (
-            <article className="timeline-row" key={event.id ?? event.summary}>
-              <span>{event.createdAt ?? "Pending timestamp"}</span>
-              <strong>{event.eventType}</strong>
-              <p>{event.summary}</p>
-            </article>
-          ))}
+          {assessment.auditEvents.map((event) => {
+            const target = getAuditEventTarget(event);
+            return (
+              <article className="timeline-row" key={event.id ?? event.summary}>
+                <span>{event.createdAt ?? "Pending timestamp"}</span>
+                <strong>{event.eventType}</strong>
+                <p>{event.summary}</p>
+                {target ? (
+                  <Link className="text-link" href={target.href}>
+                    {target.label}
+                  </Link>
+                ) : null}
+              </article>
+            );
+          })}
         </section>
       </div>
     </AppShell>
