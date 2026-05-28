@@ -25,6 +25,7 @@ This checklist is for MVP/demo readiness only. It is not a validation plan for F
 - Leaked-password protection should be enabled when available on the current plan.
 - Organization-scoped reads/writes are enforced through profiles.
 - The private `biotech-documents` bucket and storage policies are applied before testing file uploads.
+- Signed-in upload smoke must confirm `storage_bucket` and `storage_path` persist on document metadata.
 - Security advisors are reviewed before each demo; any warning is recorded with an owner and reason.
 
 ## Product Boundary

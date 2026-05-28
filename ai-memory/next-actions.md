@@ -6,9 +6,10 @@ Last updated: 2026-05-28
 
 - Re-enable Supabase email confirmation in Auth provider settings.
 - Enable leaked-password protection if available on the current Supabase plan.
-- Apply the `biotech-documents` storage migration before testing file uploads.
+- Test a signed-in upload now that the `biotech-documents` storage migration is applied.
 - Configure custom SMTP before heavier signup testing.
 - Run a v1.1 smoke test that includes document upload and report downloads.
+- Create release tag `v1.1-demo-hardening` only after upload smoke and auth hardening status are verified.
 
 ## Blockers And Watch Items
 
@@ -16,6 +17,7 @@ Last updated: 2026-05-28
 - Dependabot PRs for TypeScript, lucide-react, and Node types were merged after refreshed CI/Vercel checks.
 - Branch protection currently requires one approving review; solo-owner merges need a temporary settings adjustment or a second authorized reviewer.
 - Supabase built-in auth email sending is rate-limited; custom SMTP is required before heavier public signup testing.
+- Local `.env.local` has no service-role key or database URL, so automated signed-in storage smoke requires either a real browser session or temporary test credentials.
 
 ## v1.1 Demo Hardening
 
@@ -24,3 +26,11 @@ Last updated: 2026-05-28
 - Configure custom SMTP or document the no-SMTP demo limitation clearly.
 - Enable the `biotech-documents` storage bucket and add document upload metadata.
 - Assessment and document detail pages now include draft-only demo report downloads.
+
+## Next Product Increment Candidates
+
+- Richer assessment review workflow with review status transitions and reviewer notes.
+- Document recommendation history with previous draft recommendation runs.
+- Demo report polish with clearer headers, timestamps, and audit references.
+- Admin-only demo seed/reset controls with no public destructive UI.
+- First gated LLM draft-assist spike only after deterministic engine tests stay green.

@@ -7,7 +7,7 @@ Last updated: 2026-05-28
 - GitHub repository: `johnhhaldemann-svg/PredictSafeBIO`
 - Visibility: public
 - Protected branch: `main`
-- Latest main commit verified locally after dependency merges: `590e99b`
+- Latest main commit verified locally after v1.1 hardening: `2263ac561971f0a8ca600f66a0f65ff8edf2074c`
 - PR #9 recovered the closed-but-unmerged MVP foundation work from PRs #4, #5, #6, and #7.
 - PR #15 fixed Supabase auth confirmation callbacks for both PKCE `code` links and `token_hash` links.
 - Branch protection is restored to require one approving review.
@@ -30,7 +30,9 @@ Last updated: 2026-05-28
 - RLS is enabled and policies are present on the eight MVP public tables.
 - Security advisor warning: leaked password protection is disabled.
 - Performance advisor notes: unused early-demo indexes and Auth DB connection strategy informational items.
-- Storage upload support is being added through the private `biotech-documents` bucket and organization-scoped storage paths.
+- Storage migration `enable_document_storage` has been applied.
+- Private bucket `biotech-documents` exists with four authenticated-only storage policies for select, insert, update, and delete.
+- Storage object count is currently 0; signed-in upload smoke remains pending because local `.env.local` does not contain a service-role key or database URL.
 
 ## Current Product State
 
@@ -40,4 +42,5 @@ Last updated: 2026-05-28
 - Email confirmation was temporarily disabled during smoke testing because built-in Supabase auth email sending hit the project throttle.
 - Re-enable email confirmation after testing; configure custom SMTP before heavier signup testing.
 - v1.1 hardening adds clearer auth messages, optional document file upload metadata, and draft-only demo report downloads.
+- Auth hardening still needs dashboard confirmation: re-enable email confirmation, enable leaked-password protection if available, and configure custom SMTP before heavier signup testing.
 - Recommendations remain `Draft - Human Review Required`.

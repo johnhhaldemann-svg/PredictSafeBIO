@@ -6,7 +6,7 @@ Last checked: 2026-05-28
 
 - Project: `predictsafe-bio`
 - Production URL: `https://predictsafe-bio.vercel.app`
-- Latest production commit verified locally after dependency merges: `590e99b`
+- Latest production commit verified locally after v1.1 hardening: `2263ac561971f0a8ca600f66a0f65ff8edf2074c`
 - Latest passing CI run on `main`: `26583182299`
 
 Production routes verified with `200 OK`:
@@ -22,8 +22,9 @@ Production routes verified with `200 OK`:
 
 - Project ref: `mygxjnvzdljmdriokvvx`
 - URL: `https://mygxjnvzdljmdriokvvx.supabase.co`
-- Applied migrations include `enable_auth_onboarding`.
-- Next migration adds private `biotech-documents` storage bucket policies for document upload testing.
+- Applied migrations include `enable_auth_onboarding` and `enable_document_storage`.
+- Private bucket `biotech-documents` exists and is not public.
+- Storage policies present: select, insert, update, and delete for `authenticated` users scoped by organization path.
 - Supabase connector check passed.
 - RLS is enabled and policies are present on the eight MVP public tables.
 - Real smoke-test evidence: 1 user, 1 profile, 1 company profile, 1 assessment, 2 assessment signals, 1 document, 6 draft recommendations, and 4 audit events.
@@ -31,6 +32,7 @@ Production routes verified with `200 OK`:
 - Security advisor currently reports leaked password protection disabled.
 - Performance advisor reports informational unused-index/Auth-connection notes.
 - Email confirmation was temporarily disabled during smoke testing due to the built-in email throttle; custom SMTP is required before heavier signup testing.
+- v1.1 upload smoke is pending because no service-role key/database URL is available locally and a signed-in browser session is required to upload as the test user.
 
 ## GitHub
 
@@ -56,5 +58,6 @@ Remaining:
 - Re-enable email confirmation after smoke testing.
 - Enable leaked-password protection if available on the current Supabase plan.
 - Configure custom SMTP before heavier public signup testing.
-- Apply and verify the document storage migration before upload demos.
+- Run signed-in document upload smoke and confirm `storage_bucket` and `storage_path` persist.
+- Create release `v1.1-demo-hardening` after signed-in smoke passes.
 - Keep ESLint 10 closed until the lint toolchain is intentionally upgraded.
