@@ -31,6 +31,20 @@ function authMessage(path: string, message: string) {
   return `${pathname}?${params.toString()}`;
 }
 
+function friendlyAuthError(message: string) {
+  const normalized = message.toLowerCase();
+  if (normalized.includes("email rate limit")) {
+    return "Supabase email rate limit reached. Wait for the throttle window to reset, or configure custom SMTP before more signup testing.";
+  }
+  if (normalized.includes("email not confirmed")) {
+    return "Email is not confirmed yet. Open the Supabase confirmation email, then sign in again.";
+  }
+  if (normalized.includes("already registered") || normalized.includes("already been registered")) {
+    return "An account already exists for that email. Sign in, or use the confirmation email if it is still pending.";
+  }
+  return message;
+}
+
 async function createClientOrRedirect(path: string) {
   try {
     return await createSupabaseServerClient();
@@ -52,7 +66,7 @@ export async function signInAction(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    redirect(authMessage(`/login?next=${encodeURIComponent(next)}`, error.message));
+    redirect(authMessage(`/login?next=${encodeURIComponent(next)}`, friendlyAuthError(error.message)));
   }
 
   const {
@@ -85,7 +99,7 @@ export async function signUpAction(formData: FormData) {
   });
 
   if (error) {
-    redirect(authMessage(`/signup?next=${encodeURIComponent(next)}`, error.message));
+    redirect(authMessage(`/signup?next=${encodeURIComponent(next)}`, friendlyAuthError(error.message)));
   }
 
   revalidatePath("/", "layout");

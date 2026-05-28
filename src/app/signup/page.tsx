@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { signUpAction } from "@/app/auth/actions";
+import { getAuthSummary } from "@/lib/supabase/data";
 
 type SignupPageProps = {
   searchParams: Promise<{ message?: string; next?: string }>;
@@ -9,6 +10,7 @@ type SignupPageProps = {
 export default async function SignupPage({ searchParams }: SignupPageProps) {
   const params = await searchParams;
   const next = params.next?.startsWith("/") ? params.next : "/onboarding";
+  const auth = await getAuthSummary();
 
   return (
     <main className="auth-page">
@@ -27,7 +29,13 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           <h1 id="signup-title">Sign up</h1>
           <p className="auth-copy">Create a Supabase Auth user, then finish onboarding to seed your organization and company profile.</p>
         </div>
+        {auth.signedIn ? (
+          <p className="form-message">
+            You are signed in as {auth.userEmail}. Continue to {auth.needsOnboarding ? "onboarding" : "the Workbench"}.
+          </p>
+        ) : null}
         {params.message ? <p className="form-message">{params.message}</p> : null}
+        <p className="auth-note">Email confirmation should be enabled for MVP hardening. If signup email throttling appears, configure custom SMTP before heavier testing.</p>
         <form action={signUpAction} className="auth-form">
           <input type="hidden" name="next" value={next} />
           <label>
@@ -45,6 +53,11 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         <p className="auth-switch">
           Already have an account? <Link href={`/login?next=${encodeURIComponent(next)}`}>Sign in</Link>
         </p>
+        {auth.signedIn ? (
+          <p className="auth-switch">
+            <Link href={auth.needsOnboarding ? "/onboarding" : "/workbench"}>Continue</Link>
+          </p>
+        ) : null}
       </section>
     </main>
   );

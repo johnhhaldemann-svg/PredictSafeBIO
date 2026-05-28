@@ -24,10 +24,24 @@ Use a real email inbox for the test account. Do not commit passwords, tokens, or
 
 1. Open `/documents`.
 2. Save a document metadata record with known gaps.
-3. Open the document detail page.
-4. Confirm gap recommendations and draft update recommendations are labeled as draft/human-review work.
-5. Persist document recommendations.
-6. Confirm `/admin/audit` includes a `document_recommendation_generated` event.
+3. Optionally attach a small source file after the `biotech-documents` storage migration is applied.
+4. Open the document detail page.
+5. Confirm gap recommendations and draft update recommendations are labeled as draft/human-review work.
+6. Persist document recommendations.
+7. Download the document demo report and confirm it includes the draft-only boundary.
+8. Confirm `/admin/audit` includes a `document_recommendation_generated` event.
+
+## Demo Reports
+
+1. Open a saved assessment detail page.
+2. Download the assessment demo report.
+3. Confirm the report includes score, risk, confidence, drivers, gaps, and the draft-only boundary.
+4. Do not treat downloaded reports as controlled records or validated release artifacts.
+
+## Expected Supabase Evidence Counts
+
+- MVP release smoke test baseline: 1 user, 1 profile, 1 company profile, 1 assessment, 2 signals, 1 document, 6 draft recommendations, and 4 audit events.
+- v1.1 document upload smoke test should add a storage object under `biotech-documents/{organization_id}/{document_id}/...` when a file is attached.
 
 ## Expected Boundaries
 

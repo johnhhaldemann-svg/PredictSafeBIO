@@ -31,6 +31,23 @@ export default async function DocumentDetailPage({
 
   const gaps = generateDocumentGapRecommendations(document);
   const updates = generateDocumentUpdateRecommendations(document);
+  const reportText = [
+    `PredictSafeBIO document demo report`,
+    `Title: ${document.title}`,
+    `Status: ${document.status}`,
+    `Owner role: ${document.ownerRole}`,
+    `Area: ${document.area ?? "Missing"}`,
+    `Related process: ${document.relatedProcess ?? "Missing"}`,
+    `Storage: ${document.storagePath ? `${document.storageBucket}/${document.storagePath}` : "No uploaded file linked"}`,
+    "",
+    "Gap recommendations:",
+    ...gaps.map((gap) => `- ${gap.title}: ${gap.reason}`),
+    "",
+    "Draft update recommendations:",
+    ...updates.map((update) => `- ${update.label}: ${update.proposedChange}`),
+    "",
+    "Boundary: Draft - Human Review Required. No FDA, GxP, Part 11, approval, or release claim is made."
+  ].join("\n");
 
   return (
     <AppShell>
@@ -47,13 +64,28 @@ export default async function DocumentDetailPage({
             ["Area", document.area ?? "Missing"],
             ["Related process", document.relatedProcess ?? "Missing"],
             ["Revision", document.revision ?? "Missing"],
-            ["Next review", document.nextReviewDate ?? "Missing"]
+            ["Next review", document.nextReviewDate ?? "Missing"],
+            ["Uploaded file", document.storagePath ? `${document.storageBucket}/${document.storagePath}` : "No file linked"]
           ].map(([label, value]) => (
             <article className="profile-row" key={label}>
               <span>{label}</span>
               <strong>{value}</strong>
             </article>
           ))}
+        </section>
+        <section className="panel inline-action-panel">
+          <div>
+            <p className="section-label">Demo export</p>
+            <h2>Shareable document report</h2>
+            <p className="muted">Downloads a draft-only text report for demo review. It is not a controlled document export.</p>
+          </div>
+          <a
+            className="button-secondary"
+            download={`${document.title.replace(/[^a-zA-Z0-9._-]/g, "-")}-demo-report.txt`}
+            href={`data:text/plain;charset=utf-8,${encodeURIComponent(reportText)}`}
+          >
+            Download report
+          </a>
         </section>
         <form action={persistDocumentRecommendationsAction} className="panel inline-action-panel">
           <input type="hidden" name="documentId" value={document.id} />

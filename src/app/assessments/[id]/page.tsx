@@ -22,6 +22,24 @@ export default async function AssessmentDetailPage({ params }: { params: Promise
     );
   }
 
+  const reportText = [
+    "PredictSafeBIO assessment demo report",
+    `Workflow: ${assessment.workflow}`,
+    `Area: ${assessment.area}`,
+    `Score: ${assessment.score}`,
+    `Risk level: ${assessment.level}`,
+    `Confidence: ${assessment.confidence}`,
+    `Human review status: ${assessment.humanReviewStatus}`,
+    "",
+    "Top drivers:",
+    ...assessment.output.topDrivers.map((driver) => `- ${driver.label}: ${driver.explanation}`),
+    "",
+    "Critical gaps:",
+    ...assessment.output.criticalControlGaps.map((gap) => `- ${gap}`),
+    "",
+    "Boundary: Draft - Human Review Required. No FDA, GxP, Part 11, approval, or release claim is made."
+  ].join("\n");
+
   return (
     <AppShell>
       <div className="page-stack">
@@ -51,6 +69,20 @@ export default async function AssessmentDetailPage({ params }: { params: Promise
           <h2>Guarded explanation</h2>
           <p>{assessment.output.explanation}</p>
           <p className="muted">No release, approval, compliance, diagnosis, or regulatory acceptance claim is made.</p>
+        </section>
+        <section className="panel inline-action-panel">
+          <div>
+            <p className="section-label">Demo export</p>
+            <h2>Shareable assessment report</h2>
+            <p className="muted">Downloads a draft-only text report for demo review. It is not a release or approval record.</p>
+          </div>
+          <a
+            className="button-secondary"
+            download={`${assessment.workflow.replace(/[^a-zA-Z0-9._-]/g, "-")}-demo-report.txt`}
+            href={`data:text/plain;charset=utf-8,${encodeURIComponent(reportText)}`}
+          >
+            Download report
+          </a>
         </section>
         <section className="split-list wide">
           <div className="panel">
