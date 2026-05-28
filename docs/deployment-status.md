@@ -6,7 +6,7 @@ Last checked: 2026-05-28
 
 - Project: `predictsafe-bio`
 - Production URL: `https://predictsafe-bio.vercel.app`
-- Latest production commit verified locally after v1.1 hardening: `2263ac561971f0a8ca600f66a0f65ff8edf2074c`
+- Latest production commit verified locally after review workflow: `026b295b87d6ccdb2c288672db3b94e53d98e76f`
 - Latest passing CI run on `main`: `26583182299`
 
 Production routes verified with `200 OK`:
@@ -61,6 +61,7 @@ Remaining:
 - Run signed-in document upload smoke and confirm `storage_bucket` and `storage_path` persist.
 - Create release `v1.1-demo-hardening` after signed-in smoke passes.
 - Assessment review workflow migration has been applied and verified.
-- Run signed-in product smoke for review status updates, recommendation history, Markdown report downloads, and demo seeding after deployment.
+- Signed-in product smoke for review status updates, recommendation history, Markdown report downloads, and demo seeding is pending because this workspace does not have the existing test user password/session.
+- Create release `v1.1-demo-hardening` only after signed-in product smoke passes.
 - Keep LLM draft assist disabled unless the gate in `docs/llm-draft-assist-gate.md` is intentionally opened later.
 - Keep ESLint 10 closed until the lint toolchain is intentionally upgraded.

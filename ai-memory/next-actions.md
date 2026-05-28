@@ -4,12 +4,13 @@ Last updated: 2026-05-28
 
 ## Immediate
 
+- Run signed-in product smoke for review status updates, recommendation history, Markdown reports, and admin demo seeding.
+- Create release tag `v1.1-demo-hardening` only after signed-in product smoke passes.
 - Re-enable Supabase email confirmation in Auth provider settings.
 - Enable leaked-password protection if available on the current Supabase plan.
 - Test a signed-in upload now that the `biotech-documents` storage migration is applied.
 - Configure custom SMTP before heavier signup testing.
 - Run a v1.1 smoke test that includes document upload and report downloads.
-- Create release tag `v1.1-demo-hardening` only after upload smoke and auth hardening status are verified.
 
 ## Blockers And Watch Items
 
@@ -40,4 +41,4 @@ Last updated: 2026-05-28
 - Add reviewer assignment and due-date filtering after the basic review workflow is stable.
 - Add richer report templates after Markdown exports are verified in demo.
 - Add a first LLM draft-assist spike only after deterministic engine, review workflow, and recommendation history tests stay green.
-- Run signed-in product smoke for review status updates, recommendation history, reports, and demo seeding after deployment.
+- Add reviewer assignment and due-date filtering after the basic review workflow is smoke-tested.
