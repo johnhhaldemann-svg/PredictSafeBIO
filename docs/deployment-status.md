@@ -30,12 +30,15 @@ The preview deployment is `Ready` by `vercel inspect`, but Vercel Authentication
 
 ## GitHub
 
-GitHub CLI is installed, but the local CLI is not authenticated yet. The connected GitHub app identity is `johnhhaldemann-svg`, but it has no repository installations available in this workspace.
+Repository: `https://github.com/johnhhaldemann-svg/PredictSafeBIO`
 
-After GitHub auth is completed, finish:
+Completed:
 
-1. Create the `PredictSafeBIO` repository.
-2. Push local `main`.
-3. Verify GitHub Actions CI.
-4. Apply protected `main` settings from `docs/github-branch-protection.md`.
-5. Connect the GitHub repository to Vercel for automatic preview deployments.
+- Created private `PredictSafeBIO` repository.
+- Pushed local `main`.
+- Verified GitHub Actions CI on `main`.
+- Connected the GitHub repository to Vercel.
+
+Remaining:
+
+- GitHub branch protection for a private repo requires GitHub Pro on this account or changing the repository visibility to public.
