@@ -691,10 +691,40 @@ th {
 }
 
 .auth-form,
-.onboarding-form {
+.onboarding-form,
+.document-form {
   display: grid;
   gap: 14px;
   margin-top: 18px;
+}
+
+.inline-action-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.inline-action-panel p {
+  margin-bottom: 0;
+}
+
+.snapshot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+pre {
+  overflow: auto;
+  max-height: 420px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #071117;
+  color: #d9e8ed;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .form-message {
@@ -758,8 +788,14 @@ th {
   .form-grid,
   .toggle-grid,
   .split-list,
+  .snapshot-grid,
   .profile-grid,
   .document-grid {
     grid-template-columns: 1fr;
+  }
+
+  .inline-action-panel {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { listAssessments } from "@/lib/supabase/data";
@@ -27,7 +28,9 @@ export default async function AssessmentsPage() {
             <tbody>
               {assessments.map((assessment) => (
                 <tr key={assessment.id}>
-                  <td>{assessment.id}</td>
+                  <td>
+                    <Link href={`/assessments/${assessment.id}`}>{assessment.id}</Link>
+                  </td>
                   <td>{assessment.workflow}</td>
                   <td>{assessment.area}</td>
                   <td>
