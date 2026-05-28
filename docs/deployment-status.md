@@ -31,14 +31,13 @@ The preview deployment is `Ready` by `vercel inspect`, but Vercel Authentication
 ## GitHub
 
 Repository: `https://github.com/johnhhaldemann-svg/PredictSafeBIO`
+Visibility: public
 
 Completed:
 
 - Created private `PredictSafeBIO` repository.
+- Changed repository visibility to public so branch protection can be enforced without GitHub Pro.
 - Pushed local `main`.
 - Verified GitHub Actions CI on `main`.
 - Connected the GitHub repository to Vercel.
-
-Remaining:
-
-- GitHub branch protection for a private repo requires GitHub Pro on this account or changing the repository visibility to public.
+- Protected `main` with required PR review, stale review dismissal, required CI, no force pushes, and no deletions.
