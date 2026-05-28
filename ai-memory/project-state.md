@@ -43,4 +43,6 @@ Last updated: 2026-05-28
 - Re-enable email confirmation after testing; configure custom SMTP before heavier signup testing.
 - v1.1 hardening adds clearer auth messages, optional document file upload metadata, and draft-only demo report downloads.
 - Auth hardening still needs dashboard confirmation: re-enable email confirmation, enable leaked-password protection if available, and configure custom SMTP before heavier signup testing.
+- Current product increment adds assessment review workflow, document recommendation history, Markdown demo reports, signed-in demo seed operations, and an explicit LLM draft-assist gate.
+- Supabase migration `assessment_review_workflow` has been applied; `assessments` now includes reviewer notes, reviewer identity, reviewed timestamp, and constrained review statuses.
 - Recommendations remain `Draft - Human Review Required`.

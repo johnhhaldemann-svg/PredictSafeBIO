@@ -639,6 +639,27 @@ th {
   color: var(--muted);
 }
 
+.history-list {
+  display: grid;
+  gap: 14px;
+}
+
+.history-row {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 14px;
+}
+
+.history-row span,
+.history-row p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .auth-page,
 .onboarding-page {
   display: grid;

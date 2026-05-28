@@ -1,5 +1,6 @@
 export type BioRiskLevel = "low" | "moderate" | "high" | "critical";
 export type BioAiConfidence = "low" | "medium" | "high";
+export type HumanReviewStatus = "draft_human_review_required" | "in_review" | "reviewed_needs_action" | "reviewed_monitoring";
 
 export type BioSignalType =
   | "deviation"
@@ -213,7 +214,8 @@ export type AuditEvent = {
     | "document_metadata_created"
     | "document_metadata_updated"
     | "document_recommendation_generated"
-    | "human_review_status_changed";
+    | "human_review_status_changed"
+    | "demo_seed_created";
   summary: string;
   payload?: Record<string, unknown>;
   createdAt?: string;

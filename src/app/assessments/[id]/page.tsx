@@ -1,10 +1,19 @@
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
-import { getAssessmentDetail } from "@/lib/supabase/data";
+import { updateAssessmentReviewAction } from "@/app/assessments/actions";
+import { getAssessmentDetail, getCompanyProfile } from "@/lib/supabase/data";
 
-export default async function AssessmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AssessmentDetailPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ message?: string }>;
+}) {
   const { id } = await params;
+  const query = await searchParams;
   const assessment = await getAssessmentDetail(id);
+  const company = await getCompanyProfile();
 
   if (!assessment) {
     return (
@@ -23,21 +32,32 @@ export default async function AssessmentDetailPage({ params }: { params: Promise
   }
 
   const reportText = [
-    "PredictSafeBIO assessment demo report",
+    "# PredictSafeBIO Assessment Demo Report",
+    "",
+    `Generated: ${new Date().toISOString()}`,
+    `Company: ${company.companyName}`,
+    `Assessment ID: ${assessment.id}`,
     `Workflow: ${assessment.workflow}`,
     `Area: ${assessment.area}`,
     `Score: ${assessment.score}`,
     `Risk level: ${assessment.level}`,
     `Confidence: ${assessment.confidence}`,
     `Human review status: ${assessment.humanReviewStatus}`,
+    `Reviewed at: ${assessment.reviewedAt ?? "Not reviewed"}`,
     "",
-    "Top drivers:",
-    ...assessment.output.topDrivers.map((driver) => `- ${driver.label}: ${driver.explanation}`),
+    "## Top Drivers",
+    ...assessment.output.topDrivers.map((driver) => `- **${driver.label}**: ${driver.explanation}`),
     "",
-    "Critical gaps:",
+    "## Critical Gaps",
     ...assessment.output.criticalControlGaps.map((gap) => `- ${gap}`),
     "",
-    "Boundary: Draft - Human Review Required. No FDA, GxP, Part 11, approval, or release claim is made."
+    "## Audit References",
+    ...(assessment.auditEvents.length > 0
+      ? assessment.auditEvents.map((event) => `- ${event.createdAt ?? "Pending timestamp"}: ${event.eventType} - ${event.summary}`)
+      : ["- No linked audit events found."]),
+    "",
+    "## MVP Boundary",
+    "Draft - Human Review Required. No FDA, GxP, Part 11, approval, validation, regulatory acceptance, diagnosis, or release claim is made."
   ].join("\n");
 
   return (
@@ -47,6 +67,7 @@ export default async function AssessmentDetailPage({ params }: { params: Promise
           <p className="section-label">Assessment detail</p>
           <h1>{assessment.workflow}</h1>
         </header>
+        {query.message ? <p className="form-message">{query.message}</p> : null}
         <section className="profile-grid">
           <article className="profile-row">
             <span>Risk level</span>
@@ -65,6 +86,41 @@ export default async function AssessmentDetailPage({ params }: { params: Promise
             <strong>{assessment.humanReviewStatus}</strong>
           </article>
         </section>
+        <form action={updateAssessmentReviewAction} className="panel">
+          <input type="hidden" name="assessmentId" value={assessment.id} />
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Human review</p>
+              <h2>Review status and notes</h2>
+              <p className="muted">Records reviewer traceability only. This does not approve, release, validate, or make regulatory claims.</p>
+            </div>
+            <button className="button-primary" type="submit">
+              Save review
+            </button>
+          </div>
+          <div className="form-grid">
+            <label>
+              Review status
+              <select
+                name="humanReviewStatus"
+                defaultValue={assessment.humanReviewStatus === "routine_monitoring" ? "reviewed_monitoring" : assessment.humanReviewStatus}
+              >
+                <option value="draft_human_review_required">draft_human_review_required</option>
+                <option value="in_review">in_review</option>
+                <option value="reviewed_needs_action">reviewed_needs_action</option>
+                <option value="reviewed_monitoring">reviewed_monitoring</option>
+              </select>
+            </label>
+            <label>
+              Reviewed at
+              <input value={assessment.reviewedAt ?? "Not reviewed"} readOnly />
+            </label>
+          </div>
+          <label className="wide-fields">
+            Reviewer notes
+            <textarea name="reviewerNotes" defaultValue={assessment.reviewerNotes ?? ""} rows={4} />
+          </label>
+        </form>
         <section className="panel">
           <h2>Guarded explanation</h2>
           <p>{assessment.output.explanation}</p>
@@ -79,7 +135,7 @@ export default async function AssessmentDetailPage({ params }: { params: Promise
           <a
             className="button-secondary"
             download={`${assessment.workflow.replace(/[^a-zA-Z0-9._-]/g, "-")}-demo-report.txt`}
-            href={`data:text/plain;charset=utf-8,${encodeURIComponent(reportText)}`}
+            href={`data:text/markdown;charset=utf-8,${encodeURIComponent(reportText)}`}
           >
             Download report
           </a>
