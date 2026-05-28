@@ -7,10 +7,11 @@ Last updated: 2026-05-28
 - GitHub repository: `johnhhaldemann-svg/PredictSafeBIO`
 - Visibility: public
 - Protected branch: `main`
-- Latest main commit verified locally after review workflow UX polish: `90e97956cb3dbd943c8229620ebc6c2feca91bf8`
+- Latest main commit verified locally after v1.2 report/filter hardening: `49867cab05f53008b0c6f4eac1dca082fb8d95cf`
 - PR #9 recovered the closed-but-unmerged MVP foundation work from PRs #4, #5, #6, and #7.
 - PR #15 fixed Supabase auth confirmation callbacks for both PKCE `code` links and `token_hash` links.
 - PR #21 added audit target links, short demo seed labels, and workflow helper tests.
+- PR #23 added assessment register filters, cleaner report sections, feature-flag metadata, and expanded LLM draft-assist gate documentation.
 - Release `v1.1-demo-hardening` exists at commit `c49c54c76bb15cb395574c3f72dae90f4898f801`.
 - Branch protection is restored to require one approving review.
 - Dependency PRs #10, #12, and #13 were merged one at a time after refreshed CI and Vercel checks.
@@ -20,7 +21,7 @@ Last updated: 2026-05-28
 
 - Project: `predictsafe-bio`
 - Production URL: `https://predictsafe-bio.vercel.app`
-- Production routes verified with `200 OK`: `/workbench`, `/assessments`, `/company-profile`, `/documents`, `/admin/audit`, `/admin/demo`, and `/login`.
+- Production routes verified with `200 OK`: `/workbench`, `/assessments`, `/assessments?review=reviewed_monitoring&level=critical&reviewer=reviewed`, `/company-profile`, `/documents`, `/admin/audit`, `/admin/demo`, and `/login`.
 - Latest verified CI run on `main`: `26583182299`.
 
 ## Supabase
@@ -34,7 +35,7 @@ Last updated: 2026-05-28
 - Performance advisor notes: unused early-demo indexes and Auth DB connection strategy informational items.
 - Storage migration `enable_document_storage` has been applied.
 - Private bucket `biotech-documents` exists with four authenticated-only storage policies for select, insert, update, and delete.
-- Storage object count is currently 0; signed-in upload smoke remains pending because local `.env.local` does not contain a service-role key or database URL.
+- Storage object count is currently 0 and document metadata records with `storage_path` are 0; signed-in upload smoke remains pending because it requires a real browser upload as the test user.
 
 ## Current Product State
 
@@ -50,4 +51,5 @@ Last updated: 2026-05-28
 - Signed-in v1.1 smoke passed in production: review status changes saved reviewer notes, `human_review_status_changed` audit links opened the assessment, document recommendation history and report download worked, and `/admin/demo` seeded labeled demo assessment/document/audit records.
 - Demo seed evidence: `Demo seed 6e0c12c4`, assessment `362e02bb-8a11-48f1-933c-1fddbacbf7cd`, document `e425c0c4-42fd-48df-87ab-648f9a4191c2`.
 - v1.2 work is focused on assessment register filtering, clearer draft-only report structure, auth/upload hardening follow-up, and an explicit no-LLM implementation gate.
+- v1.2 connector checks confirm `biotech-documents` is private and has authenticated org-scoped select, insert, update, and delete policies.
 - Recommendations remain `Draft - Human Review Required`.

@@ -6,13 +6,14 @@ Last checked: 2026-05-28
 
 - Project: `predictsafe-bio`
 - Production URL: `https://predictsafe-bio.vercel.app`
-- Latest production commit verified locally after review workflow UX polish: `90e97956cb3dbd943c8229620ebc6c2feca91bf8`
+- Latest production commit verified locally after v1.2 report/filter hardening: `49867cab05f53008b0c6f4eac1dca082fb8d95cf`
 - Latest passing CI run on `main`: `26583182299`
 
 Production routes verified with `200 OK`:
 
 - `/workbench`
 - `/assessments`
+- `/assessments?review=reviewed_monitoring&level=critical&reviewer=reviewed`
 - `/company-profile`
 - `/documents`
 - `/admin/audit`
@@ -26,6 +27,7 @@ Production routes verified with `200 OK`:
 - Applied migrations include `enable_auth_onboarding` and `enable_document_storage`.
 - Private bucket `biotech-documents` exists and is not public.
 - Storage policies present: select, insert, update, and delete for `authenticated` users scoped by organization path.
+- Storage verification on 2026-05-28: bucket `biotech-documents` is private, storage object count is `0`, and document metadata records with `storage_path` are `0`.
 - Supabase connector check passed.
 - RLS is enabled and policies are present on the eight MVP public tables.
 - Real smoke-test evidence: 1 user, 1 profile, 1 company profile, 1 assessment, 2 assessment signals, 1 document, 6 draft recommendations, and 4 audit events.
@@ -33,7 +35,7 @@ Production routes verified with `200 OK`:
 - Security advisor currently reports leaked password protection disabled.
 - Performance advisor reports informational unused-index/Auth-connection notes.
 - Email confirmation was temporarily disabled during smoke testing due to the built-in email throttle; custom SMTP is required before heavier signup testing.
-- v1.1 upload smoke is pending because no service-role key/database URL is available locally and a signed-in browser session is required to upload as the test user.
+- v1.2 signed-in upload smoke is pending because a real signed-in browser upload is required; connector verification confirms the bucket/policies exist but no file has been uploaded yet.
 
 ## GitHub
 
@@ -63,8 +65,9 @@ Remaining:
 - Run signed-in document upload smoke and confirm `storage_bucket` and `storage_path` persist.
 - Assessment review workflow migration has been applied and verified.
 - PR #21 merged audit target links, short demo seed labels, and additional workflow helper tests.
+- PR #23 merged assessment register filters, report polish, and expanded LLM draft-assist gate detail.
 - Signed-in product smoke passed: review status updates saved reviewer notes and audit events, audit links opened target records, document recommendation history and Markdown report download worked, and `/admin/demo` seeded labeled demo records.
 - Demo seed evidence: `Demo seed 6e0c12c4`, assessment `362e02bb-8a11-48f1-933c-1fddbacbf7cd`, document `e425c0c4-42fd-48df-87ab-648f9a4191c2`.
-- v1.2 implementation is in progress for assessment filters, report polish, auth/upload hardening follow-up, and LLM draft-assist gate detail.
+- v1.2 route smoke passed for `/assessments` filter URL, `/documents`, and `/admin/audit`; signed-in upload smoke and Supabase dashboard auth hardening remain pending.
 - Keep LLM draft assist disabled unless the gate in `docs/llm-draft-assist-gate.md` is intentionally opened later.
 - Keep ESLint 10 closed until the lint toolchain is intentionally upgraded.
