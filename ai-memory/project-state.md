@@ -11,6 +11,7 @@ Last updated: 2026-05-28
 - PR #9 recovered the closed-but-unmerged MVP foundation work from PRs #4, #5, #6, and #7.
 - PR #15 fixed Supabase auth confirmation callbacks for both PKCE `code` links and `token_hash` links.
 - PR #21 added audit target links, short demo seed labels, and workflow helper tests.
+- Release `v1.1-demo-hardening` exists at commit `c49c54c76bb15cb395574c3f72dae90f4898f801`.
 - Branch protection is restored to require one approving review.
 - Dependency PRs #10, #12, and #13 were merged one at a time after refreshed CI and Vercel checks.
 - ESLint 10 remains closed because it still fails in the lint toolchain.
@@ -48,4 +49,5 @@ Last updated: 2026-05-28
 - Supabase migration `assessment_review_workflow` has been applied; `assessments` now includes reviewer notes, reviewer identity, reviewed timestamp, and constrained review statuses.
 - Signed-in v1.1 smoke passed in production: review status changes saved reviewer notes, `human_review_status_changed` audit links opened the assessment, document recommendation history and report download worked, and `/admin/demo` seeded labeled demo assessment/document/audit records.
 - Demo seed evidence: `Demo seed 6e0c12c4`, assessment `362e02bb-8a11-48f1-933c-1fddbacbf7cd`, document `e425c0c4-42fd-48df-87ab-648f9a4191c2`.
+- v1.2 work is focused on assessment register filtering, clearer draft-only report structure, auth/upload hardening follow-up, and an explicit no-LLM implementation gate.
 - Recommendations remain `Draft - Human Review Required`.

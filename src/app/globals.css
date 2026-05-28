@@ -254,6 +254,32 @@ h3 {
   gap: 12px;
 }
 
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr)) auto auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.summary-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.summary-strip span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  border-radius: 8px;
+  background: var(--panel-soft);
+  color: #315963;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 label {
   display: grid;
   gap: 6px;
@@ -568,6 +594,11 @@ table {
   border-collapse: collapse;
 }
 
+.empty-table-note {
+  margin: 12px;
+  color: var(--muted);
+}
+
 th,
 td {
   min-height: 44px;
@@ -829,6 +860,7 @@ pre {
   }
 
   .form-grid,
+  .filter-grid,
   .toggle-grid,
   .split-list,
   .snapshot-grid,
