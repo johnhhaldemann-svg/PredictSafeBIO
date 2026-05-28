@@ -1,11 +1,23 @@
 import Link from "next/link";
-import { Activity, ClipboardCheck, FileText, FlaskConical, LayoutDashboard, LogOut, Settings, ShieldCheck, UserCircle } from "lucide-react";
+import {
+  Activity,
+  Boxes,
+  ClipboardCheck,
+  FileText,
+  FlaskConical,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  ShieldCheck,
+  UserCircle
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { signOutAction } from "@/app/auth/actions";
 import { getAuthSummary } from "@/lib/supabase/data";
 
 const navItems = [
   { href: "/workbench", label: "Workbench", icon: FlaskConical },
+  { href: "/operations", label: "Operations", icon: Boxes },
   { href: "/assessments", label: "Assessments", icon: ClipboardCheck },
   { href: "/company-profile", label: "Company Profile", icon: LayoutDashboard },
   { href: "/documents", label: "Documents", icon: FileText },

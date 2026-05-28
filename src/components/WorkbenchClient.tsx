@@ -52,8 +52,8 @@ const signalTypes: BioSignalType[] = [
   "sop_gap"
 ];
 
-export function WorkbenchClient() {
-  const [input, setInput] = useState<BioAiInput>(starterInput);
+export function WorkbenchClient({ initialInput = starterInput }: { initialInput?: BioAiInput }) {
+  const [input, setInput] = useState<BioAiInput>(initialInput);
   const [signalType, setSignalType] = useState<BioSignalType>("contamination_event");
   const [signalLabel, setSignalLabel] = useState("Unexpected microbial growth in assay control");
   const [evidence, setEvidence] = useState("Assay control showed unexpected growth; investigation not complete.");
@@ -121,6 +121,17 @@ export function WorkbenchClient() {
           </div>
           <Beaker size={22} />
         </div>
+        {(input.sourceRecords?.length ?? 0) > 0 || (input.referenceRuleIds?.length ?? 0) > 0 ? (
+          <div className="source-context">
+            <h2>Linked map context</h2>
+            <div className="summary-strip">
+              <span>{input.sourceRecords?.length ?? 0} source record(s)</span>
+              <span>{input.referenceRuleIds?.length ?? 0} reference rule(s)</span>
+              <span>Training: {input.trainingStatus ?? "not linked"}</span>
+              <span>Documents: {input.documentReadiness ?? "not linked"}</span>
+            </div>
+          </div>
+        ) : null}
 
         <div className="form-grid">
           <label>
@@ -233,6 +244,20 @@ export function WorkbenchClient() {
             ))}
           </ul>
         </div>
+
+        {assessment.sourceTrace.sourceRecords.length > 0 ? (
+          <div className="result-section">
+            <h3>Source traceability</h3>
+            <ul className="driver-list">
+              {assessment.sourceTrace.sourceRecords.slice(0, 6).map((record) => (
+                <li key={`${record.module}-${record.recordId ?? record.label}`}>
+                  <strong>{record.module}</strong>
+                  <span>{record.label ?? record.recordId ?? "Linked source record"}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         <div className="split-list">
           <div>

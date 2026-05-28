@@ -24,9 +24,15 @@ const assessmentOutput: BioAiAssessment = {
       priority: "urgent",
       ownerRole: "qa",
       actionType: "qa_review",
-      reason: "Human quality review is required."
+      reason: "Human quality review is required.",
+      sourceRecords: [],
+      referenceRuleIds: []
     }
   ],
+  sourceTrace: {
+    sourceRecords: [],
+    referenceRuleIds: []
+  },
   explanation: "Based on available data, potential risk requires review and does not replace human judgment.",
   escalationRequired: true,
   holdOrQuarantineReviewRecommended: true,

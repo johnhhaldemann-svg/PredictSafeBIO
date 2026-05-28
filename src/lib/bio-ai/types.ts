@@ -1,6 +1,11 @@
 export type BioRiskLevel = "low" | "moderate" | "high" | "critical";
 export type BioAiConfidence = "low" | "medium" | "high";
-export type HumanReviewStatus = "draft_human_review_required" | "in_review" | "reviewed_needs_action" | "reviewed_monitoring";
+export type HumanReviewStatus =
+  | "draft_human_review_required"
+  | "in_review"
+  | "reviewed_needs_action"
+  | "reviewed_monitoring"
+  | "routine_monitoring";
 
 export type BioSignalType =
   | "deviation"
@@ -59,6 +64,61 @@ export type RecommendedActionType =
   | "documentation_review"
   | "monitoring";
 
+export type BioSourceModule =
+  | "company_profile"
+  | "site"
+  | "lab"
+  | "reference_rule"
+  | "document"
+  | "training"
+  | "biosafety"
+  | "incident"
+  | "capa"
+  | "equipment"
+  | "sample"
+  | "material"
+  | "chemical"
+  | "waste"
+  | "audit"
+  | "task";
+
+export type BioSourceRecord = {
+  module: BioSourceModule;
+  recordId?: string | null;
+  label?: string | null;
+};
+
+export type MapDerivedStatus =
+  | "current"
+  | "complete"
+  | "ready"
+  | "partial"
+  | "gap"
+  | "gaps"
+  | "missing"
+  | "expired"
+  | "out_of_tolerance"
+  | "excursion"
+  | "open"
+  | "repeat"
+  | "unknown";
+
+export type IncidentContext = {
+  incidentId?: string | null;
+  status?: "open" | "investigating" | "contained" | "closed" | "unknown" | null;
+  severity?: number | string | null;
+  capaRequired?: boolean | null;
+  repeatPattern?: boolean | null;
+};
+
+export type SampleMaterialContext = {
+  sampleId?: string | null;
+  materialId?: string | null;
+  chainOfCustodyStatus?: MapDerivedStatus | null;
+  storageConditionStatus?: MapDerivedStatus | null;
+  wasteStatus?: MapDerivedStatus | null;
+};
+
 export type BioAiSignal = {
   id?: string | null;
   type: BioSignalType;
@@ -86,11 +146,15 @@ export type BioAiSignal = {
   gxpImpact?: boolean | null;
   controls?: string[] | null;
   evidence?: string | null;
+  sourceRecords?: BioSourceRecord[] | null;
+  referenceRuleIds?: string[] | null;
+  detectability?: number | string | null;
 };
 
 export type BioAiInput = {
   organizationId?: string | null;
   siteId?: string | null;
+  labId?: string | null;
   siteName?: string | null;
   area?: string | null;
   workflow?: string | null;
@@ -121,6 +185,15 @@ export type BioAiInput = {
   outOfToleranceEquipment?: boolean | null;
   chainOfCustodyGap?: boolean | null;
   contaminationSuspected?: boolean | null;
+  sourceRecords?: BioSourceRecord[] | null;
+  referenceRuleIds?: string[] | null;
+  trainingStatus?: MapDerivedStatus | null;
+  equipmentStatus?: MapDerivedStatus | null;
+  documentReadiness?: MapDerivedStatus | null;
+  incidentContext?: IncidentContext | null;
+  sampleMaterialContext?: SampleMaterialContext | null;
+  auditReadinessStatus?: MapDerivedStatus | null;
+  detectability?: number | string | null;
 };
 
 export type BioAiAssessment = {
@@ -141,7 +214,13 @@ export type BioAiAssessment = {
     ownerRole: ReviewOwnerRole;
     actionType: RecommendedActionType;
     reason: string;
+    sourceRecords: BioSourceRecord[];
+    referenceRuleIds: string[];
   }>;
+  sourceTrace: {
+    sourceRecords: BioSourceRecord[];
+    referenceRuleIds: string[];
+  };
   explanation: string;
   escalationRequired: boolean;
   holdOrQuarantineReviewRecommended: boolean;
@@ -215,7 +294,8 @@ export type AuditEvent = {
     | "document_metadata_updated"
     | "document_recommendation_generated"
     | "human_review_status_changed"
-    | "demo_seed_created";
+    | "demo_seed_created"
+    | "map_operations_bundle_created";
   summary: string;
   payload?: Record<string, unknown>;
   createdAt?: string;

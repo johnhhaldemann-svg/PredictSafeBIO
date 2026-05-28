@@ -225,6 +225,52 @@ describe("biotech deterministic AI Engine", () => {
     expect(assessment.topDrivers.some((driver) => driver.category === "pattern")).toBe(true);
   });
 
+  it("turns map-derived source context into traceable recommendations", () => {
+    const assessment = assessBioRisk({
+      ...baseLowRiskInput,
+      labId: "lab-1",
+      siteId: "site-1",
+      referenceRuleIds: ["rule-bbp-training", "rule-sop-review"],
+      trainingStatus: "expired",
+      documentReadiness: "gaps",
+      auditReadinessStatus: "missing",
+      incidentContext: {
+        incidentId: "incident-1",
+        status: "investigating",
+        capaRequired: true,
+        repeatPattern: true
+      },
+      sampleMaterialContext: {
+        sampleId: "sample-1",
+        chainOfCustodyStatus: "gap"
+      },
+      sourceRecords: [
+        { module: "document", recordId: "doc-1", label: "BBP SOP" },
+        { module: "training", recordId: "training-1", label: "BBP annual training" }
+      ]
+    });
+
+    expect(assessment.sourceTrace.referenceRuleIds).toEqual(expect.arrayContaining(["rule-bbp-training", "rule-sop-review"]));
+    expect(assessment.sourceTrace.sourceRecords.map((record) => record.module)).toEqual(
+      expect.arrayContaining(["document", "training", "lab", "site", "incident", "sample"])
+    );
+    expect(assessment.topDrivers.map((driver) => driver.category)).toEqual(
+      expect.arrayContaining(["training", "controls", "regulatory", "quality", "sample"])
+    );
+    expect(assessment.recommendedActions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: "Review mapped document gaps",
+          referenceRuleIds: expect.arrayContaining(["rule-bbp-training"]),
+          sourceRecords: expect.arrayContaining([expect.objectContaining({ module: "document", recordId: "doc-1" })])
+        }),
+        expect.objectContaining({ title: "Review training impact" }),
+        expect.objectContaining({ title: "Screen for CAPA" }),
+        expect.objectContaining({ title: "Review sample/material traceability" })
+      ])
+    );
+  });
+
   it("keeps scores normalized between 0 and 100", () => {
     const assessment = assessBioRisk({
       ...baseLowRiskInput,

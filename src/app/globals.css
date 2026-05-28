@@ -335,6 +335,21 @@ textarea {
   border-top: 1px solid var(--line);
 }
 
+.source-context {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 12px;
+  border: 1px solid #c9e7ee;
+  border-radius: 8px;
+  background: #f2fbfd;
+}
+
+.source-context h2 {
+  margin-bottom: 0;
+  font-size: 14px;
+}
+
 .button-primary,
 .button-secondary {
   display: inline-flex;

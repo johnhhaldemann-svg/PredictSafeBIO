@@ -5,6 +5,7 @@ import type {
   BioAiConfidence,
   BioAiInput,
   BioAiSignal,
+  BioSourceRecord,
   BioRiskLevel,
   DriverCategory,
   ReviewOwnerRole
@@ -36,13 +37,14 @@ export function assessBioRisk(input: BioAiInput): BioAiAssessment {
   const baseScore = calculateWeightedScore(input, signals);
   const missingInformation = detectMissingInformation(input, signals);
   const familyMatches = matchRiskFamilies(input, signals);
+  const sourceTrace = buildSourceTrace(input, signals);
   const overrideResult = applyEscalationOverrides(input, signals, baseScore);
   const level = overrideResult.level;
   const score = clampScore(Math.max(baseScore, riskFloor[level]));
   const confidence = classifyConfidence(input, signals, missingInformation);
   const criticalControlGaps = detectCriticalControlGaps(input, familyMatches);
   const topDrivers = buildTopDrivers(input, signals, familyMatches, overrideResult.reasons, criticalControlGaps);
-  const recommendedActions = buildRecommendedActions(level, familyMatches, input, overrideResult.reasons);
+  const recommendedActions = buildRecommendedActions(level, familyMatches, input, overrideResult.reasons, sourceTrace);
   const escalationRequired = level === "high" || level === "critical";
   const holdOrQuarantineReviewRecommended =
     level === "critical" ||
@@ -62,6 +64,7 @@ export function assessBioRisk(input: BioAiInput): BioAiAssessment {
     missingInformation,
     criticalControlGaps,
     recommendedActions,
+    sourceTrace,
     explanation: buildGuardedExplanation(level, confidence, missingInformation, topDrivers, humanReviewRequired),
     escalationRequired,
     holdOrQuarantineReviewRecommended,
@@ -95,11 +98,20 @@ export function detectMissingInformation(input: BioAiInput, signals: BioAiSignal
   const missing = new Set(input.missingData ?? []);
 
   if (!input.siteName && !input.siteId) missing.add("site or facility");
-  if (!input.area) missing.add("lab, cleanroom, suite, or operating area");
+  if (!input.area && !input.labId) missing.add("lab, cleanroom, suite, or operating area");
   if (!input.workflow) missing.add("workflow or process being assessed");
   if (!input.controlEffectiveness || input.controlEffectiveness === "unknown") missing.add("control effectiveness");
   if (signals.length === 0) missing.add("risk signals or evidence");
   if (input.dataCompleteness != null && input.dataCompleteness < 0.75) missing.add("complete source data");
+  if (input.detectability == null && signals.some((signal) => signal.detectability != null)) {
+    missing.add("assessment-level detectability context");
+  }
+  if (input.sourceRecords != null && input.sourceRecords.length === 0) missing.add("source record traceability");
+
+  if (isGapStatus(input.trainingStatus)) missing.add("current training assignment evidence");
+  if (isGapStatus(input.equipmentStatus)) missing.add("equipment status or calibration evidence");
+  if (isGapStatus(input.documentReadiness)) missing.add("current document readiness evidence");
+  if (isGapStatus(input.auditReadinessStatus)) missing.add("audit evidence package readiness");
 
   if (input.contaminationSuspected) {
     missing.add("QA assessment");
@@ -123,6 +135,14 @@ export function detectMissingInformation(input: BioAiInput, signals: BioAiSignal
     missing.add("calibration or qualification evidence");
   }
 
+  if (input.incidentContext?.capaRequired && input.incidentContext.status !== "closed") {
+    missing.add("CAPA screening outcome");
+  }
+
+  if (isGapStatus(input.sampleMaterialContext?.chainOfCustodyStatus)) {
+    missing.add("sample or material chain-of-custody evidence");
+  }
+
   return Array.from(missing);
 }
 
@@ -132,6 +152,7 @@ export function classifyConfidence(
   missingInformation = detectMissingInformation(input, signals)
 ): BioAiConfidence {
   if ((input.dataCompleteness ?? 1) < 0.5 || missingInformation.length >= 5 || signals.length === 0) return "low";
+  if (isWeakDetectability(input.detectability) || signals.some((signal) => isWeakDetectability(signal.detectability))) return "medium";
   if ((input.dataCompleteness ?? 1) >= 0.85 && missingInformation.length <= 1 && signals.length >= 2) return "high";
   return "medium";
 }
@@ -179,7 +200,20 @@ function applyEscalationOverrides(input: BioAiInput, signals: BioAiSignal[], bas
     reasons.push("Readiness gap on high-risk work increases risk by one band.");
   }
 
-  if (signals.some((signal) => signal.repeatFinding)) {
+  if (isGapStatus(input.trainingStatus) || isGapStatus(input.documentReadiness) || isGapStatus(input.auditReadinessStatus)) {
+    level = increaseOneBand(level);
+    reasons.push("Map-derived readiness evidence shows a training, document, or audit-readiness gap.");
+  }
+
+  if (isGapStatus(input.equipmentStatus) || isGapStatus(input.sampleMaterialContext?.storageConditionStatus)) {
+    raiseTo("high", "Map-derived equipment or storage condition evidence requires impact review.");
+  }
+
+  if (input.incidentContext?.capaRequired) {
+    raiseTo("high", "Incident context indicates CAPA screening is required.");
+  }
+
+  if (signals.some((signal) => signal.repeatFinding) || input.incidentContext?.repeatPattern) {
     level = increaseOneBand(level);
     reasons.push("Repeat deviation pattern increases likelihood and escalation pressure.");
   }
@@ -196,6 +230,14 @@ function matchRiskFamilies(input: BioAiInput, signals: BioAiSignal[] = input.sig
     input.batchOrLot,
     input.assay,
     input.processStage,
+    input.labId,
+    input.trainingStatus,
+    input.equipmentStatus,
+    input.documentReadiness,
+    input.auditReadinessStatus,
+    input.incidentContext?.status,
+    input.sampleMaterialContext?.chainOfCustodyStatus,
+    input.sampleMaterialContext?.storageConditionStatus,
     ...(input.materials ?? []),
     ...(input.equipment ?? []),
     ...signals.flatMap((signal) => [signal.label, signal.evidence, signal.area, signal.assay, signal.equipmentId])
@@ -231,6 +273,9 @@ function detectCriticalControlGaps(input: BioAiInput, families = matchRiskFamili
   if (input.missingBiosafetyReview) gaps.add("Biosafety review is missing or unverified.");
   if (input.missingRequiredSop) gaps.add("Current SOP is missing or unverified.");
   if (input.missingRequiredTraining) gaps.add("Required training is missing or expired.");
+  if (isGapStatus(input.documentReadiness)) gaps.add("Document readiness is incomplete or missing.");
+  if (isGapStatus(input.trainingStatus)) gaps.add("Training status is incomplete, expired, or missing.");
+  if (isGapStatus(input.auditReadinessStatus)) gaps.add("Audit evidence readiness is incomplete or missing.");
 
   return Array.from(gaps);
 }
@@ -271,7 +316,19 @@ function buildTopDrivers(
     });
   }
 
-  if (signals.some((signal) => signal.repeatFinding)) {
+  if ((input.referenceRuleIds?.length ?? 0) > 0 || signals.some((signal) => (signal.referenceRuleIds?.length ?? 0) > 0)) {
+    drivers.push({
+      label: "Reference rule mapping",
+      category: "regulatory",
+      impact: "medium",
+      explanation: "One or more trusted reference-rule mappings are linked to this draft assessment."
+    });
+  }
+
+  const mapDrivers = mapDerivedDrivers(input);
+  drivers.push(...mapDrivers);
+
+  if (signals.some((signal) => signal.repeatFinding) || input.incidentContext?.repeatPattern) {
     drivers.push({
       label: "Repeat pattern across signals",
       category: "pattern",
@@ -289,14 +346,15 @@ function buildTopDrivers(
     });
   }
 
-  return dedupeByLabel(drivers).slice(0, 6);
+  return dedupeByLabel(drivers).slice(0, 12);
 }
 
 function buildRecommendedActions(
   level: BioRiskLevel,
   families: ReturnType<typeof matchRiskFamilies>,
   input: BioAiInput,
-  overrideReasons: string[]
+  overrideReasons: string[],
+  sourceTrace: BioAiAssessment["sourceTrace"]
 ): BioAiAssessment["recommendedActions"] {
   const actions: BioAiAssessment["recommendedActions"] = [];
   const priority = riskPriority[level];
@@ -307,7 +365,9 @@ function buildRecommendedActions(
       priority,
       ownerRole: family.ownerRoles[0],
       actionType: family.actionType,
-      reason: `Review ${family.label.toLowerCase()} controls before relying on this assessment.`
+      reason: `Review ${family.label.toLowerCase()} controls before relying on this assessment.`,
+      sourceRecords: sourceTrace.sourceRecords,
+      referenceRuleIds: sourceTrace.referenceRuleIds
     });
   }
 
@@ -317,7 +377,69 @@ function buildRecommendedActions(
       priority: "urgent",
       ownerRole: "quality_unit",
       actionType: "hold_or_quarantine_review",
-      reason: "Suspected contamination remains critical until assessed by QA or the quality unit."
+      reason: "Suspected contamination remains critical until assessed by QA or the quality unit.",
+      sourceRecords: sourceTrace.sourceRecords,
+      referenceRuleIds: sourceTrace.referenceRuleIds
+    });
+  }
+
+  if (isGapStatus(input.documentReadiness) || sourceTrace.referenceRuleIds.length > 0) {
+    actions.push({
+      title: "Review mapped document gaps",
+      priority,
+      ownerRole: "qa",
+      actionType: "documentation_review",
+      reason: "Reference rules or document-readiness context indicate a draft document review is needed.",
+      sourceRecords: sourceTrace.sourceRecords,
+      referenceRuleIds: sourceTrace.referenceRuleIds
+    });
+  }
+
+  if (isGapStatus(input.trainingStatus)) {
+    actions.push({
+      title: "Review training impact",
+      priority,
+      ownerRole: "qa",
+      actionType: "training_review",
+      reason: "Training assignment or competency context is missing, expired, or incomplete.",
+      sourceRecords: sourceTrace.sourceRecords,
+      referenceRuleIds: sourceTrace.referenceRuleIds
+    });
+  }
+
+  if (input.incidentContext?.capaRequired || signalsRequireCapa(input)) {
+    actions.push({
+      title: "Screen for CAPA",
+      priority,
+      ownerRole: "quality_unit",
+      actionType: "deviation_or_capa",
+      reason: "Incident, repeat finding, audit finding, equipment, or sample context indicates CAPA screening may be required.",
+      sourceRecords: sourceTrace.sourceRecords,
+      referenceRuleIds: sourceTrace.referenceRuleIds
+    });
+  }
+
+  if (isGapStatus(input.equipmentStatus)) {
+    actions.push({
+      title: "Review equipment impact",
+      priority,
+      ownerRole: "validation_lead",
+      actionType: "equipment_review",
+      reason: "Equipment status context indicates out-of-tolerance, missing, or incomplete evidence.",
+      sourceRecords: sourceTrace.sourceRecords,
+      referenceRuleIds: sourceTrace.referenceRuleIds
+    });
+  }
+
+  if (isGapStatus(input.sampleMaterialContext?.chainOfCustodyStatus)) {
+    actions.push({
+      title: "Review sample/material traceability",
+      priority,
+      ownerRole: "qa",
+      actionType: "sample_review",
+      reason: "Sample or material context indicates a chain-of-custody or traceability gap.",
+      sourceRecords: sourceTrace.sourceRecords,
+      referenceRuleIds: sourceTrace.referenceRuleIds
     });
   }
 
@@ -327,7 +449,9 @@ function buildRecommendedActions(
       priority,
       ownerRole: defaultOwner(input),
       actionType: "qa_review",
-      reason: overrideReasons[0]
+      reason: overrideReasons[0],
+      sourceRecords: sourceTrace.sourceRecords,
+      referenceRuleIds: sourceTrace.referenceRuleIds
     });
   }
 
@@ -337,7 +461,9 @@ function buildRecommendedActions(
       priority: "low",
       ownerRole: "responsible_scientist",
       actionType: "monitoring",
-      reason: "Available data does not show a high-risk escalation trigger."
+      reason: "Available data does not show a high-risk escalation trigger.",
+      sourceRecords: sourceTrace.sourceRecords,
+      referenceRuleIds: sourceTrace.referenceRuleIds
     });
   }
 
@@ -386,6 +512,69 @@ function normalizeFivePoint(value: unknown): number {
   if (["medium", "moderate"].some((token) => normalized.includes(token))) return 3;
   if (["minor", "low"].some((token) => normalized.includes(token))) return 2;
   return 1;
+}
+
+function buildSourceTrace(input: BioAiInput, signals: BioAiSignal[] = input.signals ?? []) {
+  const sourceRecords = dedupeSourceRecords([
+    ...(input.sourceRecords ?? []),
+    ...signals.flatMap((signal) => signal.sourceRecords ?? []),
+    ...(input.labId ? [{ module: "lab" as const, recordId: input.labId, label: input.area ?? "Assessment lab" }] : []),
+    ...(input.siteId ? [{ module: "site" as const, recordId: input.siteId, label: input.siteName ?? "Assessment site" }] : []),
+    ...(input.incidentContext?.incidentId
+      ? [{ module: "incident" as const, recordId: input.incidentContext.incidentId, label: "Linked incident" }]
+      : []),
+    ...(input.sampleMaterialContext?.sampleId
+      ? [{ module: "sample" as const, recordId: input.sampleMaterialContext.sampleId, label: "Linked sample" }]
+      : []),
+    ...(input.sampleMaterialContext?.materialId
+      ? [{ module: "material" as const, recordId: input.sampleMaterialContext.materialId, label: "Linked material" }]
+      : [])
+  ]);
+  const referenceRuleIds = Array.from(
+    new Set([...(input.referenceRuleIds ?? []), ...signals.flatMap((signal) => signal.referenceRuleIds ?? [])])
+  );
+
+  return { sourceRecords, referenceRuleIds };
+}
+
+function dedupeSourceRecords(records: BioSourceRecord[]) {
+  return Array.from(
+    new Map(records.map((record) => [`${record.module}:${record.recordId ?? record.label ?? "unlinked"}`, record])).values()
+  );
+}
+
+function isGapStatus(status: unknown) {
+  return ["gap", "gaps", "missing", "expired", "out_of_tolerance", "excursion", "unknown"].includes(String(status ?? ""));
+}
+
+function isWeakDetectability(value: unknown) {
+  if (value == null) return false;
+  const normalized = normalizeFivePoint(value);
+  return normalized >= 4 || String(value).toLowerCase().includes("low detectability");
+}
+
+function mapDerivedDrivers(input: BioAiInput): BioAiAssessment["topDrivers"] {
+  const drivers: BioAiAssessment["topDrivers"] = [];
+  const add = (label: string, category: DriverCategory, explanation: string) => {
+    drivers.push({ label, category, impact: "high", explanation });
+  };
+
+  if (isGapStatus(input.trainingStatus)) add("Training impact context", "training", "Mapped training status is missing, expired, or incomplete.");
+  if (isGapStatus(input.documentReadiness)) add("Document readiness context", "controls", "Mapped document readiness indicates missing or incomplete controlled documentation.");
+  if (isGapStatus(input.equipmentStatus)) add("Equipment status context", "equipment", "Mapped equipment status indicates out-of-tolerance, missing, or incomplete evidence.");
+  if (isGapStatus(input.auditReadinessStatus)) add("Audit evidence readiness", "regulatory", "Mapped audit evidence readiness indicates incomplete evidence packaging.");
+  if (input.incidentContext?.capaRequired) add("Incident CAPA screening", "quality", "Linked incident context indicates CAPA screening is required.");
+  if (isGapStatus(input.sampleMaterialContext?.chainOfCustodyStatus)) {
+    add("Sample/material traceability context", "sample", "Mapped sample or material context indicates a chain-of-custody gap.");
+  }
+
+  return drivers;
+}
+
+function signalsRequireCapa(input: BioAiInput) {
+  return (input.signals ?? []).some((signal) =>
+    ["deviation", "audit_finding", "equipment_event", "sample_chain_of_custody"].includes(signal.type)
+  );
 }
 
 function fallbackSeverity(input: BioAiInput) {
