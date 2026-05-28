@@ -67,6 +67,8 @@ export type RecommendedActionType =
 export type BioSourceModule =
   | "company_profile"
   | "foundation"
+  | "biotype_foundation"
+  | "biotype_selection"
   | "intake"
   | "applicability_rule"
   | "compliance_program"
@@ -140,6 +142,16 @@ export type FoundationAiContext = {
   referenceRuleIds: string[];
 };
 
+export type BioTypeContextFields = {
+  primaryBioType?: string | null;
+  secondaryBioTypes?: string[] | null;
+  biotypePrograms?: string[] | null;
+  biotypeDocuments?: string[] | null;
+  biotypeRecords?: string[] | null;
+  biotypeTraining?: string[] | null;
+  biotypeRiskDrivers?: string[] | null;
+};
+
 export type BioAiSignal = {
   id?: string | null;
   type: BioSignalType;
@@ -172,7 +184,7 @@ export type BioAiSignal = {
   detectability?: number | string | null;
 };
 
-export type BioAiInput = {
+export type BioAiInput = BioTypeContextFields & {
   organizationId?: string | null;
   siteId?: string | null;
   labId?: string | null;

@@ -12,6 +12,14 @@ import type {
 } from "@/lib/bio-ai/types";
 import { demoAuditEvents, demoCompanyProfile, demoDocuments } from "@/lib/demo-data";
 import { generateDocumentGapRecommendations, generateDocumentUpdateRecommendations } from "@/lib/documents/recommendations";
+import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
+import {
+  applyBioTypeContext,
+  buildBioTypeAiContext,
+  canonicalBioTypeFoundations,
+  normalizeBioTypeKey,
+  type BioTypeKey
+} from "@/lib/foundation/biotypes";
 import {
   applyFoundationContext,
   defaultApplicabilityRules,
@@ -119,6 +127,8 @@ export type MapOperationsSummary = {
 export type IntelligenceFoundationSummary = {
   companyName: string;
   counts: Array<{ label: string; value: number }>;
+  coreComponents: Array<{ name: string; purpose: string }>;
+  biotypes: Array<{ name: string; focus: string; role: "primary" | "secondary" | "available"; requirements: string }>;
   intake: Array<{ question: string; answer: string; triggers: string }>;
   programs: Array<{ name: string; status: string; owner: string }>;
   methods: Array<{ name: string; type: string; purpose: string }>;
@@ -135,8 +145,46 @@ export type IntelligenceFoundationSummary = {
     evidenceScore: number;
     topGaps: string[];
   };
+  aiWorkflow: string[];
+  humanValidationWorkflow: string[];
+  guardrailText: string;
   latestAssessmentInput: BioAiInput;
 };
+
+const coreComplianceComponents = [
+  ["Company Profile Intelligence", "Company type, sites, labs, materials, equipment, regulatory scope, roles, and workforce."],
+  ["BioType Foundation Packages", "Branch-specific foundations for different biotech operating profiles."],
+  ["BioType Branching Engine", "Selects one primary and multiple secondary biotech operating profiles."],
+  ["Compliance Applicability Engine", "Determines what programs, documents, records, and controls apply."],
+  ["BioRisk Scoring Model", "Scores risk using exposure, severity, likelihood, compliance impact, training, and missing data."],
+  ["Document Intelligence Library", "SOPs, plans, policies, forms, templates, references, and metadata."],
+  ["Controlled Record Library", "Proof records for training, equipment, temperature, incidents, chain-of-custody, and waste."],
+  ["Compliance Evidence Map", "Links requirements to evidence that proves controls exist."],
+  ["Programs & Methods Library", "Biotech safety/compliance programs and deterministic AI decision methods."],
+  ["Reference Knowledge Base", "Trusted references and company-specific reference mappings."],
+  ["Change Impact Engine", "Triggers document, training, risk, and audit updates when conditions change."],
+  ["Human Validation Workflow", "AI drafts and recommends; humans review, approve, reject, or request changes."],
+  ["Audit Readiness Score Model", "Dashboard score built from documents, training, CAPA, incidents, equipment, and evidence."]
+].map(([name, purpose]) => ({ name, purpose }));
+
+const aiWorkflowSteps = [
+  "Company profile",
+  "BioType selection",
+  "Applicability",
+  "Risk scoring",
+  "Documents",
+  "Training",
+  "Audit readiness"
+];
+
+const humanValidationWorkflowSteps = [
+  "AI draft",
+  "Human review",
+  "Approve/reject/request changes",
+  "Effective controlled output",
+  "Training impact",
+  "Audit event"
+];
 
 export async function getAuthSummary(): Promise<AuthSummary> {
   if (!isSupabaseConfigured()) {
@@ -621,7 +669,12 @@ export async function getIntelligenceFoundationSummary(): Promise<IntelligenceFo
       evidenceCount,
       changesCount,
       scoresCount,
+      biotypeFoundations,
+      biotypeSelections,
+      biotypeMappings,
       latestScore,
+      latestBiotypeSelection,
+      biotypeRows,
       programRows,
       methodRows,
       ruleRows,
@@ -637,11 +690,22 @@ export async function getIntelligenceFoundationSummary(): Promise<IntelligenceFo
       countRows(supabase, "compliance_evidence_map", context.organizationId),
       countRows(supabase, "change_impact_events", context.organizationId),
       countRows(supabase, "audit_readiness_scores", context.organizationId),
+      countRows(supabase, "biotype_foundations", context.organizationId),
+      countRows(supabase, "organization_biotype_selections", context.organizationId),
+      countRows(supabase, "biotype_rule_mappings", context.organizationId),
       latestRow(
         supabase,
         "audit_readiness_scores",
         context.organizationId,
-        "id,overall_score,documents_score,training_score,capa_score,incidents_score,equipment_score,evidence_score,top_gaps"
+          "id,overall_score,documents_score,training_score,capa_score,incidents_score,equipment_score,evidence_score,top_gaps"
+      ),
+      latestRow(supabase, "organization_biotype_selections", context.organizationId, "id,primary_biotype_key,secondary_biotype_keys,selection_status"),
+      latestRows(
+        supabase,
+        "biotype_foundations",
+        context.organizationId,
+        "id,biotype_key,display_name,focus,required_documents,required_training,risk_drivers",
+        12
       ),
       latestRows(supabase, "compliance_programs", context.organizationId, "id,program_name,status,owner_role", 8),
       latestRows(supabase, "compliance_methods", context.organizationId, "id,method_name,method_type,purpose", 8),
@@ -666,7 +730,11 @@ export async function getIntelligenceFoundationSummary(): Promise<IntelligenceFo
       : demoIntelligenceFoundationSummary().readiness;
 
     const demo = northStarFoundationDemo();
-    const latestAssessmentInput = applyFoundationContext(
+    const selection = latestBiotypeSelection as Record<string, any> | null;
+    const selectedPrimary = normalizeBioTypeKey(selection?.primary_biotype_key) ?? "rd_biotech";
+    const selectedSecondary = normalizeBioTypeKeys(selection?.secondary_biotype_keys).filter((key) => key !== selectedPrimary);
+    const biotypeContext = buildBioTypeAiContext(selectedPrimary, selectedSecondary);
+    const foundationInput = applyFoundationContext(
       {
         ...demo.aiInput,
         siteName: programs > 0 ? "Live Intelligence Foundation workspace" : "NorthStar BioLabs",
@@ -678,6 +746,29 @@ export async function getIntelligenceFoundationSummary(): Promise<IntelligenceFo
         evidenceGaps: Array.isArray(readiness.topGaps) ? readiness.topGaps : demo.foundationContext.evidenceGaps
       }
     );
+    const latestAssessmentInput = applyBioTypeContext(foundationInput, biotypeContext);
+    const liveBiotypes = ((biotypeRows as Record<string, any>[]) ?? []).map((row) => ({
+      name: row.display_name,
+      focus: row.focus,
+      role:
+        row.biotype_key === selectedPrimary
+          ? ("primary" as const)
+          : selectedSecondary.includes(row.biotype_key)
+            ? ("secondary" as const)
+            : ("available" as const),
+      requirements: summarizeJson([...(row.required_documents ?? []), ...(row.required_training ?? [])].slice(0, 4))
+    }));
+    const fallbackBiotypes = canonicalBioTypeFoundations.map((foundation) => ({
+      name: foundation.name,
+      focus: foundation.focus,
+      role:
+        foundation.key === selectedPrimary
+          ? ("primary" as const)
+          : selectedSecondary.includes(foundation.key)
+            ? ("secondary" as const)
+            : ("available" as const),
+      requirements: [...foundation.documents.slice(0, 2), ...foundation.training.slice(0, 2)].join(", ")
+    }));
 
     return {
       companyName: programs > 0 || scoresCount > 0 ? "Live organization workspace" : "NorthStar BioLabs",
@@ -689,8 +780,13 @@ export async function getIntelligenceFoundationSummary(): Promise<IntelligenceFo
         { label: "Applicability rules", value: rules },
         { label: "Evidence items", value: evidenceCount },
         { label: "Change impacts", value: changesCount },
-        { label: "Readiness scores", value: scoresCount }
+        { label: "Readiness scores", value: scoresCount },
+        { label: "BioTypes", value: biotypeFoundations },
+        { label: "BioType selections", value: biotypeSelections },
+        { label: "BioType rules", value: biotypeMappings }
       ],
+      coreComponents: coreComplianceComponents,
+      biotypes: liveBiotypes.length > 0 ? liveBiotypes : fallbackBiotypes,
       intake: ((responseRows as Record<string, any>[]) ?? []).map((row) => ({
         question: row.question_key,
         answer: summarizeJson(row.answer_value),
@@ -722,6 +818,9 @@ export async function getIntelligenceFoundationSummary(): Promise<IntelligenceFo
         actions: summarizeJson(row.recommended_actions)
       })),
       readiness,
+      aiWorkflow: aiWorkflowSteps,
+      humanValidationWorkflow: humanValidationWorkflowSteps,
+      guardrailText: draftAiRecommendationGuardrail,
       latestAssessmentInput
     };
   } catch {
@@ -1543,6 +1642,66 @@ export async function seedIntelligenceFoundation(): Promise<{ ok: true; seedLabe
       created_by: context.userId
     });
 
+    const { data: biotypeRows } = await supabase
+      .from("biotype_foundations")
+      .upsert(
+        canonicalBioTypeFoundations.map((foundation) => ({
+          organization_id: context.organizationId,
+          biotype_key: foundation.key,
+          display_name: foundation.name,
+          focus: foundation.focus,
+          applicable_programs: foundation.programs,
+          required_documents: foundation.documents,
+          required_records: foundation.records,
+          required_training: foundation.training,
+          risk_drivers: foundation.riskDrivers,
+          common_tools: foundation.commonTools,
+          metadata: { source: "PredictSafeBIO_Codex_Reformat_Packet", seedRunId },
+          draft_only: true,
+          human_review_required: true,
+          created_by: context.userId
+        })),
+        { onConflict: "organization_id,biotype_key" }
+      )
+      .select("id,biotype_key,display_name,applicable_programs,required_documents,required_records,required_training,risk_drivers");
+
+    const selectedPrimary: BioTypeKey = "rd_biotech";
+    const selectedSecondary: BioTypeKey[] = ["diagnostics_clinical_lab", "academic_university_research"];
+    const { data: biotypeSelection } = await supabase
+      .from("organization_biotype_selections")
+      .insert({
+        organization_id: context.organizationId,
+        company_profile_id: companyProfile.id ?? null,
+        primary_biotype_key: selectedPrimary,
+        secondary_biotype_keys: selectedSecondary,
+        selection_status: "draft_human_review_required",
+        selection_reason: "NorthStar BioLabs pilot combines R&D biotech with diagnostics/sample handling and academic-style biosafety oversight.",
+        human_review_required: true,
+        created_by: context.userId
+      })
+      .select("id")
+      .single();
+
+    if (biotypeRows && biotypeRows.length > 0) {
+      await supabase.from("biotype_rule_mappings").insert(
+        biotypeRows.map((row: Record<string, any>) => ({
+          organization_id: context.organizationId,
+          biotype_foundation_id: row.id,
+          rule_key: `biotype-${row.biotype_key}-${seedSuffix}`,
+          source_module: "biotype_selection",
+          source_record_id: biotypeSelection?.id ?? null,
+          required_programs: row.applicable_programs ?? [],
+          required_documents: row.required_documents ?? [],
+          required_records: row.required_records ?? [],
+          required_training: row.required_training ?? [],
+          risk_driver: Array.isArray(row.risk_drivers) ? row.risk_drivers.slice(0, 3).join(", ") : null,
+          draft_only: true,
+          human_review_required: true,
+          created_by: context.userId
+        }))
+      );
+    }
+
     await supabase.from("audit_events").insert({
       organization_id: context.organizationId,
       actor_id: context.userId,
@@ -1557,7 +1716,10 @@ export async function seedIntelligenceFoundation(): Promise<{ ok: true; seedLabe
           incidentId: incident.id,
           capaId: capa?.id ?? null,
           readinessScore: demo.readiness.overallScore,
-          documentId: documentResult.ok ? documentResult.document?.id ?? null : null
+          documentId: documentResult.ok ? documentResult.document?.id ?? null : null,
+          primaryBioType: selectedPrimary,
+          secondaryBioTypes: selectedSecondary,
+          biotypeSelectionId: biotypeSelection?.id ?? null
         },
         {
           sourceModule: "foundation",
@@ -1962,6 +2124,11 @@ function summarizeJson(value: unknown) {
   return String(value);
 }
 
+function normalizeBioTypeKeys(value: unknown): BioTypeKey[] {
+  const rawValues = Array.isArray(value) ? value : typeof value === "string" ? [value] : [];
+  return rawValues.map((item) => normalizeBioTypeKey(String(item))).filter((item): item is BioTypeKey => Boolean(item));
+}
+
 function programMethodRequired(programName: string, methodName: string) {
   if (["AI Guardrail", "Audit Evidence", "Change Impact"].includes(methodName)) return true;
   if (programName.includes("Training")) return ["Training Gap", "Control Verification"].includes(methodName);
@@ -1973,7 +2140,8 @@ function programMethodRequired(programName: string, methodName: string) {
 
 function demoIntelligenceFoundationSummary(): IntelligenceFoundationSummary {
   const demo = northStarFoundationDemo();
-  const assessmentInput = demo.aiInput;
+  const biotypeContext = buildBioTypeAiContext("rd_biotech", ["diagnostics_clinical_lab", "academic_university_research"]);
+  const assessmentInput = applyBioTypeContext(demo.aiInput, biotypeContext);
 
   return {
     companyName: "NorthStar BioLabs",
@@ -1985,8 +2153,23 @@ function demoIntelligenceFoundationSummary(): IntelligenceFoundationSummary {
       { label: "Applicability rules", value: defaultApplicabilityRules.length },
       { label: "Evidence items", value: demo.evidence.length },
       { label: "Change impacts", value: demo.changes.length },
-      { label: "Readiness scores", value: 1 }
+      { label: "Readiness scores", value: 1 },
+      { label: "BioTypes", value: canonicalBioTypeFoundations.length },
+      { label: "BioType selections", value: 1 },
+      { label: "BioType rules", value: canonicalBioTypeFoundations.length }
     ],
+    coreComponents: coreComplianceComponents,
+    biotypes: canonicalBioTypeFoundations.map((foundation) => ({
+      name: foundation.name,
+      focus: foundation.focus,
+      role:
+        foundation.key === "rd_biotech"
+          ? "primary"
+          : ["diagnostics_clinical_lab", "academic_university_research"].includes(foundation.key)
+            ? "secondary"
+            : "available",
+      requirements: [...foundation.documents.slice(0, 2), ...foundation.training.slice(0, 2)].join(", ")
+    })),
     intake: [
       { question: "hazardousChemicals", answer: "true", triggers: "Chemical Hygiene, Waste Management" },
       { question: "biologicalMaterials", answer: "true", triggers: "Biosafety, Waste Management" },
@@ -2028,6 +2211,9 @@ function demoIntelligenceFoundationSummary(): IntelligenceFoundationSummary {
       evidenceScore: demo.readiness.evidenceScore,
       topGaps: demo.readiness.topGaps
     },
+    aiWorkflow: aiWorkflowSteps,
+    humanValidationWorkflow: humanValidationWorkflowSteps,
+    guardrailText: draftAiRecommendationGuardrail,
     latestAssessmentInput: assessmentInput
   };
 }

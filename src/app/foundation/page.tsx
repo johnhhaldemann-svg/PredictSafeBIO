@@ -1,5 +1,15 @@
 import Link from "next/link";
-import { AlertTriangle, BookOpenCheck, BrainCircuit, DatabaseZap, FileSearch, Gauge, GitBranch, ShieldCheck } from "lucide-react";
+import {
+  AlertTriangle,
+  BookOpenCheck,
+  BrainCircuit,
+  DatabaseZap,
+  FileSearch,
+  Gauge,
+  GitBranch,
+  Network,
+  ShieldCheck
+} from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { assessBioRisk } from "@/lib/bio-ai/engine";
@@ -43,6 +53,49 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
               {count.label}: {count.value}
             </span>
           ))}
+        </section>
+
+        <section className="split-list wide">
+          <div className="panel">
+            <div className="panel-heading">
+              <div>
+                <p className="section-label">Core Compliance Components</p>
+                <h2>13 shared foundation components</h2>
+              </div>
+              <Network size={22} />
+            </div>
+            <div className="component-grid">
+              {summary.coreComponents.map((component) => (
+                <article className="profile-row" key={component.name}>
+                  <span>{component.name}</span>
+                  <strong>{component.purpose}</strong>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-heading">
+              <div>
+                <p className="section-label">BioType Foundation Packages</p>
+                <h2>Primary and secondary branches</h2>
+              </div>
+              <GitBranch size={22} />
+            </div>
+            <div className="action-list">
+              {summary.biotypes.map((biotype) => (
+                <article className="action-row" key={biotype.name}>
+                  <div>
+                    <strong>{biotype.name}</strong>
+                    <span>{biotype.role}</span>
+                  </div>
+                  <p>
+                    {biotype.focus} Requirements: {biotype.requirements}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
         </section>
 
         <section className="foundation-grid">
@@ -207,11 +260,43 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
             </ul>
             <div className="guardrail-box">
               <ShieldCheck size={18} />
-              <span>AI may recommend, draft, summarize, and flag gaps only. It does not approve SOPs, certify compliance, close CAPAs, or validate systems.</span>
+              <span>{summary.guardrailText}</span>
             </div>
             <Link className="button-secondary" href="/workbench">
               Open foundation context in Workbench
             </Link>
+          </div>
+        </section>
+
+        <section className="split-list wide">
+          <div className="panel">
+            <div className="panel-heading">
+              <div>
+                <p className="section-label">AI Workflow Map</p>
+                <h2>Deterministic data flow</h2>
+              </div>
+              <BrainCircuit size={22} />
+            </div>
+            <div className="workflow-steps">
+              {summary.aiWorkflow.map((step) => (
+                <span key={step}>{step}</span>
+              ))}
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-heading">
+              <div>
+                <p className="section-label">Human Validation Workflow</p>
+                <h2>Draft to controlled use</h2>
+              </div>
+              <ShieldCheck size={22} />
+            </div>
+            <div className="workflow-steps">
+              {summary.humanValidationWorkflow.map((step) => (
+                <span key={step}>{step}</span>
+              ))}
+            </div>
           </div>
         </section>
       </div>

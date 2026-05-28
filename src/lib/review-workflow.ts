@@ -1,4 +1,5 @@
 import type { AuditEvent, BioAiAssessment, BioAiInput, DocumentMetadata, HumanReviewStatus } from "@/lib/bio-ai/types";
+import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import type { DocumentRecommendationRun } from "@/lib/supabase/data";
 
 export const humanReviewStatusLabels: Record<HumanReviewStatus | "routine_monitoring", string> = {
@@ -45,7 +46,7 @@ export function getDemoSeedLabel(value?: string | null) {
 }
 
 const reportBoundary =
-  "Draft - Human Review Required. This demo report is not a controlled record and makes no FDA, GxP, Part 11, approval, validation, regulatory acceptance, diagnosis, or release claim.";
+  `${draftAiRecommendationGuardrail} This demo report is not a controlled record and makes no FDA, GxP, Part 11, approval, validation, regulatory acceptance, diagnosis, or release claim.`;
 
 export function buildAssessmentReportMarkdown({
   assessment,

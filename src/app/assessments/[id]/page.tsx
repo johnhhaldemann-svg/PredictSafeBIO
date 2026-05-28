@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { updateAssessmentReviewAction } from "@/app/assessments/actions";
 import { getAssessmentDetail, getCompanyProfile } from "@/lib/supabase/data";
+import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import {
   buildAssessmentReportMarkdown,
   getAuditEventTarget,
@@ -121,7 +122,7 @@ export default async function AssessmentDetailPage({
         <section className="panel">
           <h2>Guarded explanation</h2>
           <p>{assessment.output.explanation}</p>
-          <p className="muted">No release, approval, compliance, diagnosis, or regulatory acceptance claim is made.</p>
+          <p className="muted">{draftAiRecommendationGuardrail}</p>
         </section>
         <section className="panel inline-action-panel">
           <div>

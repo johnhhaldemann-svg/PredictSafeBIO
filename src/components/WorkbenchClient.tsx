@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, Beaker, CheckCircle2, ClipboardList, Save, Sparkles } from "lucide-react";
 import { assessBioRisk } from "@/lib/bio-ai/engine";
+import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import type { BioAiInput, BioSignalType } from "@/lib/bio-ai/types";
 import { StatusBadge } from "./StatusBadge";
 
@@ -320,7 +321,7 @@ export function WorkbenchClient({ initialInput = starterInput }: { initialInput?
         </div>
         <div className="guardrail-box">
           <CheckCircle2 size={18} />
-          <span>No release, approval, compliance, diagnosis, or regulatory acceptance claim is made.</span>
+          <span>{draftAiRecommendationGuardrail}</span>
         </div>
         <div className="source-box">
           <Sparkles size={18} />

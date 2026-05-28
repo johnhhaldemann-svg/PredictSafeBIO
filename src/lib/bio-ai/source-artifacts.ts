@@ -19,3 +19,5 @@ export const doNotClaim = [
 ];
 
 export const draftHumanReviewLabel = "Draft - Human Review Required";
+export const draftAiRecommendationGuardrail =
+  "Draft AI recommendation - human review required. This does not certify compliance, approve documents, close CAPAs, validate systems, or replace qualified review.";

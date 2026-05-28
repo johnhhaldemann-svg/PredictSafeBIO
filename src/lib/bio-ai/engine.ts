@@ -1,4 +1,4 @@
-import { doNotClaim } from "./source-artifacts";
+import { doNotClaim, draftAiRecommendationGuardrail } from "./source-artifacts";
 import { bioRiskFamilies } from "./risk-families";
 import type {
   BioAiAssessment,
@@ -71,7 +71,7 @@ export function assessBioRisk(input: BioAiInput): BioAiAssessment {
     humanReviewRequired,
     humanReviewReason,
     actionTimeframe: actionTimeframe[level],
-    doNotClaim
+    doNotClaim: [...doNotClaim, draftAiRecommendationGuardrail]
   };
 }
 
@@ -112,6 +112,17 @@ export function detectMissingInformation(input: BioAiInput, signals: BioAiSignal
       missing.add(`foundation evidence gap: ${gap}`);
     }
     if (input.foundationContext.auditReadinessScore < 70) missing.add("foundation audit readiness score below pilot threshold");
+  }
+  if (input.primaryBioType) {
+    if ((input.biotypeDocuments?.length ?? 0) > 0 && isGapStatus(input.documentReadiness)) {
+      missing.add("BioType-controlled document evidence");
+    }
+    if ((input.biotypeTraining?.length ?? 0) > 0 && isGapStatus(input.trainingStatus)) {
+      missing.add("BioType training and competency evidence");
+    }
+    if ((input.biotypeRecords?.length ?? 0) > 0 && isGapStatus(input.auditReadinessStatus)) {
+      missing.add("BioType controlled record evidence");
+    }
   }
 
   if (isGapStatus(input.trainingStatus)) missing.add("current training assignment evidence");
@@ -220,6 +231,11 @@ function applyEscalationOverrides(input: BioAiInput, signals: BioAiSignal[], bas
     }
   }
 
+  if (input.primaryBioType && (input.biotypeDocuments?.length || input.biotypeTraining?.length || input.biotypeRecords?.length)) {
+    level = increaseOneBand(level);
+    reasons.push("BioType Foundation requirements add branch-specific document, training, record, and risk context.");
+  }
+
   if (isGapStatus(input.equipmentStatus) || isGapStatus(input.sampleMaterialContext?.storageConditionStatus)) {
     raiseTo("high", "Map-derived equipment or storage condition evidence requires impact review.");
   }
@@ -254,6 +270,12 @@ function matchRiskFamilies(input: BioAiInput, signals: BioAiSignal[] = input.sig
     input.foundationContext?.requiredDocuments.join(" "),
     input.foundationContext?.requiredTraining.join(" "),
     input.foundationContext?.bioriskRuleDrivers.join(" "),
+    input.primaryBioType,
+    input.secondaryBioTypes?.join(" "),
+    input.biotypePrograms?.join(" "),
+    input.biotypeDocuments?.join(" "),
+    input.biotypeTraining?.join(" "),
+    input.biotypeRiskDrivers?.join(" "),
     input.incidentContext?.status,
     input.sampleMaterialContext?.chainOfCustodyStatus,
     input.sampleMaterialContext?.storageConditionStatus,
@@ -350,6 +372,9 @@ function buildTopDrivers(
   const foundationDrivers = foundationContextDrivers(input);
   drivers.push(...foundationDrivers);
 
+  const biotypeDrivers = biotypeContextDrivers(input);
+  drivers.push(...biotypeDrivers);
+
   if (signals.some((signal) => signal.repeatFinding) || input.incidentContext?.repeatPattern) {
     drivers.push({
       label: "Repeat pattern across signals",
@@ -368,7 +393,7 @@ function buildTopDrivers(
     });
   }
 
-  return dedupeByLabel(drivers).slice(0, 12);
+  return dedupeByLabel(drivers).slice(0, 15);
 }
 
 function buildRecommendedActions(
@@ -477,6 +502,18 @@ function buildRecommendedActions(
     });
   }
 
+  if (input.primaryBioType && ((input.biotypeDocuments?.length ?? 0) > 0 || (input.biotypeTraining?.length ?? 0) > 0)) {
+    actions.unshift({
+      title: "Review BioType Foundation requirements",
+      priority,
+      ownerRole: input.biotypePrograms?.some((program) => program.toLowerCase().includes("biosafety")) ? "biosafety_officer" : "qa",
+      actionType: "documentation_review",
+      reason: "Primary and secondary BioType selections added branch-specific documents, training, records, and risk drivers for human review.",
+      sourceRecords: sourceTrace.sourceRecords,
+      referenceRuleIds: sourceTrace.referenceRuleIds
+    });
+  }
+
   if (overrideReasons.length > 0 && actions.length === 0) {
     actions.push({
       title: "Escalate to responsible owner",
@@ -522,7 +559,7 @@ function buildGuardedExplanation(
   return `Based on available data, this is a potential ${level} biotech risk with ${confidence} confidence. Primary drivers include ${topDrivers
     .slice(0, 3)
     .map((driver) => driver.label)
-    .join(", ")}.${missingText} ${reviewText} This draft assessment does not replace quality, regulatory, biosafety, clinical, validation, or scientific judgment.`;
+    .join(", ")}.${missingText} ${reviewText} ${draftAiRecommendationGuardrail} This draft assessment does not replace quality, regulatory, biosafety, clinical, validation, or scientific judgment.`;
 }
 
 function buildHumanReviewReason(level: BioRiskLevel, overrideReasons: string[], criticalControlGaps: string[]) {
@@ -563,7 +600,9 @@ function buildSourceTrace(input: BioAiInput, signals: BioAiSignal[] = input.sign
     ...(input.sampleMaterialContext?.materialId
       ? [{ module: "material" as const, recordId: input.sampleMaterialContext.materialId, label: "Linked material" }]
       : []),
-    ...(input.foundationContext?.sourceRecords ?? [])
+    ...(input.foundationContext?.sourceRecords ?? []),
+    ...(input.primaryBioType ? [{ module: "biotype_selection" as const, recordId: input.primaryBioType, label: "Primary BioType" }] : []),
+    ...(input.secondaryBioTypes ?? []).map((key) => ({ module: "biotype_selection" as const, recordId: key, label: "Secondary BioType" }))
   ]);
   const referenceRuleIds = Array.from(
     new Set([
@@ -645,6 +684,39 @@ function foundationContextDrivers(input: BioAiInput): BioAiAssessment["topDriver
       category: "regulatory",
       impact: context.auditReadinessScore < 50 ? "critical" : "high",
       explanation: `Foundation readiness score is ${context.auditReadinessScore}; draft gaps require human review.`
+    });
+  }
+
+  return drivers;
+}
+
+function biotypeContextDrivers(input: BioAiInput): BioAiAssessment["topDrivers"] {
+  if (!input.primaryBioType) return [];
+
+  const drivers: BioAiAssessment["topDrivers"] = [
+    {
+      label: "BioType Foundation selection",
+      category: "regulatory",
+      impact: "high",
+      explanation: `Primary BioType ${input.primaryBioType} defines branch-specific controls for this draft assessment.`
+    }
+  ];
+
+  if ((input.secondaryBioTypes?.length ?? 0) > 0) {
+    drivers.push({
+      label: "Multi-BioType overlap",
+      category: "pattern",
+      impact: "high",
+      explanation: `Secondary BioTypes add ${input.secondaryBioTypes?.length ?? 0} additional branch profile(s), requiring merged document, training, and evidence review.`
+    });
+  }
+
+  if ((input.biotypeRiskDrivers?.length ?? 0) > 0) {
+    drivers.push({
+      label: "BioType risk drivers",
+      category: "controls",
+      impact: "high",
+      explanation: `BioType risk drivers include ${input.biotypeRiskDrivers?.slice(0, 4).join(", ")}.`
     });
   }
 

@@ -1,8 +1,9 @@
 import { AppShell } from "@/components/AppShell";
-import { getCompanyProfile } from "@/lib/supabase/data";
+import { getCompanyProfile, getIntelligenceFoundationSummary } from "@/lib/supabase/data";
 
 export default async function CompanyProfilePage() {
-  const companyProfile = await getCompanyProfile();
+  const [companyProfile, foundation] = await Promise.all([getCompanyProfile(), getIntelligenceFoundationSummary()]);
+  const selectedBioTypes = foundation.biotypes.filter((biotype) => biotype.role !== "available");
 
   return (
     <AppShell>
@@ -26,6 +27,30 @@ export default async function CompanyProfilePage() {
               <strong>{value}</strong>
             </article>
           ))}
+        </section>
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">BioType Foundation Packages</p>
+              <h2>Selected operating profile</h2>
+            </div>
+          </div>
+          <div className="action-list">
+            {selectedBioTypes.map((biotype) => (
+              <article className="action-row" key={biotype.name}>
+                <div>
+                  <strong>{biotype.name}</strong>
+                  <span>{biotype.role}</span>
+                </div>
+                <p>
+                  {biotype.focus} Requirements: {biotype.requirements}
+                </p>
+              </article>
+            ))}
+          </div>
+          <div className="guardrail-box">
+            <span>{foundation.guardrailText}</span>
+          </div>
         </section>
       </div>
     </AppShell>

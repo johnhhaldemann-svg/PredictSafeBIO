@@ -3,6 +3,7 @@ import { AlertTriangle, Boxes, ClipboardList, DatabaseZap, FlaskConical, ShieldC
 import { AppShell } from "@/components/AppShell";
 import { createMapOperationsBundleAction } from "./actions";
 import { assessBioRisk } from "@/lib/bio-ai/engine";
+import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import { getMapOperationsSummary } from "@/lib/supabase/data";
 
 export default async function OperationsPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
@@ -135,7 +136,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
             </ul>
             <div className="guardrail-box">
               <ShieldCheck size={18} />
-              <span>Linked source records influence deterministic context only; no approval, release, or compliance claim is made.</span>
+              <span>{draftAiRecommendationGuardrail}</span>
             </div>
             <Link className="button-secondary" href="/workbench">
               Open in Workbench

@@ -204,6 +204,31 @@ button {
   gap: 16px;
 }
 
+.component-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.workflow-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.workflow-steps span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  border: 1px solid #c9e7ee;
+  border-radius: 8px;
+  background: #f2fbfd;
+  color: #315963;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .panel,
 .table-panel,
 .timeline,
@@ -903,6 +928,7 @@ pre {
   .toggle-grid,
   .foundation-grid,
   .mini-columns,
+  .component-grid,
   .split-list,
   .snapshot-grid,
   .profile-grid,
