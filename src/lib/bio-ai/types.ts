@@ -18,6 +18,7 @@ export type BioSignalType =
   | "contamination_event"
   | "environmental_monitoring"
   | "equipment_event"
+  | "ergonomic_risk_signal"
   | "sample_chain_of_custody"
   | "data_integrity"
   | "batch_record"
@@ -90,7 +91,10 @@ export type BioSourceModule =
   | "chemical"
   | "waste"
   | "audit"
-  | "task";
+  | "task"
+  | "inspection"
+  | "ergonomic_self_assessment"
+  | "ergonomic_advanced_evaluation";
 
 export type BioSourceRecord = {
   module: BioSourceModule;
@@ -333,7 +337,10 @@ export type AuditEvent = {
     | "intelligence_foundation_seeded"
     | "intelligence_foundation_evaluated"
     | "change_impact_generated"
-    | "audit_readiness_score_generated";
+    | "audit_readiness_score_generated"
+    | "ergonomic_self_assessment_submitted"
+    | "ergonomic_advanced_evaluation_requested"
+    | "ergonomic_corrective_action_recommended";
   summary: string;
   payload?: Record<string, unknown>;
   createdAt?: string;

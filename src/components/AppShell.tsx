@@ -4,8 +4,10 @@ import {
   Boxes,
   BrainCircuit,
   ClipboardCheck,
+  ClipboardList,
   FileText,
   FlaskConical,
+  HeartPulse,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -17,14 +19,16 @@ import { signOutAction } from "@/app/auth/actions";
 import { getAuthSummary } from "@/lib/supabase/data";
 
 const navItems = [
-  { href: "/workbench", label: "Workbench", icon: FlaskConical },
-  { href: "/foundation", label: "Foundation", icon: BrainCircuit },
-  { href: "/operations", label: "Operations", icon: Boxes },
-  { href: "/assessments", label: "Assessments", icon: ClipboardCheck },
-  { href: "/company-profile", label: "Company Profile", icon: LayoutDashboard },
-  { href: "/documents", label: "Documents", icon: FileText },
-  { href: "/admin/audit", label: "Audit", icon: Activity },
-  { href: "/admin/demo", label: "Demo Ops", icon: Settings }
+  { href: "/workbench", label: "Workbench", icon: FlaskConical, section: "Platform" },
+  { href: "/foundation", label: "Foundation", icon: BrainCircuit, section: "Platform" },
+  { href: "/operations", label: "Operations", icon: Boxes, section: "Platform" },
+  { href: "/ergonomics/self-assessment", label: "Level 1 Screening", icon: HeartPulse, section: "Ergonomics" },
+  { href: "/inspections", label: "Inspections", icon: ClipboardList, section: "Safety tools" },
+  { href: "/assessments", label: "Assessments", icon: ClipboardCheck, section: "Safety tools" },
+  { href: "/company-profile", label: "Company Profile", icon: LayoutDashboard, section: "Workspace" },
+  { href: "/documents", label: "Documents", icon: FileText, section: "Workspace" },
+  { href: "/admin/audit", label: "Audit", icon: Activity, section: "Admin" },
+  { href: "/admin/demo", label: "Demo Ops", icon: Settings, section: "Admin" }
 ];
 
 export async function AppShell({ children }: { children: ReactNode }) {
@@ -43,12 +47,18 @@ export async function AppShell({ children }: { children: ReactNode }) {
           </span>
         </Link>
         <nav className="nav-list" aria-label="Primary navigation">
-          {navItems.map((item) => (
-            <Link href={item.href} className="nav-link" key={item.href}>
-              <item.icon size={17} />
-              <span>{item.label}</span>
-            </Link>
-          ))}
+          {navItems.map((item, index) => {
+            const showSection = index === 0 || navItems[index - 1].section !== item.section;
+            return (
+              <div className="nav-group" key={item.href}>
+                {showSection ? <span className="nav-section">{item.section}</span> : null}
+                <Link href={item.href} className="nav-link">
+                  <item.icon size={17} />
+                  <span>{item.label}</span>
+                </Link>
+              </div>
+            );
+          })}
         </nav>
       </aside>
       <main className="main-panel">
