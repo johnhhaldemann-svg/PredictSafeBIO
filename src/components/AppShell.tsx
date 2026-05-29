@@ -23,6 +23,7 @@ const navItems = [
   { href: "/workbench", label: "BioRisk Scoring", icon: FlaskConical, section: "Risk Intelligence" },
   { href: "/assessments", label: "Risk Register", icon: ClipboardCheck, section: "Risk Intelligence" },
   { href: "/documents", label: "SOPs & Templates", icon: FileText, section: "Document Control" },
+  { href: "/documents/version-control", label: "Version Control", icon: GitBranch, section: "Document Control" },
   { href: "/foundation", label: "Compliance Map", icon: BrainCircuit, section: "Compliance" },
   { href: "/operations", label: "HSE Operations", icon: Boxes, section: "HSE Management" },
   { href: "/ergonomics/self-assessment", label: "Hazard Tracking", icon: HeartPulse, section: "HSE Management" },

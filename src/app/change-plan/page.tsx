@@ -10,13 +10,17 @@ import {
 } from "./actions";
 
 type ChangePlanPageProps = {
-  searchParams: Promise<{ message?: string }>;
+  searchParams: Promise<{ message?: string; view?: string }>;
 };
 
 export default async function ChangePlanPage({ searchParams }: ChangePlanPageProps) {
   const [params, plan] = await Promise.all([searchParams, listChangePlanItems()]);
-  const plannedCount = plan.items.filter((row) => row.status === "Planned").length;
-  const highPriorityCount = plan.items.filter((row) => row.priority === "High").length;
+  const showArchived = params.view === "archived";
+  const activeItems = plan.items.filter((row) => row.status !== "Archived");
+  const archivedItems = plan.items.filter((row) => row.status === "Archived");
+  const visibleItems = showArchived ? plan.items : activeItems;
+  const plannedCount = activeItems.filter((row) => row.status === "Planned").length;
+  const highPriorityCount = activeItems.filter((row) => row.priority === "High").length;
   const persistedCount = plan.items.filter((row) => row.persisted).length;
   const accessTitle = plan.canManage
     ? plan.isFallback
@@ -50,10 +54,20 @@ export default async function ChangePlanPage({ searchParams }: ChangePlanPagePro
         </section>
 
         <section className="summary-strip" aria-label="Change plan summary">
-          <span>{plan.items.length} roadmap items</span>
+          <span>{activeItems.length} active roadmap items</span>
           <span>{highPriorityCount} high priority</span>
           <span>{plannedCount} planned</span>
+          <span>{archivedItems.length} archived</span>
           <span>{persistedCount > 0 ? `${persistedCount} persisted` : "Curated starter rows"}</span>
+        </section>
+
+        <section className="summary-strip" aria-label="Change plan filters">
+          <Link className={showArchived ? "filter-pill" : "filter-pill active"} href="/change-plan">
+            Active rows
+          </Link>
+          <Link className={showArchived ? "filter-pill active" : "filter-pill"} href="/change-plan?view=archived">
+            Include archived
+          </Link>
         </section>
 
         {plan.canManage ? (
@@ -123,7 +137,7 @@ export default async function ChangePlanPage({ searchParams }: ChangePlanPagePro
               </label>
               <label>
                 Sort
-                <input name="sortOrder" type="number" defaultValue={plan.items.length + 1} min={1} />
+                <input name="sortOrder" type="number" defaultValue={activeItems.length + 1} min={1} />
               </label>
               <label className="wide-field">
                 Notes / Requirement Detail
@@ -151,7 +165,7 @@ export default async function ChangePlanPage({ searchParams }: ChangePlanPagePro
               </tr>
             </thead>
             <tbody>
-              {plan.items.map((row) => (
+              {visibleItems.map((row) => (
                 <tr key={row.id ?? `${row.category}-${row.feature}`}>
                   <td>{row.category}</td>
                   <td>
@@ -163,6 +177,11 @@ export default async function ChangePlanPage({ searchParams }: ChangePlanPagePro
                   <td>{row.notes}</td>
                 </tr>
               ))}
+              {visibleItems.length === 0 ? (
+                <tr>
+                  <td colSpan={6}>No archived Change Plan rows yet.</td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </section>

@@ -9,6 +9,7 @@ const workbenchClient = readFileSync(join(process.cwd(), "src/components/Workben
 const workbenchPage = readFileSync(join(process.cwd(), "src/app/workbench/page.tsx"), "utf8");
 const changePlanActions = readFileSync(join(process.cwd(), "src/app/change-plan/actions.ts"), "utf8");
 const dataLayer = readFileSync(join(process.cwd(), "src/lib/supabase/data.ts"), "utf8");
+const versionControlPage = readFileSync(join(process.cwd(), "src/app/documents/version-control/page.tsx"), "utf8");
 
 describe("command center and change plan", () => {
   it("adds a command-center first screen while preserving BioRisk scoring", () => {
@@ -26,6 +27,7 @@ describe("command center and change plan", () => {
     expect(platformOutline).toContain("changePlanRows");
     expect(platformOutline).toContain("changePlanPriorities");
     expect(platformOutline).toContain("changePlanStatuses");
+    expect(platformOutline).toContain("Archived");
     expect(platformOutline).toContain("Version Control");
     expect(platformOutline).toContain("Roles & Permissions");
     expect(platformOutline).toContain("Integrations & APIs");
@@ -47,6 +49,7 @@ describe("command center and change plan", () => {
     expect(changePlanPage).toContain("Curated starter rows");
     expect(changePlanPage).toContain("Seed rows");
     expect(changePlanPage).toContain("Add item");
+    expect(changePlanPage).toContain("Include archived");
   });
 
   it("wires owner-only server actions for create and update controls", () => {
@@ -62,7 +65,17 @@ describe("command center and change plan", () => {
   it("adds Change Plan navigation and visible gap module cards", () => {
     expect(appShell).toContain("Change Plan");
     expect(appShell).toContain("/change-plan");
+    expect(appShell).toContain("/documents/version-control");
     expect(changePlanPage).toContain("Visible Gap Modules");
     expect(workbenchClient).toContain("gapModuleCards");
+  });
+
+  it("adds a Version Control workflow page backed by document metadata", () => {
+    expect(versionControlPage).toContain("Version Control");
+    expect(versionControlPage).toContain("Controlled version workflow");
+    expect(versionControlPage).toContain("listDocuments");
+    expect(versionControlPage).toContain("generateDocumentGapRecommendations");
+    expect(versionControlPage).toContain("generateDocumentUpdateRecommendations");
+    expect(versionControlPage).toContain("Human validation boundary");
   });
 });

@@ -17,7 +17,7 @@ export type CommandCenterCard = PlatformCategory & {
 export const changePlanPriorities = ["High", "Medium", "Low"] as const;
 export type ChangePlanPriority = (typeof changePlanPriorities)[number];
 
-export const changePlanStatuses = ["Planned", "In discovery", "Ready for demo", "Backlog"] as const;
+export const changePlanStatuses = ["Planned", "In discovery", "Ready for demo", "Backlog", "Archived"] as const;
 export type ChangePlanStatus = (typeof changePlanStatuses)[number];
 
 export type ChangePlanRow = {
@@ -137,7 +137,7 @@ export const changePlanRows: ChangePlanRow[] = [
     priority: "High",
     status: "Planned",
     notes: "Expose document version history and review state beside SOP metadata without replacing controlled-document approval.",
-    href: "/documents"
+    href: "/documents/version-control"
   },
   {
     category: "System Reliance",
@@ -181,7 +181,7 @@ export const gapModuleCards = [
   {
     title: "Version Control",
     category: "Document Control",
-    href: "/documents",
+    href: "/documents/version-control",
     summary: "Document metadata and planned version history for SOPs, forms, templates, and controlled records."
   },
   {

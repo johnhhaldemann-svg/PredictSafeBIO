@@ -1593,6 +1593,25 @@ textarea {
   font-weight: 800;
 }
 
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #315963;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.filter-pill.active {
+  border-color: #9bdceb;
+  background: #e8f9fd;
+  color: #00677c;
+}
+
 .compact-summary {
   margin: 14px 0 0;
 }

@@ -6,6 +6,10 @@ const migration = readFileSync(
   join(process.cwd(), "supabase/migrations/20260530120000_change_plan_items.sql"),
   "utf8"
 );
+const archiveMigration = readFileSync(
+  join(process.cwd(), "supabase/migrations/20260530130000_change_plan_item_archive_status.sql"),
+  "utf8"
+);
 const dataLayer = readFileSync(join(process.cwd(), "src/lib/supabase/data.ts"), "utf8");
 const actions = readFileSync(join(process.cwd(), "src/app/change-plan/actions.ts"), "utf8");
 
@@ -42,5 +46,10 @@ describe("change plan schema and owner enforcement", () => {
     expect(dataLayer).toContain('context.role !== "owner"');
     expect(actions).toContain("revalidatePath(\"/workbench\")");
     expect(actions).toContain("redirect(`/change-plan?");
+  });
+
+  it("extends roadmap status with a non-destructive archive option", () => {
+    expect(archiveMigration).toContain("drop constraint if exists change_plan_items_status_check");
+    expect(archiveMigration).toContain("'Archived'");
   });
 });
