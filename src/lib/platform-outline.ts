@@ -173,7 +173,7 @@ export const changePlanRows: ChangePlanRow[] = [
     priority: "High",
     status: "Planned",
     notes: "Connect BioType requirements, document changes, and training assignments into one readiness matrix.",
-    href: "/foundation#training-drilldown"
+    href: "/training-matrix"
   }
 ];
 
@@ -205,7 +205,7 @@ export const gapModuleCards = [
   {
     title: "Training Matrix",
     category: "HSE Management Systems",
-    href: "/foundation#training-drilldown",
+    href: "/training-matrix",
     summary: "BioType requirements, document impact, and training assignment readiness in one view."
   }
 ];

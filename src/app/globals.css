@@ -1973,6 +1973,46 @@ textarea {
   font-size: 15px;
 }
 
+.trend-list,
+.critical-signal-list {
+  display: grid;
+  gap: 10px;
+}
+
+.trend-list article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+
+.trend-list span,
+.critical-signal-list span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.trend-list strong {
+  color: var(--text);
+  font-size: 14px;
+  text-transform: capitalize;
+}
+
+.critical-signal-list {
+  margin-top: 14px;
+}
+
+.critical-signal-list span {
+  border: 1px solid #f0d5d5;
+  border-radius: 8px;
+  background: #fff8f8;
+  color: #6d3434;
+  padding: 9px 10px;
+}
+
 .table-panel {
   overflow: auto;
   padding: 6px;

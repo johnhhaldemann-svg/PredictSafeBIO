@@ -32,6 +32,19 @@ export default async function WorkbenchPage() {
     changePlanItemCount: changePlan.items.length,
     changePlanHighPriorityCount: changePlan.items.filter((item) => item.priority === "High").length,
     changePlanPersisted: !changePlan.isFallback,
+    bioRiskTrend:
+      assessments.length < 2
+        ? "not enough data"
+        : assessments[0].score > assessments[1].score
+          ? "increasing"
+          : assessments[0].score < assessments[1].score
+            ? "decreasing"
+            : "steady",
+    openActionTrend: foundationActions.length > 0 ? "active follow-up" : "clear",
+    recentCriticalSignals: assessments
+      .filter((assessment) => assessment.level === "critical" || assessment.humanReviewRequired)
+      .slice(0, 3)
+      .map((assessment) => `${assessment.workflow} / ${assessment.level}`),
     ownerMode: adminAccess.isOwner
   };
 

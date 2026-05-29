@@ -22,6 +22,9 @@ type CommandCenterSummary = {
   changePlanItemCount: number;
   changePlanHighPriorityCount: number;
   changePlanPersisted: boolean;
+  bioRiskTrend: string;
+  openActionTrend: string;
+  recentCriticalSignals: string[];
   ownerMode: boolean;
 };
 
@@ -98,6 +101,9 @@ export function WorkbenchClient({
     changePlanItemCount: gapModuleCards.length,
     changePlanHighPriorityCount: 3,
     changePlanPersisted: false,
+    bioRiskTrend: "not enough data",
+    openActionTrend: foundationActions.length > 0 ? "active follow-up" : "clear",
+    recentCriticalSignals: assessment.humanReviewRequired ? [`${input.workflow ?? "Current workflow"} / ${assessment.level}`] : [],
     ownerMode: false
   };
   const cardMetrics: Record<string, { value: string; detail: string }> = {
@@ -301,6 +307,37 @@ export function WorkbenchClient({
             <span>{commandSummary.changePlanItemCount} Change Plan rows</span>
             <span>{commandSummary.changePlanHighPriorityCount} high priority</span>
             <span>{commandSummary.changePlanPersisted ? "Workspace roadmap" : "Starter roadmap"}</span>
+          </div>
+        </div>
+
+        <div className="panel command-trend-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Dashboard Trends</p>
+              <h2>Current movement</h2>
+            </div>
+            <Gauge size={22} />
+          </div>
+          <div className="trend-list">
+            <article>
+              <span>BioRisk trend</span>
+              <strong>{commandSummary.bioRiskTrend}</strong>
+            </article>
+            <article>
+              <span>Readiness trend</span>
+              <strong>{commandSummary.readinessTrend.replace(/_/g, " ")}</strong>
+            </article>
+            <article>
+              <span>Open actions</span>
+              <strong>{commandSummary.openActionTrend}</strong>
+            </article>
+          </div>
+          <div className="critical-signal-list">
+            {commandSummary.recentCriticalSignals.length > 0 ? (
+              commandSummary.recentCriticalSignals.map((signal) => <span key={signal}>{signal}</span>)
+            ) : (
+              <span>No recent critical signals</span>
+            )}
           </div>
         </div>
       </section>

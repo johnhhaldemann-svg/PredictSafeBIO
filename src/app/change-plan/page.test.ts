@@ -10,6 +10,8 @@ const workbenchPage = readFileSync(join(process.cwd(), "src/app/workbench/page.t
 const changePlanActions = readFileSync(join(process.cwd(), "src/app/change-plan/actions.ts"), "utf8");
 const dataLayer = readFileSync(join(process.cwd(), "src/lib/supabase/data.ts"), "utf8");
 const versionControlPage = readFileSync(join(process.cwd(), "src/app/documents/version-control/page.tsx"), "utf8");
+const trainingMatrixPage = readFileSync(join(process.cwd(), "src/app/training-matrix/page.tsx"), "utf8");
+const reviewWorkflow = readFileSync(join(process.cwd(), "src/lib/review-workflow.ts"), "utf8");
 
 describe("command center and change plan", () => {
   it("adds a command-center first screen while preserving BioRisk scoring", () => {
@@ -21,6 +23,8 @@ describe("command center and change plan", () => {
     expect(workbenchPage).toContain("getAuditReadinessConsoleSummary");
     expect(workbenchPage).toContain("listChangePlanItems");
     expect(workbenchClient).toContain("changePlanItemCount");
+    expect(workbenchClient).toContain("Dashboard Trends");
+    expect(workbenchClient).toContain("recentCriticalSignals");
   });
 
   it("keeps curated starter rows and adds persistence-backed helpers", () => {
@@ -66,6 +70,7 @@ describe("command center and change plan", () => {
     expect(appShell).toContain("Change Plan");
     expect(appShell).toContain("/change-plan");
     expect(appShell).toContain("/documents/version-control");
+    expect(appShell).toContain("/training-matrix");
     expect(changePlanPage).toContain("Visible Gap Modules");
     expect(workbenchClient).toContain("gapModuleCards");
   });
@@ -77,5 +82,17 @@ describe("command center and change plan", () => {
     expect(versionControlPage).toContain("generateDocumentGapRecommendations");
     expect(versionControlPage).toContain("generateDocumentUpdateRecommendations");
     expect(versionControlPage).toContain("Human validation boundary");
+  });
+
+  it("adds a Training Matrix workflow page backed by existing training sources", () => {
+    expect(platformOutline).toContain('href: "/training-matrix"');
+    expect(trainingMatrixPage).toContain("Training Matrix");
+    expect(trainingMatrixPage).toContain("getTrainingMatrixSummary");
+    expect(trainingMatrixPage).toContain("BioType, document, and change-impact training readiness");
+    expect(trainingMatrixPage).toContain("Training remains human validated");
+    expect(dataLayer).toContain("getTrainingMatrixSummary");
+    expect(dataLayer).toContain('from("training_assignments")');
+    expect(dataLayer).toContain('from("training_requirements")');
+    expect(reviewWorkflow).toContain("/training-matrix");
   });
 });

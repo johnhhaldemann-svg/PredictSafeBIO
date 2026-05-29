@@ -49,7 +49,7 @@ export function getAuditEventTarget(event: AuditEvent): { href: string; label: s
   }
 
   if (sourceModule === "training_assignment") {
-    return { href: "/foundation#training-drilldown", label: "Open training readiness" };
+    return { href: "/training-matrix", label: "Open training matrix" };
   }
 
   if (sourceModule === "equipment") {

@@ -26,6 +26,7 @@ const navItems = [
   { href: "/documents/version-control", label: "Version Control", icon: GitBranch, section: "Document Control" },
   { href: "/foundation", label: "Compliance Map", icon: BrainCircuit, section: "Compliance" },
   { href: "/operations", label: "HSE Operations", icon: Boxes, section: "HSE Management" },
+  { href: "/training-matrix", label: "Training Matrix", icon: ClipboardCheck, section: "HSE Management" },
   { href: "/ergonomics/self-assessment", label: "Hazard Tracking", icon: HeartPulse, section: "HSE Management" },
   { href: "/inspections", label: "Inspection / Audit", icon: ClipboardList, section: "HSE Management" },
   { href: "/company-profile", label: "Company Profile", icon: LayoutDashboard, section: "Common Utilities" },
