@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import {
   requestAdvancedErgonomicEvaluation,
+  saveErgonomicLevel2Inspection,
   saveErgonomicSelfAssessment,
   type ErgonomicSelfAssessmentSubmission
 } from "@/lib/supabase/data";
@@ -17,6 +18,7 @@ import {
   type ErgonomicFrequency,
   type ErgonomicTaskType
 } from "@/lib/ergonomics/level1";
+import { gripQualityOptions, parsePositiveNumber, type GripQuality, type Level2SourceContext } from "@/lib/ergonomics/level2";
 
 export type ErgonomicAssessmentActionState = {
   ok: boolean;
@@ -34,6 +36,12 @@ export type AdvancedEvaluationActionState = {
   requestId?: string;
 };
 
+export type Level2InspectionActionState = {
+  ok: boolean;
+  message?: string;
+  inspectionId?: string;
+};
+
 function firstValue(formData: FormData, name: string) {
   const value = formData.get(name);
   return typeof value === "string" ? value.trim() : "";
@@ -41,6 +49,10 @@ function firstValue(formData: FormData, name: string) {
 
 function allowedValue<T extends readonly { value: string }[]>(options: T, value: string): T[number]["value"] | "" {
   return options.some((option) => option.value === value) ? value : "";
+}
+
+function optionalText(formData: FormData, name: string) {
+  return firstValue(formData, name) || null;
 }
 
 function bodyPartsFromForm(formData: FormData): ErgonomicBodyPart[] {
@@ -95,4 +107,44 @@ export async function requestAdvancedEvaluationAction(
 
   if (!result.ok) return { ok: false, message: result.message };
   return { ok: true, requestId: result.requestId, message: result.message };
+}
+
+export async function submitLevel2InspectionAction(
+  _previousState: Level2InspectionActionState,
+  formData: FormData
+): Promise<Level2InspectionActionState> {
+  const sourceContext = firstValue(formData, "sourceContext") as Level2SourceContext;
+  const recommendations = firstValue(formData, "formalRecommendations")
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  const result = await saveErgonomicLevel2Inspection({
+    requestId: optionalText(formData, "requestId"),
+    sourceContext,
+    taskType: allowedValue(ergonomicTaskTypes, firstValue(formData, "taskType")) as ErgonomicTaskType,
+    taskDescription: firstValue(formData, "taskDescription"),
+    location: optionalText(formData, "location"),
+    departmentTrade: optionalText(formData, "departmentTrade"),
+    measuredLoadLbs: parsePositiveNumber(formData.get("measuredLoadLbs")),
+    horizontalReachIn: parsePositiveNumber(formData.get("horizontalReachIn")),
+    verticalHandHeightIn: parsePositiveNumber(formData.get("verticalHandHeightIn")),
+    travelDistanceIn: parsePositiveNumber(formData.get("travelDistanceIn")),
+    frequencyPerMinute: parsePositiveNumber(formData.get("frequencyPerMinute")),
+    taskDurationMinutes: parsePositiveNumber(formData.get("taskDurationMinutes")),
+    asymmetryDegrees: parsePositiveNumber(formData.get("asymmetryDegrees")),
+    gripQuality: allowedValue(gripQualityOptions, firstValue(formData, "gripQuality")) as GripQuality,
+    postureNotes: optionalText(formData, "postureNotes"),
+    photoEvidenceLabel: optionalText(formData, "photoEvidenceLabel"),
+    specialistNotes: firstValue(formData, "specialistNotes"),
+    formalRecommendations: recommendations,
+    correctiveActionRecommended: formData.get("correctiveActionRecommended") === "on"
+  });
+
+  revalidatePath("/ergonomics/advanced-evaluation");
+  revalidatePath("/inspections");
+  revalidatePath("/admin/audit");
+
+  if (!result.ok) return { ok: false, message: result.message };
+  return { ok: true, inspectionId: result.inspectionId, message: result.message };
 }

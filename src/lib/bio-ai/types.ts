@@ -340,7 +340,10 @@ export type AuditEvent = {
     | "audit_readiness_score_generated"
     | "ergonomic_self_assessment_submitted"
     | "ergonomic_advanced_evaluation_requested"
-    | "ergonomic_corrective_action_recommended";
+    | "ergonomic_corrective_action_recommended"
+    | "ergonomic_level2_inspection_created"
+    | "ergonomic_level2_inspection_submitted"
+    | "ergonomic_level2_corrective_action_recommended";
   summary: string;
   payload?: Record<string, unknown>;
   createdAt?: string;

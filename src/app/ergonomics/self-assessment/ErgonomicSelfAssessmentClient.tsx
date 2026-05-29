@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
@@ -299,6 +300,11 @@ export function ErgonomicSelfAssessmentClient() {
               <AdvancedRequestButton />
               {advancedState.message ? (
                 <p className={advancedState.ok ? "save-message save-saved" : "save-message save-error"}>{advancedState.message}</p>
+              ) : null}
+              {advancedState.requestId ? (
+                <Link className="button-primary large-action" href={`/ergonomics/advanced-evaluation?requestId=${advancedState.requestId}`}>
+                  Open Level 2 Measurement Inspection
+                </Link>
               ) : null}
             </form>
           ) : (

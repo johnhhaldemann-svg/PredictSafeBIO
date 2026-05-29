@@ -14,7 +14,8 @@ export default async function InspectionsPage() {
           <h1>Inspection types</h1>
         </header>
 
-        <section className="panel">
+        <section className="inspection-type-grid">
+          <article className="panel">
           <div className="panel-heading">
             <div>
               <p className="section-label">Available inspection</p>
@@ -37,6 +38,33 @@ export default async function InspectionsPage() {
               Start Screening
             </Link>
           </div>
+          </article>
+
+          <article className="panel">
+            <div className="panel-heading">
+              <div>
+                <p className="section-label">Advanced inspection</p>
+                <h2>{ergonomic.level2InspectionType.title}</h2>
+                <p className="muted">{ergonomic.level2InspectionType.description}</p>
+              </div>
+              <RulerIcon />
+            </div>
+            <div className="inspection-type-row">
+              <div className="inspection-icon">
+                <ClipboardList size={24} />
+              </div>
+              <div>
+                <strong>Level 2 measurement evaluation</strong>
+                <p>
+                  Requires a saved Level 1 request or an audit/inspection context. Captures measurements, evidence, specialist notes, and recommendations.
+                </p>
+              </div>
+              <Link className="button-secondary large-action" href={ergonomic.level2InspectionType.href}>
+                Open Audit Evaluation
+              </Link>
+            </div>
+            <p className="auth-note">{ergonomic.level2InspectionType.gatedLabel}</p>
+          </article>
         </section>
 
         <section className="summary-strip" aria-label="Inspection counts">
@@ -90,4 +118,8 @@ export default async function InspectionsPage() {
       </div>
     </AppShell>
   );
+}
+
+function RulerIcon() {
+  return <ClipboardList size={24} />;
 }

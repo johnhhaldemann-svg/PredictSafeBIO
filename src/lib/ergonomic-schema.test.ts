@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const migration = readFileSync(join(process.cwd(), "supabase/migrations/20260528223000_ergonomic_level1_screening.sql"), "utf8");
+const level2Migration = readFileSync(join(process.cwd(), "supabase/migrations/20260529211000_ergonomic_level2_inspections.sql"), "utf8");
 
 const ergonomicTables = [
   "inspection_records",
@@ -40,5 +41,26 @@ describe("ergonomic Level 1 Supabase migration", () => {
   it("uses same-org RLS without user_metadata authorization", () => {
     expect(migration).toContain("profiles.id = (select auth.uid())");
     expect(migration).not.toMatch(/user_metadata|raw_user_meta_data/i);
+  });
+});
+
+describe("ergonomic Level 2 Supabase migration", () => {
+  it("creates an org-scoped Level 2 measurement inspection table", () => {
+    expect(level2Migration).toContain("create table public.ergonomic_level2_inspections");
+    expect(level2Migration).toContain("organization_id uuid not null references public.organizations(id) on delete cascade");
+    expect(level2Migration).toContain("advanced_evaluation_request_id uuid references public.ergonomic_advanced_evaluation_requests");
+    expect(level2Migration).toContain("inspection_record_id uuid references public.inspection_records");
+    expect(level2Migration).toContain("measurement_payload jsonb not null");
+    expect(level2Migration).toContain("photo_evidence jsonb not null");
+    expect(level2Migration).toContain("specialist_notes text not null");
+    expect(level2Migration).toContain("formal_recommendations text[]");
+  });
+
+  it("secures Level 2 with grants, RLS, indexes, and same-org policies", () => {
+    expect(level2Migration).toContain("grant select, insert, update, delete on public.ergonomic_level2_inspections to authenticated");
+    expect(level2Migration).toContain("alter table public.ergonomic_level2_inspections enable row level security");
+    expect(level2Migration).toContain("profiles.id = (select auth.uid())");
+    expect(level2Migration).toContain("ergonomic_level2_inspections_org_created_at_idx");
+    expect(level2Migration).not.toMatch(/user_metadata|raw_user_meta_data/i);
   });
 });

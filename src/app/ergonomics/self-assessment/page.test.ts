@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 const page = readFileSync(join(process.cwd(), "src/app/ergonomics/self-assessment/page.tsx"), "utf8");
 const client = readFileSync(join(process.cwd(), "src/app/ergonomics/self-assessment/ErgonomicSelfAssessmentClient.tsx"), "utf8");
 const inspections = readFileSync(join(process.cwd(), "src/app/inspections/page.tsx"), "utf8");
+const level2Page = readFileSync(join(process.cwd(), "src/app/ergonomics/advanced-evaluation/page.tsx"), "utf8");
+const level2Client = readFileSync(join(process.cwd(), "src/app/ergonomics/advanced-evaluation/Level2InspectionClient.tsx"), "utf8");
 const shell = readFileSync(join(process.cwd(), "src/components/AppShell.tsx"), "utf8");
 
 describe("ergonomic Level 1 UI", () => {
@@ -29,8 +31,20 @@ describe("ergonomic Level 1 UI", () => {
 
   it("adds access from Inspections and the Ergonomics sidebar section", () => {
     expect(inspections).toContain("ergonomic.inspectionType.title");
+    expect(inspections).toContain("ergonomic.level2InspectionType.title");
     expect(inspections).toContain("Start Screening");
+    expect(inspections).toContain("Open Audit Evaluation");
     expect(shell).toContain("Ergonomics");
     expect(shell).toContain("/ergonomics/self-assessment");
+  });
+
+  it("keeps Level 2 measurement inspection separate and gated", () => {
+    expect(level2Page).toContain("Advanced Ergonomic Evaluation");
+    expect(level2Page).toContain("Level 2 Measurement Inspection");
+    expect(level2Client).toContain("Measurement capture");
+    expect(level2Client).toContain("Load or force (lb)");
+    expect(level2Client).toContain("Horizontal reach (in)");
+    expect(level2Client).toContain("Level 2 locked");
+    expect(client.split("<form action={submitAction}")[1].split("</form>")[0]).not.toMatch(/Load or force|Horizontal reach|Vertical hand height/i);
   });
 });

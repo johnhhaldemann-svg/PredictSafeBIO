@@ -27,6 +27,12 @@ import {
   type ErgonomicTaskType
 } from "@/lib/ergonomics/level1";
 import {
+  evaluateErgonomicLevel2,
+  validateErgonomicLevel2,
+  type ErgonomicLevel2Input,
+  type Level2SourceContext
+} from "@/lib/ergonomics/level2";
+import {
   applyBioTypeContext,
   buildBioTypeAiContext,
   canonicalBioTypeFoundations,
@@ -165,7 +171,32 @@ export type ErgonomicLevel1Summary = {
     description: string;
     href: string;
   };
+  level2InspectionType: {
+    title: string;
+    description: string;
+    href: string;
+    gatedLabel: string;
+  };
   aiInsight: string;
+};
+
+export type ErgonomicLevel2LaunchContext = {
+  allowed: boolean;
+  sourceContext: Level2SourceContext | null;
+  requestId?: string | null;
+  sourceSelfAssessmentId?: string | null;
+  taskType: ErgonomicTaskType;
+  taskDescription: string;
+  location?: string | null;
+  departmentTrade?: string | null;
+  reason: string;
+  recentInspections: Array<{
+    id: string;
+    taskType: string;
+    status: string;
+    riskSummary: string;
+    createdAt?: string;
+  }>;
 };
 
 export type IntelligenceFoundationSummary = {
@@ -882,29 +913,38 @@ export async function getErgonomicLevel1Summary(): Promise<ErgonomicLevel1Summar
     description: "Worker-facing ergonomic screening with no measurements or equation fields.",
     href: "/ergonomics/self-assessment"
   };
+  const level2InspectionType = {
+    title: "Advanced Ergonomic Evaluation - Level 2",
+    description: "Specialist/auditor measurement inspection launched from a saved request or audit context.",
+    href: "/ergonomics/advanced-evaluation?context=audit",
+    gatedLabel: "Requires Level 1 request or audit context"
+  };
   const context = await getProfileContext();
   if (!context) {
     return {
       counts: [
         { label: "Level 1 screenings", value: 2 },
         { label: "High or Severe", value: 1 },
-        { label: "Level 2 requests", value: 0 }
+        { label: "Level 2 requests", value: 0 },
+        { label: "Level 2 inspections", value: 0 }
       ],
       recentScreenings: [
         demoErgonomicRecord("demo-ergo-1", "lifting", "moderate", 5, "Shipping"),
         demoErgonomicRecord("demo-ergo-2", "repetitive_work", "high", 6, "Assembly")
       ],
       inspectionType,
+      level2InspectionType,
       aiInsight: safePredictErgoAiInsight
     };
   }
 
   try {
     const supabase = await createSupabaseServerClient();
-    const [screenings, highOrSevere, requests, recentRows] = await Promise.all([
+    const [screenings, highOrSevere, requests, level2Inspections, recentRows] = await Promise.all([
       countRows(supabase, "ergonomic_self_assessments", context.organizationId),
       countRiskRows(supabase, context.organizationId, ["high", "severe"]),
       countRows(supabase, "ergonomic_advanced_evaluation_requests", context.organizationId),
+      countRows(supabase, "ergonomic_level2_inspections", context.organizationId),
       latestRows(
         supabase,
         "ergonomic_self_assessments",
@@ -918,10 +958,12 @@ export async function getErgonomicLevel1Summary(): Promise<ErgonomicLevel1Summar
       counts: [
         { label: "Level 1 screenings", value: screenings },
         { label: "High or Severe", value: highOrSevere },
-        { label: "Level 2 requests", value: requests }
+        { label: "Level 2 requests", value: requests },
+        { label: "Level 2 inspections", value: level2Inspections }
       ],
       recentScreenings: ((recentRows as Record<string, any>[]) ?? []).map(mapErgonomicRecord),
       inspectionType,
+      level2InspectionType,
       aiInsight: safePredictErgoAiInsight
     };
   } catch {
@@ -929,12 +971,94 @@ export async function getErgonomicLevel1Summary(): Promise<ErgonomicLevel1Summar
       counts: [
         { label: "Level 1 screenings", value: 0 },
         { label: "High or Severe", value: 0 },
-        { label: "Level 2 requests", value: 0 }
+        { label: "Level 2 requests", value: 0 },
+        { label: "Level 2 inspections", value: 0 }
       ],
       recentScreenings: [],
       inspectionType,
+      level2InspectionType,
       aiInsight: safePredictErgoAiInsight
     };
+  }
+}
+
+export async function getErgonomicLevel2LaunchContext(params: {
+  requestId?: string | null;
+  context?: string | null;
+}): Promise<ErgonomicLevel2LaunchContext> {
+  const sourceContext: Level2SourceContext | null = params.requestId ? "request" : params.context === "audit" ? "audit" : null;
+  const locked: ErgonomicLevel2LaunchContext = {
+    allowed: false,
+    sourceContext,
+    taskType: "lifting",
+    taskDescription: "",
+    reason: "Level 2 requires a saved Level 1 request or an audit/inspection context.",
+    recentInspections: []
+  };
+
+  const profile = await getProfileContext();
+  if (!profile) {
+    return {
+      allowed: Boolean(sourceContext),
+      sourceContext,
+      requestId: params.requestId ?? null,
+      taskType: "lifting",
+      taskDescription: sourceContext === "audit" ? "Audit-triggered ergonomic measurement review" : "Requested ergonomic measurement review",
+      location: "Pilot area",
+      departmentTrade: "Pilot team",
+      reason: sourceContext === "audit" ? "Audit context selected." : "Demo request context selected.",
+      recentInspections: []
+    };
+  }
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const recent = latestRows(
+      supabase,
+      "ergonomic_level2_inspections",
+      profile.organizationId,
+      "id,task_type,status,risk_summary,created_at",
+      6
+    );
+
+    if (params.requestId) {
+      const { data: request } = await supabase
+        .from("ergonomic_advanced_evaluation_requests")
+        .select("id,self_assessment_id,request_reason,source_payload")
+        .eq("organization_id", profile.organizationId)
+        .eq("id", params.requestId)
+        .maybeSingle();
+      if (!request) return { ...locked, recentInspections: mapLevel2Recent(await recent) };
+
+      const payload = (request.source_payload ?? {}) as Record<string, any>;
+      return {
+        allowed: true,
+        sourceContext: "request",
+        requestId: request.id,
+        sourceSelfAssessmentId: request.self_assessment_id,
+        taskType: normalizeTaskType(payload.task_type),
+        taskDescription: `Level 2 measurement review for ${ergonomicLabel("task", String(payload.task_type ?? "lifting"))}`,
+        location: typeof payload.location === "string" ? payload.location : null,
+        departmentTrade: typeof payload.department_trade === "string" ? payload.department_trade : null,
+        reason: request.request_reason ?? "Level 2 requested from Level 1 screening.",
+        recentInspections: mapLevel2Recent(await recent)
+      };
+    }
+
+    if (params.context === "audit") {
+      return {
+        allowed: true,
+        sourceContext: "audit",
+        taskType: "lifting",
+        taskDescription: "Audit-triggered ergonomic measurement review",
+        reason: "Audit/inspection context selected.",
+        recentInspections: mapLevel2Recent(await recent)
+      };
+    }
+
+    return { ...locked, recentInspections: mapLevel2Recent(await recent) };
+  } catch {
+    return locked;
   }
 }
 
@@ -1216,6 +1340,202 @@ export async function requestAdvancedErgonomicEvaluation(
     return { ok: true, requestId: request.id, message: "Level 2 advanced ergonomic evaluation request created." };
   } catch (error) {
     return { ok: false, message: error instanceof Error ? error.message : "Could not request Level 2 ergonomic evaluation." };
+  }
+}
+
+export async function saveErgonomicLevel2Inspection(
+  input: ErgonomicLevel2Input
+): Promise<{ ok: true; inspectionId: string; message: string } | { ok: false; message: string }> {
+  const errors = validateErgonomicLevel2(input);
+  if (errors.length > 0) return { ok: false, message: errors.join(" ") };
+
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before saving a Level 2 ergonomic inspection." };
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    let sourceSelfAssessmentId: string | null = null;
+    let requestPayload: Record<string, any> = {};
+
+    if (input.sourceContext === "request") {
+      if (!input.requestId) return { ok: false, message: "A Level 2 request ID is required for request-based evaluations." };
+      const { data: request, error: requestError } = await supabase
+        .from("ergonomic_advanced_evaluation_requests")
+        .select("id,self_assessment_id,source_payload")
+        .eq("organization_id", context.organizationId)
+        .eq("id", input.requestId)
+        .maybeSingle();
+      if (requestError || !request) return { ok: false, message: requestError?.message ?? "Could not verify the Level 2 request." };
+      sourceSelfAssessmentId = request.self_assessment_id;
+      requestPayload = (request.source_payload ?? {}) as Record<string, any>;
+    }
+
+    const evaluation = evaluateErgonomicLevel2(input);
+    const measurementPayload = {
+      measuredLoadLbs: input.measuredLoadLbs,
+      horizontalReachIn: input.horizontalReachIn,
+      verticalHandHeightIn: input.verticalHandHeightIn,
+      travelDistanceIn: input.travelDistanceIn,
+      frequencyPerMinute: input.frequencyPerMinute,
+      taskDurationMinutes: input.taskDurationMinutes,
+      asymmetryDegrees: input.asymmetryDegrees ?? null,
+      gripQuality: input.gripQuality,
+      postureNotes: input.postureNotes ?? null,
+      measurementSummary: evaluation.measurementSummary,
+      equationCalculated: false,
+      equationNote: "Guided Level 2 measurement capture only; no industrial ergonomic equation score is calculated in this workflow."
+    };
+    const photoEvidence = {
+      evidenceLabel: input.photoEvidenceLabel ?? null,
+      storagePending: true
+    };
+
+    const { data: inspectionRecord, error: inspectionError } = await supabase
+      .from("inspection_records")
+      .insert({
+        organization_id: context.organizationId,
+        inspection_type: "ergonomic_level_2_advanced_evaluation",
+        title: `Level 2 ergonomic evaluation - ${ergonomicLabel("task", input.taskType)}`,
+        status: "submitted",
+        source_module: "ergonomic_advanced_evaluation",
+        location: input.location || null,
+        department_trade: input.departmentTrade || null,
+        submitted_by: context.userId,
+        submitted_at: new Date().toISOString(),
+        payload: {
+          sourceContext: input.sourceContext,
+          requestId: input.requestId ?? null,
+          sourceSelfAssessmentId,
+          measurementPayload,
+          photoEvidence,
+          requestPayload
+        }
+      })
+      .select("id")
+      .single();
+    if (inspectionError || !inspectionRecord) {
+      return { ok: false, message: inspectionError?.message ?? "Could not create Level 2 inspection record." };
+    }
+
+    const { data: inspection, error } = await supabase
+      .from("ergonomic_level2_inspections")
+      .insert({
+        organization_id: context.organizationId,
+        advanced_evaluation_request_id: input.requestId || null,
+        inspection_record_id: inspectionRecord.id,
+        source_self_assessment_id: sourceSelfAssessmentId,
+        evaluator_id: context.userId,
+        source_context: input.sourceContext,
+        status: "submitted_for_review",
+        task_type: input.taskType,
+        task_description: input.taskDescription,
+        location: input.location || null,
+        department_trade: input.departmentTrade || null,
+        measurement_payload: measurementPayload,
+        photo_evidence: photoEvidence,
+        specialist_notes: input.specialistNotes,
+        formal_recommendations: input.formalRecommendations,
+        corrective_action_recommended: input.correctiveActionRecommended,
+        risk_summary: evaluation.riskSummary
+      })
+      .select("id")
+      .single();
+    if (error || !inspection) return { ok: false, message: error?.message ?? "Could not save Level 2 ergonomic inspection." };
+
+    await supabase
+      .from("inspection_records")
+      .update({ source_record_id: inspection.id, updated_at: new Date().toISOString() })
+      .eq("organization_id", context.organizationId)
+      .eq("id", inspectionRecord.id);
+
+    await supabase.from("audit_events").insert({
+      organization_id: context.organizationId,
+      actor_id: context.userId,
+      event_type: "ergonomic_level2_inspection_created",
+      summary: "Level 2 ergonomic measurement inspection record created.",
+      payload: withAuditTrace(
+        {
+          inspectionId: inspection.id,
+          inspectionRecordId: inspectionRecord.id,
+          requestId: input.requestId ?? null,
+          sourceContext: input.sourceContext
+        },
+        {
+          sourceModule: "ergonomic_advanced_evaluation",
+          sourceRecordId: inspection.id,
+          targetModule: "inspection",
+          targetRecordId: inspectionRecord.id,
+          draftOnly: true
+        }
+      )
+    });
+
+    let taskId: string | null = null;
+    if (input.correctiveActionRecommended) {
+      const { data: task } = await supabase
+        .from("tasks")
+        .insert({
+          organization_id: context.organizationId,
+          source_module: "ergonomic_advanced_evaluation",
+          source_record_id: inspection.id,
+          assigned_to: context.userId,
+          title: `Level 2 ergonomic corrective action - ${ergonomicLabel("task", input.taskType)}`,
+          status: "open",
+          due_date: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
+          priority: "high",
+          created_by: context.userId
+        })
+        .select("id")
+        .single();
+      taskId = task?.id ?? null;
+
+      await supabase.from("audit_events").insert({
+        organization_id: context.organizationId,
+        actor_id: context.userId,
+        event_type: "ergonomic_level2_corrective_action_recommended",
+        summary: "Level 2 ergonomic inspection recommended corrective-action review.",
+        payload: withAuditTrace(
+          { inspectionId: inspection.id, taskId, riskSummary: evaluation.riskSummary },
+          {
+            sourceModule: "ergonomic_advanced_evaluation",
+            sourceRecordId: inspection.id,
+            targetModule: taskId ? "task" : "ergonomic_advanced_evaluation",
+            targetRecordId: taskId ?? inspection.id,
+            draftOnly: true
+          }
+        )
+      });
+    }
+
+    await supabase.from("audit_events").insert({
+      organization_id: context.organizationId,
+      actor_id: context.userId,
+      event_type: "ergonomic_level2_inspection_submitted",
+      summary: "Level 2 ergonomic measurement inspection submitted for review.",
+      payload: withAuditTrace(
+        {
+          inspectionId: inspection.id,
+          inspectionRecordId: inspectionRecord.id,
+          requestId: input.requestId ?? null,
+          sourceContext: input.sourceContext,
+          measurementPayload,
+          photoEvidence,
+          correctiveActionRecommended: input.correctiveActionRecommended,
+          taskId
+        },
+        {
+          sourceModule: "ergonomic_advanced_evaluation",
+          sourceRecordId: inspection.id,
+          targetModule: "inspection",
+          targetRecordId: inspectionRecord.id,
+          draftOnly: true
+        }
+      )
+    });
+
+    return { ok: true, inspectionId: inspection.id, message: "Level 2 ergonomic measurement inspection saved for review." };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Could not save Level 2 ergonomic inspection." };
   }
 }
 
@@ -2651,6 +2971,21 @@ function summarizeJson(value: unknown) {
 function normalizeBioTypeKeys(value: unknown): BioTypeKey[] {
   const rawValues = Array.isArray(value) ? value : typeof value === "string" ? [value] : [];
   return rawValues.map((item) => normalizeBioTypeKey(String(item))).filter((item): item is BioTypeKey => Boolean(item));
+}
+
+function normalizeTaskType(value: unknown): ErgonomicTaskType {
+  const allowed: ErgonomicTaskType[] = ["lifting", "pushing_pulling", "reaching_overhead", "repetitive_work", "other"];
+  return allowed.includes(value as ErgonomicTaskType) ? (value as ErgonomicTaskType) : "lifting";
+}
+
+function mapLevel2Recent(rows: unknown[]) {
+  return ((rows as Record<string, any>[]) ?? []).map((row) => ({
+    id: row.id,
+    taskType: ergonomicLabel("task", row.task_type ?? "other"),
+    status: row.status,
+    riskSummary: row.risk_summary,
+    createdAt: row.created_at
+  }));
 }
 
 function programMethodRequired(programName: string, methodName: string) {
