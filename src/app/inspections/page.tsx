@@ -10,15 +10,15 @@ export default async function InspectionsPage() {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Inspections</p>
-          <h1>Inspection types</h1>
+          <p className="section-label">HSE Management Systems</p>
+          <h1>Inspection / Audit Management</h1>
         </header>
 
         <section className="inspection-type-grid">
           <article className="panel">
           <div className="panel-heading">
             <div>
-              <p className="section-label">Available inspection</p>
+              <p className="section-label">Hazard & Exposure Tracking</p>
               <h2>{ergonomic.inspectionType.title}</h2>
               <p className="muted">{ergonomic.inspectionType.description}</p>
             </div>
@@ -29,13 +29,13 @@ export default async function InspectionsPage() {
               <ClipboardList size={24} />
             </div>
             <div>
-              <strong>Level 1 worker screening</strong>
+              <strong>Level 1 hazard screening</strong>
               <p>
                 Capture task type, discomfort, body strain, frequency, comments, and optional context. No measurement fields appear in this basic screen.
               </p>
             </div>
             <Link className="button-primary large-action" href={ergonomic.inspectionType.href}>
-              Start Screening
+              Start Hazard Screening
             </Link>
           </div>
           </article>
@@ -43,7 +43,7 @@ export default async function InspectionsPage() {
           <article className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Advanced inspection</p>
+                <p className="section-label">Inspection / Audit Management</p>
                 <h2>{ergonomic.level2InspectionType.title}</h2>
                 <p className="muted">{ergonomic.level2InspectionType.description}</p>
               </div>
@@ -54,7 +54,7 @@ export default async function InspectionsPage() {
                 <ClipboardList size={24} />
               </div>
               <div>
-                <strong>Level 2 measurement evaluation</strong>
+                <strong>Level 2 audit evaluation</strong>
                 <p>
                   Requires a saved Level 1 request or an audit/inspection context. Captures measurements, evidence, specialist notes, and recommendations.
                 </p>
@@ -79,8 +79,8 @@ export default async function InspectionsPage() {
           <div className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Recent submissions</p>
-                <h2>Ergonomic Level 1 screenings</h2>
+                <p className="section-label">Hazard & Exposure Tracking</p>
+                <h2>Level 1 signal history</h2>
               </div>
               <ClipboardList size={22} />
             </div>
@@ -99,7 +99,7 @@ export default async function InspectionsPage() {
                   </article>
                 ))
               ) : (
-                <p className="muted">No ergonomic inspection submissions yet.</p>
+                <p className="muted">No hazard-screening submissions yet.</p>
               )}
             </div>
           </div>
@@ -107,8 +107,8 @@ export default async function InspectionsPage() {
           <div className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">AI Engine signal</p>
-                <h2>SafePredict ergonomic insight</h2>
+                <p className="section-label">Risk Intelligence</p>
+                <h2>PredictSafeBIO HSE insight</h2>
               </div>
               <ShieldCheck size={22} />
             </div>

@@ -15,8 +15,8 @@ export default async function AuditPage() {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Audit log</p>
-          <h1>Human-review trace</h1>
+          <p className="section-label">System Reliance</p>
+          <h1>Immutable Audit Log</h1>
         </header>
         <FoundationReviewActionsPanel
           actions={foundationActions.slice(0, 6)}

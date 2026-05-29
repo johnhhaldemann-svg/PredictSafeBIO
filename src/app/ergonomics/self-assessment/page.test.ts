@@ -11,8 +11,8 @@ const shell = readFileSync(join(process.cwd(), "src/components/AppShell.tsx"), "
 
 describe("ergonomic Level 1 UI", () => {
   it("surfaces the worker-facing Level 1 screening route", () => {
-    expect(page).toContain("Ergonomic Self-Assessment");
-    expect(page).toContain("Level 1 Screening");
+    expect(page).toContain("Hazard & Exposure Screening");
+    expect(page).toContain("Level 1 HSE Signal");
     expect(page).toContain("No measurements needed");
     expect(client).toContain("What type of work are you doing?");
     expect(client).toContain("How does this task feel on your body?");
@@ -32,14 +32,14 @@ describe("ergonomic Level 1 UI", () => {
   it("adds access from Inspections and the Ergonomics sidebar section", () => {
     expect(inspections).toContain("ergonomic.inspectionType.title");
     expect(inspections).toContain("ergonomic.level2InspectionType.title");
-    expect(inspections).toContain("Start Screening");
+    expect(inspections).toContain("Start Hazard Screening");
     expect(inspections).toContain("Open Audit Evaluation");
-    expect(shell).toContain("Ergonomics");
+    expect(shell).toContain("HSE Management");
     expect(shell).toContain("/ergonomics/self-assessment");
   });
 
   it("keeps Level 2 measurement inspection separate and gated", () => {
-    expect(level2Page).toContain("Advanced Ergonomic Evaluation");
+    expect(level2Page).toContain("Advanced HSE Audit Evaluation");
     expect(level2Page).toContain("Level 2 Measurement Inspection");
     expect(level2Client).toContain("Measurement capture");
     expect(level2Client).toContain("Load or force (lb)");

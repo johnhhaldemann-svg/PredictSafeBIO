@@ -21,7 +21,7 @@ export default async function DocumentDetailPage({
       <AppShell>
         <div className="page-stack">
           <header className="page-header">
-            <p className="section-label">Document detail</p>
+            <p className="section-label">Document Control</p>
             <h1>Document not found</h1>
           </header>
           <section className="panel">
@@ -47,7 +47,7 @@ export default async function DocumentDetailPage({
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Document detail</p>
+          <p className="section-label">Document Control Detail</p>
           <h1>{document.title}</h1>
         </header>
         {query.message ? <p className="form-message">{query.message}</p> : null}
@@ -69,8 +69,8 @@ export default async function DocumentDetailPage({
         </section>
         <section className="panel inline-action-panel">
           <div>
-            <p className="section-label">Demo export</p>
-            <h2>Shareable document report</h2>
+            <p className="section-label">Reporting & Exports</p>
+            <h2>Shareable controlled document report</h2>
             <p className="muted">Downloads a draft-only text report for demo review. It is not a controlled document export.</p>
           </div>
           <a
@@ -84,7 +84,7 @@ export default async function DocumentDetailPage({
         <form action={persistDocumentRecommendationsAction} className="panel inline-action-panel">
           <input type="hidden" name="documentId" value={document.id} />
           <div>
-            <p className="section-label">Persistence</p>
+            <p className="section-label">Drafting & AI-Assisted Updates</p>
             <h2>Save draft recommendations</h2>
             <p className="muted">
               Persists gap and draft update recommendations to Supabase and writes an audit event. All recommendations remain draft-only.

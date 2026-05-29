@@ -11,8 +11,8 @@ export default async function AdminDemoPage({ searchParams }: { searchParams: Pr
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Admin demo operations</p>
-          <h1>Seed demo records</h1>
+          <p className="section-label">System Reliance</p>
+          <h1>Admin Utilities</h1>
         </header>
         {params.message ? <p className="form-message">{params.message}</p> : null}
         <section className="panel">

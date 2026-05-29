@@ -7,6 +7,7 @@ import {
   ClipboardList,
   FileText,
   FlaskConical,
+  GitBranch,
   HeartPulse,
   LayoutDashboard,
   LogOut,
@@ -19,16 +20,17 @@ import { signOutAction } from "@/app/auth/actions";
 import { getAuthSummary } from "@/lib/supabase/data";
 
 const navItems = [
-  { href: "/workbench", label: "Workbench", icon: FlaskConical, section: "Platform" },
-  { href: "/foundation", label: "Foundation", icon: BrainCircuit, section: "Platform" },
-  { href: "/operations", label: "Operations", icon: Boxes, section: "Platform" },
-  { href: "/ergonomics/self-assessment", label: "Level 1 Screening", icon: HeartPulse, section: "Ergonomics" },
-  { href: "/inspections", label: "Inspections", icon: ClipboardList, section: "Safety tools" },
-  { href: "/assessments", label: "Assessments", icon: ClipboardCheck, section: "Safety tools" },
-  { href: "/company-profile", label: "Company Profile", icon: LayoutDashboard, section: "Workspace" },
-  { href: "/documents", label: "Documents", icon: FileText, section: "Workspace" },
-  { href: "/admin/audit", label: "Audit", icon: Activity, section: "Admin" },
-  { href: "/admin/demo", label: "Demo Ops", icon: Settings, section: "Admin" }
+  { href: "/workbench", label: "BioRisk Scoring", icon: FlaskConical, section: "Risk Intelligence" },
+  { href: "/assessments", label: "Risk Register", icon: ClipboardCheck, section: "Risk Intelligence" },
+  { href: "/documents", label: "SOPs & Templates", icon: FileText, section: "Document Control" },
+  { href: "/foundation", label: "Compliance Map", icon: BrainCircuit, section: "Compliance" },
+  { href: "/operations", label: "HSE Operations", icon: Boxes, section: "HSE Management" },
+  { href: "/ergonomics/self-assessment", label: "Hazard Tracking", icon: HeartPulse, section: "HSE Management" },
+  { href: "/inspections", label: "Inspection / Audit", icon: ClipboardList, section: "HSE Management" },
+  { href: "/company-profile", label: "Company Profile", icon: LayoutDashboard, section: "Common Utilities" },
+  { href: "/change-plan", label: "Change Plan", icon: GitBranch, section: "Common Utilities" },
+  { href: "/admin/audit", label: "Immutable Audit Log", icon: Activity, section: "System Reliance" },
+  { href: "/admin/demo", label: "Admin Utilities", icon: Settings, section: "System Reliance" }
 ];
 
 export async function AppShell({ children }: { children: ReactNode }) {
@@ -37,13 +39,13 @@ export async function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <Link href="/workbench" className="brand" aria-label="SafePredict Workbench">
+        <Link href="/workbench" className="brand" aria-label="PredictSafeBIO platform">
           <span className="brand-mark">
             <ShieldCheck size={18} />
           </span>
           <span>
-            <strong>SafePredict</strong>
-            <small>Predict | Prevent | Protect</small>
+            <strong>PredictSafeBIO</strong>
+            <small>One Platform. Every BioType.</small>
           </span>
         </Link>
         <nav className="nav-list" aria-label="Primary navigation">

@@ -23,7 +23,7 @@ export default async function AdvancedErgonomicEvaluationPage({
         <header className="level2-page-header">
           <div>
             <div className="ergonomic-title-row">
-              <h1>Advanced Ergonomic Evaluation</h1>
+              <h1>Advanced HSE Audit Evaluation</h1>
               <span>Level 2 Measurement Inspection</span>
             </div>
             <p>Specialist/auditor workflow for measurements, evidence, notes, recommendations, and corrective-action review.</p>
@@ -47,7 +47,7 @@ export default async function AdvancedErgonomicEvaluationPage({
           <div className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Level 1 boundary</p>
+                <p className="section-label">Hazard Screening Boundary</p>
                 <h2>Separate advanced workflow</h2>
                 <p className="muted">Measurements are captured here, not in the basic worker Level 1 screening.</p>
               </div>
@@ -61,7 +61,7 @@ export default async function AdvancedErgonomicEvaluationPage({
           <aside className="panel level2-recent-panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Recent Level 2</p>
+                <p className="section-label">Inspection / Audit Management</p>
                 <h2>Measurement inspections</h2>
               </div>
               <Ruler size={22} />

@@ -20,15 +20,15 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Map-aligned operations</p>
-          <h1>Biotech operating graph</h1>
+          <p className="section-label">HSE Management Systems</p>
+          <h1>Incident, CAPA & operating graph</h1>
         </header>
 
         <section className="panel">
           <div className="panel-heading">
             <div>
-              <p className="section-label">Phases 1-3</p>
-              <h2>Create linked source records</h2>
+              <p className="section-label">Incident Management + CAPA Workflow</p>
+              <h2>Create linked HSE source records</h2>
             </div>
             <DatabaseZap size={22} />
           </div>
@@ -74,7 +74,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
             </div>
             <button className="button-primary" type="submit">
               <Boxes size={16} />
-              Create operations bundle
+              Create HSE operations bundle
             </button>
           </form>
         </section>
@@ -91,8 +91,8 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
           <div className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Readiness graph</p>
-                <h2>Live module signals</h2>
+                <p className="section-label">Training, CAPA, Equipment, Samples</p>
+                <h2>Live HSE module signals</h2>
               </div>
               <ClipboardList size={22} />
             </div>
@@ -114,8 +114,8 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
           <div className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Phase 4</p>
-                <h2>AI Engine live context</h2>
+                <p className="section-label">Risk Intelligence</p>
+                <h2>BioRisk live context</h2>
               </div>
               <FlaskConical size={22} />
             </div>
@@ -144,7 +144,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
               <span>{draftAiRecommendationGuardrail}</span>
             </div>
             <Link className="button-secondary" href="/workbench">
-              Open in Workbench
+              Open in BioRisk Scoring
             </Link>
           </div>
         </section>

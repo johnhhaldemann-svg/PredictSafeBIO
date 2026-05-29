@@ -45,20 +45,20 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">PredictSafeBIO Intelligence Foundation</p>
-          <h1>Core Compliance Components</h1>
+          <p className="section-label">Compliance + System Reliance</p>
+          <h1>Compliance Map & AI Guardrails</h1>
         </header>
 
         <section className="panel inline-action-panel">
           <div>
-            <p className="section-label">Pilot foundation</p>
+            <p className="section-label">Common Utilities Across All Categories</p>
             <h2>{summary.companyName}</h2>
             <p className="muted">
-              Company intake, Programs & Methods, applicability, evidence, change impact, and audit readiness feed deterministic AI context.
+              Company profile intelligence, BioType branching, evidence tracking, change impact, and audit readiness feed deterministic AI context.
             </p>
           </div>
           <Link className="button-secondary" href="#foundation-workflows">
-            {adminAccess.isOwner ? "Review MVP controls" : "View owner controls"}
+            {adminAccess.isOwner ? "Review platform controls" : "View owner controls"}
           </Link>
         </section>
 
@@ -85,8 +85,8 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           <div className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Core Compliance Components</p>
-                <h2>13 shared foundation components</h2>
+                <p className="section-label">Common Utilities</p>
+                <h2>13 shared platform components</h2>
               </div>
               <Network size={22} />
             </div>
@@ -103,8 +103,8 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           <div className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">BioType Foundation Packages</p>
-                <h2>Primary and secondary branches</h2>
+                <p className="section-label">BioType Branching Engine</p>
+                <h2>Primary and secondary BioTypes</h2>
               </div>
               <GitBranch size={22} />
             </div>
@@ -128,7 +128,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           <div className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Company Intake Wizard</p>
+                <p className="section-label">Company Profile Intelligence</p>
                 <h2>Applicability triggers</h2>
               </div>
               <BookOpenCheck size={22} />
@@ -149,7 +149,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           <div className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Programs & Methods Library</p>
+                <p className="section-label">HSE Management Systems</p>
                 <h2>Draft operating library</h2>
               </div>
               <GitBranch size={22} />
@@ -185,8 +185,8 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           <div className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Applicability Engine</p>
-                <h2>Required controls</h2>
+                <p className="section-label">Regulatory Mapping</p>
+                <h2>Required obligations and controls</h2>
               </div>
               <FileSearch size={22} />
             </div>
@@ -229,7 +229,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           <div className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Change Impact Engine</p>
+                <p className="section-label">Change Impact Management</p>
                 <h2>Draft impact events</h2>
               </div>
               <BrainCircuit size={22} />
@@ -252,8 +252,8 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           <div className="panel" id="audit-readiness-console">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Audit Readiness + AI Engine</p>
-                <h2>Operating console</h2>
+                <p className="section-label">Audit Readiness</p>
+                <h2>Compliance operating console</h2>
               </div>
               <Gauge size={22} />
             </div>
@@ -270,7 +270,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
             <div className="score-wrap compact-score">
               <span className="score">{assessment.score}</span>
               <div>
-                <p className="score-label">{assessment.level} AI risk</p>
+                <p className="score-label">{assessment.level} BioRisk</p>
                 <p className="muted">Confidence: {assessment.confidence}</p>
               </div>
               <StatusBadge level={assessment.level} />
@@ -349,7 +349,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
               <span>{summary.guardrailText}</span>
             </div>
             <Link className="button-secondary" href="/workbench">
-              Open foundation context in Workbench
+              Open compliance context in BioRisk Scoring
             </Link>
           </div>
         </section>
@@ -359,7 +359,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
         <section className="panel">
           <div className="panel-heading">
             <div>
-              <p className="section-label">Foundation source drilldowns</p>
+              <p className="section-label">Compliance source drilldowns</p>
               <h2>Traceable source detail</h2>
             </div>
             <FileSearch size={22} />
@@ -402,7 +402,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           <div className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">AI Workflow Map</p>
+                <p className="section-label">AI Guardrails</p>
                 <h2>Deterministic data flow</h2>
               </div>
               <BrainCircuit size={22} />

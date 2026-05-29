@@ -9,7 +9,7 @@ export default async function CompanyProfilePage() {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Company profile intake</p>
+          <p className="section-label">Company Profile Intelligence</p>
           <h1>{companyProfile.companyName}</h1>
         </header>
         <section className="profile-grid">
@@ -31,7 +31,7 @@ export default async function CompanyProfilePage() {
         <section className="panel">
           <div className="panel-heading">
             <div>
-              <p className="section-label">BioType Foundation Packages</p>
+              <p className="section-label">BioType Branching Engine</p>
               <h2>Selected operating profile</h2>
             </div>
           </div>

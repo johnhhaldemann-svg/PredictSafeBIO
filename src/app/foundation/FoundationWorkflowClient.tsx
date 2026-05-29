@@ -19,28 +19,28 @@ export function FoundationWorkflowClient({ canManage, summary }: { canManage: bo
 
   if (!canManage) {
     return (
-      <section className="panel owner-gate-panel" aria-label="Foundation owner-only controls">
+      <section className="panel owner-gate-panel" aria-label="System Reliance owner-only controls">
         <div className="panel-heading">
           <div>
-            <p className="section-label">Owner-only controls</p>
-            <h2>Foundation edit workflows are locked</h2>
+            <p className="section-label">Roles & Permissions</p>
+            <h2>System Reliance edit workflows are locked</h2>
           </div>
           <FileCheck2 size={22} />
         </div>
         <p className="muted">
-          Read-only Foundation intelligence remains visible. Sign in as an organization owner to edit BioTypes, intake answers, evidence
-          readiness, audit notes, review actions, or NorthStar demo seeds.
+          Read-only compliance intelligence remains visible. Sign in as an organization owner to edit BioTypes, intake answers, evidence
+          readiness, audit notes, action planning, or NorthStar demo seeds.
         </p>
       </section>
     );
   }
 
   return (
-    <section className="foundation-workflow-grid" aria-label="Foundation MVP edit workflows">
+    <section className="foundation-workflow-grid" aria-label="Compliance and System Reliance edit workflows">
       <div className="panel">
         <div className="panel-heading">
           <div>
-            <p className="section-label">MVP edit workflow</p>
+            <p className="section-label">BioType Branching Engine</p>
             <h2>BioType selection</h2>
           </div>
           <GitBranch size={22} />
@@ -77,7 +77,7 @@ export function FoundationWorkflowClient({ canManage, summary }: { canManage: bo
       <div className="panel">
         <div className="panel-heading">
           <div>
-            <p className="section-label">MVP edit workflow</p>
+            <p className="section-label">Company Profile Intelligence</p>
             <h2>Company intake answers</h2>
           </div>
           <ListChecks size={22} />
@@ -105,7 +105,7 @@ export function FoundationWorkflowClient({ canManage, summary }: { canManage: bo
       <div className="panel">
         <div className="panel-heading">
           <div>
-            <p className="section-label">MVP edit workflow</p>
+            <p className="section-label">Evidence Tracking</p>
             <h2>Evidence readiness</h2>
           </div>
           <FileCheck2 size={22} />
@@ -140,8 +140,8 @@ export function FoundationWorkflowClient({ canManage, summary }: { canManage: bo
       <div className="panel">
         <div className="panel-heading">
           <div>
-            <p className="section-label">Audit readiness</p>
-            <h2>Notes and review actions</h2>
+            <p className="section-label">Audit Readiness</p>
+            <h2>Notes and action planning</h2>
           </div>
           <NotebookPen size={22} />
         </div>
@@ -174,7 +174,7 @@ export function FoundationWorkflowClient({ canManage, summary }: { canManage: bo
         <form action={generateFoundationReviewActionsAction}>
           <button className="button-primary" type="submit">
             <Wand2 size={16} />
-            Generate Review Actions
+            Generate Action Plan
           </button>
         </form>
       </div>
@@ -182,7 +182,7 @@ export function FoundationWorkflowClient({ canManage, summary }: { canManage: bo
       <div className="panel demo-control-panel">
         <div className="panel-heading">
           <div>
-            <p className="section-label">Demo/admin control</p>
+            <p className="section-label">Admin Utilities</p>
             <h2>NorthStar seed guard</h2>
           </div>
           <DatabaseZap size={22} />

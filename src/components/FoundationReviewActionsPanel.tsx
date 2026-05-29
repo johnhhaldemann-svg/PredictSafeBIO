@@ -6,7 +6,7 @@ import type { FoundationReviewActionSummary } from "@/lib/supabase/data";
 export function FoundationReviewActionsPanel({
   actions,
   canManage = false,
-  emptyMessage = "No open Foundation review actions have been generated yet.",
+  emptyMessage = "No open action-planning items have been generated yet.",
   title = "Source-traced follow-through"
 }: {
   actions: FoundationReviewActionSummary[];
@@ -18,7 +18,7 @@ export function FoundationReviewActionsPanel({
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="section-label">Foundation review actions</p>
+          <p className="section-label">Action Planning</p>
           <h2>{title}</h2>
         </div>
         <ClipboardList size={22} />

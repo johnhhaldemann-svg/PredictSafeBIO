@@ -12,14 +12,14 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Document intelligence</p>
-          <h1>Metadata and gap recommendations</h1>
+          <p className="section-label">Document Control</p>
+          <h1>SOPs, Forms & Templates</h1>
         </header>
         <section className="panel">
           <div className="panel-heading">
             <div>
-              <p className="section-label">Live metadata</p>
-              <h2>Create document metadata</h2>
+              <p className="section-label">Controlled Records Linkage</p>
+              <h2>Create controlled document metadata</h2>
             </div>
           </div>
           {params.message ? <p className="form-message">{params.message}</p> : null}
@@ -96,7 +96,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
               />
             </label>
             <button className="button-primary" type="submit">
-              Save metadata
+              Save controlled metadata
             </button>
           </form>
         </section>
@@ -105,7 +105,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
             <article className="document-card">
               <span>Live workspace</span>
               <strong>No document metadata saved yet</strong>
-              <p>Create a document metadata record above to generate draft gap and update recommendations.</p>
+              <p>Create a controlled metadata record above to generate draft gap and AI-assisted update recommendations.</p>
             </article>
           ) : null}
           {documents.map((document) => {
@@ -115,7 +115,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
                 <span>{document.documentType}</span>
                 <strong>{document.title}</strong>
                 <p>Status: {document.status}</p>
-                <p>{gaps.length} draft gap recommendation{gaps.length === 1 ? "" : "s"}</p>
+                <p>{gaps.length} document gap recommendation{gaps.length === 1 ? "" : "s"}</p>
               </Link>
             );
           })}

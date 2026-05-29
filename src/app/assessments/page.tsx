@@ -32,15 +32,15 @@ export default async function AssessmentsPage({ searchParams }: { searchParams: 
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Saved assessments</p>
-          <h1>Assessment register</h1>
+          <p className="section-label">Risk Intelligence</p>
+          <h1>Risk Register</h1>
         </header>
         <section className="panel">
           <div className="panel-heading">
             <div>
-              <p className="section-label">Review views</p>
+              <p className="section-label">Risk Register / Risk Factors</p>
               <h2>Traceability filters</h2>
-              <p className="muted">Filter saved assessments by review status, risk level, and reviewer activity. These views do not approve or release records.</p>
+              <p className="muted">Filter saved BioRisk records by review status, risk level, and reviewer activity. These views do not approve or release records.</p>
             </div>
           </div>
           <div className="summary-strip">
@@ -62,7 +62,7 @@ export default async function AssessmentsPage({ searchParams }: { searchParams: 
             <label>
               Risk level
               <select name="level" defaultValue={filters.level ?? "all"}>
-                <option value="all">All risk levels</option>
+                <option value="all">All BioRisk levels</option>
                 <option value="critical">critical</option>
                 <option value="high">high</option>
                 <option value="moderate">moderate</option>
@@ -116,7 +116,7 @@ export default async function AssessmentsPage({ searchParams }: { searchParams: 
               ))}
             </tbody>
           </table>
-          {filteredAssessments.length === 0 ? <p className="empty-table-note">No assessments match the selected filters.</p> : null}
+          {filteredAssessments.length === 0 ? <p className="empty-table-note">No BioRisk records match the selected filters.</p> : null}
         </section>
       </div>
     </AppShell>

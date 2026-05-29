@@ -29,8 +29,8 @@ export default async function AssessmentDetailPage({
       <AppShell>
         <div className="page-stack">
           <header className="page-header">
-            <p className="section-label">Assessment detail</p>
-            <h1>Assessment not found</h1>
+            <p className="section-label">Risk Register</p>
+            <h1>BioRisk record not found</h1>
           </header>
           <section className="panel">
             <p>This assessment was not found in the current signed-in workspace.</p>
@@ -51,7 +51,7 @@ export default async function AssessmentDetailPage({
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Assessment detail</p>
+          <p className="section-label">Risk Register Detail</p>
           <h1>{assessment.workflow}</h1>
         </header>
         {query.message ? <p className="form-message">{query.message}</p> : null}
@@ -127,7 +127,7 @@ export default async function AssessmentDetailPage({
         <section className="panel inline-action-panel">
           <div>
             <p className="section-label">Demo export</p>
-            <h2>Shareable assessment report</h2>
+            <h2>Shareable BioRisk report</h2>
             <p className="muted">Downloads a draft-only text report for demo review. It is not a release or approval record.</p>
           </div>
           <a

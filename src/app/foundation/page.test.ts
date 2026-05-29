@@ -15,14 +15,14 @@ const notesMigration = readFileSync(join(process.cwd(), "supabase/migrations/202
 
 describe("foundation UI alignment", () => {
   it("surfaces BioType, core component, AI workflow, and human validation sections", () => {
-    expect(foundationPage).toContain("Core Compliance Components");
-    expect(foundationPage).toContain("BioType Foundation Packages");
-    expect(foundationPage).toContain("AI Workflow Map");
+    expect(foundationPage).toContain("Common Utilities");
+    expect(foundationPage).toContain("BioType Branching Engine");
+    expect(foundationPage).toContain("AI Guardrails");
     expect(foundationPage).toContain("Human Validation Workflow");
   });
 
   it("shows BioType selections on the company profile surface", () => {
-    expect(companyProfilePage).toContain("BioType Foundation Packages");
+    expect(companyProfilePage).toContain("BioType Branching Engine");
     expect(companyProfilePage).toContain("Selected operating profile");
   });
 
@@ -33,8 +33,8 @@ describe("foundation UI alignment", () => {
     expect(foundationClient).toContain("updateFoundationBioTypeSelectionAction");
     expect(foundationClient).toContain("updateFoundationIntakeResponseAction");
     expect(foundationClient).toContain("updateFoundationEvidenceReadinessAction");
-    expect(foundationClient).toContain("Foundation edit workflows are locked");
-    expect(foundationClient).toContain("Generate Review Actions");
+    expect(foundationClient).toContain("System Reliance edit workflows are locked");
+    expect(foundationClient).toContain("Generate Action Plan");
     expect(foundationClient).toContain("SEED NORTHSTAR");
     expect(foundationClient).toContain("Current foundation counts");
     expect(foundationActions).toContain("seedNorthStarWithConfirmationAction");
@@ -65,7 +65,7 @@ describe("foundation UI alignment", () => {
     expect(foundationActions).toContain("updateFoundationReviewTaskStatusAction");
     expect(reviewActionsPanel).toContain("updateFoundationReviewTaskStatusAction");
     expect(reviewActionsPanel).toContain("canManage && action.taskId");
-    expect(foundationPage).toContain("Foundation source drilldowns");
+    expect(foundationPage).toContain("Compliance source drilldowns");
     expect(foundationPage).toContain("source-drilldown-grid");
     expect(foundationPage).toContain("getFoundationSourceDrilldownSummary");
   });

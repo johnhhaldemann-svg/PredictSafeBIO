@@ -46,6 +46,14 @@ import {
   foundationProgramNames,
   northStarFoundationDemo
 } from "@/lib/foundation/engine";
+import {
+  changePlanPriorities,
+  changePlanRows,
+  changePlanStatuses,
+  type ChangePlanPriority,
+  type ChangePlanRow,
+  type ChangePlanStatus
+} from "@/lib/platform-outline";
 import { createSupabaseServerClient } from "./server";
 import { isSupabaseConfigured } from "./env";
 
@@ -260,6 +268,34 @@ export type FoundationReviewActionSummary = {
   createdAt?: string;
 };
 
+export type ChangePlanItem = ChangePlanRow & {
+  id?: string;
+  sortOrder: number;
+  persisted: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type ChangePlanItemsSummary = {
+  items: ChangePlanItem[];
+  canManage: boolean;
+  signedIn: boolean;
+  isFallback: boolean;
+  message: string;
+};
+
+export type ChangePlanItemInput = {
+  id?: string;
+  category: string;
+  feature: string;
+  owner: string;
+  priority: string;
+  status: string;
+  notes: string;
+  href: string;
+  sortOrder?: number;
+};
+
 export type FoundationSourceDrilldownSummary = {
   groups: Array<{
     key: string;
@@ -296,28 +332,28 @@ const foundationReviewSourceModules = ["evidence_map", "training_assignment", "e
 
 const coreComplianceComponents = [
   ["Company Profile Intelligence", "Company type, sites, labs, materials, equipment, regulatory scope, roles, and workforce."],
-  ["BioType Foundation Packages", "Branch-specific foundations for different biotech operating profiles."],
   ["BioType Branching Engine", "Selects one primary and multiple secondary biotech operating profiles."],
-  ["Compliance Applicability Engine", "Determines what programs, documents, records, and controls apply."],
-  ["BioRisk Scoring Model", "Scores risk using exposure, severity, likelihood, compliance impact, training, and missing data."],
-  ["Document Intelligence Library", "SOPs, plans, policies, forms, templates, references, and metadata."],
-  ["Controlled Record Library", "Proof records for training, equipment, temperature, incidents, chain-of-custody, and waste."],
-  ["Compliance Evidence Map", "Links requirements to evidence that proves controls exist."],
-  ["Programs & Methods Library", "Biotech safety/compliance programs and deterministic AI decision methods."],
+  ["Document Gap Engine", "Checks SOPs, forms, templates, revisions, gaps, and draft update needs."],
+  ["Training Matrix", "Connects document, role, BioType, and process changes to training impact."],
+  ["CAPA Screening", "Screens incidents and findings for corrective and preventive action needs."],
+  ["Evidence Tracking", "Links requirements to evidence that proves controls exist."],
   ["Reference Knowledge Base", "Trusted references and company-specific reference mappings."],
-  ["Change Impact Engine", "Triggers document, training, risk, and audit updates when conditions change."],
-  ["Human Validation Workflow", "AI drafts and recommends; humans review, approve, reject, or request changes."],
-  ["Audit Readiness Score Model", "Dashboard score built from documents, training, CAPA, incidents, equipment, and evidence."]
+  ["Audit Dashboard", "Readiness score built from documents, training, CAPA, incidents, equipment, and evidence."],
+  ["Regulatory Mapping", "Determines what programs, documents, records, and controls apply."],
+  ["BioRisk Scoring Engine", "Scores risk using exposure, severity, likelihood, compliance impact, training, and missing data."],
+  ["Controlled Records Linkage", "Proof records for training, equipment, temperature, incidents, chain-of-custody, and waste."],
+  ["Programs & Methods Library", "Biotech safety/compliance programs and deterministic AI decision methods."],
+  ["Human Validation Workflow", "AI drafts and recommends; humans review, approve, reject, or request changes."]
 ].map(([name, purpose]) => ({ name, purpose }));
 
 const aiWorkflowSteps = [
-  "Company profile",
-  "BioType selection",
-  "Applicability",
-  "Risk scoring",
-  "Documents",
-  "Training",
-  "Audit readiness"
+  "Company profile intelligence",
+  "BioType branching",
+  "Regulatory mapping",
+  "BioRisk scoring",
+  "Document control",
+  "Training matrix",
+  "Audit dashboard"
 ];
 
 const humanValidationWorkflowSteps = [
@@ -1272,6 +1308,206 @@ export async function getAuditReadinessConsoleSummary(): Promise<AuditReadinessC
   }
 }
 
+function fallbackChangePlanItems(): ChangePlanItem[] {
+  return changePlanRows.map((row, index) => ({
+    ...row,
+    sortOrder: index + 1,
+    persisted: false
+  }));
+}
+
+function normalizeChangePlanPriority(priority: string): ChangePlanPriority {
+  return changePlanPriorities.includes(priority as ChangePlanPriority) ? (priority as ChangePlanPriority) : "Medium";
+}
+
+function normalizeChangePlanStatus(status: string): ChangePlanStatus {
+  return changePlanStatuses.includes(status as ChangePlanStatus) ? (status as ChangePlanStatus) : "Planned";
+}
+
+function normalizeChangePlanText(value: string, fallback: string) {
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : fallback;
+}
+
+function mapChangePlanItem(row: Record<string, any>): ChangePlanItem {
+  return {
+    id: row.id,
+    category: row.category,
+    feature: row.feature,
+    owner: row.owner,
+    priority: normalizeChangePlanPriority(row.priority),
+    status: normalizeChangePlanStatus(row.status),
+    notes: row.notes ?? "",
+    href: row.href ?? "/change-plan",
+    sortOrder: Number(row.sort_order ?? 0),
+    persisted: true,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+export async function listChangePlanItems(): Promise<ChangePlanItemsSummary> {
+  const fallbackItems = fallbackChangePlanItems();
+  const context = await getProfileContext();
+
+  if (!context) {
+    return {
+      items: fallbackItems,
+      canManage: false,
+      signedIn: false,
+      isFallback: true,
+      message: "Public demo mode is showing curated starter roadmap rows."
+    };
+  }
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("change_plan_items")
+      .select("id,category,feature,owner,priority,status,notes,href,sort_order,created_at,updated_at")
+      .eq("organization_id", context.organizationId)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      return {
+        items: fallbackItems,
+        canManage: context.role === "owner",
+        signedIn: true,
+        isFallback: true,
+        message: "Live Change Plan rows are unavailable; showing curated starter rows."
+      };
+    }
+
+    if (!data || data.length === 0) {
+      return {
+        items: fallbackItems,
+        canManage: context.role === "owner",
+        signedIn: true,
+        isFallback: true,
+        message: "This workspace has not seeded its Change Plan yet."
+      };
+    }
+
+    return {
+      items: data.map((row) => mapChangePlanItem(row as Record<string, any>)),
+      canManage: context.role === "owner",
+      signedIn: true,
+      isFallback: false,
+      message: context.role === "owner" ? "Owner roadmap controls enabled." : "Roadmap editing is owner-only for this workspace."
+    };
+  } catch {
+    return {
+      items: fallbackItems,
+      canManage: context.role === "owner",
+      signedIn: true,
+      isFallback: true,
+      message: "Live Change Plan rows are unavailable; showing curated starter rows."
+    };
+  }
+}
+
+export async function seedDefaultChangePlanItems(): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before seeding Change Plan rows." };
+  if (context.role !== "owner") return { ok: false, message: "Only organization owners can manage Change Plan rows." };
+
+  const supabase = await createSupabaseServerClient();
+  const { count, error: countError } = await supabase
+    .from("change_plan_items")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", context.organizationId);
+
+  if (countError) return { ok: false, message: countError.message };
+  if ((count ?? 0) > 0) return { ok: true, message: "This workspace already has persisted Change Plan rows." };
+
+  const rows = changePlanRows.map((row, index) => ({
+    organization_id: context.organizationId,
+    category: row.category,
+    feature: row.feature,
+    owner: row.owner,
+    priority: row.priority,
+    status: row.status,
+    notes: row.notes,
+    href: row.href,
+    sort_order: index + 1,
+    created_by: context.userId
+  }));
+
+  const { error } = await supabase.from("change_plan_items").insert(rows);
+  if (error) return { ok: false, message: error.message };
+
+  return { ok: true, message: "Starter Change Plan rows seeded for owner editing." };
+}
+
+export async function createChangePlanItem(input: ChangePlanItemInput): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before creating Change Plan rows." };
+  if (context.role !== "owner") return { ok: false, message: "Only organization owners can manage Change Plan rows." };
+
+  const category = normalizeChangePlanText(input.category, "System Reliance");
+  const feature = normalizeChangePlanText(input.feature, "");
+  const owner = normalizeChangePlanText(input.owner, "Platform Owner");
+  const notes = normalizeChangePlanText(input.notes, "Roadmap requirement detail pending owner review.");
+  const href = normalizeChangePlanText(input.href, "/change-plan");
+
+  if (!feature) return { ok: false, message: "Add a Change Plan feature before saving." };
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.from("change_plan_items").insert({
+    organization_id: context.organizationId,
+    category,
+    feature,
+    owner,
+    priority: normalizeChangePlanPriority(input.priority),
+    status: normalizeChangePlanStatus(input.status),
+    notes,
+    href,
+    sort_order: Number.isFinite(input.sortOrder) ? Number(input.sortOrder) : 99,
+    created_by: context.userId
+  });
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true, message: "Change Plan item created." };
+}
+
+export async function updateChangePlanItem(input: ChangePlanItemInput): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before updating Change Plan rows." };
+  if (context.role !== "owner") return { ok: false, message: "Only organization owners can manage Change Plan rows." };
+  if (!input.id) return { ok: false, message: "Choose a persisted Change Plan row to update." };
+
+  const category = normalizeChangePlanText(input.category, "System Reliance");
+  const feature = normalizeChangePlanText(input.feature, "");
+  const owner = normalizeChangePlanText(input.owner, "Platform Owner");
+  const notes = normalizeChangePlanText(input.notes, "Roadmap requirement detail pending owner review.");
+  const href = normalizeChangePlanText(input.href, "/change-plan");
+
+  if (!feature) return { ok: false, message: "Add a Change Plan feature before saving." };
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("change_plan_items")
+    .update({
+      category,
+      feature,
+      owner,
+      priority: normalizeChangePlanPriority(input.priority),
+      status: normalizeChangePlanStatus(input.status),
+      notes,
+      href,
+      sort_order: Number.isFinite(input.sortOrder) ? Number(input.sortOrder) : 99,
+      updated_at: new Date().toISOString()
+    })
+    .eq("organization_id", context.organizationId)
+    .eq("id", input.id)
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) return { ok: false, message: error?.message ?? "Change Plan item could not be updated." };
+  return { ok: true, message: "Change Plan item updated." };
+}
+
 export async function updateFoundationBioTypeSelection(input: {
   primaryBioType: string;
   secondaryBioTypes: string[];
@@ -1659,12 +1895,12 @@ export async function updateFoundationReviewTaskStatus(input: {
 
 export async function getErgonomicLevel1Summary(): Promise<ErgonomicLevel1Summary> {
   const inspectionType = {
-    title: "Ergonomic Self-Assessment - Level 1 Screening",
-    description: "Worker-facing ergonomic screening with no measurements or equation fields.",
+    title: "Hazard & Exposure Screening - Level 1 HSE Signal",
+    description: "Worker-facing HSE screening with no measurements or equation fields.",
     href: "/ergonomics/self-assessment"
   };
   const level2InspectionType = {
-    title: "Advanced Ergonomic Evaluation - Level 2",
+    title: "Advanced HSE Audit Evaluation - Level 2",
     description: "Specialist/auditor measurement inspection launched from a saved request or audit context.",
     href: "/ergonomics/advanced-evaluation?context=audit",
     gatedLabel: "Requires Level 1 request or audit context"

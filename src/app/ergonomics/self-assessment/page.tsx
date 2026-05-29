@@ -12,8 +12,8 @@ export default async function ErgonomicSelfAssessmentPage() {
         <header className="ergonomic-page-header">
           <div>
             <div className="ergonomic-title-row">
-              <h1>Ergonomic Self-Assessment</h1>
-              <span>Level 1 Screening</span>
+              <h1>Hazard & Exposure Screening</h1>
+              <span>Level 1 HSE Signal</span>
             </div>
             <p>Answer a few simple questions about your task.</p>
             <p>No measurements needed.</p>
@@ -23,7 +23,7 @@ export default async function ErgonomicSelfAssessmentPage() {
           </div>
         </header>
 
-        <section className="summary-strip" aria-label="Ergonomic screening counts">
+        <section className="summary-strip" aria-label="HSE hazard screening counts">
           {summary.counts.map((count) => (
             <span key={count.label}>
               {count.label}: {count.value}
@@ -37,7 +37,7 @@ export default async function ErgonomicSelfAssessmentPage() {
           <div className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Recent ergonomic screenings</p>
+                <p className="section-label">Hazard & Exposure Tracking</p>
                 <h2>Level 1 signal history</h2>
               </div>
               <HeartPulse size={22} />
@@ -57,7 +57,7 @@ export default async function ErgonomicSelfAssessmentPage() {
                   </article>
                 ))
               ) : (
-                <p className="muted">No saved Level 1 ergonomic screenings yet.</p>
+                <p className="muted">No saved Level 1 HSE screenings yet.</p>
               )}
             </div>
           </div>
@@ -65,7 +65,7 @@ export default async function ErgonomicSelfAssessmentPage() {
           <div className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Level 2 boundary</p>
+                <p className="section-label">Inspection / Audit Management</p>
                 <h2>Advanced evaluation stays separate</h2>
               </div>
               <ClipboardList size={22} />
@@ -93,7 +93,7 @@ function ErgoHeroSignal() {
           <ShieldCheck size={18} />
         </span>
         <div>
-          <strong>Ergo signal</strong>
+          <strong>HSE signal</strong>
           <small>Level 1 screen</small>
         </div>
       </div>
