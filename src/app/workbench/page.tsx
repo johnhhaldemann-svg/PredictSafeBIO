@@ -1,16 +1,26 @@
 import { AppShell } from "@/components/AppShell";
+import { FoundationReviewActionsPanel } from "@/components/FoundationReviewActionsPanel";
 import { WorkbenchClient } from "@/components/WorkbenchClient";
-import { getFoundationReviewActionsSummary, getIntelligenceFoundationWorkbenchInput } from "@/lib/supabase/data";
+import { getFoundationAdminAccessSummary, getFoundationReviewActionsSummary, getIntelligenceFoundationWorkbenchInput } from "@/lib/supabase/data";
 
 export default async function WorkbenchPage() {
-  const [initialInput, foundationActions] = await Promise.all([
+  const [initialInput, foundationActions, adminAccess] = await Promise.all([
     getIntelligenceFoundationWorkbenchInput(),
-    getFoundationReviewActionsSummary()
+    getFoundationReviewActionsSummary(),
+    getFoundationAdminAccessSummary()
   ]);
 
   return (
     <AppShell>
-      <WorkbenchClient foundationActions={foundationActions} initialInput={initialInput} />
+      <div className="page-stack">
+        <WorkbenchClient foundationActions={foundationActions} initialInput={initialInput} />
+        <FoundationReviewActionsPanel
+          actions={foundationActions.slice(0, 6)}
+          canManage={adminAccess.isOwner}
+          emptyMessage="No generated Foundation review actions yet."
+          title="Workbench follow-through"
+        />
+      </div>
     </AppShell>
   );
 }

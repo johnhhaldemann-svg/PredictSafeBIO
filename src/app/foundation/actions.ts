@@ -9,6 +9,7 @@ import {
   updateFoundationBioTypeSelection,
   updateFoundationEvidenceReadiness,
   updateFoundationIntakeResponse,
+  updateFoundationReviewTaskStatus,
   type FoundationActionResult
 } from "@/lib/supabase/data";
 
@@ -71,5 +72,13 @@ export async function addAuditReadinessNoteAction(formData: FormData) {
 
 export async function generateFoundationReviewActionsAction() {
   const result = await generateFoundationReviewActions();
+  redirectFoundationResult(result);
+}
+
+export async function updateFoundationReviewTaskStatusAction(formData: FormData) {
+  const result = await updateFoundationReviewTaskStatus({
+    taskId: String(formData.get("taskId") ?? ""),
+    status: String(formData.get("status") ?? "")
+  });
   redirectFoundationResult(result);
 }

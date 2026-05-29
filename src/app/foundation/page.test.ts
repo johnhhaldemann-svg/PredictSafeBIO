@@ -10,6 +10,7 @@ const companyProfilePage = readFileSync(join(process.cwd(), "src/app/company-pro
 const operationsPage = readFileSync(join(process.cwd(), "src/app/operations/page.tsx"), "utf8");
 const workbenchPage = readFileSync(join(process.cwd(), "src/app/workbench/page.tsx"), "utf8");
 const auditPage = readFileSync(join(process.cwd(), "src/app/admin/audit/page.tsx"), "utf8");
+const reviewActionsPanel = readFileSync(join(process.cwd(), "src/components/FoundationReviewActionsPanel.tsx"), "utf8");
 const notesMigration = readFileSync(join(process.cwd(), "supabase/migrations/20260529143000_audit_readiness_notes.sql"), "utf8");
 
 describe("foundation UI alignment", () => {
@@ -54,6 +55,19 @@ describe("foundation UI alignment", () => {
     expect(operationsPage).toContain("getFoundationReviewActionsSummary");
     expect(workbenchPage).toContain("getFoundationReviewActionsSummary");
     expect(auditPage).toContain("getFoundationReviewActionsSummary");
+  });
+
+  it("adds owner-only task status controls and source drilldowns", () => {
+    expect(foundationData).toContain("updateFoundationReviewTaskStatus");
+    expect(foundationData).toContain("getFoundationSourceDrilldownSummary");
+    expect(foundationData).toContain("foundation_review_task_status_updated");
+    expect(foundationData).toContain("Only generated Foundation review tasks can be updated");
+    expect(foundationActions).toContain("updateFoundationReviewTaskStatusAction");
+    expect(reviewActionsPanel).toContain("updateFoundationReviewTaskStatusAction");
+    expect(reviewActionsPanel).toContain("canManage && action.taskId");
+    expect(foundationPage).toContain("Foundation source drilldowns");
+    expect(foundationPage).toContain("source-drilldown-grid");
+    expect(foundationPage).toContain("getFoundationSourceDrilldownSummary");
   });
 
   it("adds audit readiness notes with org scope, RLS, grants, and no user metadata authorization", () => {

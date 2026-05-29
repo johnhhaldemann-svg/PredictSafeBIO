@@ -1,14 +1,19 @@
 import Link from "next/link";
 import { AlertTriangle, Boxes, ClipboardList, DatabaseZap, FlaskConical, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { FoundationReviewActionsPanel } from "@/components/FoundationReviewActionsPanel";
 import { createMapOperationsBundleAction } from "./actions";
 import { assessBioRisk } from "@/lib/bio-ai/engine";
 import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
-import { getFoundationReviewActionsSummary, getMapOperationsSummary } from "@/lib/supabase/data";
+import { getFoundationAdminAccessSummary, getFoundationReviewActionsSummary, getMapOperationsSummary } from "@/lib/supabase/data";
 
 export default async function OperationsPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const params = await searchParams;
-  const [summary, foundationActions] = await Promise.all([getMapOperationsSummary(), getFoundationReviewActionsSummary()]);
+  const [summary, foundationActions, adminAccess] = await Promise.all([
+    getMapOperationsSummary(),
+    getFoundationReviewActionsSummary(),
+    getFoundationAdminAccessSummary()
+  ]);
   const assessment = assessBioRisk(summary.latestAssessmentInput);
 
   return (
@@ -144,35 +149,12 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
           </div>
         </section>
 
-        <section className="panel">
-          <div className="panel-heading">
-            <div>
-              <p className="section-label">Foundation follow-through</p>
-              <h2>Open review actions</h2>
-            </div>
-            <ClipboardList size={22} />
-          </div>
-          <div className="action-list">
-            {foundationActions.length > 0 ? (
-              foundationActions.slice(0, 6).map((action) => (
-                <article className="action-row" key={`${action.id}-${action.sourceModule}`}>
-                  <div>
-                    <strong>{action.title}</strong>
-                    <span>
-                      {action.priority} / {action.status}
-                    </span>
-                  </div>
-                  <p>
-                    Source: <Link href={action.sourceHref}>{action.sourceLabel}</Link>
-                    {action.dueDate ? ` / Due ${action.dueDate}` : ""}
-                  </p>
-                </article>
-              ))
-            ) : (
-              <p className="muted">No open Foundation review actions yet. Generate them from the Foundation page.</p>
-            )}
-          </div>
-        </section>
+        <FoundationReviewActionsPanel
+          actions={foundationActions.slice(0, 6)}
+          canManage={adminAccess.isOwner}
+          emptyMessage="No open Foundation review actions yet. Generate them from the Foundation page."
+          title="Open review actions"
+        />
       </div>
     </AppShell>
   );

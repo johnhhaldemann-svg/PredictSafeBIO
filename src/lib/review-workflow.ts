@@ -48,7 +48,19 @@ export function getAuditEventTarget(event: AuditEvent): { href: string; label: s
     return { href: "/foundation#evidence-map", label: "Open evidence map" };
   }
 
-  if (["audit_readiness", "training_assignment", "equipment", "incident"].includes(sourceModule ?? "")) {
+  if (sourceModule === "training_assignment") {
+    return { href: "/foundation#training-drilldown", label: "Open training readiness" };
+  }
+
+  if (sourceModule === "equipment") {
+    return { href: "/foundation#equipment-drilldown", label: "Open equipment readiness" };
+  }
+
+  if (sourceModule === "incident") {
+    return { href: "/foundation#incident-drilldown", label: "Open incident screening" };
+  }
+
+  if (sourceModule === "audit_readiness") {
     return { href: "/foundation#audit-readiness-console", label: "Open readiness console" };
   }
 

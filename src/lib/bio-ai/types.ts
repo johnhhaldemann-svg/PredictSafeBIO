@@ -343,6 +343,7 @@ export type AuditEvent = {
     | "foundation_evidence_readiness_updated"
     | "foundation_audit_readiness_note_added"
     | "foundation_review_actions_generated"
+    | "foundation_review_task_status_updated"
     | "ergonomic_self_assessment_submitted"
     | "ergonomic_advanced_evaluation_requested"
     | "ergonomic_corrective_action_recommended"

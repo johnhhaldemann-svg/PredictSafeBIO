@@ -246,6 +246,7 @@ export type FoundationAdminAccessSummary = {
 
 export type FoundationReviewActionSummary = {
   id: string;
+  taskId?: string;
   title: string;
   priority: string;
   status: string;
@@ -257,6 +258,25 @@ export type FoundationReviewActionSummary = {
   recommendationId?: string;
   reason?: string;
   createdAt?: string;
+};
+
+export type FoundationSourceDrilldownSummary = {
+  groups: Array<{
+    key: string;
+    title: string;
+    description: string;
+    href: string;
+    items: Array<{
+      id: string;
+      label: string;
+      status: string;
+      detail: string;
+      sourceModule: string;
+      sourceRecordId?: string;
+      recommendedAction: string;
+      ownerRole: string;
+    }>;
+  }>;
 };
 
 export type AuditReadinessConsoleSummary = {
@@ -1032,6 +1052,7 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
       const source = getFoundationSourceTarget(sourceModule);
       actions.set(key, {
         id: row.id,
+        taskId: row.id,
         title: row.title,
         priority: row.priority ?? "medium",
         status: row.status ?? "open",
@@ -1070,6 +1091,125 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
     return Array.from(actions.values()).slice(0, 12);
   } catch {
     return [];
+  }
+}
+
+export async function getFoundationSourceDrilldownSummary(): Promise<FoundationSourceDrilldownSummary> {
+  const context = await getProfileContext();
+  if (!context) return demoFoundationSourceDrilldownSummary();
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const [evidenceRows, trainingRows, equipmentRows, incidentRows, biotypeSelection] = await Promise.all([
+      latestRows(supabase, "compliance_evidence_map", context.organizationId, "id,requirement_name,evidence_status,audit_ready,source_table,source_record_id", 8),
+      latestRows(supabase, "training_assignments", context.organizationId, "id,status,training_requirement_id", 8),
+      latestRows(supabase, "equipment", context.organizationId, "id,equipment_tag,name,status,qualification_status", 8),
+      latestRows(supabase, "incidents", context.organizationId, "id,title,status,severity", 8),
+      latestRow(supabase, "organization_biotype_selections", context.organizationId, "id,primary_biotype_key,secondary_biotype_keys,selection_status")
+    ]);
+
+    const selection = biotypeSelection as Record<string, any> | null;
+    const primary = normalizeBioTypeKey(selection?.primary_biotype_key) ?? "rd_biotech";
+    const secondary = normalizeBioTypeKeys(selection?.secondary_biotype_keys).filter((key) => key !== primary);
+
+    return {
+      groups: [
+        {
+          key: "evidence_map",
+          title: "Evidence gaps",
+          description: "Mapped controls that still need audit-ready evidence or human review.",
+          href: getFoundationSourceTarget("evidence_map").href,
+          items: ((evidenceRows as Record<string, any>[]) ?? [])
+            .filter((row) => !row.audit_ready || isFoundationGapStatus(row.evidence_status))
+            .map((row) => ({
+              id: row.id,
+              label: row.requirement_name ?? "Evidence requirement",
+              status: row.evidence_status ?? "review_needed",
+              detail: `Audit-ready: ${Boolean(row.audit_ready)}. Source table: ${row.source_table ?? "not linked"}.`,
+              sourceModule: "evidence_map",
+              sourceRecordId: row.id,
+              recommendedAction: "Review mapped evidence and update readiness status.",
+              ownerRole: "quality_unit"
+            }))
+        },
+        {
+          key: "biotype_selection",
+          title: "BioType missing controls",
+          description: "Selected BioType branches that drive document, training, record, and evidence checks.",
+          href: getFoundationSourceTarget("biotype_selection").href,
+          items: selection?.id
+            ? [
+                {
+                  id: selection.id,
+                  label: `Primary ${primary}`,
+                  status: selection.selection_status ?? "draft_human_review_required",
+                  detail: `Secondary BioTypes: ${secondary.length > 0 ? secondary.join(", ") : "none selected"}.`,
+                  sourceModule: "biotype_selection",
+                  sourceRecordId: selection.id,
+                  recommendedAction: "Confirm required BioType controls and evidence map coverage.",
+                  ownerRole: "biosafety_officer"
+                }
+              ]
+            : []
+        },
+        {
+          key: "incident",
+          title: "Incident/CAPA screening",
+          description: "Open incidents that may need CAPA screening, document impact, training impact, or evidence updates.",
+          href: getFoundationSourceTarget("incident").href,
+          items: ((incidentRows as Record<string, any>[]) ?? [])
+            .filter((row) => row.status !== "closed")
+            .map((row) => ({
+              id: row.id,
+              label: row.title ?? "Open incident",
+              status: row.status ?? "open",
+              detail: `Severity: ${row.severity ?? "unknown"}.`,
+              sourceModule: "incident",
+              sourceRecordId: row.id,
+              recommendedAction: "Complete incident/CAPA screening and link evidence.",
+              ownerRole: "quality_unit"
+            }))
+        },
+        {
+          key: "equipment",
+          title: "Equipment readiness",
+          description: "Equipment records with inactive status, overdue qualification, or readiness impact.",
+          href: getFoundationSourceTarget("equipment").href,
+          items: ((equipmentRows as Record<string, any>[]) ?? [])
+            .filter((row) => row.status !== "active" || row.qualification_status !== "current")
+            .map((row) => ({
+              id: row.id,
+              label: row.equipment_tag ?? row.name ?? "Equipment",
+              status: row.status ?? "unknown",
+              detail: `Qualification: ${row.qualification_status ?? "unknown"}.`,
+              sourceModule: "equipment",
+              sourceRecordId: row.id,
+              recommendedAction: "Review equipment status, qualification evidence, and impacted workflows.",
+              ownerRole: "validation_lead"
+            }))
+        },
+        {
+          key: "training_assignment",
+          title: "Training readiness",
+          description: "Expired or incomplete training assignments that block readiness.",
+          href: getFoundationSourceTarget("training_assignment").href,
+          items: ((trainingRows as Record<string, any>[]) ?? [])
+            .filter((row) => row.status !== "complete" && row.status !== "current")
+            .map((row) => ({
+              id: row.id,
+              label: `Training assignment ${String(row.id).slice(0, 8)}`,
+              status: row.status ?? "open",
+              detail: `Requirement: ${row.training_requirement_id ?? "not linked"}.`,
+              sourceModule: "training_assignment",
+              sourceRecordId: row.id,
+              recommendedAction: "Review competency evidence and assign follow-up training.",
+              ownerRole: "training_owner"
+            }))
+        }
+      ]
+    };
+  } catch {
+    return demoFoundationSourceDrilldownSummary();
   }
 }
 
@@ -1465,6 +1605,56 @@ export async function generateFoundationReviewActions(): Promise<FoundationActio
     ok: true,
     message: created > 0 ? `${created} review action(s) generated as draft tasks.` : "No new review actions needed; existing open actions were preserved."
   };
+}
+
+export async function updateFoundationReviewTaskStatus(input: {
+  taskId: string;
+  status: string;
+}): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before updating Foundation review tasks." };
+  if (context.role !== "owner") return { ok: false, message: "Only organization owners can update Foundation review tasks." };
+
+  const status = normalizeFoundationTaskStatus(input.status);
+  if (!status) return { ok: false, message: "Choose a valid Foundation review task status." };
+
+  const supabase = await createSupabaseServerClient();
+  const { data: task, error: readError } = await supabase
+    .from("tasks")
+    .select("id,title,status,source_module,source_record_id")
+    .eq("organization_id", context.organizationId)
+    .eq("id", input.taskId)
+    .single();
+
+  if (readError || !task) return { ok: false, message: readError?.message ?? "Foundation review task could not be found." };
+  if (!foundationReviewSourceModules.includes(String(task.source_module))) {
+    return { ok: false, message: "Only generated Foundation review tasks can be updated from this panel." };
+  }
+
+  const { error } = await supabase
+    .from("tasks")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("organization_id", context.organizationId)
+    .eq("id", task.id);
+
+  if (error) return { ok: false, message: error.message };
+
+  await writeFoundationAuditEvent(supabase, context, {
+    eventType: "foundation_review_task_status_updated",
+    summary: `Foundation review task status updated to ${status}.`,
+    sourceModule: task.source_module ?? "foundation",
+    sourceRecordId: task.source_record_id ?? task.id,
+    targetModule: "task",
+    targetRecordId: task.id,
+    payload: {
+      taskId: task.id,
+      title: task.title,
+      previousStatus: task.status,
+      status
+    }
+  });
+
+  return { ok: true, message: `Foundation review task marked ${status}.` };
 }
 
 export async function getErgonomicLevel1Summary(): Promise<ErgonomicLevel1Summary> {
@@ -3487,9 +3677,9 @@ function foundationActionKey(sourceModule?: string | null, sourceRecordId?: stri
 function getFoundationSourceTarget(sourceModule: string) {
   const targets: Record<string, { label: string; href: string }> = {
     evidence_map: { label: "Evidence map", href: "/foundation#evidence-map" },
-    training_assignment: { label: "Training readiness", href: "/foundation#audit-readiness-console" },
-    equipment: { label: "Equipment readiness", href: "/foundation#audit-readiness-console" },
-    incident: { label: "Incident/CAPA screening", href: "/foundation#audit-readiness-console" },
+    training_assignment: { label: "Training readiness", href: "/foundation#training-drilldown" },
+    equipment: { label: "Equipment readiness", href: "/foundation#equipment-drilldown" },
+    incident: { label: "Incident/CAPA screening", href: "/foundation#incident-drilldown" },
     biotype_selection: { label: "BioType controls", href: "/foundation#foundation-workflows" },
     audit_readiness: { label: "Audit readiness", href: "/foundation#audit-readiness-console" },
     foundation: { label: "Foundation", href: "/foundation" }
@@ -3530,6 +3720,72 @@ function demoAuditReadinessConsoleSummary(): AuditReadinessConsoleSummary {
     notes: [],
     humanReviewStatus: "Draft - human review required",
     draftOnly: true
+  };
+}
+
+function demoFoundationSourceDrilldownSummary(): FoundationSourceDrilldownSummary {
+  const demo = demoIntelligenceFoundationSummary();
+  return {
+    groups: [
+      {
+        key: "evidence_map",
+        title: "Evidence gaps",
+        description: "Mapped controls that still need audit-ready evidence or human review.",
+        href: "/foundation#evidence-map",
+        items: demo.evidence
+          .filter((item) => !item.auditReady || isFoundationGapStatus(item.status))
+          .slice(0, 4)
+          .map((item, index) => ({
+            id: item.id ?? `demo-evidence-${index}`,
+            label: item.requirement,
+            status: item.status,
+            detail: `Audit-ready: ${item.auditReady}.`,
+            sourceModule: "evidence_map",
+            sourceRecordId: item.id ?? `demo-evidence-${index}`,
+            recommendedAction: "Review mapped evidence and update readiness status.",
+            ownerRole: "quality_unit"
+          }))
+      },
+      {
+        key: "biotype_selection",
+        title: "BioType missing controls",
+        description: "Selected BioType branches that drive document, training, record, and evidence checks.",
+        href: "/foundation#foundation-workflows",
+        items: [
+          {
+            id: demo.biotypeSelection?.id ?? "demo-biotype-selection",
+            label: `Primary ${demo.biotypeSelection?.primaryBioType ?? "rd_biotech"}`,
+            status: demo.biotypeSelection?.status ?? "draft_human_review_required",
+            detail: `Secondary BioTypes: ${demo.biotypeSelection?.secondaryBioTypes.join(", ") ?? "none selected"}.`,
+            sourceModule: "biotype_selection",
+            sourceRecordId: demo.biotypeSelection?.id ?? "demo-biotype-selection",
+            recommendedAction: "Confirm required BioType controls and evidence map coverage.",
+            ownerRole: "biosafety_officer"
+          }
+        ]
+      },
+      {
+        key: "incident",
+        title: "Incident/CAPA screening",
+        description: "Open incidents that may need CAPA screening, document impact, training impact, or evidence updates.",
+        href: "/foundation#incident-drilldown",
+        items: []
+      },
+      {
+        key: "equipment",
+        title: "Equipment readiness",
+        description: "Equipment records with inactive status, overdue qualification, or readiness impact.",
+        href: "/foundation#equipment-drilldown",
+        items: []
+      },
+      {
+        key: "training_assignment",
+        title: "Training readiness",
+        description: "Expired or incomplete training assignments that block readiness.",
+        href: "/foundation#training-drilldown",
+        items: []
+      }
+    ]
   };
 }
 
@@ -3607,6 +3863,10 @@ async function writeFoundationAuditEvent(
 
 function normalizeFoundationEvidenceStatus(status: string): FoundationEvidenceStatus {
   return foundationEvidenceStatuses.includes(status as FoundationEvidenceStatus) ? (status as FoundationEvidenceStatus) : "review_needed";
+}
+
+function normalizeFoundationTaskStatus(status: string) {
+  return ["in_progress", "complete", "blocked"].includes(status) ? (status as "in_progress" | "complete" | "blocked") : null;
 }
 
 function isFoundationGapStatus(status: unknown) {

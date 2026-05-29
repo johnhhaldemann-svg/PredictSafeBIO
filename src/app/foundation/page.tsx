@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   BookOpenCheck,
   BrainCircuit,
-  ClipboardList,
   FileSearch,
   Gauge,
   GitBranch,
@@ -11,23 +10,34 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { FoundationReviewActionsPanel } from "@/components/FoundationReviewActionsPanel";
 import { StatusBadge } from "@/components/StatusBadge";
 import { assessBioRisk } from "@/lib/bio-ai/engine";
 import {
   getAuditReadinessConsoleSummary,
   getFoundationAdminAccessSummary,
   getFoundationReviewActionsSummary,
+  getFoundationSourceDrilldownSummary,
   getIntelligenceFoundationSummary
 } from "@/lib/supabase/data";
 import { FoundationWorkflowClient } from "./FoundationWorkflowClient";
 
+const sourceDrilldownIds: Record<string, string> = {
+  evidence_map: "evidence-drilldown",
+  biotype_selection: "biotype-drilldown",
+  incident: "incident-drilldown",
+  equipment: "equipment-drilldown",
+  training_assignment: "training-drilldown"
+};
+
 export default async function FoundationPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const params = await searchParams;
-  const [summary, adminAccess, auditConsole, reviewActions] = await Promise.all([
+  const [summary, adminAccess, auditConsole, reviewActions, sourceDrilldowns] = await Promise.all([
     getIntelligenceFoundationSummary(),
     getFoundationAdminAccessSummary(),
     getAuditReadinessConsoleSummary(),
-    getFoundationReviewActionsSummary()
+    getFoundationReviewActionsSummary(),
+    getFoundationSourceDrilldownSummary()
   ]);
   const assessment = assessBioRisk(summary.latestAssessmentInput);
 
@@ -90,7 +100,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
             </div>
           </div>
 
-          <div className="panel" id="evidence-map">
+          <div className="panel">
             <div className="panel-heading">
               <div>
                 <p className="section-label">BioType Foundation Packages</p>
@@ -193,7 +203,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
             </div>
           </div>
 
-          <div className="panel">
+          <div className="panel" id="evidence-map">
             <div className="panel-heading">
               <div>
                 <p className="section-label">Evidence Map</p>
@@ -344,33 +354,47 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           </div>
         </section>
 
+        <FoundationReviewActionsPanel actions={reviewActions.slice(0, 8)} canManage={adminAccess.isOwner} />
+
         <section className="panel">
           <div className="panel-heading">
             <div>
-              <p className="section-label">Foundation review actions</p>
-              <h2>Source-traced follow-through</h2>
+              <p className="section-label">Foundation source drilldowns</p>
+              <h2>Traceable source detail</h2>
             </div>
-            <ClipboardList size={22} />
+            <FileSearch size={22} />
           </div>
-          <div className="action-list">
-            {reviewActions.length > 0 ? (
-              reviewActions.slice(0, 8).map((action) => (
-                <article className="action-row" key={`${action.id}-${action.sourceModule}`}>
-                  <div>
-                    <strong>{action.title}</strong>
-                    <span>
-                      {action.priority} / {action.status}
-                    </span>
-                  </div>
-                  <p>
-                    Source: <Link href={action.sourceHref}>{action.sourceLabel}</Link>
-                    {action.dueDate ? ` / Due ${action.dueDate}` : ""}
-                  </p>
-                </article>
-              ))
-            ) : (
-              <p className="muted">No open Foundation review actions have been generated yet.</p>
-            )}
+          <div className="source-drilldown-grid">
+            {sourceDrilldowns.groups.map((group) => (
+              <article className="source-drilldown-card" id={sourceDrilldownIds[group.key] ?? `${group.key}-drilldown`} key={group.key}>
+                <div>
+                  <h3>{group.title}</h3>
+                  <span>{group.items.length} source(s)</span>
+                </div>
+                <p>{group.description}</p>
+                <div className="action-list compact-list">
+                  {group.items.length > 0 ? (
+                    group.items.slice(0, 4).map((item) => (
+                      <div className="source-detail-row" key={`${group.key}-${item.id}`}>
+                        <strong>{item.label}</strong>
+                        <span>
+                          {item.status} / {item.ownerRole}
+                        </span>
+                        <p>
+                          {item.detail} Action: {item.recommendedAction}
+                        </p>
+                        <small>
+                          {item.sourceModule}
+                          {item.sourceRecordId ? ` / ${item.sourceRecordId}` : ""}
+                        </small>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="muted">No active source gaps in this group.</p>
+                  )}
+                </div>
+              </article>
+            ))}
           </div>
         </section>
 
