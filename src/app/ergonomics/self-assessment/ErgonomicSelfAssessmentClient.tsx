@@ -288,22 +288,22 @@ export function ErgonomicSelfAssessmentClient() {
           <p>
             If symptoms continue or the task feels worse, request an advanced ergonomic evaluation with measurements and photos.
           </p>
-        {assessmentState.assessmentId ? (
-          <form action={requestAction} className="advanced-request-form">
-            <input name="assessmentId" type="hidden" value={assessmentState.assessmentId} />
-            <input
-              name="reason"
-              type="hidden"
-              value={`Level 2 requested from ${riskLabel((assessmentState.riskLevel ?? result.riskLevel).toString())} Level 1 ergonomic screening.`}
-            />
-            <AdvancedRequestButton />
-            {advancedState.message ? (
-              <p className={advancedState.ok ? "save-message save-saved" : "save-message save-error"}>{advancedState.message}</p>
-            ) : null}
-          </form>
-        ) : (
-          <p className="muted">Save the Level 1 screening first to request Level 2.</p>
-        )}
+          {assessmentState.assessmentId ? (
+            <form action={requestAction} className="advanced-request-form">
+              <input name="assessmentId" type="hidden" value={assessmentState.assessmentId} />
+              <input
+                name="reason"
+                type="hidden"
+                value={`Level 2 requested from ${riskLabel((assessmentState.riskLevel ?? result.riskLevel).toString())} Level 1 ergonomic screening.`}
+              />
+              <AdvancedRequestButton />
+              {advancedState.message ? (
+                <p className={advancedState.ok ? "save-message save-saved" : "save-message save-error"}>{advancedState.message}</p>
+              ) : null}
+            </form>
+          ) : (
+            <p className="muted">Save the Level 1 screening first to request Level 2.</p>
+          )}
           <div className="level-two-note">
             <ShieldCheck size={16} />
             Level 2 is separate and may include measurements, photos, industrial ergonomic equation data points, specialist review, formal recommendations, and corrective actions.

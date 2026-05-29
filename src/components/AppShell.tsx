@@ -37,13 +37,13 @@ export async function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <Link href="/workbench" className="brand" aria-label="PredictSafeBIO Workbench">
+        <Link href="/workbench" className="brand" aria-label="SafePredict Workbench">
           <span className="brand-mark">
             <ShieldCheck size={18} />
           </span>
           <span>
-            <strong>PredictSafeBIO</strong>
-            <small>AI Engine MVP</small>
+            <strong>SafePredict</strong>
+            <small>Predict | Prevent | Protect</small>
           </span>
         </Link>
         <nav className="nav-list" aria-label="Primary navigation">
