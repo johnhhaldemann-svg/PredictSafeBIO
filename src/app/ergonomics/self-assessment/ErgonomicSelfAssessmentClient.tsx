@@ -91,7 +91,7 @@ export function ErgonomicSelfAssessmentClient() {
             <legend>1. What type of work are you doing?</legend>
             <div className="option-grid task-option-grid">
               {ergonomicTaskTypes.map((option) => (
-                <label className="option-tile" key={option.value}>
+                <label className={`option-tile task-card task-${option.value}`} key={option.value}>
                   <input
                     checked={draft.taskType === option.value}
                     name="taskType"
@@ -99,7 +99,7 @@ export function ErgonomicSelfAssessmentClient() {
                     type="radio"
                     value={option.value}
                   />
-                  <span className="option-icon">{taskIcon(option.value)}</span>
+                  <span className="option-icon option-visual">{taskIcon(option.value)}</span>
                   <span>{option.label}</span>
                 </label>
               ))}
@@ -110,7 +110,7 @@ export function ErgonomicSelfAssessmentClient() {
             <legend>2. How does this task feel on your body?</legend>
             <div className="option-grid discomfort-grid">
               {ergonomicDiscomfortLevels.map((option) => (
-                <label className="option-tile" key={option.value}>
+                <label className={`option-tile discomfort-card discomfort-card-${option.value}`} key={option.value}>
                   <input
                     checked={draft.discomfortLevel === option.value}
                     name="discomfortLevel"
@@ -118,7 +118,7 @@ export function ErgonomicSelfAssessmentClient() {
                     type="radio"
                     value={option.value}
                   />
-                  <span className={`option-icon discomfort-${option.value}`}>{discomfortIcon(option.value)}</span>
+                  <span className={`option-icon option-visual discomfort-${option.value}`}>{discomfortIcon(option.value)}</span>
                   <span>{option.label}</span>
                 </label>
               ))}
@@ -129,7 +129,7 @@ export function ErgonomicSelfAssessmentClient() {
             <legend>3. Which parts of your body feel the strain?</legend>
             <div className="option-grid body-grid">
               {ergonomicBodyParts.map((option) => (
-                <label className="option-tile" key={option.value}>
+                <label className="option-tile body-card" key={option.value}>
                   <input
                     checked={draft.bodyParts.includes(option.value)}
                     name="bodyParts"
@@ -137,7 +137,7 @@ export function ErgonomicSelfAssessmentClient() {
                     type="checkbox"
                     value={option.value}
                   />
-                  <span className="option-icon compact-icon">{bodyIcon(option.value)}</span>
+                  <span className="option-icon compact-icon option-visual">{bodyIcon(option.value)}</span>
                   <span>{option.label}</span>
                 </label>
               ))}
@@ -148,7 +148,7 @@ export function ErgonomicSelfAssessmentClient() {
             <legend>4. How often do you do this task?</legend>
             <div className="option-grid frequency-grid">
               {ergonomicFrequencies.map((option) => (
-                <label className="option-tile" key={option.value}>
+                <label className="option-tile frequency-card" key={option.value}>
                   <input
                     checked={draft.frequency === option.value}
                     name="frequency"
@@ -156,7 +156,7 @@ export function ErgonomicSelfAssessmentClient() {
                     type="radio"
                     value={option.value}
                   />
-                  <span>{option.label}</span>
+                  <span className="frequency-label">{option.label}</span>
                 </label>
               ))}
             </div>

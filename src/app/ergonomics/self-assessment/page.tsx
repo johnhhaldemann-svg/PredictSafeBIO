@@ -1,4 +1,4 @@
-import { Activity, ClipboardList, HeartPulse } from "lucide-react";
+import { ClipboardList, HeartPulse } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { getErgonomicLevel1Summary } from "@/lib/supabase/data";
 import { ErgonomicSelfAssessmentClient } from "./ErgonomicSelfAssessmentClient";
@@ -19,7 +19,7 @@ export default async function ErgonomicSelfAssessmentPage() {
             <p>No measurements needed.</p>
           </div>
           <div className="ergo-hero-figure" aria-hidden="true">
-            <Activity size={74} />
+            <ErgoHeroIllustration />
           </div>
         </header>
 
@@ -82,5 +82,34 @@ export default async function ErgonomicSelfAssessmentPage() {
         </section>
       </div>
     </AppShell>
+  );
+}
+
+function ErgoHeroIllustration() {
+  return (
+    <svg className="ergo-hero-svg" viewBox="0 0 260 150" role="img" aria-label="Worker lifting safely">
+      <defs>
+        <linearGradient id="ergoPerson" x1="86" x2="162" y1="22" y2="130">
+          <stop offset="0" stopColor="#0b63f6" />
+          <stop offset="1" stopColor="#0040a8" />
+        </linearGradient>
+        <linearGradient id="ergoBox" x1="158" x2="218" y1="75" y2="128">
+          <stop offset="0" stopColor="#38bdf8" />
+          <stop offset="1" stopColor="#0b63f6" />
+        </linearGradient>
+      </defs>
+      <path d="M39 128h181" stroke="#b9d3f5" strokeLinecap="round" strokeWidth="4" />
+      <circle cx="147" cy="32" r="15" fill="#0b63f6" />
+      <path d="M125 51c17-12 42-4 50 14l7 16" fill="none" stroke="url(#ergoPerson)" strokeLinecap="round" strokeWidth="16" />
+      <path d="M137 65l-19 33-22 23" fill="none" stroke="url(#ergoPerson)" strokeLinecap="round" strokeWidth="16" />
+      <path d="M157 75l-6 31 20 22" fill="none" stroke="url(#ergoPerson)" strokeLinecap="round" strokeWidth="16" />
+      <path d="M111 91l44 6" stroke="#06337c" strokeLinecap="round" strokeWidth="8" />
+      <rect x="169" y="81" width="45" height="45" rx="8" fill="url(#ergoBox)" />
+      <path d="M179 94h25M179 106h17" stroke="#dff6ff" strokeLinecap="round" strokeWidth="4" />
+      <circle cx="58" cy="55" r="20" fill="#e8f1ff" />
+      <path d="M49 57l7 7 15-18" fill="none" stroke="#32b649" strokeLinecap="round" strokeLinejoin="round" strokeWidth="5" />
+      <path d="M221 35c8 6 13 15 13 26" fill="none" stroke="#bfdbfe" strokeLinecap="round" strokeWidth="5" />
+      <path d="M35 99c-7-10-8-21-2-32" fill="none" stroke="#bfdbfe" strokeLinecap="round" strokeWidth="5" />
+    </svg>
   );
 }
