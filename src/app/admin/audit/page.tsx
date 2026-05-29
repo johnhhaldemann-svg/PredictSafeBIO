@@ -1,18 +1,29 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
-import { listAuditEvents } from "@/lib/supabase/data";
+import { FoundationReviewActionsPanel } from "@/components/FoundationReviewActionsPanel";
+import { getFoundationAdminAccessSummary, getFoundationReviewActionsSummary, listAuditEvents } from "@/lib/supabase/data";
 import { getAuditEventTarget } from "@/lib/review-workflow";
 
 export default async function AuditPage() {
-  const auditEvents = await listAuditEvents();
+  const [auditEvents, foundationActions, adminAccess] = await Promise.all([
+    listAuditEvents(),
+    getFoundationReviewActionsSummary(),
+    getFoundationAdminAccessSummary()
+  ]);
 
   return (
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Audit log</p>
-          <h1>Human-review trace</h1>
+          <p className="section-label">System Reliance</p>
+          <h1>Immutable Audit Log</h1>
         </header>
+        <FoundationReviewActionsPanel
+          actions={foundationActions.slice(0, 6)}
+          canManage={adminAccess.isOwner}
+          emptyMessage="No open Foundation review actions are waiting for human review."
+          title="Open source-traced actions"
+        />
         <section className="timeline">
           {auditEvents.map((event, index) => {
             const target = getAuditEventTarget(event);

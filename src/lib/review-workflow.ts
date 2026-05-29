@@ -1,4 +1,5 @@
 import type { AuditEvent, BioAiAssessment, BioAiInput, DocumentMetadata, HumanReviewStatus } from "@/lib/bio-ai/types";
+import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import type { DocumentRecommendationRun } from "@/lib/supabase/data";
 
 export const humanReviewStatusLabels: Record<HumanReviewStatus | "routine_monitoring", string> = {
@@ -28,6 +29,8 @@ export function getAuditEventTarget(event: AuditEvent): { href: string; label: s
   const payload = event.payload ?? {};
   const assessmentId = typeof payload.assessmentId === "string" ? payload.assessmentId : null;
   const documentId = typeof payload.documentId === "string" ? payload.documentId : null;
+  const sourceModule = typeof payload.sourceModule === "string" ? payload.sourceModule : null;
+  const targetModule = typeof payload.targetModule === "string" ? payload.targetModule : null;
 
   if (assessmentId) {
     return { href: `/assessments/${assessmentId}`, label: "Open assessment" };
@@ -35,6 +38,34 @@ export function getAuditEventTarget(event: AuditEvent): { href: string; label: s
 
   if (documentId) {
     return { href: `/documents/${documentId}`, label: "Open document" };
+  }
+
+  if (sourceModule?.startsWith("foundation") || targetModule?.startsWith("foundation")) {
+    return { href: "/foundation", label: "Open foundation" };
+  }
+
+  if (sourceModule === "evidence_map") {
+    return { href: "/foundation#evidence-map", label: "Open evidence map" };
+  }
+
+  if (sourceModule === "training_assignment") {
+    return { href: "/training-matrix", label: "Open training matrix" };
+  }
+
+  if (sourceModule === "equipment") {
+    return { href: "/foundation#equipment-drilldown", label: "Open equipment readiness" };
+  }
+
+  if (sourceModule === "incident") {
+    return { href: "/foundation#incident-drilldown", label: "Open incident screening" };
+  }
+
+  if (sourceModule === "audit_readiness") {
+    return { href: "/foundation#audit-readiness-console", label: "Open readiness console" };
+  }
+
+  if (sourceModule === "biotype_selection") {
+    return { href: "/foundation#foundation-workflows", label: "Open BioType controls" };
   }
 
   return null;
@@ -45,7 +76,7 @@ export function getDemoSeedLabel(value?: string | null) {
 }
 
 const reportBoundary =
-  "Draft - Human Review Required. This demo report is not a controlled record and makes no FDA, GxP, Part 11, approval, validation, regulatory acceptance, diagnosis, or release claim.";
+  `${draftAiRecommendationGuardrail} This demo report is not a controlled record and makes no FDA, GxP, Part 11, approval, validation, regulatory acceptance, diagnosis, or release claim.`;
 
 export function buildAssessmentReportMarkdown({
   assessment,

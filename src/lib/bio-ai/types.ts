@@ -1,6 +1,11 @@
 export type BioRiskLevel = "low" | "moderate" | "high" | "critical";
 export type BioAiConfidence = "low" | "medium" | "high";
-export type HumanReviewStatus = "draft_human_review_required" | "in_review" | "reviewed_needs_action" | "reviewed_monitoring";
+export type HumanReviewStatus =
+  | "draft_human_review_required"
+  | "in_review"
+  | "reviewed_needs_action"
+  | "reviewed_monitoring"
+  | "routine_monitoring";
 
 export type BioSignalType =
   | "deviation"
@@ -13,6 +18,7 @@ export type BioSignalType =
   | "contamination_event"
   | "environmental_monitoring"
   | "equipment_event"
+  | "ergonomic_risk_signal"
   | "sample_chain_of_custody"
   | "data_integrity"
   | "batch_record"
@@ -59,6 +65,97 @@ export type RecommendedActionType =
   | "documentation_review"
   | "monitoring";
 
+export type BioSourceModule =
+  | "company_profile"
+  | "foundation"
+  | "biotype_foundation"
+  | "biotype_selection"
+  | "intake"
+  | "applicability_rule"
+  | "compliance_program"
+  | "compliance_method"
+  | "evidence_map"
+  | "change_impact"
+  | "audit_readiness"
+  | "site"
+  | "lab"
+  | "reference_rule"
+  | "document"
+  | "training"
+  | "biosafety"
+  | "incident"
+  | "capa"
+  | "equipment"
+  | "sample"
+  | "material"
+  | "chemical"
+  | "waste"
+  | "audit"
+  | "task"
+  | "inspection"
+  | "ergonomic_self_assessment"
+  | "ergonomic_advanced_evaluation";
+
+export type BioSourceRecord = {
+  module: BioSourceModule;
+  recordId?: string | null;
+  label?: string | null;
+};
+
+export type MapDerivedStatus =
+  | "current"
+  | "complete"
+  | "ready"
+  | "partial"
+  | "gap"
+  | "gaps"
+  | "missing"
+  | "expired"
+  | "out_of_tolerance"
+  | "excursion"
+  | "open"
+  | "repeat"
+  | "unknown";
+
+export type IncidentContext = {
+  incidentId?: string | null;
+  status?: "open" | "investigating" | "contained" | "closed" | "unknown" | null;
+  severity?: number | string | null;
+  capaRequired?: boolean | null;
+  repeatPattern?: boolean | null;
+};
+
+export type SampleMaterialContext = {
+  sampleId?: string | null;
+  materialId?: string | null;
+  chainOfCustodyStatus?: MapDerivedStatus | null;
+  storageConditionStatus?: MapDerivedStatus | null;
+  wasteStatus?: MapDerivedStatus | null;
+};
+
+export type FoundationAiContext = {
+  applicablePrograms: string[];
+  requiredDocuments: string[];
+  requiredTraining: string[];
+  requiredEvidence: string[];
+  evidenceGaps: string[];
+  changeImpactSummaries: string[];
+  auditReadinessScore: number;
+  bioriskRuleDrivers: string[];
+  sourceRecords: BioSourceRecord[];
+  referenceRuleIds: string[];
+};
+
+export type BioTypeContextFields = {
+  primaryBioType?: string | null;
+  secondaryBioTypes?: string[] | null;
+  biotypePrograms?: string[] | null;
+  biotypeDocuments?: string[] | null;
+  biotypeRecords?: string[] | null;
+  biotypeTraining?: string[] | null;
+  biotypeRiskDrivers?: string[] | null;
+};
+
 export type BioAiSignal = {
   id?: string | null;
   type: BioSignalType;
@@ -86,11 +183,15 @@ export type BioAiSignal = {
   gxpImpact?: boolean | null;
   controls?: string[] | null;
   evidence?: string | null;
+  sourceRecords?: BioSourceRecord[] | null;
+  referenceRuleIds?: string[] | null;
+  detectability?: number | string | null;
 };
 
-export type BioAiInput = {
+export type BioAiInput = BioTypeContextFields & {
   organizationId?: string | null;
   siteId?: string | null;
+  labId?: string | null;
   siteName?: string | null;
   area?: string | null;
   workflow?: string | null;
@@ -121,6 +222,16 @@ export type BioAiInput = {
   outOfToleranceEquipment?: boolean | null;
   chainOfCustodyGap?: boolean | null;
   contaminationSuspected?: boolean | null;
+  sourceRecords?: BioSourceRecord[] | null;
+  referenceRuleIds?: string[] | null;
+  trainingStatus?: MapDerivedStatus | null;
+  equipmentStatus?: MapDerivedStatus | null;
+  documentReadiness?: MapDerivedStatus | null;
+  incidentContext?: IncidentContext | null;
+  sampleMaterialContext?: SampleMaterialContext | null;
+  auditReadinessStatus?: MapDerivedStatus | null;
+  detectability?: number | string | null;
+  foundationContext?: FoundationAiContext | null;
 };
 
 export type BioAiAssessment = {
@@ -141,7 +252,13 @@ export type BioAiAssessment = {
     ownerRole: ReviewOwnerRole;
     actionType: RecommendedActionType;
     reason: string;
+    sourceRecords: BioSourceRecord[];
+    referenceRuleIds: string[];
   }>;
+  sourceTrace: {
+    sourceRecords: BioSourceRecord[];
+    referenceRuleIds: string[];
+  };
   explanation: string;
   escalationRequired: boolean;
   holdOrQuarantineReviewRecommended: boolean;
@@ -215,7 +332,24 @@ export type AuditEvent = {
     | "document_metadata_updated"
     | "document_recommendation_generated"
     | "human_review_status_changed"
-    | "demo_seed_created";
+    | "demo_seed_created"
+    | "map_operations_bundle_created"
+    | "intelligence_foundation_seeded"
+    | "intelligence_foundation_evaluated"
+    | "change_impact_generated"
+    | "audit_readiness_score_generated"
+    | "foundation_biotype_selection_updated"
+    | "foundation_intake_response_updated"
+    | "foundation_evidence_readiness_updated"
+    | "foundation_audit_readiness_note_added"
+    | "foundation_review_actions_generated"
+    | "foundation_review_task_status_updated"
+    | "ergonomic_self_assessment_submitted"
+    | "ergonomic_advanced_evaluation_requested"
+    | "ergonomic_corrective_action_recommended"
+    | "ergonomic_level2_inspection_created"
+    | "ergonomic_level2_inspection_submitted"
+    | "ergonomic_level2_corrective_action_recommended";
   summary: string;
   payload?: Record<string, unknown>;
   createdAt?: string;

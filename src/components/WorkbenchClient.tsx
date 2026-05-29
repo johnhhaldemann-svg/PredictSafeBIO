@@ -2,10 +2,31 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, Beaker, CheckCircle2, ClipboardList, Save, Sparkles } from "lucide-react";
+import { AlertTriangle, Beaker, CheckCircle2, ClipboardList, Gauge, Save, ShieldCheck, Sparkles } from "lucide-react";
 import { assessBioRisk } from "@/lib/bio-ai/engine";
+import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import type { BioAiInput, BioSignalType } from "@/lib/bio-ai/types";
+import { commonUtilities, gapModuleCards, platformCategories } from "@/lib/platform-outline";
+import type { FoundationReviewActionSummary } from "@/lib/supabase/data";
 import { StatusBadge } from "./StatusBadge";
+
+type CommandCenterSummary = {
+  assessmentCount: number;
+  criticalRiskCount: number;
+  pendingReviewCount: number;
+  documentCount: number;
+  readinessScore: number;
+  readinessTrend: string;
+  hseSignalCount: number;
+  openActionCount: number;
+  changePlanItemCount: number;
+  changePlanHighPriorityCount: number;
+  changePlanPersisted: boolean;
+  bioRiskTrend: string;
+  openActionTrend: string;
+  recentCriticalSignals: string[];
+  ownerMode: boolean;
+};
 
 const starterInput: BioAiInput = {
   siteName: "Demo Biotech Site",
@@ -52,14 +73,61 @@ const signalTypes: BioSignalType[] = [
   "sop_gap"
 ];
 
-export function WorkbenchClient() {
-  const [input, setInput] = useState<BioAiInput>(starterInput);
+export function WorkbenchClient({
+  foundationActions = [],
+  initialInput = starterInput,
+  commandCenter
+}: {
+  foundationActions?: FoundationReviewActionSummary[];
+  initialInput?: BioAiInput;
+  commandCenter?: CommandCenterSummary;
+}) {
+  const [input, setInput] = useState<BioAiInput>(initialInput);
   const [signalType, setSignalType] = useState<BioSignalType>("contamination_event");
   const [signalLabel, setSignalLabel] = useState("Unexpected microbial growth in assay control");
   const [evidence, setEvidence] = useState("Assay control showed unexpected growth; investigation not complete.");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "blocked" | "error">("idle");
   const [saveMessage, setSaveMessage] = useState("Assessment has not been saved yet.");
   const assessment = useMemo(() => assessBioRisk(input), [input]);
+  const commandSummary = commandCenter ?? {
+    assessmentCount: 2,
+    criticalRiskCount: assessment.level === "critical" ? 1 : 0,
+    pendingReviewCount: assessment.humanReviewRequired ? 1 : 0,
+    documentCount: 2,
+    readinessScore: 72,
+    readinessTrend: "steady",
+    hseSignalCount: input.signals?.length ?? 0,
+    openActionCount: foundationActions.length,
+    changePlanItemCount: gapModuleCards.length,
+    changePlanHighPriorityCount: 3,
+    changePlanPersisted: false,
+    bioRiskTrend: "not enough data",
+    openActionTrend: foundationActions.length > 0 ? "active follow-up" : "clear",
+    recentCriticalSignals: assessment.humanReviewRequired ? [`${input.workflow ?? "Current workflow"} / ${assessment.level}`] : [],
+    ownerMode: false
+  };
+  const cardMetrics: Record<string, { value: string; detail: string }> = {
+    "Document Control": {
+      value: String(commandSummary.documentCount),
+      detail: "SOP metadata and draft update records"
+    },
+    "Risk Intelligence": {
+      value: String(commandSummary.assessmentCount),
+      detail: `${commandSummary.criticalRiskCount} critical / ${commandSummary.pendingReviewCount} pending review`
+    },
+    Compliance: {
+      value: String(commandSummary.readinessScore),
+      detail: `Audit readiness / ${commandSummary.readinessTrend.replace(/_/g, " ")}`
+    },
+    "HSE Management Systems": {
+      value: String(commandSummary.hseSignalCount),
+      detail: "Incidents, inspections, training, and CAPA signals"
+    },
+    "System Reliance": {
+      value: String(commandSummary.openActionCount),
+      detail: "Open source-traced action items"
+    }
+  };
 
   function updateField<K extends keyof BioAiInput>(key: K, value: BioAiInput[K]) {
     setInput((current) => ({ ...current, [key]: value }));
@@ -112,15 +180,235 @@ export function WorkbenchClient() {
   }
 
   return (
-    <div className="workbench-grid">
-      <section className="panel intake-panel" aria-labelledby="intake-title">
+    <div className="page-stack">
+      <section className="command-center panel" aria-labelledby="command-center-title">
+        <div className="command-hero">
+          <div>
+            <p className="section-label">PredictSafeBIO Command Center</p>
+            <h1 id="command-center-title">One platform for biotech safety, compliance, and biosafety operations</h1>
+            <p>
+              Category status, risk intelligence, action planning, audit readiness, and AI guardrails are gathered here before users move into
+              deeper workflows.
+            </p>
+          </div>
+          <div className="command-score">
+            <span>{commandSummary.readinessScore}</span>
+            <strong>Audit readiness</strong>
+            <small>{commandSummary.ownerMode ? "Owner controls enabled" : "Read-only roadmap controls"}</small>
+          </div>
+        </div>
+
+        <div className="command-card-grid">
+          {platformCategories.map((category) => {
+            const metric = cardMetrics[category.title];
+            return (
+              <Link className={`command-card platform-${category.accent}`} href={category.href} key={category.title}>
+                <div>
+                  <span>{category.number}</span>
+                  <strong>{category.title}</strong>
+                </div>
+                <p>{category.primaryWorkflow}</p>
+                <small>
+                  {category.statusLabel}: {metric.value}
+                </small>
+                <em>{metric.detail}</em>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="command-ops-grid" aria-label="Command center operating summary">
+        <div className="panel command-action-queue">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Action Queue</p>
+              <h2>Owner follow-through</h2>
+            </div>
+            <ClipboardList size={22} />
+          </div>
+          <div className="action-list">
+            {foundationActions.length > 0 ? (
+              foundationActions.slice(0, 4).map((action) => (
+                <article className="action-row" key={`${action.id}-${action.sourceModule}`}>
+                  <div>
+                    <strong>{action.title}</strong>
+                    <span>
+                      {action.priority} / {action.status}
+                    </span>
+                  </div>
+                  <p>
+                    <Link href={action.sourceHref}>{action.sourceLabel}</Link>
+                    {action.reason ? ` - ${action.reason}` : ""}
+                  </p>
+                </article>
+              ))
+            ) : (
+              <p className="muted">No open action-planning items yet. Generate actions from the compliance map when ready.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="panel command-risk-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">BioRisk Score</p>
+              <h2>Current workbench signal</h2>
+            </div>
+            <StatusBadge level={assessment.level} />
+          </div>
+          <div className="score-wrap compact-score">
+            <span className="score">{assessment.score}</span>
+            <div>
+              <p className="score-label">{assessment.level} BioRisk</p>
+              <p className="muted">Confidence: {assessment.confidence}</p>
+            </div>
+          </div>
+          <p className="explanation">{assessment.explanation}</p>
+        </div>
+
+        <div className="panel command-guardrail-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">System Reliance</p>
+              <h2>AI guardrail summary</h2>
+            </div>
+            <ShieldCheck size={22} />
+          </div>
+          <div className="guardrail-box no-border">
+            <CheckCircle2 size={18} />
+            <span>{draftAiRecommendationGuardrail}</span>
+          </div>
+          <div className="workflow-steps">
+            <span>Recommend</span>
+            <span>Draft</span>
+            <span>Analyze gaps</span>
+            <span>Human approves</span>
+          </div>
+        </div>
+
+        <div className="panel command-gap-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Gap Modules</p>
+              <h2>Visible next capabilities</h2>
+            </div>
+            <Gauge size={22} />
+          </div>
+          <div className="gap-module-list">
+            {gapModuleCards.map((module) => (
+              <Link href={module.href} key={module.title}>
+                <strong>{module.title}</strong>
+                <span>{module.category}</span>
+              </Link>
+            ))}
+          </div>
+          <div className="summary-strip compact-summary">
+            <span>{commandSummary.changePlanItemCount} Change Plan rows</span>
+            <span>{commandSummary.changePlanHighPriorityCount} high priority</span>
+            <span>{commandSummary.changePlanPersisted ? "Workspace roadmap" : "Starter roadmap"}</span>
+          </div>
+        </div>
+
+        <div className="panel command-trend-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Dashboard Trends</p>
+              <h2>Current movement</h2>
+            </div>
+            <Gauge size={22} />
+          </div>
+          <div className="trend-list">
+            <article>
+              <span>BioRisk trend</span>
+              <strong>{commandSummary.bioRiskTrend}</strong>
+            </article>
+            <article>
+              <span>Readiness trend</span>
+              <strong>{commandSummary.readinessTrend.replace(/_/g, " ")}</strong>
+            </article>
+            <article>
+              <span>Open actions</span>
+              <strong>{commandSummary.openActionTrend}</strong>
+            </article>
+          </div>
+          <div className="critical-signal-list">
+            {commandSummary.recentCriticalSignals.length > 0 ? (
+              commandSummary.recentCriticalSignals.map((signal) => <span key={signal}>{signal}</span>)
+            ) : (
+              <span>No recent critical signals</span>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="platform-map panel" aria-labelledby="platform-map-title">
+        <div className="platform-map-heading">
+          <div>
+            <p className="section-label">PredictSafeBIO Intelligence Platform Architecture</p>
+            <h1 id="platform-map-title">AI-powered biotech safety, compliance, and biosafety operations platform</h1>
+          </div>
+          <span className="platform-promise">Connected. Intelligent. Compliant. Audit Ready.</span>
+        </div>
+        <div className="platform-category-grid">
+          {platformCategories.map((category) => (
+            <Link className={`platform-category platform-${category.accent}`} href={category.href} key={category.title}>
+              <div className="platform-category-title">
+                <span>{category.number}</span>
+                <strong>{category.title}</strong>
+              </div>
+              <ul>
+                {category.features.map((feature) => (
+                  <li key={feature}>{feature}</li>
+                ))}
+              </ul>
+            </Link>
+          ))}
+        </div>
+        <div className="common-utilities" aria-label="Common utilities across all categories">
+          <strong>Common utilities across all categories</strong>
+          <div>
+            {commonUtilities.map((utility) => (
+              <span key={utility}>{utility}</span>
+            ))}
+          </div>
+        </div>
+        <div className="promise-grid">
+          <div>
+            <p className="section-label">Platform Promise</p>
+            <strong>AI drafts & recommends</strong>
+            <strong>Humans review & approve</strong>
+            <strong>Compliance you can prove</strong>
+            <strong>Audit ready at all times</strong>
+          </div>
+          <div>
+            <p className="section-label">AI Guardrails</p>
+            <strong>AI may recommend, draft, and analyze gaps</strong>
+            <strong>AI may not approve documents, certify compliance, close CAPAs, or replace human review</strong>
+          </div>
+        </div>
+      </section>
+
+      <div className="workbench-grid">
+        <section className="panel intake-panel" aria-labelledby="intake-title">
         <div className="panel-heading">
           <div>
-            <p className="section-label">AI Engine Workbench</p>
-            <h1 id="intake-title">Biotech risk intake</h1>
+            <p className="section-label">Risk Intelligence</p>
+            <h1 id="intake-title">BioRisk Scoring Engine</h1>
           </div>
           <Beaker size={22} />
         </div>
+        {(input.sourceRecords?.length ?? 0) > 0 || (input.referenceRuleIds?.length ?? 0) > 0 ? (
+          <div className="source-context">
+            <h2>Linked map context</h2>
+            <div className="summary-strip">
+              <span>{input.sourceRecords?.length ?? 0} source record(s)</span>
+              <span>{input.referenceRuleIds?.length ?? 0} reference rule(s)</span>
+              <span>Training: {input.trainingStatus ?? "not linked"}</span>
+              <span>Documents: {input.documentReadiness ?? "not linked"}</span>
+            </div>
+          </div>
+        ) : null}
 
         <div className="form-grid">
           <label>
@@ -203,13 +491,13 @@ export function WorkbenchClient() {
             Add signal
           </button>
         </div>
-      </section>
+        </section>
 
-      <section className="panel result-panel" aria-labelledby="result-title">
+        <section className="panel result-panel" aria-labelledby="result-title">
         <div className="panel-heading">
           <div>
-            <p className="section-label">Deterministic result</p>
-            <h2 id="result-title">Risk assessment</h2>
+            <p className="section-label">Predictive Risk Alerts</p>
+            <h2 id="result-title">Risk intelligence result</h2>
           </div>
           <StatusBadge level={assessment.level} />
         </div>
@@ -234,6 +522,20 @@ export function WorkbenchClient() {
           </ul>
         </div>
 
+        {assessment.sourceTrace.sourceRecords.length > 0 ? (
+          <div className="result-section">
+            <h3>Source traceability</h3>
+            <ul className="driver-list">
+              {assessment.sourceTrace.sourceRecords.slice(0, 6).map((record) => (
+                <li key={`${record.module}-${record.recordId ?? record.label}`}>
+                  <strong>{record.module}</strong>
+                  <span>{record.label ?? record.recordId ?? "Linked source record"}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
         <div className="split-list">
           <div>
             <h3>Missing information</h3>
@@ -252,9 +554,9 @@ export function WorkbenchClient() {
             </ul>
           </div>
         </div>
-      </section>
+        </section>
 
-      <aside className="panel action-panel" aria-label="Human review and audit preview">
+        <aside className="panel action-panel" aria-label="Human review and audit preview">
         <div className="draft-banner">
           <AlertTriangle size={18} />
           Draft - Human Review Required
@@ -270,6 +572,29 @@ export function WorkbenchClient() {
               <p>{action.reason}</p>
             </article>
           ))}
+        </div>
+        <div className="result-section">
+          <h3>Action Planning</h3>
+          <div className="action-list compact-list">
+            {foundationActions.length > 0 ? (
+              foundationActions.slice(0, 5).map((action) => (
+                <article className="action-row" key={`${action.id}-${action.sourceModule}`}>
+                  <div>
+                    <strong>{action.title}</strong>
+                    <span>
+                      {action.priority} / {action.status}
+                    </span>
+                  </div>
+                  <p>
+                    <Link href={action.sourceHref}>{action.sourceLabel}</Link>
+                    {action.reason ? ` - ${action.reason}` : ""}
+                  </p>
+                </article>
+              ))
+            ) : (
+              <p className="muted">No generated action-planning items yet.</p>
+            )}
+          </div>
         </div>
         <div className="audit-preview">
           <h3>Audit preview</h3>
@@ -295,13 +620,14 @@ export function WorkbenchClient() {
         </div>
         <div className="guardrail-box">
           <CheckCircle2 size={18} />
-          <span>No release, approval, compliance, diagnosis, or regulatory acceptance claim is made.</span>
+          <span>{draftAiRecommendationGuardrail}</span>
         </div>
         <div className="source-box">
           <Sparkles size={18} />
           <span>Built from local AI Engine artifacts in this workspace.</span>
         </div>
-      </aside>
+        </aside>
+      </div>
     </div>
   );
 }
