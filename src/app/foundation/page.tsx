@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   BookOpenCheck,
   BrainCircuit,
-  DatabaseZap,
   FileSearch,
   Gauge,
   GitBranch,
@@ -14,7 +13,7 @@ import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { assessBioRisk } from "@/lib/bio-ai/engine";
 import { getIntelligenceFoundationSummary } from "@/lib/supabase/data";
-import { seedIntelligenceFoundationAction } from "./actions";
+import { FoundationWorkflowClient } from "./FoundationWorkflowClient";
 
 export default async function FoundationPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const params = await searchParams;
@@ -37,12 +36,9 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
               Company intake, Programs & Methods, applicability, evidence, change impact, and audit readiness feed deterministic AI context.
             </p>
           </div>
-          <form action={seedIntelligenceFoundationAction}>
-            <button className="button-primary" type="submit">
-              <DatabaseZap size={16} />
-              Seed NorthStar
-            </button>
-          </form>
+          <Link className="button-secondary" href="#foundation-workflows">
+            Review MVP controls
+          </Link>
         </section>
 
         {params.message ? <p className="form-message">{params.message}</p> : null}
@@ -54,6 +50,10 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
             </span>
           ))}
         </section>
+
+        <div id="foundation-workflows">
+          <FoundationWorkflowClient summary={summary} />
+        </div>
 
         <section className="split-list wide">
           <div className="panel">

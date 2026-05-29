@@ -203,14 +203,21 @@ export type IntelligenceFoundationSummary = {
   companyName: string;
   counts: Array<{ label: string; value: number }>;
   coreComponents: Array<{ name: string; purpose: string }>;
-  biotypes: Array<{ name: string; focus: string; role: "primary" | "secondary" | "available"; requirements: string }>;
-  intake: Array<{ question: string; answer: string; triggers: string }>;
+  biotypes: Array<{ key: BioTypeKey; name: string; focus: string; role: "primary" | "secondary" | "available"; requirements: string }>;
+  biotypeSelection?: {
+    id?: string;
+    primaryBioType: BioTypeKey;
+    secondaryBioTypes: BioTypeKey[];
+    status: string;
+  };
+  intake: Array<{ id?: string; question: string; answer: string; booleanValue: boolean; triggers: string }>;
   programs: Array<{ name: string; status: string; owner: string }>;
   methods: Array<{ name: string; type: string; purpose: string }>;
   applicability: Array<{ rule: string; required: string; reviewer: string }>;
-  evidence: Array<{ requirement: string; status: string; auditReady: boolean }>;
+  evidence: Array<{ id?: string; requirement: string; status: string; auditReady: boolean }>;
   changes: Array<{ type: string; summary: string; actions: string }>;
   readiness: {
+    id?: string;
     overallScore: number;
     documentsScore: number;
     trainingScore: number;
@@ -220,11 +227,17 @@ export type IntelligenceFoundationSummary = {
     evidenceScore: number;
     topGaps: string[];
   };
+  auditReadinessNotes: Array<{ id: string; note: string; noteType: string; createdAt?: string }>;
   aiWorkflow: string[];
   humanValidationWorkflow: string[];
   guardrailText: string;
   latestAssessmentInput: BioAiInput;
 };
+
+export type FoundationActionResult = { ok: true; message: string } | { ok: false; message: string };
+
+const foundationEvidenceStatuses = ["current", "ready", "review_needed", "missing", "expired", "open", "out_of_tolerance"] as const;
+export type FoundationEvidenceStatus = (typeof foundationEvidenceStatuses)[number];
 
 const coreComplianceComponents = [
   ["Company Profile Intelligence", "Company type, sites, labs, materials, equipment, regulatory scope, roles, and workforce."],
@@ -755,7 +768,8 @@ export async function getIntelligenceFoundationSummary(): Promise<IntelligenceFo
       ruleRows,
       evidenceRows,
       changeRows,
-      responseRows
+      responseRows,
+      noteRows
     ] = await Promise.all([
       countRows(supabase, "company_intake_templates", context.organizationId),
       countRows(supabase, "company_intake_responses", context.organizationId),
@@ -772,7 +786,7 @@ export async function getIntelligenceFoundationSummary(): Promise<IntelligenceFo
         supabase,
         "audit_readiness_scores",
         context.organizationId,
-          "id,overall_score,documents_score,training_score,capa_score,incidents_score,equipment_score,evidence_score,top_gaps"
+        "id,overall_score,documents_score,training_score,capa_score,incidents_score,equipment_score,evidence_score,top_gaps"
       ),
       latestRow(supabase, "organization_biotype_selections", context.organizationId, "id,primary_biotype_key,secondary_biotype_keys,selection_status"),
       latestRows(
@@ -787,12 +801,14 @@ export async function getIntelligenceFoundationSummary(): Promise<IntelligenceFo
       latestRows(supabase, "applicability_rules", context.organizationId, "id,rule_code,name,required_programs,human_reviewer_role", 8),
       latestRows(supabase, "compliance_evidence_map", context.organizationId, "id,requirement_name,evidence_status,audit_ready", 8),
       latestRows(supabase, "change_impact_events", context.organizationId, "id,change_type,impact_summary,recommended_actions", 5),
-      latestRows(supabase, "company_intake_responses", context.organizationId, "id,question_key,answer_value,triggers_programs", 5)
+      latestRows(supabase, "company_intake_responses", context.organizationId, "id,question_key,answer_value,triggers_programs", 12),
+      latestRows(supabase, "audit_readiness_notes", context.organizationId, "id,note,note_type,created_at", 5)
     ]);
 
     const score = latestScore as Record<string, any> | null;
     const readiness = score
       ? {
+          id: score.id,
           overallScore: score.overall_score,
           documentsScore: score.documents_score,
           trainingScore: score.training_score,
@@ -823,6 +839,7 @@ export async function getIntelligenceFoundationSummary(): Promise<IntelligenceFo
     );
     const latestAssessmentInput = applyBioTypeContext(foundationInput, biotypeContext);
     const liveBiotypes = ((biotypeRows as Record<string, any>[]) ?? []).map((row) => ({
+      key: row.biotype_key as BioTypeKey,
       name: row.display_name,
       focus: row.focus,
       role:
@@ -834,6 +851,7 @@ export async function getIntelligenceFoundationSummary(): Promise<IntelligenceFo
       requirements: summarizeJson([...(row.required_documents ?? []), ...(row.required_training ?? [])].slice(0, 4))
     }));
     const fallbackBiotypes = canonicalBioTypeFoundations.map((foundation) => ({
+      key: foundation.key,
       name: foundation.name,
       focus: foundation.focus,
       role:
@@ -862,9 +880,17 @@ export async function getIntelligenceFoundationSummary(): Promise<IntelligenceFo
       ],
       coreComponents: coreComplianceComponents,
       biotypes: liveBiotypes.length > 0 ? liveBiotypes : fallbackBiotypes,
+      biotypeSelection: {
+        id: selection?.id,
+        primaryBioType: selectedPrimary,
+        secondaryBioTypes: selectedSecondary,
+        status: selection?.selection_status ?? "draft_human_review_required"
+      },
       intake: ((responseRows as Record<string, any>[]) ?? []).map((row) => ({
+        id: row.id,
         question: row.question_key,
         answer: summarizeJson(row.answer_value),
+        booleanValue: Boolean(row.answer_value?.value),
         triggers: summarizeJson(row.triggers_programs)
       })),
       programs: ((programRows as Record<string, any>[]) ?? []).map((row) => ({
@@ -883,6 +909,7 @@ export async function getIntelligenceFoundationSummary(): Promise<IntelligenceFo
         reviewer: row.human_reviewer_role ?? "human reviewer"
       })),
       evidence: ((evidenceRows as Record<string, any>[]) ?? []).map((row) => ({
+        id: row.id,
         requirement: row.requirement_name,
         status: row.evidence_status,
         auditReady: Boolean(row.audit_ready)
@@ -893,6 +920,12 @@ export async function getIntelligenceFoundationSummary(): Promise<IntelligenceFo
         actions: summarizeJson(row.recommended_actions)
       })),
       readiness,
+      auditReadinessNotes: ((noteRows as Record<string, any>[]) ?? []).map((row) => ({
+        id: row.id,
+        note: row.note,
+        noteType: row.note_type,
+        createdAt: row.created_at
+      })),
       aiWorkflow: aiWorkflowSteps,
       humanValidationWorkflow: humanValidationWorkflowSteps,
       guardrailText: draftAiRecommendationGuardrail,
@@ -905,6 +938,332 @@ export async function getIntelligenceFoundationSummary(): Promise<IntelligenceFo
 
 export async function getIntelligenceFoundationWorkbenchInput(): Promise<BioAiInput> {
   return (await getIntelligenceFoundationSummary()).latestAssessmentInput;
+}
+
+export async function updateFoundationBioTypeSelection(input: {
+  primaryBioType: string;
+  secondaryBioTypes: string[];
+}): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before updating BioType selection." };
+
+  const primaryBioType = normalizeBioTypeKey(input.primaryBioType);
+  if (!primaryBioType) return { ok: false, message: "Choose a valid primary BioType." };
+
+  const secondaryBioTypes = normalizeBioTypeKeys(input.secondaryBioTypes).filter((key) => key !== primaryBioType);
+  const supabase = await createSupabaseServerClient();
+  const companyProfile = await getCompanyProfile();
+  const latestSelection = (await latestRow(
+    supabase,
+    "organization_biotype_selections",
+    context.organizationId,
+    "id"
+  )) as Record<string, any> | null;
+
+  const payload = {
+    organization_id: context.organizationId,
+    company_profile_id: companyProfile.id ?? null,
+    primary_biotype_key: primaryBioType,
+    secondary_biotype_keys: secondaryBioTypes,
+    selection_status: "draft_human_review_required",
+    selection_reason: "Updated from PredictSafeBIO Intelligence Foundation MVP edit workflow.",
+    human_review_required: true,
+    created_by: context.userId
+  };
+
+  const query = latestSelection?.id
+    ? supabase
+        .from("organization_biotype_selections")
+        .update(payload)
+        .eq("organization_id", context.organizationId)
+        .eq("id", latestSelection.id)
+        .select("id")
+        .single()
+    : supabase.from("organization_biotype_selections").insert(payload).select("id").single();
+
+  const { data, error } = await query;
+  if (error || !data) return { ok: false, message: error?.message ?? "BioType selection could not be updated." };
+
+  await writeFoundationAuditEvent(supabase, context, {
+    eventType: "foundation_biotype_selection_updated",
+    summary: "Foundation BioType selection updated; human review required.",
+    sourceModule: "biotype_selection",
+    sourceRecordId: data.id,
+    targetModule: "foundation",
+    targetRecordId: data.id,
+    payload: { primaryBioType, secondaryBioTypes }
+  });
+
+  return { ok: true, message: "BioType selection updated as draft - human review required." };
+}
+
+export async function updateFoundationIntakeResponse(input: {
+  responseId: string;
+  answer: boolean;
+}): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before updating intake responses." };
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("company_intake_responses")
+    .update({ answer_value: { value: input.answer }, updated_at: new Date().toISOString() })
+    .eq("organization_id", context.organizationId)
+    .eq("id", input.responseId)
+    .select("id,question_key")
+    .single();
+
+  if (error || !data) return { ok: false, message: error?.message ?? "Intake response could not be updated." };
+
+  await writeFoundationAuditEvent(supabase, context, {
+    eventType: "foundation_intake_response_updated",
+    summary: `Foundation intake response updated for ${data.question_key}.`,
+    sourceModule: "foundation",
+    sourceRecordId: data.id,
+    targetModule: "foundation",
+    targetRecordId: data.id,
+    payload: { responseId: data.id, questionKey: data.question_key, answer: input.answer }
+  });
+
+  return { ok: true, message: "Intake answer updated as draft - human review required." };
+}
+
+export async function updateFoundationEvidenceReadiness(input: {
+  evidenceId: string;
+  status: string;
+  auditReady: boolean;
+}): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before updating evidence readiness." };
+
+  const status = normalizeFoundationEvidenceStatus(input.status);
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("compliance_evidence_map")
+    .update({
+      evidence_status: status,
+      audit_ready: input.auditReady,
+      human_review_required: true,
+      updated_at: new Date().toISOString()
+    })
+    .eq("organization_id", context.organizationId)
+    .eq("id", input.evidenceId)
+    .select("id,requirement_name")
+    .single();
+
+  if (error || !data) return { ok: false, message: error?.message ?? "Evidence readiness could not be updated." };
+
+  await writeFoundationAuditEvent(supabase, context, {
+    eventType: "foundation_evidence_readiness_updated",
+    summary: `Foundation evidence readiness updated for ${data.requirement_name}.`,
+    sourceModule: "evidence_map",
+    sourceRecordId: data.id,
+    targetModule: "audit_readiness",
+    targetRecordId: data.id,
+    payload: { evidenceId: data.id, requirementName: data.requirement_name, status, auditReady: input.auditReady }
+  });
+
+  return { ok: true, message: "Evidence readiness updated as draft - human review required." };
+}
+
+export async function addAuditReadinessNote(input: {
+  auditReadinessScoreId?: string | null;
+  note: string;
+}): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before adding audit readiness notes." };
+
+  const note = input.note.trim();
+  if (note.length < 3) return { ok: false, message: "Add a short audit readiness note before saving." };
+
+  const supabase = await createSupabaseServerClient();
+  const score =
+    input.auditReadinessScoreId ??
+    ((await latestRow(supabase, "audit_readiness_scores", context.organizationId, "id")) as Record<string, any> | null)?.id ??
+    null;
+  const { data, error } = await supabase
+    .from("audit_readiness_notes")
+    .insert({
+      organization_id: context.organizationId,
+      audit_readiness_score_id: score,
+      note,
+      note_type: "human_review_note",
+      draft_only: true,
+      human_review_required: true,
+      created_by: context.userId
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) return { ok: false, message: error?.message ?? "Audit readiness note could not be saved." };
+
+  await writeFoundationAuditEvent(supabase, context, {
+    eventType: "foundation_audit_readiness_note_added",
+    summary: "Audit readiness note added; this does not approve or certify readiness.",
+    sourceModule: "audit_readiness",
+    sourceRecordId: score ?? data.id,
+    targetModule: "audit_readiness",
+    targetRecordId: data.id,
+    payload: { noteId: data.id, auditReadinessScoreId: score }
+  });
+
+  return { ok: true, message: "Audit readiness note added as draft - human review required." };
+}
+
+export async function seedNorthStarWithConfirmation(confirmation: string): Promise<FoundationActionResult> {
+  if (confirmation.trim() !== "SEED NORTHSTAR") {
+    return { ok: false, message: "Type SEED NORTHSTAR to create another NorthStar demo dataset." };
+  }
+
+  const result = await seedIntelligenceFoundation();
+  if (!result.ok) return result;
+  return {
+    ok: true,
+    message: `${result.seedLabel} created. Draft audit readiness score is ${result.readinessScore}; human review is required.`
+  };
+}
+
+export async function generateFoundationReviewActions(): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before generating review actions." };
+
+  const supabase = await createSupabaseServerClient();
+  const runId = randomUUID();
+  const [evidenceRows, trainingRows, equipmentRows, incidentRows, biotypeSelection] = await Promise.all([
+    latestRows(
+      supabase,
+      "compliance_evidence_map",
+      context.organizationId,
+      "id,requirement_name,evidence_status,audit_ready,source_table,source_record_id",
+      50
+    ),
+    latestRows(supabase, "training_assignments", context.organizationId, "id,status,training_requirement_id", 25),
+    latestRows(supabase, "equipment", context.organizationId, "id,equipment_tag,name,status,qualification_status", 25),
+    latestRows(supabase, "incidents", context.organizationId, "id,title,status,severity", 25),
+    latestRow(supabase, "organization_biotype_selections", context.organizationId, "id,primary_biotype_key,secondary_biotype_keys")
+  ]);
+
+  const candidates: FoundationReviewActionCandidate[] = [
+    ...((evidenceRows as Record<string, any>[]) ?? [])
+      .filter((row) => !row.audit_ready || isFoundationGapStatus(row.evidence_status))
+      .map((row) => ({
+        sourceModule: "evidence_map",
+        sourceRecordId: row.id,
+        title: `Review evidence gap - ${row.requirement_name}`,
+        priority: (row.evidence_status === "out_of_tolerance" || row.evidence_status === "expired" ? "high" : "medium") as "high" | "medium",
+        reason: `Evidence status is ${row.evidence_status}; audit-ready is ${Boolean(row.audit_ready)}.`
+      })),
+    ...((trainingRows as Record<string, any>[]) ?? [])
+      .filter((row) => row.status === "expired")
+      .map((row) => ({
+        sourceModule: "training_assignment",
+        sourceRecordId: row.id,
+        title: "Review expired foundation training assignment",
+        priority: "high" as const,
+        reason: "Training assignment is expired and blocks readiness."
+      })),
+    ...((equipmentRows as Record<string, any>[]) ?? [])
+      .filter((row) => row.status !== "active" || row.qualification_status !== "current")
+      .map((row) => ({
+        sourceModule: "equipment",
+        sourceRecordId: row.id,
+        title: `Review equipment readiness - ${row.equipment_tag ?? row.name}`,
+        priority: (row.status === "out_of_service" ? "high" : "medium") as "high" | "medium",
+        reason: `Equipment status is ${row.status}; qualification is ${row.qualification_status ?? "unknown"}.`
+      })),
+    ...((incidentRows as Record<string, any>[]) ?? [])
+      .filter((row) => row.status !== "closed")
+      .map((row) => ({
+        sourceModule: "incident",
+        sourceRecordId: row.id,
+        title: `Review incident/CAPA screening - ${row.title}`,
+        priority: (row.severity === "high" || row.severity === "critical" ? "high" : "medium") as "high" | "medium",
+        reason: `Incident status is ${row.status}; CAPA screening may be required.`
+      }))
+  ];
+
+  const selection = biotypeSelection as Record<string, any> | null;
+  if (selection?.id) {
+    candidates.push({
+      sourceModule: "biotype_selection",
+      sourceRecordId: selection.id,
+      title: "Review BioType missing controls",
+      priority: "medium",
+      reason: "Primary and secondary BioType selections require document, training, record, and evidence review."
+    });
+  }
+
+  let created = 0;
+  for (const candidate of candidates) {
+    const [duplicateTask, duplicateRecommendation] = await Promise.all([
+      hasOpenFoundationTask(supabase, context.organizationId, candidate.sourceModule, candidate.sourceRecordId, candidate.title),
+      hasOpenFoundationRecommendation(supabase, context.organizationId, candidate.sourceModule, candidate.sourceRecordId, candidate.title)
+    ]);
+    if (duplicateTask || duplicateRecommendation) continue;
+
+    const dueDate = new Date(Date.now() + (candidate.priority === "high" ? 7 : 14) * 86400000).toISOString().slice(0, 10);
+    const { data: task } = await supabase
+      .from("tasks")
+      .insert({
+        organization_id: context.organizationId,
+        source_module: candidate.sourceModule,
+        source_record_id: candidate.sourceRecordId,
+        assigned_to: context.userId,
+        title: candidate.title,
+        status: "open",
+        due_date: dueDate,
+        priority: candidate.priority,
+        created_by: context.userId
+      })
+      .select("id")
+      .single();
+
+    if (!task?.id) continue;
+    created += 1;
+
+    await supabase.from("document_recommendations").insert({
+      organization_id: context.organizationId,
+      recommendation_type: "gap",
+      title: candidate.title,
+      label: "Draft - Human Review Required",
+      human_review_required: true,
+      created_by: context.userId,
+      payload: withAuditTrace(
+        {
+          runId,
+          actionType: "foundation_review_action",
+          sourceModule: candidate.sourceModule,
+          sourceRecordId: candidate.sourceRecordId,
+          taskId: task.id,
+          reason: candidate.reason
+        },
+        {
+          sourceModule: candidate.sourceModule,
+          sourceRecordId: candidate.sourceRecordId,
+          targetModule: "task",
+          targetRecordId: task.id,
+          runId,
+          draftOnly: true
+        }
+      )
+    });
+  }
+
+  await writeFoundationAuditEvent(supabase, context, {
+    eventType: "foundation_review_actions_generated",
+    summary: `Foundation review action generation completed. ${created} new action(s) created.`,
+    sourceModule: "foundation",
+    sourceRecordId: runId,
+    targetModule: "task",
+    targetRecordId: runId,
+    runId,
+    payload: { created, candidateCount: candidates.length }
+  });
+
+  return {
+    ok: true,
+    message: created > 0 ? `${created} review action(s) generated as draft tasks.` : "No new review actions needed; existing open actions were preserved."
+  };
 }
 
 export async function getErgonomicLevel1Summary(): Promise<ErgonomicLevel1Summary> {
@@ -2911,6 +3270,94 @@ async function createErgonomicCorrectiveActionRecommendation(
   return task?.id ?? null;
 }
 
+type FoundationReviewActionCandidate = {
+  sourceModule: string;
+  sourceRecordId: string;
+  title: string;
+  priority: "medium" | "high";
+  reason: string;
+};
+
+async function hasOpenFoundationTask(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  organizationId: string,
+  sourceModule: string,
+  sourceRecordId: string,
+  title: string
+) {
+  const { count, error } = await supabase
+    .from("tasks")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", organizationId)
+    .eq("source_module", sourceModule)
+    .eq("source_record_id", sourceRecordId)
+    .eq("title", title)
+    .in("status", ["open", "in_progress"]);
+
+  if (error) return false;
+  return (count ?? 0) > 0;
+}
+
+async function hasOpenFoundationRecommendation(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  organizationId: string,
+  sourceModule: string,
+  sourceRecordId: string,
+  title: string
+) {
+  const { count, error } = await supabase
+    .from("document_recommendations")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", organizationId)
+    .eq("title", title)
+    .contains("payload", {
+      actionType: "foundation_review_action",
+      sourceModule,
+      sourceRecordId
+    });
+
+  if (error) return false;
+  return (count ?? 0) > 0;
+}
+
+async function writeFoundationAuditEvent(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  context: ProfileContext,
+  input: {
+    eventType: AuditEvent["eventType"];
+    summary: string;
+    sourceModule: string;
+    sourceRecordId?: string | null;
+    targetModule: string;
+    targetRecordId?: string | null;
+    runId?: string;
+    payload?: Record<string, unknown>;
+  }
+) {
+  await supabase.from("audit_events").insert({
+    organization_id: context.organizationId,
+    actor_id: context.userId,
+    event_type: input.eventType,
+    summary: input.summary,
+    payload: withAuditTrace(input.payload ?? {}, {
+      sourceModule: input.sourceModule,
+      sourceRecordId: input.sourceRecordId ?? undefined,
+      targetModule: input.targetModule,
+      targetRecordId: input.targetRecordId ?? undefined,
+      runId: input.runId,
+      draftOnly: true
+    })
+  });
+}
+
+function normalizeFoundationEvidenceStatus(status: string): FoundationEvidenceStatus {
+  return foundationEvidenceStatuses.includes(status as FoundationEvidenceStatus) ? (status as FoundationEvidenceStatus) : "review_needed";
+}
+
+function isFoundationGapStatus(status: unknown) {
+  return ["review_needed", "missing", "expired", "open", "out_of_tolerance", "gap", "gaps"].includes(String(status ?? "").toLowerCase());
+}
+
 async function countRows(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>, table: string, organizationId: string) {
   const { count, error } = await supabase
     .from(table)
@@ -3019,6 +3466,7 @@ function demoIntelligenceFoundationSummary(): IntelligenceFoundationSummary {
     ],
     coreComponents: coreComplianceComponents,
     biotypes: canonicalBioTypeFoundations.map((foundation) => ({
+      key: foundation.key,
       name: foundation.name,
       focus: foundation.focus,
       role:
@@ -3029,11 +3477,16 @@ function demoIntelligenceFoundationSummary(): IntelligenceFoundationSummary {
             : "available",
       requirements: [...foundation.documents.slice(0, 2), ...foundation.training.slice(0, 2)].join(", ")
     })),
+    biotypeSelection: {
+      primaryBioType: "rd_biotech",
+      secondaryBioTypes: ["diagnostics_clinical_lab", "academic_university_research"],
+      status: "draft_human_review_required"
+    },
     intake: [
-      { question: "hazardousChemicals", answer: "true", triggers: "Chemical Hygiene, Waste Management" },
-      { question: "biologicalMaterials", answer: "true", triggers: "Biosafety, Waste Management" },
-      { question: "humanDerivedSamples", answer: "true", triggers: "Bloodborne Pathogens, Incident/Exposure Response" },
-      { question: "bscUsed", answer: "true", triggers: "Equipment/Calibration, Biosafety" }
+      { question: "hazardousChemicals", answer: "true", booleanValue: true, triggers: "Chemical Hygiene, Waste Management" },
+      { question: "biologicalMaterials", answer: "true", booleanValue: true, triggers: "Biosafety, Waste Management" },
+      { question: "humanDerivedSamples", answer: "true", booleanValue: true, triggers: "Bloodborne Pathogens, Incident/Exposure Response" },
+      { question: "bscUsed", answer: "true", booleanValue: true, triggers: "Equipment/Calibration, Biosafety" }
     ],
     programs: foundationProgramNames.slice(0, 8).map((name) => ({
       name,
@@ -3070,6 +3523,7 @@ function demoIntelligenceFoundationSummary(): IntelligenceFoundationSummary {
       evidenceScore: demo.readiness.evidenceScore,
       topGaps: demo.readiness.topGaps
     },
+    auditReadinessNotes: [],
     aiWorkflow: aiWorkflowSteps,
     humanValidationWorkflow: humanValidationWorkflowSteps,
     guardrailText: draftAiRecommendationGuardrail,

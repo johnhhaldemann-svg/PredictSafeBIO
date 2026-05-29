@@ -214,6 +214,13 @@ button {
   align-items: start;
 }
 
+.foundation-workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
 .ergonomic-dashboard {
   gap: 14px;
 }
@@ -1016,6 +1023,100 @@ textarea {
   min-height: 16px;
 }
 
+.stacked-form {
+  display: grid;
+  gap: 12px;
+}
+
+.compact-toggle-grid {
+  gap: 8px;
+  margin-top: 0;
+}
+
+.compact-toggle-grid .check-row {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fbff;
+  padding: 8px 10px;
+}
+
+.inline-edit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.inline-edit-row div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.inline-edit-row strong,
+.inline-edit-row span {
+  overflow-wrap: anywhere;
+}
+
+.inline-edit-row strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.inline-edit-row span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.evidence-edit-row {
+  grid-template-columns: minmax(0, 1fr) 132px 88px auto;
+}
+
+.small-check-row {
+  min-height: 38px;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fbff;
+  padding: 8px;
+}
+
+.compact-list {
+  margin: 12px 0;
+}
+
+.demo-control-panel {
+  border-color: #bfdbfe;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.seed-count-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.seed-count-grid span {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.74);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.seed-count-grid strong {
+  color: var(--text);
+  font-size: 16px;
+}
+
 .signal-builder {
   display: grid;
   gap: 10px;
@@ -1606,8 +1707,14 @@ pre {
   .frequency-grid,
   .measurement-grid,
   .level2-layout,
+  .foundation-workflow-grid,
   .inspection-type-grid,
   .ergonomic-side-rail {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-edit-row,
+  .evidence-edit-row {
     grid-template-columns: 1fr;
   }
 
