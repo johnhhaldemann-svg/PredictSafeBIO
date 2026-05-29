@@ -9,13 +9,14 @@ const shell = readFileSync(join(process.cwd(), "src/components/AppShell.tsx"), "
 
 describe("ergonomic Level 1 UI", () => {
   it("surfaces the worker-facing Level 1 screening route", () => {
-    expect(page).toContain("Ergonomic Self-Assessment - Level 1 Screening");
-    expect(page).toContain("No measurements required");
-    expect(client).toContain("Task type");
+    expect(page).toContain("Ergonomic Self-Assessment");
+    expect(page).toContain("Level 1 Screening");
+    expect(page).toContain("No measurements needed");
+    expect(client).toContain("What type of work are you doing?");
     expect(client).toContain("How does this task feel on your body?");
-    expect(client).toContain("Which body parts feel the strain?");
+    expect(client).toContain("Which parts of your body feel the strain?");
     expect(client).toContain("How often do you do this task?");
-    expect(client).toContain("Additional comments");
+    expect(client).toContain("Any additional comments?");
   });
 
   it("keeps the advanced workflow separate from the Level 1 worker form", () => {

@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { ClipboardList, HeartPulse } from "lucide-react";
+import { Activity, ClipboardList, HeartPulse } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { getErgonomicLevel1Summary } from "@/lib/supabase/data";
 import { ErgonomicSelfAssessmentClient } from "./ErgonomicSelfAssessmentClient";
@@ -9,25 +8,20 @@ export default async function ErgonomicSelfAssessmentPage() {
 
   return (
     <AppShell>
-      <div className="page-stack">
-        <header className="page-header">
-          <p className="section-label">SafePredict Ergonomics</p>
-          <h1>Ergonomic Self-Assessment - Level 1 Screening</h1>
-        </header>
-
-        <section className="panel inline-action-panel">
+      <div className="page-stack ergonomic-dashboard">
+        <header className="ergonomic-page-header">
           <div>
-            <p className="section-label">Worker-facing screening</p>
-            <h2>No measurements required</h2>
-            <p className="muted">
-              This Level 1 tool captures discomfort, body strain, and task frequency. The ergonomic equation and measurements stay in a separate Level 2 advanced evaluation.
-            </p>
+            <div className="ergonomic-title-row">
+              <h1>Ergonomic Self-Assessment</h1>
+              <span>Level 1 Screening</span>
+            </div>
+            <p>Answer a few simple questions about your task.</p>
+            <p>No measurements needed.</p>
           </div>
-          <Link className="button-secondary" href="/inspections">
-            <ClipboardList size={16} />
-            Open Inspections
-          </Link>
-        </section>
+          <div className="ergo-hero-figure" aria-hidden="true">
+            <Activity size={74} />
+          </div>
+        </header>
 
         <section className="summary-strip" aria-label="Ergonomic screening counts">
           {summary.counts.map((count) => (
