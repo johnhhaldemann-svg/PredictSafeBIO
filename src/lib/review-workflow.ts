@@ -29,6 +29,8 @@ export function getAuditEventTarget(event: AuditEvent): { href: string; label: s
   const payload = event.payload ?? {};
   const assessmentId = typeof payload.assessmentId === "string" ? payload.assessmentId : null;
   const documentId = typeof payload.documentId === "string" ? payload.documentId : null;
+  const sourceModule = typeof payload.sourceModule === "string" ? payload.sourceModule : null;
+  const targetModule = typeof payload.targetModule === "string" ? payload.targetModule : null;
 
   if (assessmentId) {
     return { href: `/assessments/${assessmentId}`, label: "Open assessment" };
@@ -36,6 +38,22 @@ export function getAuditEventTarget(event: AuditEvent): { href: string; label: s
 
   if (documentId) {
     return { href: `/documents/${documentId}`, label: "Open document" };
+  }
+
+  if (sourceModule?.startsWith("foundation") || targetModule?.startsWith("foundation")) {
+    return { href: "/foundation", label: "Open foundation" };
+  }
+
+  if (sourceModule === "evidence_map") {
+    return { href: "/foundation#evidence-map", label: "Open evidence map" };
+  }
+
+  if (["audit_readiness", "training_assignment", "equipment", "incident"].includes(sourceModule ?? "")) {
+    return { href: "/foundation#audit-readiness-console", label: "Open readiness console" };
+  }
+
+  if (sourceModule === "biotype_selection") {
+    return { href: "/foundation#foundation-workflows", label: "Open BioType controls" };
   }
 
   return null;

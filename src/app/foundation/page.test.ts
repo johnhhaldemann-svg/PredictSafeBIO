@@ -7,6 +7,9 @@ const foundationClient = readFileSync(join(process.cwd(), "src/app/foundation/Fo
 const foundationActions = readFileSync(join(process.cwd(), "src/app/foundation/actions.ts"), "utf8");
 const foundationData = readFileSync(join(process.cwd(), "src/lib/supabase/data.ts"), "utf8");
 const companyProfilePage = readFileSync(join(process.cwd(), "src/app/company-profile/page.tsx"), "utf8");
+const operationsPage = readFileSync(join(process.cwd(), "src/app/operations/page.tsx"), "utf8");
+const workbenchPage = readFileSync(join(process.cwd(), "src/app/workbench/page.tsx"), "utf8");
+const auditPage = readFileSync(join(process.cwd(), "src/app/admin/audit/page.tsx"), "utf8");
 const notesMigration = readFileSync(join(process.cwd(), "supabase/migrations/20260529143000_audit_readiness_notes.sql"), "utf8");
 
 describe("foundation UI alignment", () => {
@@ -24,9 +27,12 @@ describe("foundation UI alignment", () => {
 
   it("adds MVP edit workflows without restoring one-click NorthStar seeding", () => {
     expect(foundationPage).toContain("FoundationWorkflowClient");
+    expect(foundationPage).toContain("getFoundationAdminAccessSummary");
+    expect(foundationPage).toContain("canManage={adminAccess.isOwner}");
     expect(foundationClient).toContain("updateFoundationBioTypeSelectionAction");
     expect(foundationClient).toContain("updateFoundationIntakeResponseAction");
     expect(foundationClient).toContain("updateFoundationEvidenceReadinessAction");
+    expect(foundationClient).toContain("Foundation edit workflows are locked");
     expect(foundationClient).toContain("Generate Review Actions");
     expect(foundationClient).toContain("SEED NORTHSTAR");
     expect(foundationClient).toContain("Current foundation counts");
@@ -34,6 +40,20 @@ describe("foundation UI alignment", () => {
     expect(foundationActions).not.toContain("seedIntelligenceFoundationAction");
     expect(foundationData).toContain("hasOpenFoundationRecommendation");
     expect(foundationData).toContain("actionType: \"foundation_review_action\"");
+    expect(foundationData).toContain("Only organization owners can update Foundation");
+    expect(foundationData).toContain("Only organization owners can generate Foundation review actions");
+  });
+
+  it("surfaces source-traced review actions and audit readiness console", () => {
+    expect(foundationData).toContain("getFoundationReviewActionsSummary");
+    expect(foundationData).toContain("getAuditReadinessConsoleSummary");
+    expect(foundationData).toContain("foundationActionKey");
+    expect(foundationData).toContain("foundationReviewSourceModules");
+    expect(foundationPage).toContain("audit-readiness-console");
+    expect(foundationPage).toContain("Generated review actions");
+    expect(operationsPage).toContain("getFoundationReviewActionsSummary");
+    expect(workbenchPage).toContain("getFoundationReviewActionsSummary");
+    expect(auditPage).toContain("getFoundationReviewActionsSummary");
   });
 
   it("adds audit readiness notes with org scope, RLS, grants, and no user metadata authorization", () => {

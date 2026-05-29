@@ -1,13 +1,16 @@
 import { AppShell } from "@/components/AppShell";
 import { WorkbenchClient } from "@/components/WorkbenchClient";
-import { getIntelligenceFoundationWorkbenchInput } from "@/lib/supabase/data";
+import { getFoundationReviewActionsSummary, getIntelligenceFoundationWorkbenchInput } from "@/lib/supabase/data";
 
 export default async function WorkbenchPage() {
-  const initialInput = await getIntelligenceFoundationWorkbenchInput();
+  const [initialInput, foundationActions] = await Promise.all([
+    getIntelligenceFoundationWorkbenchInput(),
+    getFoundationReviewActionsSummary()
+  ]);
 
   return (
     <AppShell>
-      <WorkbenchClient initialInput={initialInput} />
+      <WorkbenchClient foundationActions={foundationActions} initialInput={initialInput} />
     </AppShell>
   );
 }

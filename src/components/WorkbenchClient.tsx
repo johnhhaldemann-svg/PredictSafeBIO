@@ -6,6 +6,7 @@ import { AlertTriangle, Beaker, CheckCircle2, ClipboardList, Save, Sparkles } fr
 import { assessBioRisk } from "@/lib/bio-ai/engine";
 import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import type { BioAiInput, BioSignalType } from "@/lib/bio-ai/types";
+import type { FoundationReviewActionSummary } from "@/lib/supabase/data";
 import { StatusBadge } from "./StatusBadge";
 
 const starterInput: BioAiInput = {
@@ -53,7 +54,13 @@ const signalTypes: BioSignalType[] = [
   "sop_gap"
 ];
 
-export function WorkbenchClient({ initialInput = starterInput }: { initialInput?: BioAiInput }) {
+export function WorkbenchClient({
+  foundationActions = [],
+  initialInput = starterInput
+}: {
+  foundationActions?: FoundationReviewActionSummary[];
+  initialInput?: BioAiInput;
+}) {
   const [input, setInput] = useState<BioAiInput>(initialInput);
   const [signalType, setSignalType] = useState<BioSignalType>("contamination_event");
   const [signalLabel, setSignalLabel] = useState("Unexpected microbial growth in assay control");
@@ -296,6 +303,29 @@ export function WorkbenchClient({ initialInput = starterInput }: { initialInput?
               <p>{action.reason}</p>
             </article>
           ))}
+        </div>
+        <div className="result-section">
+          <h3>Foundation review actions</h3>
+          <div className="action-list compact-list">
+            {foundationActions.length > 0 ? (
+              foundationActions.slice(0, 5).map((action) => (
+                <article className="action-row" key={`${action.id}-${action.sourceModule}`}>
+                  <div>
+                    <strong>{action.title}</strong>
+                    <span>
+                      {action.priority} / {action.status}
+                    </span>
+                  </div>
+                  <p>
+                    <Link href={action.sourceHref}>{action.sourceLabel}</Link>
+                    {action.reason ? ` - ${action.reason}` : ""}
+                  </p>
+                </article>
+              ))
+            ) : (
+              <p className="muted">No generated Foundation review actions yet.</p>
+            )}
+          </div>
         </div>
         <div className="audit-preview">
           <h3>Audit preview</h3>

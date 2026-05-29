@@ -221,6 +221,72 @@ button {
   align-items: start;
 }
 
+.access-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+}
+
+.access-banner span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.access-enabled {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.access-readonly,
+.owner-gate-panel {
+  border-color: #bfdbfe;
+  background: #f8fbff;
+}
+
+.readiness-console-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 14px 0;
+}
+
+.readiness-console-grid h3,
+.compact-list h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.readiness-console-grid ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.readiness-console-grid li {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.readiness-console-grid li a,
+.readiness-console-grid li strong {
+  color: var(--text);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
 .ergonomic-dashboard {
   gap: 14px;
 }
@@ -1714,8 +1780,14 @@ pre {
   }
 
   .inline-edit-row,
-  .evidence-edit-row {
+  .evidence-edit-row,
+  .readiness-console-grid {
     grid-template-columns: 1fr;
+  }
+
+  .access-banner {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .form-grid,

@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   BookOpenCheck,
   BrainCircuit,
+  ClipboardList,
   FileSearch,
   Gauge,
   GitBranch,
@@ -12,12 +13,22 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { assessBioRisk } from "@/lib/bio-ai/engine";
-import { getIntelligenceFoundationSummary } from "@/lib/supabase/data";
+import {
+  getAuditReadinessConsoleSummary,
+  getFoundationAdminAccessSummary,
+  getFoundationReviewActionsSummary,
+  getIntelligenceFoundationSummary
+} from "@/lib/supabase/data";
 import { FoundationWorkflowClient } from "./FoundationWorkflowClient";
 
 export default async function FoundationPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const params = await searchParams;
-  const summary = await getIntelligenceFoundationSummary();
+  const [summary, adminAccess, auditConsole, reviewActions] = await Promise.all([
+    getIntelligenceFoundationSummary(),
+    getFoundationAdminAccessSummary(),
+    getAuditReadinessConsoleSummary(),
+    getFoundationReviewActionsSummary()
+  ]);
   const assessment = assessBioRisk(summary.latestAssessmentInput);
 
   return (
@@ -37,8 +48,13 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
             </p>
           </div>
           <Link className="button-secondary" href="#foundation-workflows">
-            Review MVP controls
+            {adminAccess.isOwner ? "Review MVP controls" : "View owner controls"}
           </Link>
+        </section>
+
+        <section className={`panel access-banner ${adminAccess.isOwner ? "access-enabled" : "access-readonly"}`}>
+          <strong>{adminAccess.isOwner ? "Owner controls enabled" : "Read-only Foundation mode"}</strong>
+          <span>{adminAccess.message}</span>
         </section>
 
         {params.message ? <p className="form-message">{params.message}</p> : null}
@@ -52,7 +68,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
         </section>
 
         <div id="foundation-workflows">
-          <FoundationWorkflowClient summary={summary} />
+          <FoundationWorkflowClient canManage={adminAccess.isOwner} summary={summary} />
         </div>
 
         <section className="split-list wide">
@@ -74,7 +90,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
             </div>
           </div>
 
-          <div className="panel">
+          <div className="panel" id="evidence-map">
             <div className="panel-heading">
               <div>
                 <p className="section-label">BioType Foundation Packages</p>
@@ -223,21 +239,21 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
             </div>
           </div>
 
-          <div className="panel">
+          <div className="panel" id="audit-readiness-console">
             <div className="panel-heading">
               <div>
                 <p className="section-label">Audit Readiness + AI Engine</p>
-                <h2>Deterministic foundation context</h2>
+                <h2>Operating console</h2>
               </div>
               <Gauge size={22} />
             </div>
             <div className="score-wrap">
-              <span className="score">{summary.readiness.overallScore}</span>
+              <span className="score">{auditConsole.latestScore}</span>
               <div>
                 <p className="score-label">Readiness score</p>
                 <p className="muted">
                   Documents {summary.readiness.documentsScore} / Training {summary.readiness.trainingScore} / Evidence{" "}
-                  {summary.readiness.evidenceScore}
+                  {summary.readiness.evidenceScore} / Trend {auditConsole.trend.replace(/_/g, " ")}
                 </p>
               </div>
             </div>
@@ -251,13 +267,73 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
             </div>
             <div className="draft-banner">
               <AlertTriangle size={18} />
-              Draft - Human Review Required
+              {auditConsole.humanReviewStatus}
             </div>
-            <ul>
-              {summary.readiness.topGaps.slice(0, 5).map((gap) => (
-                <li key={gap}>{gap}</li>
-              ))}
-            </ul>
+            <div className="readiness-console-grid">
+              <div>
+                <h3>Unresolved gaps</h3>
+                <ul>
+                  {auditConsole.unresolvedGaps.slice(0, 5).map((gap) => (
+                    <li key={`${gap.label}-${gap.status}`}>
+                      <Link href={gap.sourceHref}>{gap.label}</Link>
+                      <span>{gap.status}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3>Recent scores</h3>
+                <ul>
+                  {auditConsole.recentScores.length > 0 ? (
+                    auditConsole.recentScores.map((score) => (
+                      <li key={score.id}>
+                        <strong>{score.overallScore}</strong>
+                        <span>{score.generatedAt ? new Date(score.generatedAt).toLocaleString() : "draft"}</span>
+                      </li>
+                    ))
+                  ) : (
+                    <li>No live readiness scores yet.</li>
+                  )}
+                </ul>
+              </div>
+            </div>
+            <div className="action-list compact-list">
+              <h3>Generated review actions</h3>
+              {auditConsole.generatedActions.length > 0 ? (
+                auditConsole.generatedActions.map((action) => (
+                  <article className="action-row" key={`${action.id}-${action.sourceModule}`}>
+                    <div>
+                      <strong>{action.title}</strong>
+                      <span>
+                        {action.priority} / {action.status}
+                      </span>
+                    </div>
+                    <p>
+                      <Link href={action.sourceHref}>{action.sourceLabel}</Link>
+                      {action.reason ? ` - ${action.reason}` : ""}
+                    </p>
+                  </article>
+                ))
+              ) : (
+                <p className="muted">No generated Foundation review actions yet.</p>
+              )}
+            </div>
+            <div className="action-list compact-list">
+              <h3>Notes history</h3>
+              {auditConsole.notes.length > 0 ? (
+                auditConsole.notes.map((note) => (
+                  <article className="action-row" key={note.id}>
+                    <div>
+                      <strong>{note.noteType}</strong>
+                      <span>{note.createdAt ? new Date(note.createdAt).toLocaleString() : "draft"}</span>
+                    </div>
+                    <p>{note.note}</p>
+                  </article>
+                ))
+              ) : (
+                <p className="muted">No audit readiness notes yet.</p>
+              )}
+            </div>
             <div className="guardrail-box">
               <ShieldCheck size={18} />
               <span>{summary.guardrailText}</span>
@@ -265,6 +341,36 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
             <Link className="button-secondary" href="/workbench">
               Open foundation context in Workbench
             </Link>
+          </div>
+        </section>
+
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Foundation review actions</p>
+              <h2>Source-traced follow-through</h2>
+            </div>
+            <ClipboardList size={22} />
+          </div>
+          <div className="action-list">
+            {reviewActions.length > 0 ? (
+              reviewActions.slice(0, 8).map((action) => (
+                <article className="action-row" key={`${action.id}-${action.sourceModule}`}>
+                  <div>
+                    <strong>{action.title}</strong>
+                    <span>
+                      {action.priority} / {action.status}
+                    </span>
+                  </div>
+                  <p>
+                    Source: <Link href={action.sourceHref}>{action.sourceLabel}</Link>
+                    {action.dueDate ? ` / Due ${action.dueDate}` : ""}
+                  </p>
+                </article>
+              ))
+            ) : (
+              <p className="muted">No open Foundation review actions have been generated yet.</p>
+            )}
           </div>
         </section>
 

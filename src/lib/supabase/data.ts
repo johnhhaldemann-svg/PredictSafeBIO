@@ -236,8 +236,43 @@ export type IntelligenceFoundationSummary = {
 
 export type FoundationActionResult = { ok: true; message: string } | { ok: false; message: string };
 
+export type FoundationAdminAccessSummary = {
+  configured: boolean;
+  signedIn: boolean;
+  isOwner: boolean;
+  role?: string;
+  message: string;
+};
+
+export type FoundationReviewActionSummary = {
+  id: string;
+  title: string;
+  priority: string;
+  status: string;
+  sourceModule: string;
+  sourceRecordId?: string;
+  sourceLabel: string;
+  sourceHref: string;
+  dueDate?: string | null;
+  recommendationId?: string;
+  reason?: string;
+  createdAt?: string;
+};
+
+export type AuditReadinessConsoleSummary = {
+  latestScore: number;
+  trend: "improving" | "declining" | "steady" | "not_enough_data";
+  recentScores: Array<{ id: string; overallScore: number; generatedAt?: string }>;
+  unresolvedGaps: Array<{ label: string; status: string; sourceHref: string }>;
+  generatedActions: FoundationReviewActionSummary[];
+  notes: Array<{ id: string; note: string; noteType: string; createdAt?: string }>;
+  humanReviewStatus: string;
+  draftOnly: boolean;
+};
+
 const foundationEvidenceStatuses = ["current", "ready", "review_needed", "missing", "expired", "open", "out_of_tolerance"] as const;
 export type FoundationEvidenceStatus = (typeof foundationEvidenceStatuses)[number];
+const foundationReviewSourceModules = ["evidence_map", "training_assignment", "equipment", "incident", "biotype_selection", "audit_readiness", "foundation"];
 
 const coreComplianceComponents = [
   ["Company Profile Intelligence", "Company type, sites, labs, materials, equipment, regulatory scope, roles, and workforce."],
@@ -940,12 +975,170 @@ export async function getIntelligenceFoundationWorkbenchInput(): Promise<BioAiIn
   return (await getIntelligenceFoundationSummary()).latestAssessmentInput;
 }
 
+export async function getFoundationAdminAccessSummary(): Promise<FoundationAdminAccessSummary> {
+  const auth = await getAuthSummary();
+  const isOwner = auth.signedIn && !auth.needsOnboarding && auth.role === "owner";
+
+  return {
+    configured: auth.configured,
+    signedIn: auth.signedIn,
+    isOwner,
+    role: auth.role,
+    message: isOwner
+      ? "Owner access active. Foundation edit and demo controls are enabled."
+      : auth.signedIn
+        ? "Read-only foundation view. Owner access is required for MVP edit workflows and NorthStar seeding."
+        : "Read-only demo view. Sign in as an organization owner to use Foundation edit workflows."
+  };
+}
+
+export async function getFoundationReviewActionsSummary(): Promise<FoundationReviewActionSummary[]> {
+  const context = await getProfileContext();
+  if (!context) return [];
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const [taskRows, recommendationRows] = await Promise.all([
+      supabase
+        .from("tasks")
+        .select("id,title,priority,status,due_date,source_module,source_record_id,created_at")
+        .eq("organization_id", context.organizationId)
+        .in("status", ["open", "in_progress"])
+        .in("source_module", foundationReviewSourceModules)
+        .order("created_at", { ascending: false })
+        .limit(20),
+      supabase
+        .from("document_recommendations")
+        .select("id,title,payload,label,created_at")
+        .eq("organization_id", context.organizationId)
+        .contains("payload", { actionType: "foundation_review_action" })
+        .order("created_at", { ascending: false })
+        .limit(20)
+    ]);
+
+    const recommendations = ((recommendationRows.data as Record<string, any>[]) ?? []).filter((row) => row.payload?.draftOnly !== false);
+    const recommendationBySource = new Map<string, Record<string, any>>();
+    for (const row of recommendations) {
+      const key = foundationActionKey(row.payload?.sourceModule, row.payload?.sourceRecordId, row.title);
+      if (key) recommendationBySource.set(key, row);
+    }
+
+    const actions = new Map<string, FoundationReviewActionSummary>();
+    for (const row of ((taskRows.data as Record<string, any>[]) ?? [])) {
+      const sourceModule = String(row.source_module ?? "foundation");
+      const sourceRecordId = row.source_record_id ? String(row.source_record_id) : undefined;
+      const key = foundationActionKey(sourceModule, sourceRecordId, row.title) ?? row.id;
+      const recommendation = recommendationBySource.get(key);
+      const source = getFoundationSourceTarget(sourceModule);
+      actions.set(key, {
+        id: row.id,
+        title: row.title,
+        priority: row.priority ?? "medium",
+        status: row.status ?? "open",
+        sourceModule,
+        sourceRecordId,
+        sourceLabel: source.label,
+        sourceHref: source.href,
+        dueDate: row.due_date,
+        recommendationId: recommendation?.id,
+        reason: recommendation?.payload?.reason,
+        createdAt: row.created_at
+      });
+    }
+
+    for (const row of recommendations) {
+      const sourceModule = String(row.payload?.sourceModule ?? "foundation");
+      const sourceRecordId = row.payload?.sourceRecordId ? String(row.payload.sourceRecordId) : undefined;
+      const key = foundationActionKey(sourceModule, sourceRecordId, row.title) ?? row.id;
+      if (actions.has(key)) continue;
+      const source = getFoundationSourceTarget(sourceModule);
+      actions.set(key, {
+        id: row.id,
+        title: row.title,
+        priority: "medium",
+        status: row.label ?? "Draft - Human Review Required",
+        sourceModule,
+        sourceRecordId,
+        sourceLabel: source.label,
+        sourceHref: source.href,
+        recommendationId: row.id,
+        reason: row.payload?.reason,
+        createdAt: row.created_at
+      });
+    }
+
+    return Array.from(actions.values()).slice(0, 12);
+  } catch {
+    return [];
+  }
+}
+
+export async function getAuditReadinessConsoleSummary(): Promise<AuditReadinessConsoleSummary> {
+  const context = await getProfileContext();
+  if (!context) return demoAuditReadinessConsoleSummary();
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const [scoreResult, evidenceRows, noteRows, generatedActions] = await Promise.all([
+      supabase
+        .from("audit_readiness_scores")
+        .select("id,overall_score,top_gaps,generated_at")
+        .eq("organization_id", context.organizationId)
+        .order("generated_at", { ascending: false })
+        .limit(5),
+      latestRows(supabase, "compliance_evidence_map", context.organizationId, "id,requirement_name,evidence_status,audit_ready", 20),
+      latestRows(supabase, "audit_readiness_notes", context.organizationId, "id,note,note_type,created_at", 5),
+      getFoundationReviewActionsSummary()
+    ]);
+
+    const scores = ((scoreResult.data as Record<string, any>[]) ?? []).map((row) => ({
+      id: row.id,
+      overallScore: Number(row.overall_score ?? 0),
+      generatedAt: row.generated_at
+    }));
+    const latest = scores[0]?.overallScore ?? demoIntelligenceFoundationSummary().readiness.overallScore;
+    const previous = scores[1]?.overallScore;
+    const scoreTopGaps = ((scoreResult.data?.[0] as Record<string, any> | undefined)?.top_gaps ?? []) as unknown[];
+    const evidenceGaps = ((evidenceRows as Record<string, any>[]) ?? [])
+      .filter((row) => !row.audit_ready || isFoundationGapStatus(row.evidence_status))
+      .map((row) => ({
+        label: row.requirement_name,
+        status: row.evidence_status ?? "review_needed",
+        sourceHref: getFoundationSourceTarget("evidence_map").href
+      }));
+    const topGaps = scoreTopGaps.map((gap) => ({
+      label: String(gap),
+      status: "readiness_gap",
+      sourceHref: getFoundationSourceTarget("audit_readiness").href
+    }));
+
+    return {
+      latestScore: latest,
+      trend: getReadinessTrend(latest, previous),
+      recentScores: scores,
+      unresolvedGaps: dedupeReadinessGaps([...evidenceGaps, ...topGaps]).slice(0, 8),
+      generatedActions: generatedActions.slice(0, 6),
+      notes: ((noteRows as Record<string, any>[]) ?? []).map((row) => ({
+        id: row.id,
+        note: row.note,
+        noteType: row.note_type,
+        createdAt: row.created_at
+      })),
+      humanReviewStatus: "Draft - human review required",
+      draftOnly: true
+    };
+  } catch {
+    return demoAuditReadinessConsoleSummary();
+  }
+}
+
 export async function updateFoundationBioTypeSelection(input: {
   primaryBioType: string;
   secondaryBioTypes: string[];
 }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before updating BioType selection." };
+  if (context.role !== "owner") return { ok: false, message: "Only organization owners can update Foundation BioType selections." };
 
   const primaryBioType = normalizeBioTypeKey(input.primaryBioType);
   if (!primaryBioType) return { ok: false, message: "Choose a valid primary BioType." };
@@ -1003,6 +1196,7 @@ export async function updateFoundationIntakeResponse(input: {
 }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before updating intake responses." };
+  if (context.role !== "owner") return { ok: false, message: "Only organization owners can update Foundation intake responses." };
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -1035,6 +1229,7 @@ export async function updateFoundationEvidenceReadiness(input: {
 }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before updating evidence readiness." };
+  if (context.role !== "owner") return { ok: false, message: "Only organization owners can update Foundation evidence readiness." };
 
   const status = normalizeFoundationEvidenceStatus(input.status);
   const supabase = await createSupabaseServerClient();
@@ -1072,6 +1267,7 @@ export async function addAuditReadinessNote(input: {
 }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before adding audit readiness notes." };
+  if (context.role !== "owner") return { ok: false, message: "Only organization owners can add Foundation audit readiness notes." };
 
   const note = input.note.trim();
   if (note.length < 3) return { ok: false, message: "Add a short audit readiness note before saving." };
@@ -1115,6 +1311,10 @@ export async function seedNorthStarWithConfirmation(confirmation: string): Promi
     return { ok: false, message: "Type SEED NORTHSTAR to create another NorthStar demo dataset." };
   }
 
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before seeding NorthStar." };
+  if (context.role !== "owner") return { ok: false, message: "Only organization owners can seed NorthStar demo data." };
+
   const result = await seedIntelligenceFoundation();
   if (!result.ok) return result;
   return {
@@ -1126,6 +1326,7 @@ export async function seedNorthStarWithConfirmation(confirmation: string): Promi
 export async function generateFoundationReviewActions(): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before generating review actions." };
+  if (context.role !== "owner") return { ok: false, message: "Only organization owners can generate Foundation review actions." };
 
   const supabase = await createSupabaseServerClient();
   const runId = randomUUID();
@@ -3277,6 +3478,60 @@ type FoundationReviewActionCandidate = {
   priority: "medium" | "high";
   reason: string;
 };
+
+function foundationActionKey(sourceModule?: string | null, sourceRecordId?: string | null, title?: string | null) {
+  if (!sourceModule || !sourceRecordId || !title) return null;
+  return `${sourceModule}:${sourceRecordId}:${title}`;
+}
+
+function getFoundationSourceTarget(sourceModule: string) {
+  const targets: Record<string, { label: string; href: string }> = {
+    evidence_map: { label: "Evidence map", href: "/foundation#evidence-map" },
+    training_assignment: { label: "Training readiness", href: "/foundation#audit-readiness-console" },
+    equipment: { label: "Equipment readiness", href: "/foundation#audit-readiness-console" },
+    incident: { label: "Incident/CAPA screening", href: "/foundation#audit-readiness-console" },
+    biotype_selection: { label: "BioType controls", href: "/foundation#foundation-workflows" },
+    audit_readiness: { label: "Audit readiness", href: "/foundation#audit-readiness-console" },
+    foundation: { label: "Foundation", href: "/foundation" }
+  };
+
+  return targets[sourceModule] ?? { label: sourceModule.replace(/_/g, " "), href: "/foundation" };
+}
+
+function getReadinessTrend(latest: number, previous?: number) {
+  if (typeof previous !== "number") return "not_enough_data" as const;
+  if (latest > previous) return "improving" as const;
+  if (latest < previous) return "declining" as const;
+  return "steady" as const;
+}
+
+function dedupeReadinessGaps(gaps: Array<{ label: string; status: string; sourceHref: string }>) {
+  const seen = new Set<string>();
+  return gaps.filter((gap) => {
+    const key = `${gap.label}:${gap.status}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function demoAuditReadinessConsoleSummary(): AuditReadinessConsoleSummary {
+  const demo = demoIntelligenceFoundationSummary();
+  return {
+    latestScore: demo.readiness.overallScore,
+    trend: "not_enough_data",
+    recentScores: demo.readiness.id ? [{ id: demo.readiness.id, overallScore: demo.readiness.overallScore }] : [],
+    unresolvedGaps: demo.readiness.topGaps.slice(0, 5).map((gap) => ({
+      label: gap,
+      status: "readiness_gap",
+      sourceHref: "/foundation#audit-readiness-console"
+    })),
+    generatedActions: [],
+    notes: [],
+    humanReviewStatus: "Draft - human review required",
+    draftOnly: true
+  };
+}
 
 async function hasOpenFoundationTask(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,

@@ -84,6 +84,14 @@ describe("review workflow helpers", () => {
         payload: { documentId: "document-1", runId: "run-1" }
       })
     ).toEqual({ href: "/documents/document-1", label: "Open document" });
+
+    expect(
+      getAuditEventTarget({
+        eventType: "foundation_review_actions_generated",
+        summary: "Foundation actions generated.",
+        payload: { sourceModule: "evidence_map", sourceRecordId: "evidence-1", runId: "run-1" }
+      })
+    ).toEqual({ href: "/foundation#evidence-map", label: "Open evidence map" });
   });
 
   it("creates short demo seed labels without exposing full identifiers", () => {

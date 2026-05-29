@@ -4,11 +4,11 @@ import { AppShell } from "@/components/AppShell";
 import { createMapOperationsBundleAction } from "./actions";
 import { assessBioRisk } from "@/lib/bio-ai/engine";
 import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
-import { getMapOperationsSummary } from "@/lib/supabase/data";
+import { getFoundationReviewActionsSummary, getMapOperationsSummary } from "@/lib/supabase/data";
 
 export default async function OperationsPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const params = await searchParams;
-  const summary = await getMapOperationsSummary();
+  const [summary, foundationActions] = await Promise.all([getMapOperationsSummary(), getFoundationReviewActionsSummary()]);
   const assessment = assessBioRisk(summary.latestAssessmentInput);
 
   return (
@@ -141,6 +141,36 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
             <Link className="button-secondary" href="/workbench">
               Open in Workbench
             </Link>
+          </div>
+        </section>
+
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Foundation follow-through</p>
+              <h2>Open review actions</h2>
+            </div>
+            <ClipboardList size={22} />
+          </div>
+          <div className="action-list">
+            {foundationActions.length > 0 ? (
+              foundationActions.slice(0, 6).map((action) => (
+                <article className="action-row" key={`${action.id}-${action.sourceModule}`}>
+                  <div>
+                    <strong>{action.title}</strong>
+                    <span>
+                      {action.priority} / {action.status}
+                    </span>
+                  </div>
+                  <p>
+                    Source: <Link href={action.sourceHref}>{action.sourceLabel}</Link>
+                    {action.dueDate ? ` / Due ${action.dueDate}` : ""}
+                  </p>
+                </article>
+              ))
+            ) : (
+              <p className="muted">No open Foundation review actions yet. Generate them from the Foundation page.</p>
+            )}
           </div>
         </section>
       </div>

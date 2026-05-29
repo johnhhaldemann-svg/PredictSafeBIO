@@ -13,9 +13,27 @@ import {
 
 const evidenceStatuses = ["current", "ready", "review_needed", "missing", "expired", "open", "out_of_tolerance"];
 
-export function FoundationWorkflowClient({ summary }: { summary: IntelligenceFoundationSummary }) {
+export function FoundationWorkflowClient({ canManage, summary }: { canManage: boolean; summary: IntelligenceFoundationSummary }) {
   const selected = summary.biotypeSelection;
   const selectedSecondaries = new Set(selected?.secondaryBioTypes ?? []);
+
+  if (!canManage) {
+    return (
+      <section className="panel owner-gate-panel" aria-label="Foundation owner-only controls">
+        <div className="panel-heading">
+          <div>
+            <p className="section-label">Owner-only controls</p>
+            <h2>Foundation edit workflows are locked</h2>
+          </div>
+          <FileCheck2 size={22} />
+        </div>
+        <p className="muted">
+          Read-only Foundation intelligence remains visible. Sign in as an organization owner to edit BioTypes, intake answers, evidence
+          readiness, audit notes, review actions, or NorthStar demo seeds.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className="foundation-workflow-grid" aria-label="Foundation MVP edit workflows">
