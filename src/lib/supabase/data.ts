@@ -268,6 +268,38 @@ export type FoundationReviewActionSummary = {
   createdAt?: string;
 };
 
+export type FoundationDuplicateSkipSummary = {
+  title: string;
+  sourceModule: string;
+  sourceRecordId?: string;
+  reason: string;
+};
+
+export type FoundationVerificationStatusSummary = {
+  latestWorkflowSave?: {
+    eventType: AuditEvent["eventType"];
+    summary: string;
+    createdAt?: string;
+    sourceModule?: string;
+    targetModule?: string;
+  };
+  latestReviewActionRun?: {
+    summary: string;
+    createdAt?: string;
+    created: number;
+    candidateCount: number;
+    skippedDuplicates: FoundationDuplicateSkipSummary[];
+  };
+  latestAuditEvent?: {
+    eventType: AuditEvent["eventType"];
+    summary: string;
+    createdAt?: string;
+    sourceModule?: string;
+    targetModule?: string;
+    draftOnly: boolean;
+  };
+};
+
 export type ChangePlanItem = ChangePlanRow & {
   id?: string;
   sortOrder: number;
@@ -1176,7 +1208,7 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
         .from("tasks")
         .select("id,title,priority,status,due_date,source_module,source_record_id,created_at")
         .eq("organization_id", context.organizationId)
-        .in("status", ["open", "in_progress"])
+        .in("status", ["open", "in_progress", "blocked", "complete"])
         .in("source_module", foundationReviewSourceModules)
         .order("created_at", { ascending: false })
         .limit(20),
@@ -1244,6 +1276,56 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
     return Array.from(actions.values()).slice(0, 12);
   } catch {
     return [];
+  }
+}
+
+export async function getFoundationVerificationStatusSummary(): Promise<FoundationVerificationStatusSummary> {
+  const context = await getProfileContext();
+  if (!context) return demoFoundationVerificationStatusSummary();
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const workflowEvents = [
+      "foundation_biotype_selection_updated",
+      "foundation_intake_response_updated",
+      "foundation_evidence_readiness_updated",
+      "foundation_audit_readiness_note_added",
+      "foundation_review_task_status_updated"
+    ];
+    const [saveResult, runResult, latestResult] = await Promise.all([
+      supabase
+        .from("audit_events")
+        .select("event_type,summary,payload,created_at")
+        .eq("organization_id", context.organizationId)
+        .in("event_type", workflowEvents)
+        .order("created_at", { ascending: false })
+        .limit(1),
+      supabase
+        .from("audit_events")
+        .select("event_type,summary,payload,created_at")
+        .eq("organization_id", context.organizationId)
+        .eq("event_type", "foundation_review_actions_generated")
+        .order("created_at", { ascending: false })
+        .limit(1),
+      supabase
+        .from("audit_events")
+        .select("event_type,summary,payload,created_at")
+        .eq("organization_id", context.organizationId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+    ]);
+
+    const latestWorkflowSave = mapFoundationWorkflowSave((saveResult.data?.[0] as Record<string, any> | undefined) ?? null);
+    const latestReviewActionRun = mapFoundationReviewRun((runResult.data?.[0] as Record<string, any> | undefined) ?? null);
+    const latestAuditEvent = mapFoundationLatestAudit((latestResult.data?.[0] as Record<string, any> | undefined) ?? null);
+
+    return {
+      latestWorkflowSave,
+      latestReviewActionRun,
+      latestAuditEvent
+    };
+  } catch {
+    return demoFoundationVerificationStatusSummary();
   }
 }
 
@@ -1888,12 +1970,21 @@ export async function generateFoundationReviewActions(): Promise<FoundationActio
   }
 
   let created = 0;
+  const skippedDuplicates: FoundationDuplicateSkipSummary[] = [];
   for (const candidate of candidates) {
     const [duplicateTask, duplicateRecommendation] = await Promise.all([
       hasOpenFoundationTask(supabase, context.organizationId, candidate.sourceModule, candidate.sourceRecordId, candidate.title),
       hasOpenFoundationRecommendation(supabase, context.organizationId, candidate.sourceModule, candidate.sourceRecordId, candidate.title)
     ]);
-    if (duplicateTask || duplicateRecommendation) continue;
+    if (duplicateTask || duplicateRecommendation) {
+      skippedDuplicates.push({
+        title: candidate.title,
+        sourceModule: candidate.sourceModule,
+        sourceRecordId: candidate.sourceRecordId,
+        reason: duplicateTask && duplicateRecommendation ? "Existing open task and draft recommendation" : duplicateTask ? "Existing open task" : "Existing draft recommendation"
+      });
+      continue;
+    }
 
     const dueDate = new Date(Date.now() + (candidate.priority === "high" ? 7 : 14) * 86400000).toISOString().slice(0, 10);
     const { data: task } = await supabase
@@ -1951,12 +2042,15 @@ export async function generateFoundationReviewActions(): Promise<FoundationActio
     targetModule: "task",
     targetRecordId: runId,
     runId,
-    payload: { created, candidateCount: candidates.length }
+    payload: { created, candidateCount: candidates.length, skippedDuplicates }
   });
 
   return {
     ok: true,
-    message: created > 0 ? `${created} review action(s) generated as draft tasks.` : "No new review actions needed; existing open actions were preserved."
+    message:
+      created > 0
+        ? `${created} review action(s) generated as draft tasks. ${skippedDuplicates.length} duplicate(s) preserved.`
+        : `No new review actions needed; ${skippedDuplicates.length} existing open action(s) were preserved.`
   };
 }
 
@@ -4058,6 +4152,53 @@ function dedupeReadinessGaps(gaps: Array<{ label: string; status: string; source
   });
 }
 
+function mapFoundationWorkflowSave(row: Record<string, any> | null): FoundationVerificationStatusSummary["latestWorkflowSave"] {
+  if (!row) return undefined;
+  return {
+    eventType: row.event_type,
+    summary: row.summary,
+    createdAt: row.created_at,
+    sourceModule: row.payload?.sourceModule,
+    targetModule: row.payload?.targetModule
+  };
+}
+
+function mapFoundationReviewRun(row: Record<string, any> | null): FoundationVerificationStatusSummary["latestReviewActionRun"] {
+  if (!row) return undefined;
+  return {
+    summary: row.summary,
+    createdAt: row.created_at,
+    created: Number(row.payload?.created ?? 0),
+    candidateCount: Number(row.payload?.candidateCount ?? 0),
+    skippedDuplicates: normalizeSkippedDuplicates(row.payload?.skippedDuplicates)
+  };
+}
+
+function mapFoundationLatestAudit(row: Record<string, any> | null): FoundationVerificationStatusSummary["latestAuditEvent"] {
+  if (!row) return undefined;
+  return {
+    eventType: row.event_type,
+    summary: row.summary,
+    createdAt: row.created_at,
+    sourceModule: row.payload?.sourceModule,
+    targetModule: row.payload?.targetModule,
+    draftOnly: row.payload?.draftOnly !== false
+  };
+}
+
+function normalizeSkippedDuplicates(value: unknown): FoundationDuplicateSkipSummary[] {
+  if (!Array.isArray(value)) return [];
+  return value.slice(0, 8).map((item) => {
+    const row = (item ?? {}) as Record<string, unknown>;
+    return {
+      title: String(row.title ?? "Duplicate review action"),
+      sourceModule: String(row.sourceModule ?? "foundation"),
+      sourceRecordId: row.sourceRecordId ? String(row.sourceRecordId) : undefined,
+      reason: String(row.reason ?? "Existing open action")
+    };
+  });
+}
+
 function demoAuditReadinessConsoleSummary(): AuditReadinessConsoleSummary {
   const demo = demoIntelligenceFoundationSummary();
   return {
@@ -4073,6 +4214,40 @@ function demoAuditReadinessConsoleSummary(): AuditReadinessConsoleSummary {
     notes: [],
     humanReviewStatus: "Draft - human review required",
     draftOnly: true
+  };
+}
+
+function demoFoundationVerificationStatusSummary(): FoundationVerificationStatusSummary {
+  return {
+    latestWorkflowSave: {
+      eventType: "foundation_evidence_readiness_updated",
+      summary: "Demo evidence readiness update available for owner verification.",
+      createdAt: undefined,
+      sourceModule: "evidence_map",
+      targetModule: "compliance_evidence_map"
+    },
+    latestReviewActionRun: {
+      summary: "Demo action planning run. Draft outputs require human review.",
+      createdAt: undefined,
+      created: 0,
+      candidateCount: 2,
+      skippedDuplicates: [
+        {
+          title: "Review evidence gap - Biosafety Manual acknowledgement",
+          sourceModule: "evidence_map",
+          sourceRecordId: "demo-evidence-0",
+          reason: "Existing open task"
+        }
+      ]
+    },
+    latestAuditEvent: {
+      eventType: "foundation_review_actions_generated",
+      summary: "Demo action generation audit event.",
+      createdAt: undefined,
+      sourceModule: "foundation",
+      targetModule: "task",
+      draftOnly: true
+    }
   };
 }
 

@@ -18,6 +18,7 @@ import {
   getFoundationAdminAccessSummary,
   getFoundationReviewActionsSummary,
   getFoundationSourceDrilldownSummary,
+  getFoundationVerificationStatusSummary,
   getIntelligenceFoundationSummary
 } from "@/lib/supabase/data";
 import { FoundationWorkflowClient } from "./FoundationWorkflowClient";
@@ -32,12 +33,13 @@ const sourceDrilldownIds: Record<string, string> = {
 
 export default async function FoundationPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const params = await searchParams;
-  const [summary, adminAccess, auditConsole, reviewActions, sourceDrilldowns] = await Promise.all([
+  const [summary, adminAccess, auditConsole, reviewActions, sourceDrilldowns, verificationStatus] = await Promise.all([
     getIntelligenceFoundationSummary(),
     getFoundationAdminAccessSummary(),
     getAuditReadinessConsoleSummary(),
     getFoundationReviewActionsSummary(),
-    getFoundationSourceDrilldownSummary()
+    getFoundationSourceDrilldownSummary(),
+    getFoundationVerificationStatusSummary()
   ]);
   const assessment = assessBioRisk(summary.latestAssessmentInput);
 
@@ -68,6 +70,63 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
         </section>
 
         {params.message ? <p className="form-message">{params.message}</p> : null}
+
+        <section className={`panel verification-status-panel ${adminAccess.isOwner ? "access-enabled" : "access-readonly"}`}>
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Owner verification status</p>
+              <h2>Latest live workflow evidence</h2>
+            </div>
+            <ShieldCheck size={22} />
+          </div>
+          {adminAccess.isOwner ? (
+            <div className="verification-status-grid">
+              <article>
+                <span>Last workflow save</span>
+                <strong>{verificationStatus.latestWorkflowSave?.summary ?? "No owner workflow save captured yet."}</strong>
+                <small>
+                  {verificationStatus.latestWorkflowSave?.eventType ?? "pending"} /{" "}
+                  {verificationStatus.latestWorkflowSave?.createdAt
+                    ? new Date(verificationStatus.latestWorkflowSave.createdAt).toLocaleString()
+                    : "not run"}
+                </small>
+              </article>
+              <article>
+                <span>Last action run</span>
+                <strong>{verificationStatus.latestReviewActionRun?.summary ?? "Generate Action Plan has not run yet."}</strong>
+                <small>
+                  Created {verificationStatus.latestReviewActionRun?.created ?? 0} / Candidates{" "}
+                  {verificationStatus.latestReviewActionRun?.candidateCount ?? 0} / Duplicates{" "}
+                  {verificationStatus.latestReviewActionRun?.skippedDuplicates.length ?? 0}
+                </small>
+              </article>
+              <article>
+                <span>Latest audit event</span>
+                <strong>{verificationStatus.latestAuditEvent?.summary ?? "No audit event captured yet."}</strong>
+                <small>
+                  {verificationStatus.latestAuditEvent?.eventType ?? "pending"} / Draft-only{" "}
+                  {verificationStatus.latestAuditEvent?.draftOnly === false ? "false" : "true"}
+                </small>
+              </article>
+            </div>
+          ) : (
+            <p className="muted">Sign in as an organization owner to run and view live workflow verification status.</p>
+          )}
+          {adminAccess.isOwner && verificationStatus.latestReviewActionRun?.skippedDuplicates.length ? (
+            <div className="duplicate-skip-panel">
+              <h3>Duplicate prevention visibility</h3>
+              {verificationStatus.latestReviewActionRun.skippedDuplicates.slice(0, 6).map((duplicate) => (
+                <p key={`${duplicate.sourceModule}-${duplicate.sourceRecordId}-${duplicate.title}`}>
+                  <strong>{duplicate.title}</strong>
+                  <span>
+                    {duplicate.reason} / {duplicate.sourceModule}
+                    {duplicate.sourceRecordId ? ` / ${duplicate.sourceRecordId}` : ""}
+                  </span>
+                </p>
+              ))}
+            </div>
+          ) : null}
+        </section>
 
         <section className="summary-strip" aria-label="Foundation counts">
           {summary.counts.map((count) => (
@@ -375,19 +434,20 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
                 <div className="action-list compact-list">
                   {group.items.length > 0 ? (
                     group.items.slice(0, 4).map((item) => (
-                      <div className="source-detail-row" key={`${group.key}-${item.id}`}>
-                        <strong>{item.label}</strong>
-                        <span>
-                          {item.status} / {item.ownerRole}
-                        </span>
-                        <p>
-                          {item.detail} Action: {item.recommendedAction}
-                        </p>
+                      <details className="source-detail-row" key={`${group.key}-${item.id}`}>
+                        <summary>
+                          <strong>{item.label}</strong>
+                          <span>
+                            {item.status} / {item.ownerRole}
+                          </span>
+                        </summary>
+                        <p>{item.detail}</p>
+                        <p>Recommended action: {item.recommendedAction}</p>
                         <small>
                           {item.sourceModule}
                           {item.sourceRecordId ? ` / ${item.sourceRecordId}` : ""}
                         </small>
-                      </div>
+                      </details>
                     ))
                   ) : (
                     <p className="muted">No active source gaps in this group.</p>

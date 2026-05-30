@@ -47,11 +47,14 @@ describe("foundation UI alignment", () => {
 
   it("surfaces source-traced review actions and audit readiness console", () => {
     expect(foundationData).toContain("getFoundationReviewActionsSummary");
+    expect(foundationData).toContain("getFoundationVerificationStatusSummary");
     expect(foundationData).toContain("getAuditReadinessConsoleSummary");
     expect(foundationData).toContain("foundationActionKey");
     expect(foundationData).toContain("foundationReviewSourceModules");
     expect(foundationPage).toContain("audit-readiness-console");
     expect(foundationPage).toContain("Generated review actions");
+    expect(foundationPage).toContain("Owner verification status");
+    expect(foundationPage).toContain("Duplicate prevention visibility");
     expect(operationsPage).toContain("getFoundationReviewActionsSummary");
     expect(workbenchPage).toContain("getFoundationReviewActionsSummary");
     expect(auditPage).toContain("getFoundationReviewActionsSummary");
@@ -65,9 +68,12 @@ describe("foundation UI alignment", () => {
     expect(foundationActions).toContain("updateFoundationReviewTaskStatusAction");
     expect(reviewActionsPanel).toContain("updateFoundationReviewTaskStatusAction");
     expect(reviewActionsPanel).toContain("canManage && action.taskId");
+    expect(reviewActionsPanel).toContain("action-filter-bar");
+    expect(reviewActionsPanel).toContain("Source trace");
     expect(foundationPage).toContain("Compliance source drilldowns");
     expect(foundationPage).toContain("source-drilldown-grid");
     expect(foundationPage).toContain("getFoundationSourceDrilldownSummary");
+    expect(foundationPage).toContain("Recommended action");
   });
 
   it("adds audit readiness notes with org scope, RLS, grants, and no user metadata authorization", () => {
