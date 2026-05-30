@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   addAuditReadinessNote,
+  createFoundationReviewActionFromSource,
   generateFoundationReviewActions,
   seedNorthStarWithConfirmation,
   updateFoundationBioTypeSelection,
@@ -78,7 +79,20 @@ export async function generateFoundationReviewActionsAction() {
 export async function updateFoundationReviewTaskStatusAction(formData: FormData) {
   const result = await updateFoundationReviewTaskStatus({
     taskId: String(formData.get("taskId") ?? ""),
-    status: String(formData.get("status") ?? "")
+    status: String(formData.get("status") ?? ""),
+    dueDate: String(formData.get("dueDate") ?? "") || null,
+    assignedTo: String(formData.get("assignedTo") ?? "") || null
+  });
+  redirectFoundationResult(result);
+}
+
+export async function createFoundationReviewActionFromSourceAction(formData: FormData) {
+  const result = await createFoundationReviewActionFromSource({
+    sourceModule: String(formData.get("sourceModule") ?? ""),
+    sourceRecordId: String(formData.get("sourceRecordId") ?? ""),
+    title: String(formData.get("title") ?? ""),
+    reason: String(formData.get("reason") ?? ""),
+    priority: String(formData.get("priority") ?? "medium")
   });
   redirectFoundationResult(result);
 }

@@ -4,15 +4,17 @@ import Link from "next/link";
 import { ClipboardList } from "lucide-react";
 import { useMemo, useState } from "react";
 import { updateFoundationReviewTaskStatusAction } from "@/app/foundation/actions";
-import type { FoundationReviewActionSummary } from "@/lib/supabase/data";
+import type { FoundationAssigneeOption, FoundationReviewActionSummary } from "@/lib/supabase/data";
 
 export function FoundationReviewActionsPanel({
   actions,
+  assignees = [],
   canManage = false,
   emptyMessage = "No open action-planning items have been generated yet.",
   title = "Source-traced follow-through"
 }: {
   actions: FoundationReviewActionSummary[];
+  assignees?: FoundationAssigneeOption[];
   canManage?: boolean;
   emptyMessage?: string;
   title?: string;
@@ -94,6 +96,7 @@ export function FoundationReviewActionsPanel({
               <p>
                 Source: <Link href={action.sourceHref}>{action.sourceLabel}</Link>
                 {action.dueDate ? ` / Due ${action.dueDate}` : ""}
+                {action.assigneeName ? ` / Assigned to ${action.assigneeName}` : ""}
                 {action.reason ? ` / ${action.reason}` : ""}
               </p>
               <details className="source-detail-expander">
@@ -111,16 +114,43 @@ export function FoundationReviewActionsPanel({
                     <dt>Recommendation</dt>
                     <dd>{action.recommendationId ?? "task only"}</dd>
                   </div>
+                  <div>
+                    <dt>Assignee</dt>
+                    <dd>{action.assigneeName ?? "Unassigned"}</dd>
+                  </div>
+                  <div>
+                    <dt>Due date</dt>
+                    <dd>{action.dueDate ?? "No due date"}</dd>
+                  </div>
                 </dl>
               </details>
               {canManage && action.taskId ? (
                 <form action={updateFoundationReviewTaskStatusAction} className="task-status-form">
                   <input name="taskId" type="hidden" value={action.taskId} />
-                  <select name="status" defaultValue={action.status === "open" ? "in_progress" : action.status}>
-                    <option value="in_progress">In progress</option>
-                    <option value="complete">Complete</option>
-                    <option value="blocked">Blocked</option>
-                  </select>
+                  <label>
+                    Status
+                    <select name="status" defaultValue={action.status === "open" ? "in_progress" : action.status}>
+                      <option value="in_progress">In progress</option>
+                      <option value="complete">Complete</option>
+                      <option value="blocked">Blocked</option>
+                    </select>
+                  </label>
+                  <label>
+                    Due date
+                    <input name="dueDate" type="date" defaultValue={action.dueDate ?? ""} />
+                  </label>
+                  <label>
+                    Assignee
+                    <select name="assignedTo" defaultValue={action.assignedTo ?? ""}>
+                      <option value="">Unassigned</option>
+                      {assignees.map((assignee) => (
+                        <option key={assignee.id} value={assignee.id}>
+                          {assignee.name}
+                          {assignee.role ? ` / ${assignee.role}` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   <button className="button-secondary compact" type="submit">
                     Update task
                   </button>

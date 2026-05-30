@@ -348,9 +348,10 @@ button {
 }
 
 .task-status-form {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(130px, 0.8fr) minmax(150px, 0.8fr) minmax(190px, 1fr) auto;
   gap: 8px;
+  align-items: end;
   margin-top: 10px;
 }
 
@@ -367,6 +368,71 @@ button {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+}
+
+.verification-guidance {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  background: #f0fdf4;
+  padding: 12px;
+}
+
+.verification-guidance span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.verification-checklist {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.verification-checklist article {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.verification-checklist strong,
+.verification-checklist span,
+.verification-checklist small {
+  overflow-wrap: anywhere;
+}
+
+.verification-checklist strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.verification-checklist span {
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.verification-checklist small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.checklist-pass {
+  border-color: #bbf7d0;
+}
+
+.checklist-pass span {
+  color: var(--green);
+}
+
+.checklist-pending span {
+  color: var(--amber);
 }
 
 .verification-status-grid article,
@@ -461,6 +527,50 @@ button {
 
 .source-detail-expander dd {
   color: var(--text);
+}
+
+.source-action-form {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+  margin-top: 10px;
+}
+
+.ops-foundation-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ops-foundation-grid article {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.ops-foundation-grid span,
+.ops-foundation-grid small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.ops-foundation-grid strong {
+  color: var(--text);
+  font-size: 24px;
+}
+
+.audit-filter-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr)) auto auto;
+  gap: 10px;
+  align-items: end;
 }
 
 .ergonomic-dashboard {
@@ -2458,6 +2568,11 @@ pre {
   .readiness-console-grid,
   .source-drilldown-grid,
   .verification-status-grid,
+  .verification-checklist,
+  .ops-foundation-grid,
+  .audit-filter-form,
+  .task-status-form,
+  .source-action-form,
   .action-filter-bar,
   .source-detail-expander dl div {
     grid-template-columns: 1fr;

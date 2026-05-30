@@ -16,11 +16,13 @@ import { assessBioRisk } from "@/lib/bio-ai/engine";
 import {
   getAuditReadinessConsoleSummary,
   getFoundationAdminAccessSummary,
+  getFoundationAssigneeOptions,
   getFoundationReviewActionsSummary,
   getFoundationSourceDrilldownSummary,
   getFoundationVerificationStatusSummary,
   getIntelligenceFoundationSummary
 } from "@/lib/supabase/data";
+import { createFoundationReviewActionFromSourceAction } from "./actions";
 import { FoundationWorkflowClient } from "./FoundationWorkflowClient";
 
 const sourceDrilldownIds: Record<string, string> = {
@@ -33,13 +35,14 @@ const sourceDrilldownIds: Record<string, string> = {
 
 export default async function FoundationPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const params = await searchParams;
-  const [summary, adminAccess, auditConsole, reviewActions, sourceDrilldowns, verificationStatus] = await Promise.all([
+  const [summary, adminAccess, auditConsole, reviewActions, sourceDrilldowns, verificationStatus, assignees] = await Promise.all([
     getIntelligenceFoundationSummary(),
     getFoundationAdminAccessSummary(),
     getAuditReadinessConsoleSummary(),
     getFoundationReviewActionsSummary(),
     getFoundationSourceDrilldownSummary(),
-    getFoundationVerificationStatusSummary()
+    getFoundationVerificationStatusSummary(),
+    getFoundationAssigneeOptions()
   ]);
   const assessment = assessBioRisk(summary.latestAssessmentInput);
 
@@ -80,35 +83,53 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
             <ShieldCheck size={22} />
           </div>
           {adminAccess.isOwner ? (
-            <div className="verification-status-grid">
-              <article>
-                <span>Last workflow save</span>
-                <strong>{verificationStatus.latestWorkflowSave?.summary ?? "No owner workflow save captured yet."}</strong>
-                <small>
-                  {verificationStatus.latestWorkflowSave?.eventType ?? "pending"} /{" "}
-                  {verificationStatus.latestWorkflowSave?.createdAt
-                    ? new Date(verificationStatus.latestWorkflowSave.createdAt).toLocaleString()
-                    : "not run"}
-                </small>
-              </article>
-              <article>
-                <span>Last action run</span>
-                <strong>{verificationStatus.latestReviewActionRun?.summary ?? "Generate Action Plan has not run yet."}</strong>
-                <small>
-                  Created {verificationStatus.latestReviewActionRun?.created ?? 0} / Candidates{" "}
-                  {verificationStatus.latestReviewActionRun?.candidateCount ?? 0} / Duplicates{" "}
-                  {verificationStatus.latestReviewActionRun?.skippedDuplicates.length ?? 0}
-                </small>
-              </article>
-              <article>
-                <span>Latest audit event</span>
-                <strong>{verificationStatus.latestAuditEvent?.summary ?? "No audit event captured yet."}</strong>
-                <small>
-                  {verificationStatus.latestAuditEvent?.eventType ?? "pending"} / Draft-only{" "}
-                  {verificationStatus.latestAuditEvent?.draftOnly === false ? "false" : "true"}
-                </small>
-              </article>
-            </div>
+            <>
+              <div className="verification-guidance">
+                <strong>Run verification mode</strong>
+                <span>
+                  Save BioTypes, edit one intake answer, update one evidence row, add one audit note, generate an action plan, then update one
+                  generated task status.
+                </span>
+              </div>
+              <div className="verification-checklist">
+                {verificationStatus.checklist.map((step) => (
+                  <article className={step.status === "pass" ? "checklist-pass" : "checklist-pending"} key={step.key}>
+                    <strong>{step.label}</strong>
+                    <span>{step.status === "pass" ? "Pass" : "Pending"}</span>
+                    <small>{step.detail}</small>
+                  </article>
+                ))}
+              </div>
+              <div className="verification-status-grid">
+                <article>
+                  <span>Last workflow save</span>
+                  <strong>{verificationStatus.latestWorkflowSave?.summary ?? "No owner workflow save captured yet."}</strong>
+                  <small>
+                    {verificationStatus.latestWorkflowSave?.eventType ?? "pending"} /{" "}
+                    {verificationStatus.latestWorkflowSave?.createdAt
+                      ? new Date(verificationStatus.latestWorkflowSave.createdAt).toLocaleString()
+                      : "not run"}
+                  </small>
+                </article>
+                <article>
+                  <span>Last action run</span>
+                  <strong>{verificationStatus.latestReviewActionRun?.summary ?? "Generate Action Plan has not run yet."}</strong>
+                  <small>
+                    Created {verificationStatus.latestReviewActionRun?.created ?? 0} / Candidates{" "}
+                    {verificationStatus.latestReviewActionRun?.candidateCount ?? 0} / Duplicates{" "}
+                    {verificationStatus.latestReviewActionRun?.skippedDuplicates.length ?? 0}
+                  </small>
+                </article>
+                <article>
+                  <span>Latest audit event</span>
+                  <strong>{verificationStatus.latestAuditEvent?.summary ?? "No audit event captured yet."}</strong>
+                  <small>
+                    {verificationStatus.latestAuditEvent?.eventType ?? "pending"} / Draft-only{" "}
+                    {verificationStatus.latestAuditEvent?.draftOnly === false ? "false" : "true"}
+                  </small>
+                </article>
+              </div>
+            </>
           ) : (
             <p className="muted">Sign in as an organization owner to run and view live workflow verification status.</p>
           )}
@@ -413,7 +434,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           </div>
         </section>
 
-        <FoundationReviewActionsPanel actions={reviewActions.slice(0, 8)} canManage={adminAccess.isOwner} />
+        <FoundationReviewActionsPanel actions={reviewActions.slice(0, 8)} assignees={assignees} canManage={adminAccess.isOwner} />
 
         <section className="panel">
           <div className="panel-heading">
@@ -447,6 +468,21 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
                           {item.sourceModule}
                           {item.sourceRecordId ? ` / ${item.sourceRecordId}` : ""}
                         </small>
+                        {adminAccess.isOwner && item.sourceRecordId ? (
+                          <form action={createFoundationReviewActionFromSourceAction} className="source-action-form">
+                            <input name="sourceModule" type="hidden" value={item.sourceModule} />
+                            <input name="sourceRecordId" type="hidden" value={item.sourceRecordId} />
+                            <input name="title" type="hidden" value={`Review ${item.label}`} />
+                            <input name="reason" type="hidden" value={item.detail} />
+                            <select name="priority" defaultValue={item.status === "expired" || item.status === "out_of_tolerance" ? "high" : "medium"}>
+                              <option value="medium">Medium</option>
+                              <option value="high">High</option>
+                            </select>
+                            <button className="button-secondary compact" type="submit">
+                              Create action
+                            </button>
+                          </form>
+                        ) : null}
                       </details>
                     ))
                   ) : (

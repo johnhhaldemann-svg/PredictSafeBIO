@@ -48,16 +48,23 @@ describe("foundation UI alignment", () => {
   it("surfaces source-traced review actions and audit readiness console", () => {
     expect(foundationData).toContain("getFoundationReviewActionsSummary");
     expect(foundationData).toContain("getFoundationVerificationStatusSummary");
+    expect(foundationData).toContain("getFoundationOperationsDashboardSummary");
     expect(foundationData).toContain("getAuditReadinessConsoleSummary");
     expect(foundationData).toContain("foundationActionKey");
     expect(foundationData).toContain("foundationReviewSourceModules");
     expect(foundationPage).toContain("audit-readiness-console");
     expect(foundationPage).toContain("Generated review actions");
     expect(foundationPage).toContain("Owner verification status");
+    expect(foundationPage).toContain("Run verification mode");
     expect(foundationPage).toContain("Duplicate prevention visibility");
+    expect(foundationPage).toContain("verificationStatus.checklist");
     expect(operationsPage).toContain("getFoundationReviewActionsSummary");
+    expect(operationsPage).toContain("getFoundationOperationsDashboardSummary");
+    expect(operationsPage).toContain("Foundation operations dashboard");
     expect(workbenchPage).toContain("getFoundationReviewActionsSummary");
     expect(auditPage).toContain("getFoundationReviewActionsSummary");
+    expect(auditPage).toContain("Audit filters");
+    expect(auditPage).toContain("listAuditEvents({ eventType, sourceModule })");
   });
 
   it("adds owner-only task status controls and source drilldowns", () => {
@@ -66,14 +73,21 @@ describe("foundation UI alignment", () => {
     expect(foundationData).toContain("foundation_review_task_status_updated");
     expect(foundationData).toContain("Only generated Foundation review tasks can be updated");
     expect(foundationActions).toContain("updateFoundationReviewTaskStatusAction");
+    expect(foundationActions).toContain("createFoundationReviewActionFromSourceAction");
+    expect(foundationData).toContain("createFoundationReviewActionFromSource");
+    expect(foundationData).toContain("assigned_to");
+    expect(foundationData).toContain("due_date");
     expect(reviewActionsPanel).toContain("updateFoundationReviewTaskStatusAction");
     expect(reviewActionsPanel).toContain("canManage && action.taskId");
     expect(reviewActionsPanel).toContain("action-filter-bar");
     expect(reviewActionsPanel).toContain("Source trace");
+    expect(reviewActionsPanel).toContain("assignedTo");
+    expect(reviewActionsPanel).toContain("dueDate");
     expect(foundationPage).toContain("Compliance source drilldowns");
     expect(foundationPage).toContain("source-drilldown-grid");
     expect(foundationPage).toContain("getFoundationSourceDrilldownSummary");
     expect(foundationPage).toContain("Recommended action");
+    expect(foundationPage).toContain("createFoundationReviewActionFromSourceAction");
   });
 
   it("adds audit readiness notes with org scope, RLS, grants, and no user metadata authorization", () => {
