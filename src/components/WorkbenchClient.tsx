@@ -7,7 +7,8 @@ import { assessBioRisk } from "@/lib/bio-ai/engine";
 import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import type { BioAiInput, BioSignalType } from "@/lib/bio-ai/types";
 import { commonUtilities, gapModuleCards, platformCategories } from "@/lib/platform-outline";
-import type { FoundationReviewActionSummary } from "@/lib/supabase/data";
+import type { FoundationAssigneeOption, FoundationProductionVerificationSummary, FoundationReviewActionSummary } from "@/lib/supabase/data";
+import { FoundationReviewActionsPanel } from "./FoundationReviewActionsPanel";
 import { StatusBadge } from "./StatusBadge";
 
 type CommandCenterSummary = {
@@ -74,18 +75,29 @@ const signalTypes: BioSignalType[] = [
 ];
 
 export function WorkbenchClient({
+  assignees = [],
+  canManageFoundationActions = false,
   foundationActions = [],
   initialInput = starterInput,
+  productionVerification,
   commandCenter
 }: {
+  assignees?: FoundationAssigneeOption[];
+  canManageFoundationActions?: boolean;
   foundationActions?: FoundationReviewActionSummary[];
   initialInput?: BioAiInput;
+  productionVerification?: FoundationProductionVerificationSummary;
   commandCenter?: CommandCenterSummary;
 }) {
   const [input, setInput] = useState<BioAiInput>(initialInput);
   const [signalType, setSignalType] = useState<BioSignalType>("contamination_event");
   const [signalLabel, setSignalLabel] = useState("Unexpected microbial growth in assay control");
   const [evidence, setEvidence] = useState("Assay control showed unexpected growth; investigation not complete.");
+  const [assignedFilter, setAssignedFilter] = useState("all");
+  const [dueFilter, setDueFilter] = useState("all");
+  const [workStatusFilter, setWorkStatusFilter] = useState("all");
+  const [workPriorityFilter, setWorkPriorityFilter] = useState("all");
+  const [workSourceFilter, setWorkSourceFilter] = useState("all");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "blocked" | "error">("idle");
   const [saveMessage, setSaveMessage] = useState("Assessment has not been saved yet.");
   const assessment = useMemo(() => assessBioRisk(input), [input]);
@@ -127,6 +139,30 @@ export function WorkbenchClient({
       value: String(commandSummary.openActionCount),
       detail: "Open source-traced action items"
     }
+  };
+  const assignedSourceOptions = useMemo(
+    () => Array.from(new Set(foundationActions.map((action) => action.sourceModule))).sort(),
+    [foundationActions]
+  );
+  const assignedWorkActions = useMemo(
+    () =>
+      foundationActions.filter((action) => {
+        const assigneeMatches =
+          assignedFilter === "all" ||
+          (assignedFilter === "unassigned" ? !action.assignedTo : action.assignedTo === assignedFilter);
+        const statusMatches = workStatusFilter === "all" || action.status === workStatusFilter;
+        const priorityMatches = workPriorityFilter === "all" || action.priority === workPriorityFilter;
+        const sourceMatches = workSourceFilter === "all" || action.sourceModule === workSourceFilter;
+        const dueMatches = dueFilter === "all" || getAssignedWorkDueBucket(action) === dueFilter;
+        return assigneeMatches && statusMatches && priorityMatches && sourceMatches && dueMatches;
+      }),
+    [assignedFilter, dueFilter, foundationActions, workPriorityFilter, workSourceFilter, workStatusFilter]
+  );
+  const productionPanel = productionVerification ?? {
+    environment: "local",
+    deploymentUrl: "http://127.0.0.1:3001",
+    productionReady: false,
+    reason: "Production verification has not been loaded for this workbench session."
   };
 
   function updateField<K extends keyof BioAiInput>(key: K, value: BioAiInput[K]) {
@@ -367,6 +403,113 @@ export function WorkbenchClient({
             )}
           </div>
         </div>
+      </section>
+
+      <section className="panel production-verification-panel" aria-labelledby="production-verification-title">
+        <div className="panel-heading">
+          <div>
+            <p className="section-label">Production verification</p>
+            <h2 id="production-verification-title">{productionPanel.productionReady ? "Operating evidence ready" : "Operating evidence pending"}</h2>
+          </div>
+          <ShieldCheck size={22} />
+        </div>
+        <div className="verification-export-grid">
+          <article>
+            <strong>Latest workflow save</strong>
+            <span>{productionPanel.latestWorkflowSave?.summary ?? "Pending workflow save evidence"}</span>
+          </article>
+          <article>
+            <strong>Latest task activity</strong>
+            <span>{productionPanel.latestTaskUpdate?.summary ?? "Pending task status or note evidence"}</span>
+          </article>
+          <article>
+            <strong>Latest audit event</strong>
+            <span>{productionPanel.latestAuditEvent?.eventType ?? "Pending audit event"}</span>
+          </article>
+          <article>
+            <strong>Deployment</strong>
+            <span>
+              {productionPanel.environment} / {productionPanel.deploymentUrl}
+            </span>
+          </article>
+        </div>
+        <div className={productionPanel.productionReady ? "verification-pass-box" : "verification-pending-box"}>
+          <strong>{productionPanel.productionReady ? "Production-ready signal present" : "Production readiness blocked"}</strong>
+          <span>{productionPanel.reason}</span>
+        </div>
+      </section>
+
+      <section className="assigned-work-console" aria-labelledby="assigned-work-title">
+        <div className="panel-heading">
+          <div>
+            <p className="section-label">Assigned operating work</p>
+            <h2 id="assigned-work-title">My Assigned Work</h2>
+          </div>
+          <ClipboardList size={22} />
+        </div>
+        <div className="assigned-work-filter-grid">
+          <label>
+            Assignee
+            <select value={assignedFilter} onChange={(event) => setAssignedFilter(event.target.value)}>
+              <option value="all">All assignees</option>
+              <option value="unassigned">Unassigned</option>
+              {assignees.map((assignee) => (
+                <option key={assignee.id} value={assignee.id}>
+                  {assignee.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Due
+            <select value={dueFilter} onChange={(event) => setDueFilter(event.target.value)}>
+              <option value="all">All due dates</option>
+              <option value="overdue">Overdue</option>
+              <option value="due_soon">Due soon</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="unscheduled">No due date</option>
+            </select>
+          </label>
+          <label>
+            Status
+            <select value={workStatusFilter} onChange={(event) => setWorkStatusFilter(event.target.value)}>
+              <option value="all">All statuses</option>
+              <option value="open">Open</option>
+              <option value="in_progress">In progress</option>
+              <option value="blocked">Blocked</option>
+              <option value="complete">Complete</option>
+            </select>
+          </label>
+          <label>
+            Priority
+            <select value={workPriorityFilter} onChange={(event) => setWorkPriorityFilter(event.target.value)}>
+              <option value="all">All priorities</option>
+              <option value="urgent">Urgent</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </label>
+          <label>
+            Source module
+            <select value={workSourceFilter} onChange={(event) => setWorkSourceFilter(event.target.value)}>
+              <option value="all">All sources</option>
+              {assignedSourceOptions.map((sourceModule) => (
+                <option key={sourceModule} value={sourceModule}>
+                  {sourceModule.replace(/_/g, " ")}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <FoundationReviewActionsPanel
+          actions={assignedWorkActions}
+          assignees={assignees}
+          canManage={canManageFoundationActions}
+          emptyMessage="No assigned Foundation work matches these filters."
+          returnTo="/workbench"
+          title="Filtered Foundation review tasks"
+        />
       </section>
 
       <section className="platform-map panel" aria-labelledby="platform-map-title">
@@ -681,4 +824,15 @@ function getWorkbenchTaskAgingClass(action: FoundationReviewActionSummary) {
   if (days < 0) return "task-aging-overdue";
   if (days <= 3) return "task-aging-due-soon";
   return "task-aging-on-track";
+}
+
+function getAssignedWorkDueBucket(action: FoundationReviewActionSummary) {
+  if (!action.dueDate) return "unscheduled";
+  const due = new Date(`${action.dueDate}T00:00:00`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
+  if (days < 0) return "overdue";
+  if (days <= 3) return "due_soon";
+  return "scheduled";
 }

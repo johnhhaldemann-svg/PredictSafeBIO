@@ -359,6 +359,21 @@ button {
   min-width: 140px;
 }
 
+.task-note-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.task-note-form label,
+.task-status-form .wide-field {
+  min-width: 0;
+}
+
 .verification-status-panel {
   display: grid;
   gap: 14px;
@@ -367,6 +382,49 @@ button {
 .production-gate-panel {
   display: grid;
   gap: 12px;
+}
+
+.production-verification-panel,
+.assigned-work-console {
+  display: grid;
+  gap: 14px;
+}
+
+.verification-pass-box,
+.verification-pending-box {
+  display: grid;
+  gap: 4px;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.verification-pass-box {
+  border: 1px solid #86efac;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.verification-pending-box {
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.verification-pass-box span,
+.verification-pending-box span {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.assigned-work-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px;
+  box-shadow: var(--shadow);
 }
 
 .verification-passed-banner,
@@ -2764,8 +2822,10 @@ pre {
   .audit-filter-form,
   .verification-export-grid,
   .task-status-form,
+  .task-note-form,
   .source-action-form,
   .action-filter-bar,
+  .assigned-work-filter-grid,
   .action-detail-grid,
   .source-detail-expander dl div {
     grid-template-columns: 1fr;

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ClipboardList } from "lucide-react";
 import { useMemo, useState } from "react";
-import { updateFoundationReviewTaskStatusAction } from "@/app/foundation/actions";
+import { addFoundationReviewTaskNoteAction, updateFoundationReviewTaskStatusAction } from "@/app/foundation/actions";
 import type { FoundationAssigneeOption, FoundationReviewActionSummary } from "@/lib/supabase/data";
 
 export function FoundationReviewActionsPanel({
@@ -137,6 +137,11 @@ export function FoundationReviewActionsPanel({
                       Open source section
                     </Link>
                   </div>
+                  <div className="action-next-step">
+                    <strong>Source resolution</strong>
+                    <p>{action.sourceResolutionState}</p>
+                    <p>{action.sourceResolutionDetail}</p>
+                  </div>
                   <div className="action-status-history">
                     <strong>Status history</strong>
                     {action.statusHistory.length > 0 ? (
@@ -183,8 +188,29 @@ export function FoundationReviewActionsPanel({
                       ))}
                     </select>
                   </label>
+                  <label className="wide-field">
+                    Closeout note
+                    <textarea
+                      name="closeoutNote"
+                      placeholder="Required before marking complete; optional for other status changes."
+                      rows={2}
+                    />
+                  </label>
                   <button className="button-secondary compact" type="submit">
                     Update task
+                  </button>
+                </form>
+              ) : null}
+              {canManage && action.taskId ? (
+                <form action={addFoundationReviewTaskNoteAction} className="task-note-form">
+                  <input name="taskId" type="hidden" value={action.taskId} />
+                  <input name="returnTo" type="hidden" value={returnTo} />
+                  <label>
+                    Activity note
+                    <textarea name="note" placeholder="Add a human-review note without changing status." rows={2} />
+                  </label>
+                  <button className="button-secondary compact" type="submit">
+                    Add note
                   </button>
                 </form>
               ) : null}

@@ -11,7 +11,8 @@ const foundationAuditEventTypes = [
   "foundation_evidence_readiness_updated",
   "foundation_audit_readiness_note_added",
   "foundation_review_actions_generated",
-  "foundation_review_task_status_updated"
+  "foundation_review_task_status_updated",
+  "foundation_review_task_note_added"
 ];
 const foundationSourceModules = ["all", "foundation", "evidence_map", "training_assignment", "equipment", "incident", "biotype_selection", "audit_readiness"];
 

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   addAuditReadinessNote,
+  addFoundationReviewTaskNote,
   createFoundationStarterRecords,
   createFoundationReviewActionFromSource,
   generateFoundationReviewActions,
@@ -101,7 +102,18 @@ export async function updateFoundationReviewTaskStatusAction(formData: FormData)
     taskId: String(formData.get("taskId") ?? ""),
     status: String(formData.get("status") ?? ""),
     dueDate: String(formData.get("dueDate") ?? "") || null,
-    assignedTo: String(formData.get("assignedTo") ?? "") || null
+    assignedTo: String(formData.get("assignedTo") ?? "") || null,
+    closeoutNote: String(formData.get("closeoutNote") ?? "") || null
+  });
+  revalidateFoundationPaths();
+  redirectWithMessage(returnTo, result.message);
+}
+
+export async function addFoundationReviewTaskNoteAction(formData: FormData) {
+  const returnTo = normalizeFoundationReturnTo(String(formData.get("returnTo") ?? "/foundation"));
+  const result = await addFoundationReviewTaskNote({
+    taskId: String(formData.get("taskId") ?? ""),
+    note: String(formData.get("note") ?? "")
   });
   revalidateFoundationPaths();
   redirectWithMessage(returnTo, result.message);
