@@ -7,7 +7,12 @@ import { assessBioRisk } from "@/lib/bio-ai/engine";
 import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import type { BioAiInput, BioSignalType } from "@/lib/bio-ai/types";
 import { commonUtilities, gapModuleCards, platformCategories } from "@/lib/platform-outline";
-import type { FoundationAssigneeOption, FoundationProductionVerificationSummary, FoundationReviewActionSummary } from "@/lib/supabase/data";
+import type {
+  FoundationAssigneeOption,
+  FoundationNotificationSummary,
+  FoundationProductionVerificationSummary,
+  FoundationReviewActionSummary
+} from "@/lib/supabase/data";
 import { FoundationReviewActionsPanel } from "./FoundationReviewActionsPanel";
 import { StatusBadge } from "./StatusBadge";
 
@@ -79,6 +84,7 @@ export function WorkbenchClient({
   canManageFoundationActions = false,
   foundationActions = [],
   initialInput = starterInput,
+  notifications,
   productionVerification,
   commandCenter
 }: {
@@ -86,6 +92,7 @@ export function WorkbenchClient({
   canManageFoundationActions?: boolean;
   foundationActions?: FoundationReviewActionSummary[];
   initialInput?: BioAiInput;
+  notifications?: FoundationNotificationSummary;
   productionVerification?: FoundationProductionVerificationSummary;
   commandCenter?: CommandCenterSummary;
 }) {
@@ -164,6 +171,7 @@ export function WorkbenchClient({
     productionReady: false,
     reason: "Production verification has not been loaded for this workbench session."
   };
+  const notificationPanel = notifications ?? { unreadCount: 0, notifications: [] };
   const workKpis = useMemo(() => {
     const now = new Date();
     const weekStart = new Date(now);
@@ -451,6 +459,64 @@ export function WorkbenchClient({
         <div className={productionPanel.productionReady ? "verification-pass-box" : "verification-pending-box"}>
           <strong>{productionPanel.productionReady ? "Production-ready signal present" : "Production readiness blocked"}</strong>
           <span>{productionPanel.reason}</span>
+        </div>
+      </section>
+
+      <section className="panel notification-center-panel" aria-labelledby="notification-center-title">
+        <div className="panel-heading">
+          <div>
+            <p className="section-label">Notification center</p>
+            <h2 id="notification-center-title">{notificationPanel.unreadCount} unread operating notification(s)</h2>
+          </div>
+          <ClipboardList size={22} />
+        </div>
+        <div className="notification-list">
+          {notificationPanel.notifications.length > 0 ? (
+            notificationPanel.notifications.slice(0, 6).map((notification) => (
+              <article className={notification.readAt ? "notification-row" : "notification-row notification-unread"} key={notification.id}>
+                <div>
+                  <strong>{notification.title}</strong>
+                  <span>{notification.createdAt ? new Date(notification.createdAt).toLocaleString() : "Pending timestamp"}</span>
+                </div>
+                <p>{notification.body}</p>
+                {notification.taskId ? <Link className="text-link" href="#assigned-work-console">Open My Work</Link> : null}
+              </article>
+            ))
+          ) : (
+            <p className="muted">No task notifications have been created yet.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="panel workbench-source-summary" aria-labelledby="source-summary-title">
+        <div className="panel-heading">
+          <div>
+            <p className="section-label">Foundation source summary</p>
+            <h2 id="source-summary-title">Workbench-to-Foundation context</h2>
+          </div>
+          <ShieldCheck size={22} />
+        </div>
+        <div className="verification-export-grid">
+          <article>
+            <strong>Readiness</strong>
+            <span>
+              {commandSummary.readinessScore} / {commandSummary.readinessTrend.replace(/_/g, " ")}
+            </span>
+          </article>
+          <article>
+            <strong>Open actions</strong>
+            <span>{commandSummary.openActionCount} source-traced task(s)</span>
+          </article>
+          <article>
+            <strong>Latest task evidence</strong>
+            <span>{productionPanel.latestTaskUpdate?.summary ?? "No task activity evidence loaded yet."}</span>
+          </article>
+          <article>
+            <strong>Foundation map</strong>
+            <Link className="text-link" href="/foundation">
+              Open Foundation command center
+            </Link>
+          </article>
         </div>
       </section>
 

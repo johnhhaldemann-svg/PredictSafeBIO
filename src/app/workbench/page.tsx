@@ -4,6 +4,7 @@ import {
   getAuditReadinessConsoleSummary,
   getFoundationAdminAccessSummary,
   getFoundationAssigneeOptions,
+  getFoundationNotificationSummary,
   getFoundationProductionVerificationSummary,
   getFoundationReviewActionsSummary,
   getIntelligenceFoundationWorkbenchInput,
@@ -13,11 +14,12 @@ import {
 } from "@/lib/supabase/data";
 
 export default async function WorkbenchPage() {
-  const [initialInput, foundationActions, adminAccess, assignees, productionVerification, assessments, documents, auditReadiness, changePlan] = await Promise.all([
+  const [initialInput, foundationActions, adminAccess, assignees, notifications, productionVerification, assessments, documents, auditReadiness, changePlan] = await Promise.all([
     getIntelligenceFoundationWorkbenchInput(),
     getFoundationReviewActionsSummary(),
     getFoundationAdminAccessSummary(),
     getFoundationAssigneeOptions(),
+    getFoundationNotificationSummary(),
     getFoundationProductionVerificationSummary(),
     listAssessments(),
     listDocuments(),
@@ -60,6 +62,7 @@ export default async function WorkbenchPage() {
           canManageFoundationActions={adminAccess.signedIn}
           foundationActions={foundationActions}
           initialInput={initialInput}
+          notifications={notifications}
           productionVerification={productionVerification}
           commandCenter={commandCenter}
         />

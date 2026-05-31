@@ -316,6 +316,18 @@ export type FoundationProductionVerificationSummary = {
   reason: string;
 };
 
+export type FoundationNotificationSummary = {
+  unreadCount: number;
+  notifications: Array<{
+    id: string;
+    title: string;
+    body: string;
+    taskId?: string | null;
+    createdAt?: string;
+    readAt?: string | null;
+  }>;
+};
+
 export type FoundationAssigneeOption = {
   id: string;
   name: string;
@@ -1580,6 +1592,38 @@ export async function getFoundationProductionVerificationSummary(): Promise<Foun
       productionReady: false,
       reason: "Production verification could not read the audit trail."
     };
+  }
+}
+
+export async function getFoundationNotificationSummary(): Promise<FoundationNotificationSummary> {
+  const context = await getProfileContext();
+  if (!context) return { unreadCount: 0, notifications: [] };
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("id,title,body,task_id,read_at,created_at")
+      .eq("organization_id", context.organizationId)
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(12);
+
+    if (error || !data) return { unreadCount: 0, notifications: [] };
+    const notifications = data.map((row) => ({
+      id: row.id,
+      title: row.title,
+      body: row.body ?? "",
+      taskId: row.task_id,
+      createdAt: row.created_at,
+      readAt: row.read_at
+    }));
+    return {
+      unreadCount: notifications.filter((notification) => !notification.readAt).length,
+      notifications
+    };
+  } catch {
+    return { unreadCount: 0, notifications: [] };
   }
 }
 

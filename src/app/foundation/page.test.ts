@@ -63,6 +63,8 @@ describe("foundation UI alignment", () => {
     expect(foundationPage).toContain("Generated review actions");
     expect(foundationPage).toContain("Owner verification status");
     expect(foundationPage).toContain("Run verification mode");
+    expect(foundationPage).toContain("Workbench handoff");
+    expect(foundationPage).toContain("/workbench#assigned-work-console");
     expect(foundationPage).toContain("Duplicate prevention visibility");
     expect(foundationPage).toContain("verificationStatus.checklist");
     expect(foundationPage).toContain("Verification export summary");
@@ -108,6 +110,7 @@ describe("foundation UI alignment", () => {
     expect(foundationData).toContain("getFoundationSourceResolutionStates");
     expect(foundationData).toContain("addFoundationReviewTaskNote");
     expect(foundationData).toContain("getFoundationProductionVerificationSummary");
+    expect(foundationData).toContain("getFoundationNotificationSummary");
     expect(foundationData).toContain("refreshFoundationSourceResolution");
     expect(foundationData).toContain("createFoundationTaskNotification");
     expect(foundationData).toContain("Members can update only Foundation review tasks assigned to them");
@@ -127,6 +130,10 @@ describe("foundation UI alignment", () => {
     expect(reviewActionsPanel).toContain("task-card-meta");
     expect(reviewActionsPanel).toContain("Ready for closure review");
     expect(reviewActionsPanel).toContain("compact-timeline");
+    expect(reviewActionsPanel).toContain("Search tasks");
+    expect(reviewActionsPanel).toContain("Saved task views");
+    expect(reviewActionsPanel).toContain("TaskDetailDrawer");
+    expect(reviewActionsPanel).toContain("Open task detail");
     expect(foundationActions).toContain("normalizeFoundationReturnTo");
     expect(foundationActions).toContain("addFoundationReviewTaskNoteAction");
     expect(foundationActions).toContain("refreshFoundationSourceResolutionAction");
@@ -138,12 +145,15 @@ describe("foundation UI alignment", () => {
     expect(workbenchPage).toContain("getFoundationReviewActionsSummary");
     expect(workbenchPage).toContain("getFoundationProductionVerificationSummary");
     expect(workbenchPage).toContain("getFoundationAssigneeOptions");
+    expect(workbenchPage).toContain("getFoundationNotificationSummary");
     expect(workbenchClient).toContain("getWorkbenchTaskAgingClass");
     expect(workbenchClient).toContain("My Assigned Work");
     expect(workbenchClient).toContain("Completed this week");
     expect(workbenchClient).toContain("assigned-work-console");
     expect(workbenchClient).toContain("Assigned to me");
     expect(workbenchClient).toContain("Reset filters");
+    expect(workbenchClient).toContain("Notification center");
+    expect(workbenchClient).toContain("Workbench-to-Foundation context");
     expect(workbenchClient).toContain("canManageFoundationActions");
     expect(workbenchClient).toContain("productionVerification");
     expect(workbenchClient).toContain("getAssignedWorkDueBucket");

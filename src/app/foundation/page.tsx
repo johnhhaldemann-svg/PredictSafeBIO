@@ -92,6 +92,17 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
 
         {params.message ? <p className="form-message">{params.message}</p> : null}
 
+        <section className="panel foundation-workbench-handoff">
+          <div>
+            <p className="section-label">Workbench handoff</p>
+            <h2>{reviewActions.filter((action) => action.status !== "complete").length} task(s) waiting in My Work</h2>
+            <p className="muted">Foundation source gaps and review actions are routed to the Workbench operating console for assignment, notes, due dates, and closure review.</p>
+          </div>
+          <Link className="button-primary" href="/workbench#assigned-work-console">
+            Open My Work
+          </Link>
+        </section>
+
         <section className={`panel verification-status-panel ${adminAccess.isOwner ? "access-enabled" : "access-readonly"}`}>
           <div className="panel-heading">
             <div>

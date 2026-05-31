@@ -391,9 +391,51 @@ button {
 }
 
 .production-verification-panel,
-.assigned-work-console {
+.assigned-work-console,
+.notification-center-panel,
+.workbench-source-summary {
   display: grid;
   gap: 14px;
+}
+
+.notification-list {
+  display: grid;
+  gap: 8px;
+}
+
+.notification-row {
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.notification-unread {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.notification-row div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.notification-row span,
+.notification-row p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.foundation-workbench-handoff {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .verification-pass-box,
@@ -584,7 +626,7 @@ button {
 
 .action-filter-bar {
   display: grid;
-  grid-template-columns: repeat(3, minmax(150px, 1fr)) auto;
+  grid-template-columns: minmax(260px, 1.4fr) repeat(3, minmax(150px, 1fr)) auto;
   gap: 10px;
   align-items: end;
   margin-bottom: 12px;
@@ -592,6 +634,78 @@ button {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #f8fbff;
+}
+
+.saved-view-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.action-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.42fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.task-detail-drawer {
+  position: sticky;
+  top: 18px;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.task-detail-drawer h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.task-detail-drawer dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.task-detail-drawer dl div {
+  display: grid;
+  gap: 3px;
+}
+
+.task-detail-drawer dt,
+.task-detail-drawer dd {
+  margin: 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.task-detail-drawer dt {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.ready-closure-lane {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 12px;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  background: #f0fdf4;
+  color: #166534;
+  padding: 12px;
+}
+
+.ready-closure-lane span {
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .action-filter-bar span {
@@ -2949,11 +3063,22 @@ pre {
   .task-refresh-form,
   .source-action-form,
   .action-filter-bar,
+  .action-workspace,
   .task-card-meta,
   .assigned-work-filter-grid,
   .action-detail-grid,
   .source-detail-expander dl div {
     grid-template-columns: 1fr;
+  }
+
+  .foundation-workbench-handoff,
+  .notification-row div {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .task-detail-drawer {
+    position: static;
   }
 
   .change-plan-seed {
