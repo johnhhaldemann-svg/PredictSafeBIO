@@ -91,7 +91,7 @@ describe("review workflow helpers", () => {
         summary: "Foundation actions generated.",
         payload: { sourceModule: "evidence_map", sourceRecordId: "evidence-1", runId: "run-1" }
       })
-    ).toEqual({ href: "/foundation#evidence-map", label: "Open evidence map" });
+    ).toEqual({ href: "/foundation#source-evidence_map-evidence-1", label: "Open exact source" });
   });
 
   it("creates short demo seed labels without exposing full identifiers", () => {

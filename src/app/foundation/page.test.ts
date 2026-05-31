@@ -58,9 +58,12 @@ describe("foundation UI alignment", () => {
     expect(foundationPage).toContain("Run verification mode");
     expect(foundationPage).toContain("Duplicate prevention visibility");
     expect(foundationPage).toContain("verificationStatus.checklist");
+    expect(foundationPage).toContain("Verification export summary");
+    expect(foundationPage).toContain("sourceRecordAnchor");
     expect(operationsPage).toContain("getFoundationReviewActionsSummary");
     expect(operationsPage).toContain("getFoundationOperationsDashboardSummary");
     expect(operationsPage).toContain("Foundation operations dashboard");
+    expect(operationsPage).toContain("Blocked task quick actions");
     expect(workbenchPage).toContain("getFoundationReviewActionsSummary");
     expect(auditPage).toContain("getFoundationReviewActionsSummary");
     expect(auditPage).toContain("Audit filters");
@@ -83,6 +86,7 @@ describe("foundation UI alignment", () => {
     expect(reviewActionsPanel).toContain("Source trace");
     expect(reviewActionsPanel).toContain("assignedTo");
     expect(reviewActionsPanel).toContain("dueDate");
+    expect(reviewActionsPanel).toContain("task-aging-badge");
     expect(foundationPage).toContain("Compliance source drilldowns");
     expect(foundationPage).toContain("source-drilldown-grid");
     expect(foundationPage).toContain("getFoundationSourceDrilldownSummary");

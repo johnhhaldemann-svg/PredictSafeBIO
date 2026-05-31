@@ -33,6 +33,10 @@ const sourceDrilldownIds: Record<string, string> = {
   training_assignment: "training-drilldown"
 };
 
+function sourceRecordAnchor(sourceModule: string, sourceRecordId?: string) {
+  return sourceRecordId ? `source-${sourceModule}-${sourceRecordId}` : undefined;
+}
+
 export default async function FoundationPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const params = await searchParams;
   const [summary, adminAccess, auditConsole, reviewActions, sourceDrilldowns, verificationStatus, assignees] = await Promise.all([
@@ -436,6 +440,37 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
 
         <FoundationReviewActionsPanel actions={reviewActions.slice(0, 8)} assignees={assignees} canManage={adminAccess.isOwner} />
 
+        <section className="panel verification-export-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Verification export summary</p>
+              <h2>Draft owner verification packet</h2>
+            </div>
+            <FileSearch size={22} />
+          </div>
+          <div className="verification-export-grid">
+            <article>
+              <strong>Counts</strong>
+              <span>{summary.counts.map((count) => `${count.label}: ${count.value}`).join(" / ")}</span>
+            </article>
+            <article>
+              <strong>Latest events</strong>
+              <span>
+                Save: {verificationStatus.latestWorkflowSave?.eventType ?? "pending"} / Action run:{" "}
+                {verificationStatus.latestReviewActionRun ? "captured" : "pending"} / Audit: {verificationStatus.latestAuditEvent?.eventType ?? "pending"}
+              </span>
+            </article>
+            <article>
+              <strong>Unresolved gaps</strong>
+              <span>{auditConsole.unresolvedGaps.map((gap) => `${gap.label} (${gap.status})`).join(" / ") || "No live gaps listed"}</span>
+            </article>
+            <article>
+              <strong>Guardrail</strong>
+              <span>{summary.guardrailText}</span>
+            </article>
+          </div>
+        </section>
+
         <section className="panel">
           <div className="panel-heading">
             <div>
@@ -455,7 +490,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
                 <div className="action-list compact-list">
                   {group.items.length > 0 ? (
                     group.items.slice(0, 4).map((item) => (
-                      <details className="source-detail-row" key={`${group.key}-${item.id}`}>
+                      <details className="source-detail-row" id={sourceRecordAnchor(item.sourceModule, item.sourceRecordId)} key={`${group.key}-${item.id}`}>
                         <summary>
                           <strong>{item.label}</strong>
                           <span>

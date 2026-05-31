@@ -23,6 +23,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
     getFoundationOperationsDashboardSummary()
   ]);
   const assessment = assessBioRisk(summary.latestAssessmentInput);
+  const blockedFoundationActions = foundationActions.filter((action) => action.status === "blocked");
 
   return (
     <AppShell>
@@ -187,6 +188,16 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
           emptyMessage="No open Foundation review actions yet. Generate them from the Foundation page."
           title="Open review actions"
         />
+
+        {adminAccess.isOwner && blockedFoundationActions.length > 0 ? (
+          <FoundationReviewActionsPanel
+            actions={blockedFoundationActions.slice(0, 6)}
+            assignees={assignees}
+            canManage={adminAccess.isOwner}
+            emptyMessage="No blocked Foundation tasks need quick action."
+            title="Blocked task quick actions"
+          />
+        ) : null}
       </div>
     </AppShell>
   );

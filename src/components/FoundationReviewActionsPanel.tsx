@@ -93,6 +93,7 @@ export function FoundationReviewActionsPanel({
                   {action.priority} / {action.status}
                 </span>
               </div>
+              <span className={`task-aging-badge ${getTaskAgingClass(action)}`}>{getTaskAgingLabel(action)}</span>
               <p>
                 Source: <Link href={action.sourceHref}>{action.sourceLabel}</Link>
                 {action.dueDate ? ` / Due ${action.dueDate}` : ""}
@@ -166,4 +167,22 @@ export function FoundationReviewActionsPanel({
       </div>
     </section>
   );
+}
+
+function getTaskAgingLabel(action: FoundationReviewActionSummary) {
+  if (action.status === "complete") return "Completed";
+  if (action.status === "blocked") return "Blocked";
+  if (!action.dueDate) return "No due date";
+  const due = new Date(`${action.dueDate}T00:00:00`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
+  if (days < 0) return "Overdue";
+  if (days <= 3) return "Due soon";
+  return "On track";
+}
+
+function getTaskAgingClass(action: FoundationReviewActionSummary) {
+  const label = getTaskAgingLabel(action).toLowerCase().replace(/\s+/g, "-");
+  return `task-aging-${label}`;
 }
