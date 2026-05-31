@@ -123,6 +123,10 @@ describe("foundation UI alignment", () => {
     expect(reviewActionsPanel).toContain("Source resolution");
     expect(reviewActionsPanel).toContain("Activity history");
     expect(reviewActionsPanel).toContain("task-aging-badge");
+    expect(reviewActionsPanel).toContain("task-status-chip");
+    expect(reviewActionsPanel).toContain("task-card-meta");
+    expect(reviewActionsPanel).toContain("Ready for closure review");
+    expect(reviewActionsPanel).toContain("compact-timeline");
     expect(foundationActions).toContain("normalizeFoundationReturnTo");
     expect(foundationActions).toContain("addFoundationReviewTaskNoteAction");
     expect(foundationActions).toContain("refreshFoundationSourceResolutionAction");
@@ -138,6 +142,8 @@ describe("foundation UI alignment", () => {
     expect(workbenchClient).toContain("My Assigned Work");
     expect(workbenchClient).toContain("Completed this week");
     expect(workbenchClient).toContain("assigned-work-console");
+    expect(workbenchClient).toContain("Assigned to me");
+    expect(workbenchClient).toContain("Reset filters");
     expect(workbenchClient).toContain("canManageFoundationActions");
     expect(workbenchClient).toContain("productionVerification");
     expect(workbenchClient).toContain("getAssignedWorkDueBucket");

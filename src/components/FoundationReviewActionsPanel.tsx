@@ -94,17 +94,30 @@ export function FoundationReviewActionsPanel({
                   <strong>{action.title}</strong>
                   <span>{action.operatingState}</span>
                 </div>
-                <span>
-                  {action.priority} / {action.status}
-                </span>
+                <div className="task-chip-row" aria-label="Task state">
+                  <span className={`task-status-chip task-status-${normalizeChipClass(action.status)}`}>{formatActionLabel(action.status)}</span>
+                  <span className={`task-priority-chip task-priority-${normalizeChipClass(action.priority)}`}>{formatActionLabel(action.priority)}</span>
+                </div>
               </div>
-              <span className={`task-aging-badge ${getTaskAgingClass(action)}`}>{getTaskAgingLabel(action)}</span>
-              <p>
-                Source: <Link href={action.sourceHref}>{action.sourceLabel}</Link>
-                {action.dueDate ? ` / Due ${action.dueDate}` : ""}
-                {action.assigneeName ? ` / Assigned to ${action.assigneeName}` : ""}
-                {action.reason ? ` / ${action.reason}` : ""}
-              </p>
+              <div className="task-card-meta" aria-label="Task summary">
+                <span>
+                  Owner <strong>{action.assigneeName ?? "Unassigned"}</strong>
+                </span>
+                <span>
+                  Due <strong>{action.dueDate ?? "No due date"}</strong>
+                </span>
+                <span>
+                  Source <Link href={action.sourceHref}>{action.sourceLabel}</Link>
+                </span>
+                <span className={`task-aging-badge ${getTaskAgingClass(action)}`}>{getTaskAgingLabel(action)}</span>
+              </div>
+              {action.reason ? <p>{action.reason}</p> : null}
+              {isReadyForClosure(action) ? (
+                <div className="ready-closure-banner">
+                  <strong>Ready for closure review</strong>
+                  <span>Source resolution is clean. Add a closeout note before completing the task.</span>
+                </div>
+              ) : null}
               <details className="source-detail-expander">
                 <summary>Action detail and source trace</summary>
                 <div className="action-detail-grid">
@@ -151,8 +164,8 @@ export function FoundationReviewActionsPanel({
                   <div className="action-status-history">
                     <strong>Activity history</strong>
                     {action.activityHistory.length > 0 ? (
-                      <ol>
-                        {action.activityHistory.map((event) => (
+                      <ol className="compact-timeline">
+                        {action.activityHistory.slice(0, 5).map((event) => (
                           <li key={`${event.eventType}-${event.createdAt ?? event.summary}`}>
                             <span>{event.createdAt ? new Date(event.createdAt).toLocaleString() : "Pending timestamp"}</span>
                             <p>{event.status ? `${event.status}: ${event.summary}` : event.summary}</p>
@@ -259,4 +272,16 @@ function getTaskAgingLabel(action: FoundationReviewActionSummary) {
 function getTaskAgingClass(action: FoundationReviewActionSummary) {
   const label = getTaskAgingLabel(action).toLowerCase().replace(/\s+/g, "-");
   return `task-aging-${label}`;
+}
+
+function formatActionLabel(value: string) {
+  return value.replace(/_/g, " ");
+}
+
+function normalizeChipClass(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
+
+function isReadyForClosure(action: FoundationReviewActionSummary) {
+  return action.status !== "complete" && action.sourceResolutionState === "Source appears resolved";
 }

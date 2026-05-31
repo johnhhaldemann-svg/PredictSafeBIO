@@ -175,6 +175,10 @@ export function WorkbenchClient({
       unassigned: foundationActions.filter((action) => !action.assignedTo && action.taskId).length
     };
   }, [foundationActions]);
+  const myAssignee = useMemo(() => {
+    const assignedAction = foundationActions.find((action) => action.canUpdate && action.assignedTo);
+    return assignedAction?.assignedTo ?? assignees[0]?.id ?? null;
+  }, [assignees, foundationActions]);
 
   function updateField<K extends keyof BioAiInput>(key: K, value: BioAiInput[K]) {
     setInput((current) => ({ ...current, [key]: value }));
@@ -475,6 +479,30 @@ export function WorkbenchClient({
             <strong>{workKpis.unassigned}</strong>
             <span>Unassigned</span>
           </article>
+        </div>
+        <div className="quick-filter-row" aria-label="My Work quick filters">
+          <button className="button-secondary compact" type="button" onClick={() => setAssignedFilter(myAssignee ?? "all")} disabled={!myAssignee}>
+            Assigned to me
+          </button>
+          <button className="button-secondary compact" type="button" onClick={() => setWorkStatusFilter("blocked")}>
+            Blocked
+          </button>
+          <button className="button-secondary compact" type="button" onClick={() => setDueFilter("overdue")}>
+            Overdue
+          </button>
+          <button
+            className="button-secondary compact"
+            type="button"
+            onClick={() => {
+              setAssignedFilter("all");
+              setDueFilter("all");
+              setWorkStatusFilter("all");
+              setWorkPriorityFilter("all");
+              setWorkSourceFilter("all");
+            }}
+          >
+            Reset filters
+          </button>
         </div>
         <div className="assigned-work-filter-grid">
           <label>
