@@ -71,6 +71,15 @@ export async function addAuditReadinessNoteAction(formData: FormData) {
   redirectFoundationResult(result);
 }
 
+export async function addFoundationFinalPreviewSignoffAction(formData: FormData) {
+  const result = await addAuditReadinessNote({
+    auditReadinessScoreId: String(formData.get("auditReadinessScoreId") ?? "") || null,
+    note: String(formData.get("note") ?? ""),
+    noteType: "final_preview_signoff"
+  });
+  redirectFoundationResult(result);
+}
+
 export async function generateFoundationReviewActionsAction() {
   const result = await generateFoundationReviewActions();
   redirectFoundationResult(result);

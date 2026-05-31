@@ -11,6 +11,7 @@ const operationsPage = readFileSync(join(process.cwd(), "src/app/operations/page
 const workbenchPage = readFileSync(join(process.cwd(), "src/app/workbench/page.tsx"), "utf8");
 const auditPage = readFileSync(join(process.cwd(), "src/app/admin/audit/page.tsx"), "utf8");
 const reviewActionsPanel = readFileSync(join(process.cwd(), "src/components/FoundationReviewActionsPanel.tsx"), "utf8");
+const copyVerificationButton = readFileSync(join(process.cwd(), "src/components/CopyVerificationSummaryButton.tsx"), "utf8");
 const notesMigration = readFileSync(join(process.cwd(), "supabase/migrations/20260529143000_audit_readiness_notes.sql"), "utf8");
 
 describe("foundation UI alignment", () => {
@@ -59,6 +60,11 @@ describe("foundation UI alignment", () => {
     expect(foundationPage).toContain("Duplicate prevention visibility");
     expect(foundationPage).toContain("verificationStatus.checklist");
     expect(foundationPage).toContain("Verification export summary");
+    expect(foundationPage).toContain("Production readiness gate");
+    expect(foundationPage).toContain("Verification passed");
+    expect(foundationPage).toContain("Final preview signoff note");
+    expect(foundationPage).toContain("CopyVerificationSummaryButton");
+    expect(copyVerificationButton).toContain("navigator.clipboard.writeText");
     expect(foundationPage).toContain("sourceRecordAnchor");
     expect(operationsPage).toContain("getFoundationReviewActionsSummary");
     expect(operationsPage).toContain("getFoundationOperationsDashboardSummary");
@@ -77,7 +83,10 @@ describe("foundation UI alignment", () => {
     expect(foundationData).toContain("Only generated Foundation review tasks can be updated");
     expect(foundationActions).toContain("updateFoundationReviewTaskStatusAction");
     expect(foundationActions).toContain("createFoundationReviewActionFromSourceAction");
+    expect(foundationActions).toContain("addFoundationFinalPreviewSignoffAction");
     expect(foundationData).toContain("createFoundationReviewActionFromSource");
+    expect(foundationData).toContain("final_preview_signoff");
+    expect(foundationData).toContain("productionPromotionAllowed");
     expect(foundationData).toContain("assigned_to");
     expect(foundationData).toContain("due_date");
     expect(reviewActionsPanel).toContain("updateFoundationReviewTaskStatusAction");

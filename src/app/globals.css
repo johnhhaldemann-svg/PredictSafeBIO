@@ -364,6 +364,36 @@ button {
   gap: 14px;
 }
 
+.production-gate-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.verification-passed-banner,
+.signoff-note {
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.verification-passed-banner span,
+.signoff-note span,
+.signoff-note p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.panel-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .verification-status-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

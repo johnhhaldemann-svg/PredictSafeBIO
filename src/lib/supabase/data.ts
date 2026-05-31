@@ -313,6 +313,14 @@ export type FoundationVerificationStatusSummary = {
     targetModule?: string;
     draftOnly: boolean;
   };
+  latestFinalSignoff?: {
+    id: string;
+    note: string;
+    createdAt?: string;
+  };
+  allChecklistPassed: boolean;
+  productionPromotionAllowed: boolean;
+  productionGateReason: string;
 };
 
 export type FoundationOperationsDashboardSummary = {
@@ -1349,7 +1357,7 @@ export async function getFoundationVerificationStatusSummary(): Promise<Foundati
       "foundation_audit_readiness_note_added",
       "foundation_review_task_status_updated"
     ];
-    const [saveResult, runResult, latestResult, checklistResult] = await Promise.all([
+    const [saveResult, runResult, latestResult, checklistResult, signoffResult] = await Promise.all([
       supabase
         .from("audit_events")
         .select("event_type,summary,payload,created_at")
@@ -1376,19 +1384,37 @@ export async function getFoundationVerificationStatusSummary(): Promise<Foundati
         .eq("organization_id", context.organizationId)
         .in("event_type", [...workflowEvents, "foundation_review_actions_generated"])
         .order("created_at", { ascending: false })
-        .limit(50)
+        .limit(50),
+      supabase
+        .from("audit_readiness_notes")
+        .select("id,note,created_at")
+        .eq("organization_id", context.organizationId)
+        .eq("note_type", "final_preview_signoff")
+        .order("created_at", { ascending: false })
+        .limit(1)
     ]);
 
     const checklist = buildFoundationVerificationChecklist((checklistResult.data as Record<string, any>[]) ?? []);
     const latestWorkflowSave = mapFoundationWorkflowSave((saveResult.data?.[0] as Record<string, any> | undefined) ?? null);
     const latestReviewActionRun = mapFoundationReviewRun((runResult.data?.[0] as Record<string, any> | undefined) ?? null);
     const latestAuditEvent = mapFoundationLatestAudit((latestResult.data?.[0] as Record<string, any> | undefined) ?? null);
+    const latestFinalSignoff = mapFoundationFinalSignoff((signoffResult.data?.[0] as Record<string, any> | undefined) ?? null);
+    const allChecklistPassed = checklist.every((step) => step.status === "pass");
+    const productionPromotionAllowed = allChecklistPassed && Boolean(latestFinalSignoff);
 
     return {
       checklist,
       latestWorkflowSave,
       latestReviewActionRun,
-      latestAuditEvent
+      latestAuditEvent,
+      latestFinalSignoff,
+      allChecklistPassed,
+      productionPromotionAllowed,
+      productionGateReason: productionPromotionAllowed
+        ? "Owner verification passed and final preview signoff is captured."
+        : allChecklistPassed
+          ? "Verification checklist passed; final preview signoff is still required."
+          : "Production promotion is blocked until every owner verification checklist item passes."
     };
   } catch {
     return demoFoundationVerificationStatusSummary();
@@ -1956,6 +1982,7 @@ export async function updateFoundationEvidenceReadiness(input: {
 export async function addAuditReadinessNote(input: {
   auditReadinessScoreId?: string | null;
   note: string;
+  noteType?: string;
 }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before adding audit readiness notes." };
@@ -1963,6 +1990,7 @@ export async function addAuditReadinessNote(input: {
 
   const note = input.note.trim();
   if (note.length < 3) return { ok: false, message: "Add a short audit readiness note before saving." };
+  const noteType = input.noteType === "final_preview_signoff" ? "final_preview_signoff" : "human_review_note";
 
   const supabase = await createSupabaseServerClient();
   const score =
@@ -1975,7 +2003,7 @@ export async function addAuditReadinessNote(input: {
       organization_id: context.organizationId,
       audit_readiness_score_id: score,
       note,
-      note_type: "human_review_note",
+      note_type: noteType,
       draft_only: true,
       human_review_required: true,
       created_by: context.userId
@@ -1987,15 +2015,24 @@ export async function addAuditReadinessNote(input: {
 
   await writeFoundationAuditEvent(supabase, context, {
     eventType: "foundation_audit_readiness_note_added",
-    summary: "Audit readiness note added; this does not approve or certify readiness.",
+    summary:
+      noteType === "final_preview_signoff"
+        ? "Final preview signoff note added; production promotion remains subject to verification and deployment review."
+        : "Audit readiness note added; this does not approve or certify readiness.",
     sourceModule: "audit_readiness",
     sourceRecordId: score ?? data.id,
     targetModule: "audit_readiness",
     targetRecordId: data.id,
-    payload: { noteId: data.id, auditReadinessScoreId: score }
+    payload: { noteId: data.id, auditReadinessScoreId: score, noteType }
   });
 
-  return { ok: true, message: "Audit readiness note added as draft - human review required." };
+  return {
+    ok: true,
+    message:
+      noteType === "final_preview_signoff"
+        ? "Final preview signoff captured as draft - human review required."
+        : "Audit readiness note added as draft - human review required."
+  };
 }
 
 export async function seedNorthStarWithConfirmation(confirmation: string): Promise<FoundationActionResult> {
@@ -4428,6 +4465,15 @@ function mapFoundationLatestAudit(row: Record<string, any> | null): FoundationVe
   };
 }
 
+function mapFoundationFinalSignoff(row: Record<string, any> | null): FoundationVerificationStatusSummary["latestFinalSignoff"] {
+  if (!row) return undefined;
+  return {
+    id: row.id,
+    note: row.note,
+    createdAt: row.created_at
+  };
+}
+
 function buildFoundationVerificationChecklist(rows: Record<string, any>[]): FoundationVerificationStatusSummary["checklist"] {
   const steps: Array<{
     key: string;
@@ -4483,8 +4529,9 @@ function demoAuditReadinessConsoleSummary(): AuditReadinessConsoleSummary {
 }
 
 function demoFoundationVerificationStatusSummary(): FoundationVerificationStatusSummary {
+  const checklist = buildFoundationVerificationChecklist([]);
   return {
-    checklist: buildFoundationVerificationChecklist([]),
+    checklist,
     latestWorkflowSave: {
       eventType: "foundation_evidence_readiness_updated",
       summary: "Demo evidence readiness update available for owner verification.",
@@ -4513,7 +4560,11 @@ function demoFoundationVerificationStatusSummary(): FoundationVerificationStatus
       sourceModule: "foundation",
       targetModule: "task",
       draftOnly: true
-    }
+    },
+    latestFinalSignoff: undefined,
+    allChecklistPassed: false,
+    productionPromotionAllowed: false,
+    productionGateReason: "Production promotion is blocked until owner verification and final preview signoff are captured."
   };
 }
 

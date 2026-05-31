@@ -10,6 +10,7 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { CopyVerificationSummaryButton } from "@/components/CopyVerificationSummaryButton";
 import { FoundationReviewActionsPanel } from "@/components/FoundationReviewActionsPanel";
 import { StatusBadge } from "@/components/StatusBadge";
 import { assessBioRisk } from "@/lib/bio-ai/engine";
@@ -22,7 +23,7 @@ import {
   getFoundationVerificationStatusSummary,
   getIntelligenceFoundationSummary
 } from "@/lib/supabase/data";
-import { createFoundationReviewActionFromSourceAction } from "./actions";
+import { addFoundationFinalPreviewSignoffAction, createFoundationReviewActionFromSourceAction } from "./actions";
 import { FoundationWorkflowClient } from "./FoundationWorkflowClient";
 
 const sourceDrilldownIds: Record<string, string> = {
@@ -49,6 +50,19 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
     getFoundationAssigneeOptions()
   ]);
   const assessment = assessBioRisk(summary.latestAssessmentInput);
+  const verificationSummaryText = [
+    `PredictSafeBIO Foundation verification summary for ${summary.companyName}`,
+    `Promotion gate: ${verificationStatus.productionPromotionAllowed ? "allowed" : "blocked"}`,
+    `Gate reason: ${verificationStatus.productionGateReason}`,
+    `Checklist: ${verificationStatus.checklist.map((step) => `${step.label}=${step.status}`).join("; ")}`,
+    `Latest workflow save: ${verificationStatus.latestWorkflowSave?.eventType ?? "pending"}`,
+    `Latest action run: ${verificationStatus.latestReviewActionRun?.summary ?? "pending"}`,
+    `Latest audit event: ${verificationStatus.latestAuditEvent?.eventType ?? "pending"}`,
+    `Final signoff: ${verificationStatus.latestFinalSignoff?.createdAt ?? "pending"}`,
+    `Counts: ${summary.counts.map((count) => `${count.label} ${count.value}`).join(", ")}`,
+    `Unresolved gaps: ${auditConsole.unresolvedGaps.map((gap) => `${gap.label} (${gap.status})`).join("; ") || "none listed"}`,
+    `Guardrail: ${summary.guardrailText}`
+  ].join("\n");
 
   return (
     <AppShell>
@@ -137,6 +151,14 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           ) : (
             <p className="muted">Sign in as an organization owner to run and view live workflow verification status.</p>
           )}
+          <div className={`verification-passed-banner ${verificationStatus.allChecklistPassed ? "checklist-pass" : "checklist-pending"}`}>
+            <strong>{verificationStatus.allChecklistPassed ? "Verification passed" : "Verification pending"}</strong>
+            <span>
+              {verificationStatus.allChecklistPassed
+                ? "All owner workflow checklist items have supporting audit events."
+                : "Complete each owner workflow step to unlock final preview signoff."}
+            </span>
+          </div>
           {adminAccess.isOwner && verificationStatus.latestReviewActionRun?.skippedDuplicates.length ? (
             <div className="duplicate-skip-panel">
               <h3>Duplicate prevention visibility</h3>
@@ -149,6 +171,42 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
                   </span>
                 </p>
               ))}
+            </div>
+          ) : null}
+        </section>
+
+        <section className={`panel production-gate-panel ${verificationStatus.productionPromotionAllowed ? "access-enabled" : "access-readonly"}`}>
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Production readiness gate</p>
+              <h2>{verificationStatus.productionPromotionAllowed ? "Promotion allowed" : "Promotion blocked"}</h2>
+            </div>
+            <ShieldCheck size={22} />
+          </div>
+          <p className="muted">{verificationStatus.productionGateReason}</p>
+          {adminAccess.isOwner ? (
+            <form action={addFoundationFinalPreviewSignoffAction} className="stacked-form">
+              <input name="auditReadinessScoreId" type="hidden" value={summary.readiness.id ?? ""} />
+              <label>
+                Final preview signoff note
+                <textarea
+                  name="note"
+                  placeholder="Record owner signoff, preview URL reviewed, and any promotion decision context..."
+                  rows={3}
+                />
+              </label>
+              <button className="button-secondary" type="submit">
+                Add final preview signoff
+              </button>
+            </form>
+          ) : (
+            <p className="muted">Owner sign-in is required to add final preview signoff.</p>
+          )}
+          {verificationStatus.latestFinalSignoff ? (
+            <div className="signoff-note">
+              <strong>Latest signoff</strong>
+              <span>{verificationStatus.latestFinalSignoff.createdAt ? new Date(verificationStatus.latestFinalSignoff.createdAt).toLocaleString() : "draft"}</span>
+              <p>{verificationStatus.latestFinalSignoff.note}</p>
             </div>
           ) : null}
         </section>
@@ -446,7 +504,10 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
               <p className="section-label">Verification export summary</p>
               <h2>Draft owner verification packet</h2>
             </div>
-            <FileSearch size={22} />
+            <div className="panel-heading-actions">
+              <CopyVerificationSummaryButton summary={verificationSummaryText} />
+              <FileSearch size={22} />
+            </div>
           </div>
           <div className="verification-export-grid">
             <article>
