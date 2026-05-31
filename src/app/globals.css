@@ -369,6 +369,12 @@ button {
   padding-top: 10px;
 }
 
+.task-refresh-form {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
 .task-note-form label,
 .task-status-form .wide-field {
   min-width: 0;
@@ -425,6 +431,23 @@ button {
   background: #ffffff;
   padding: 12px;
   box-shadow: var(--shadow);
+}
+
+.assigned-work-filter-grid article {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.assigned-work-filter-grid article strong {
+  color: var(--text);
+  font-size: 22px;
+}
+
+.assigned-work-filter-grid article span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .verification-passed-banner,
@@ -2823,6 +2846,7 @@ pre {
   .verification-export-grid,
   .task-status-form,
   .task-note-form,
+  .task-refresh-form,
   .source-action-form,
   .action-filter-bar,
   .assigned-work-filter-grid,

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ClipboardList } from "lucide-react";
 import { useMemo, useState } from "react";
-import { addFoundationReviewTaskNoteAction, updateFoundationReviewTaskStatusAction } from "@/app/foundation/actions";
+import { addFoundationReviewTaskNoteAction, refreshFoundationSourceResolutionAction, updateFoundationReviewTaskStatusAction } from "@/app/foundation/actions";
 import type { FoundationAssigneeOption, FoundationReviewActionSummary } from "@/lib/supabase/data";
 
 export function FoundationReviewActionsPanel({
@@ -142,24 +142,32 @@ export function FoundationReviewActionsPanel({
                     <p>{action.sourceResolutionState}</p>
                     <p>{action.sourceResolutionDetail}</p>
                   </div>
+                  {action.closeoutNote ? (
+                    <div className="action-next-step">
+                      <strong>Closeout note</strong>
+                      <p>{action.closeoutNote}</p>
+                    </div>
+                  ) : null}
                   <div className="action-status-history">
-                    <strong>Status history</strong>
-                    {action.statusHistory.length > 0 ? (
+                    <strong>Activity history</strong>
+                    {action.activityHistory.length > 0 ? (
                       <ol>
-                        {action.statusHistory.map((event) => (
+                        {action.activityHistory.map((event) => (
                           <li key={`${event.eventType}-${event.createdAt ?? event.summary}`}>
                             <span>{event.createdAt ? new Date(event.createdAt).toLocaleString() : "Pending timestamp"}</span>
                             <p>{event.status ? `${event.status}: ${event.summary}` : event.summary}</p>
+                            {event.note ? <p>{event.note}</p> : null}
+                            {event.closeoutNote ? <p>Closeout: {event.closeoutNote}</p> : null}
                           </li>
                         ))}
                       </ol>
                     ) : (
-                      <p>No status history has been written yet.</p>
+                      <p>No activity history has been written yet.</p>
                     )}
                   </div>
                 </div>
               </details>
-              {canManage && action.taskId ? (
+              {canManage && action.canUpdate && action.taskId ? (
                 <form action={updateFoundationReviewTaskStatusAction} className="task-status-form">
                   <input name="taskId" type="hidden" value={action.taskId} />
                   <input name="returnTo" type="hidden" value={returnTo} />
@@ -201,7 +209,7 @@ export function FoundationReviewActionsPanel({
                   </button>
                 </form>
               ) : null}
-              {canManage && action.taskId ? (
+              {canManage && action.canUpdate && action.taskId ? (
                 <form action={addFoundationReviewTaskNoteAction} className="task-note-form">
                   <input name="taskId" type="hidden" value={action.taskId} />
                   <input name="returnTo" type="hidden" value={returnTo} />
@@ -211,6 +219,15 @@ export function FoundationReviewActionsPanel({
                   </label>
                   <button className="button-secondary compact" type="submit">
                     Add note
+                  </button>
+                </form>
+              ) : null}
+              {canManage && action.canUpdate && action.taskId ? (
+                <form action={refreshFoundationSourceResolutionAction} className="task-refresh-form">
+                  <input name="taskId" type="hidden" value={action.taskId} />
+                  <input name="returnTo" type="hidden" value={returnTo} />
+                  <button className="button-secondary compact" type="submit">
+                    Refresh source resolution
                   </button>
                 </form>
               ) : null}

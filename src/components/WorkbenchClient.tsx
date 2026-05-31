@@ -164,6 +164,17 @@ export function WorkbenchClient({
     productionReady: false,
     reason: "Production verification has not been loaded for this workbench session."
   };
+  const workKpis = useMemo(() => {
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - 7);
+    return {
+      overdue: foundationActions.filter((action) => getAssignedWorkDueBucket(action) === "overdue" && action.status !== "complete").length,
+      blocked: foundationActions.filter((action) => action.status === "blocked").length,
+      completedThisWeek: foundationActions.filter((action) => action.status === "complete" && action.activityHistory.some((event) => event.status === "complete" && event.createdAt && new Date(event.createdAt) >= weekStart)).length,
+      unassigned: foundationActions.filter((action) => !action.assignedTo && action.taskId).length
+    };
+  }, [foundationActions]);
 
   function updateField<K extends keyof BioAiInput>(key: K, value: BioAiInput[K]) {
     setInput((current) => ({ ...current, [key]: value }));
@@ -439,13 +450,31 @@ export function WorkbenchClient({
         </div>
       </section>
 
-      <section className="assigned-work-console" aria-labelledby="assigned-work-title">
+      <section className="assigned-work-console" id="assigned-work-console" aria-labelledby="assigned-work-title">
         <div className="panel-heading">
           <div>
             <p className="section-label">Assigned operating work</p>
             <h2 id="assigned-work-title">My Assigned Work</h2>
           </div>
           <ClipboardList size={22} />
+        </div>
+        <div className="assigned-work-filter-grid">
+          <article>
+            <strong>{workKpis.overdue}</strong>
+            <span>Overdue</span>
+          </article>
+          <article>
+            <strong>{workKpis.blocked}</strong>
+            <span>Blocked</span>
+          </article>
+          <article>
+            <strong>{workKpis.completedThisWeek}</strong>
+            <span>Completed this week</span>
+          </article>
+          <article>
+            <strong>{workKpis.unassigned}</strong>
+            <span>Unassigned</span>
+          </article>
         </div>
         <div className="assigned-work-filter-grid">
           <label>

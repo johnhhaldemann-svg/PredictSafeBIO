@@ -184,7 +184,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
         <FoundationReviewActionsPanel
           actions={foundationActions.slice(0, 6)}
           assignees={assignees}
-          canManage={adminAccess.isOwner}
+          canManage={adminAccess.signedIn}
           emptyMessage="No open Foundation review actions yet. Generate them from the Foundation page."
           returnTo="/operations"
           title="Open review actions"
@@ -194,7 +194,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
           <FoundationReviewActionsPanel
             actions={blockedFoundationActions.slice(0, 6)}
             assignees={assignees}
-            canManage={adminAccess.isOwner}
+            canManage={adminAccess.signedIn}
             emptyMessage="No blocked Foundation tasks need quick action."
             returnTo="/operations"
             title="Blocked task quick actions"

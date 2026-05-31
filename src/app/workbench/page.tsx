@@ -57,7 +57,7 @@ export default async function WorkbenchPage() {
       <div className="page-stack">
         <WorkbenchClient
           assignees={assignees}
-          canManageFoundationActions={adminAccess.isOwner}
+          canManageFoundationActions={adminAccess.signedIn}
           foundationActions={foundationActions}
           initialInput={initialInput}
           productionVerification={productionVerification}

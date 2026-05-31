@@ -345,6 +345,7 @@ export type AuditEvent = {
     | "foundation_review_actions_generated"
     | "foundation_review_task_status_updated"
     | "foundation_review_task_note_added"
+    | "foundation_source_resolution_refreshed"
     | "foundation_starter_records_created"
     | "ergonomic_self_assessment_submitted"
     | "ergonomic_advanced_evaluation_requested"

@@ -12,7 +12,8 @@ const foundationAuditEventTypes = [
   "foundation_audit_readiness_note_added",
   "foundation_review_actions_generated",
   "foundation_review_task_status_updated",
-  "foundation_review_task_note_added"
+  "foundation_review_task_note_added",
+  "foundation_source_resolution_refreshed"
 ];
 const foundationSourceModules = ["all", "foundation", "evidence_map", "training_assignment", "equipment", "incident", "biotype_selection", "audit_readiness"];
 
@@ -41,7 +42,7 @@ export default async function AuditPage({
         <FoundationReviewActionsPanel
           actions={foundationActions.slice(0, 6)}
           assignees={assignees}
-          canManage={adminAccess.isOwner}
+          canManage={adminAccess.signedIn}
           emptyMessage="No open Foundation review actions are waiting for human review."
           returnTo="/admin/audit"
           title="Open source-traced actions"

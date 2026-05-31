@@ -8,6 +8,7 @@ import {
   createFoundationStarterRecords,
   createFoundationReviewActionFromSource,
   generateFoundationReviewActions,
+  refreshFoundationSourceResolution,
   seedNorthStarWithConfirmation,
   updateFoundationBioTypeSelection,
   updateFoundationEvidenceReadiness,
@@ -114,6 +115,15 @@ export async function addFoundationReviewTaskNoteAction(formData: FormData) {
   const result = await addFoundationReviewTaskNote({
     taskId: String(formData.get("taskId") ?? ""),
     note: String(formData.get("note") ?? "")
+  });
+  revalidateFoundationPaths();
+  redirectWithMessage(returnTo, result.message);
+}
+
+export async function refreshFoundationSourceResolutionAction(formData: FormData) {
+  const returnTo = normalizeFoundationReturnTo(String(formData.get("returnTo") ?? "/foundation"));
+  const result = await refreshFoundationSourceResolution({
+    taskId: String(formData.get("taskId") ?? "")
   });
   revalidateFoundationPaths();
   redirectWithMessage(returnTo, result.message);
