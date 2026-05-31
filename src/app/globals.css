@@ -520,6 +520,25 @@ button {
   white-space: nowrap;
 }
 
+.foundation-action-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.foundation-action-header div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.foundation-action-header > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .source-detail-expander {
   margin-top: 10px;
   border: 1px solid var(--line);
@@ -557,6 +576,59 @@ button {
 
 .source-detail-expander dd {
   color: var(--text);
+}
+
+.action-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.85fr);
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.action-detail-grid dl {
+  margin-top: 0;
+}
+
+.action-next-step,
+.action-status-history {
+  display: grid;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.action-status-history {
+  grid-column: 1 / -1;
+}
+
+.action-next-step strong,
+.action-status-history strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.action-next-step p,
+.action-status-history p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.action-status-history ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.action-status-history li span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .task-aging-badge {
@@ -2694,6 +2766,7 @@ pre {
   .task-status-form,
   .source-action-form,
   .action-filter-bar,
+  .action-detail-grid,
   .source-detail-expander dl div {
     grid-template-columns: 1fr;
   }

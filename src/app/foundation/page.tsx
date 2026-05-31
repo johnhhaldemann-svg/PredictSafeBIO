@@ -496,7 +496,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           </div>
         </section>
 
-        <FoundationReviewActionsPanel actions={reviewActions.slice(0, 8)} assignees={assignees} canManage={adminAccess.isOwner} />
+        <FoundationReviewActionsPanel actions={reviewActions.slice(0, 8)} assignees={assignees} canManage={adminAccess.isOwner} returnTo="/foundation" />
 
         <section className="panel verification-export-panel">
           <div className="panel-heading">

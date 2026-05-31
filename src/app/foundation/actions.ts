@@ -28,6 +28,10 @@ function revalidateFoundationPaths() {
   revalidatePath("/company-profile");
 }
 
+function normalizeFoundationReturnTo(value: string) {
+  return ["/foundation", "/operations", "/workbench", "/admin/audit"].includes(value) ? value : "/foundation";
+}
+
 function redirectFoundationResult(result: FoundationActionResult): never {
   revalidateFoundationPaths();
   redirectWithMessage("/foundation", result.message);
@@ -92,13 +96,15 @@ export async function generateFoundationReviewActionsAction() {
 }
 
 export async function updateFoundationReviewTaskStatusAction(formData: FormData) {
+  const returnTo = normalizeFoundationReturnTo(String(formData.get("returnTo") ?? "/foundation"));
   const result = await updateFoundationReviewTaskStatus({
     taskId: String(formData.get("taskId") ?? ""),
     status: String(formData.get("status") ?? ""),
     dueDate: String(formData.get("dueDate") ?? "") || null,
     assignedTo: String(formData.get("assignedTo") ?? "") || null
   });
-  redirectFoundationResult(result);
+  revalidateFoundationPaths();
+  redirectWithMessage(returnTo, result.message);
 }
 
 export async function createFoundationReviewActionFromSourceAction(formData: FormData) {

@@ -259,16 +259,25 @@ export type FoundationReviewActionSummary = {
   title: string;
   priority: string;
   status: string;
+  operatingState: string;
   assignedTo?: string | null;
   assigneeName?: string | null;
   sourceModule: string;
   sourceRecordId?: string;
   sourceLabel: string;
   sourceHref: string;
+  sourceDetailHref: string;
   dueDate?: string | null;
   recommendationId?: string;
   reason?: string;
+  nextStep: string;
   createdAt?: string;
+  statusHistory: Array<{
+    eventType: AuditEvent["eventType"];
+    summary: string;
+    createdAt?: string;
+    status?: string;
+  }>;
 };
 
 export type FoundationAssigneeOption = {
@@ -1242,7 +1251,7 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
 
   try {
     const supabase = await createSupabaseServerClient();
-    const [taskRows, recommendationRows, profileRows] = await Promise.all([
+    const [taskRows, recommendationRows, profileRows, auditRows] = await Promise.all([
       supabase
         .from("tasks")
         .select("id,title,priority,status,due_date,assigned_to,source_module,source_record_id,created_at")
@@ -1258,11 +1267,24 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
         .contains("payload", { actionType: "foundation_review_action" })
         .order("created_at", { ascending: false })
         .limit(20),
-      supabase.from("profiles").select("id,full_name,role").eq("organization_id", context.organizationId).order("full_name")
+      supabase.from("profiles").select("id,full_name,role").eq("organization_id", context.organizationId).order("full_name"),
+      supabase
+        .from("audit_events")
+        .select("event_type,summary,created_at,payload")
+        .eq("organization_id", context.organizationId)
+        .in("event_type", ["foundation_review_actions_generated", "foundation_review_task_status_updated"])
+        .order("created_at", { ascending: false })
+        .limit(80)
     ]);
 
     const recommendations = ((recommendationRows.data as Record<string, any>[]) ?? []).filter((row) => row.payload?.draftOnly !== false);
     const profiles = new Map(((profileRows.data as Record<string, any>[]) ?? []).map((row) => [row.id, row]));
+    const auditEvents = ((auditRows.data as Record<string, any>[]) ?? []).map((row) => ({
+      eventType: row.event_type as AuditEvent["eventType"],
+      summary: String(row.summary ?? ""),
+      createdAt: row.created_at,
+      payload: row.payload ?? {}
+    }));
     const recommendationBySource = new Map<string, Record<string, any>>();
     for (const row of recommendations) {
       const key = foundationActionKey(row.payload?.sourceModule, row.payload?.sourceRecordId, row.title);
@@ -1276,22 +1298,27 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
       const key = foundationActionKey(sourceModule, sourceRecordId, row.title) ?? row.id;
       const recommendation = recommendationBySource.get(key);
       const source = getFoundationSourceTarget(sourceModule);
+      const statusHistory = getFoundationTaskStatusHistory(auditEvents, row.id, sourceRecordId);
       actions.set(key, {
         id: row.id,
         taskId: row.id,
         title: row.title,
         priority: row.priority ?? "medium",
         status: row.status ?? "open",
+        operatingState: getFoundationActionOperatingState(row.status ?? "open", row.due_date),
         assignedTo: row.assigned_to ?? null,
         assigneeName: profiles.get(row.assigned_to)?.full_name ?? null,
         sourceModule,
         sourceRecordId,
         sourceLabel: source.label,
-        sourceHref: source.href,
+        sourceHref: getFoundationExactSourceHref(sourceModule, sourceRecordId),
+        sourceDetailHref: getFoundationExactSourceHref(sourceModule, sourceRecordId),
         dueDate: row.due_date,
         recommendationId: recommendation?.id,
         reason: recommendation?.payload?.reason,
-        createdAt: row.created_at
+        nextStep: getFoundationActionNextStep(row.status ?? "open", row.assigned_to, row.due_date),
+        createdAt: row.created_at,
+        statusHistory
       });
     }
 
@@ -1306,13 +1333,17 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
         title: row.title,
         priority: "medium",
         status: row.label ?? "Draft - Human Review Required",
+        operatingState: "Draft recommendation",
         sourceModule,
         sourceRecordId,
         sourceLabel: source.label,
-        sourceHref: source.href,
+        sourceHref: getFoundationExactSourceHref(sourceModule, sourceRecordId),
+        sourceDetailHref: getFoundationExactSourceHref(sourceModule, sourceRecordId),
         recommendationId: row.id,
         reason: row.payload?.reason,
-        createdAt: row.created_at
+        nextStep: "Create or link a review task before operational follow-through.",
+        createdAt: row.created_at,
+        statusHistory: []
       });
     }
 
@@ -4522,6 +4553,52 @@ function getFoundationSourceTarget(sourceModule: string) {
   return targets[sourceModule] ?? { label: sourceModule.replace(/_/g, " "), href: "/foundation" };
 }
 
+function getFoundationExactSourceHref(sourceModule: string, sourceRecordId?: string) {
+  if (sourceRecordId && foundationReviewSourceModules.includes(sourceModule)) {
+    return `/foundation#source-${sourceModule}-${sourceRecordId}`;
+  }
+  return getFoundationSourceTarget(sourceModule).href;
+}
+
+function getFoundationActionOperatingState(status: string, dueDate?: string | null) {
+  if (status === "complete") return "Closed with human review";
+  if (status === "blocked") return "Blocked - owner decision needed";
+  if (status === "in_progress") return "Active review underway";
+  if (!dueDate) return "Open - needs schedule";
+  const due = new Date(`${dueDate}T00:00:00`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return due.getTime() < today.getTime() ? "Open - overdue" : "Open - queued";
+}
+
+function getFoundationActionNextStep(status: string, assignedTo?: string | null, dueDate?: string | null) {
+  if (status === "complete") return "Confirm evidence and audit trail remain linked; no further draft action is implied.";
+  if (status === "blocked") return "Capture the blocker, owner decision, or missing evidence before moving forward.";
+  if (!assignedTo) return "Assign an owner so follow-through is accountable.";
+  if (!dueDate) return "Set a due date and move the task to in progress when review starts.";
+  if (status === "in_progress") return "Complete the source review, update evidence, then close or block with notes.";
+  return "Move to in progress when the assigned owner starts review.";
+}
+
+function getFoundationTaskStatusHistory(
+  auditEvents: Array<{ eventType: AuditEvent["eventType"]; summary: string; createdAt?: string; payload: Record<string, any> }>,
+  taskId: string,
+  sourceRecordId?: string
+): FoundationReviewActionSummary["statusHistory"] {
+  return auditEvents
+    .filter((event) => {
+      const payload = event.payload ?? {};
+      return payload.taskId === taskId || payload.targetRecordId === taskId || (sourceRecordId && payload.sourceRecordId === sourceRecordId);
+    })
+    .slice(0, 5)
+    .map((event) => ({
+      eventType: event.eventType,
+      summary: event.summary,
+      createdAt: event.createdAt,
+      status: typeof event.payload.status === "string" ? event.payload.status : undefined
+    }));
+}
+
 function getReadinessTrend(latest: number, previous?: number) {
   if (typeof previous !== "number") return "not_enough_data" as const;
   if (latest > previous) return "improving" as const;
@@ -4901,7 +4978,7 @@ function normalizeFoundationEvidenceStatus(status: string): FoundationEvidenceSt
 }
 
 function normalizeFoundationTaskStatus(status: string) {
-  return ["in_progress", "complete", "blocked"].includes(status) ? (status as "in_progress" | "complete" | "blocked") : null;
+  return ["open", "in_progress", "complete", "blocked"].includes(status) ? (status as "open" | "in_progress" | "complete" | "blocked") : null;
 }
 
 function normalizeFoundationReviewSourceModule(sourceModule: string) {

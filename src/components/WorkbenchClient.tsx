@@ -237,10 +237,37 @@ export function WorkbenchClient({
                       {action.priority} / {action.status}
                     </span>
                   </div>
+                  <span className={`task-aging-badge ${getWorkbenchTaskAgingClass(action)}`}>{action.operatingState}</span>
                   <p>
                     <Link href={action.sourceHref}>{action.sourceLabel}</Link>
                     {action.reason ? ` - ${action.reason}` : ""}
                   </p>
+                  <details className="source-detail-expander">
+                    <summary>Action detail</summary>
+                    <div className="action-detail-grid">
+                      <dl>
+                        <div>
+                          <dt>Source</dt>
+                          <dd>{action.sourceModule.replace(/_/g, " ")}</dd>
+                        </div>
+                        <div>
+                          <dt>Assignee</dt>
+                          <dd>{action.assigneeName ?? "Unassigned"}</dd>
+                        </div>
+                        <div>
+                          <dt>Due date</dt>
+                          <dd>{action.dueDate ?? "No due date"}</dd>
+                        </div>
+                      </dl>
+                      <div className="action-next-step">
+                        <strong>Next step</strong>
+                        <p>{action.nextStep}</p>
+                        <Link className="text-link" href={action.sourceDetailHref}>
+                          Open source section
+                        </Link>
+                      </div>
+                    </div>
+                  </details>
                 </article>
               ))
             ) : (
@@ -585,10 +612,21 @@ export function WorkbenchClient({
                       {action.priority} / {action.status}
                     </span>
                   </div>
+                  <span className={`task-aging-badge ${getWorkbenchTaskAgingClass(action)}`}>{action.operatingState}</span>
                   <p>
                     <Link href={action.sourceHref}>{action.sourceLabel}</Link>
                     {action.reason ? ` - ${action.reason}` : ""}
                   </p>
+                  <details className="source-detail-expander">
+                    <summary>Action detail</summary>
+                    <div className="action-next-step">
+                      <strong>Next step</strong>
+                      <p>{action.nextStep}</p>
+                      <Link className="text-link" href={action.sourceDetailHref}>
+                        Open source section
+                      </Link>
+                    </div>
+                  </details>
                 </article>
               ))
             ) : (
@@ -630,4 +668,17 @@ export function WorkbenchClient({
       </div>
     </div>
   );
+}
+
+function getWorkbenchTaskAgingClass(action: FoundationReviewActionSummary) {
+  if (action.status === "complete") return "task-aging-completed";
+  if (action.status === "blocked") return "task-aging-blocked";
+  if (!action.dueDate) return "task-aging-no-due-date";
+  const due = new Date(`${action.dueDate}T00:00:00`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
+  if (days < 0) return "task-aging-overdue";
+  if (days <= 3) return "task-aging-due-soon";
+  return "task-aging-on-track";
 }
