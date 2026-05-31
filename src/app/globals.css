@@ -2551,6 +2551,11 @@ pre {
   font-weight: 800;
 }
 
+.auth-continue {
+  width: 100%;
+  margin-top: 12px;
+}
+
 .text-link {
   color: #007d96;
   font-size: 13px;

@@ -11,6 +11,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
   const params = await searchParams;
   const next = params.next?.startsWith("/") ? params.next : "/onboarding";
   const auth = await getAuthSummary();
+  const continueHref = auth.needsOnboarding ? "/onboarding" : next === "/onboarding" ? "/workbench" : next;
 
   return (
     <main className="auth-page">
@@ -35,29 +36,35 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           </p>
         ) : null}
         {params.message ? <p className="form-message">{params.message}</p> : null}
-        <p className="auth-note">Email confirmation should be enabled for MVP hardening. If signup email throttling appears, configure custom SMTP before heavier testing.</p>
-        <form action={signUpAction} className="auth-form">
-          <input type="hidden" name="next" value={next} />
-          <label>
-            Email
-            <input name="email" type="email" autoComplete="email" required />
-          </label>
-          <label>
-            Password
-            <input name="password" type="password" autoComplete="new-password" minLength={8} required />
-          </label>
-          <button className="button-primary" type="submit">
-            Create account
-          </button>
-        </form>
-        <p className="auth-switch">
-          Already have an account? <Link href={`/login?next=${encodeURIComponent(next)}`}>Sign in</Link>
-        </p>
         {auth.signedIn ? (
-          <p className="auth-switch">
-            <Link href={auth.needsOnboarding ? "/onboarding" : "/workbench"}>Continue</Link>
-          </p>
-        ) : null}
+          <Link className="button-primary auth-continue" href={continueHref}>
+            Continue
+          </Link>
+        ) : (
+          <>
+            <p className="auth-note">
+              Email confirmation should be enabled for MVP hardening. If signup email throttling appears, configure custom SMTP before heavier
+              testing.
+            </p>
+            <form action={signUpAction} className="auth-form">
+              <input type="hidden" name="next" value={next} />
+              <label>
+                Email
+                <input name="email" type="email" autoComplete="email" required />
+              </label>
+              <label>
+                Password
+                <input name="password" type="password" autoComplete="new-password" minLength={8} required />
+              </label>
+              <button className="button-primary" type="submit">
+                Create account
+              </button>
+            </form>
+            <p className="auth-switch">
+              Already have an account? <Link href={`/login?next=${encodeURIComponent(next)}`}>Sign in</Link>
+            </p>
+          </>
+        )}
       </section>
     </main>
   );
