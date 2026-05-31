@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   addAuditReadinessNote,
+  createFoundationStarterRecords,
   createFoundationReviewActionFromSource,
   generateFoundationReviewActions,
   seedNorthStarWithConfirmation,
@@ -60,6 +61,11 @@ export async function updateFoundationEvidenceReadinessAction(formData: FormData
     status: String(formData.get("status") ?? "review_needed"),
     auditReady: formData.get("auditReady") === "on"
   });
+  redirectFoundationResult(result);
+}
+
+export async function createFoundationStarterRecordsAction() {
+  const result = await createFoundationStarterRecords();
   redirectFoundationResult(result);
 }
 

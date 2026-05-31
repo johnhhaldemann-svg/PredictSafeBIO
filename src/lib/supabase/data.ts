@@ -44,7 +44,8 @@ import {
   defaultApplicabilityRules,
   foundationMethodNames,
   foundationProgramNames,
-  northStarFoundationDemo
+  northStarFoundationDemo,
+  type FoundationIntakeAnswers
 } from "@/lib/foundation/engine";
 import {
   changePlanPriorities,
@@ -1977,6 +1978,124 @@ export async function updateFoundationEvidenceReadiness(input: {
   });
 
   return { ok: true, message: "Evidence readiness updated as draft - human review required." };
+}
+
+export async function createFoundationStarterRecords(): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before creating Foundation starter records." };
+  if (context.role !== "owner") return { ok: false, message: "Only organization owners can create Foundation starter records." };
+
+  const supabase = await createSupabaseServerClient();
+  const companyProfile = await getCompanyProfile();
+  const demo = northStarFoundationDemo();
+  const now = new Date().toISOString();
+  let createdIntake = 0;
+  let createdEvidence = 0;
+
+  const templateName = "PredictSafeBIO Foundation Starter Intake";
+  const { data: existingTemplate } = await supabase
+    .from("company_intake_templates")
+    .select("id")
+    .eq("organization_id", context.organizationId)
+    .eq("name", templateName)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let templateId = (existingTemplate as Record<string, any> | null)?.id as string | undefined;
+  if (!templateId) {
+    const { data: template, error: templateError } = await supabase
+      .from("company_intake_templates")
+      .insert({
+        organization_id: context.organizationId,
+        name: templateName,
+        version_label: "starter-v1",
+        active: true,
+        sections: [
+          { key: "materials", title: "Materials and samples" },
+          { key: "equipment", title: "Equipment and controls" },
+          { key: "readiness", title: "Documents, training, incidents, and evidence" }
+        ]
+      })
+      .select("id")
+      .single();
+    if (templateError || !template) return { ok: false, message: templateError?.message ?? "Could not create starter intake template." };
+    templateId = template.id;
+  }
+
+  const starterAnswerKeys = (Object.keys(demo.answers) as Array<keyof FoundationIntakeAnswers>).slice(0, 6);
+  const { data: existingResponses } = await supabase
+    .from("company_intake_responses")
+    .select("question_key")
+    .eq("organization_id", context.organizationId)
+    .in("question_key", starterAnswerKeys);
+  const existingQuestionKeys = new Set(((existingResponses as Record<string, any>[] | null) ?? []).map((row) => row.question_key));
+  const intakeRows = starterAnswerKeys
+    .filter((questionKey) => !existingQuestionKeys.has(questionKey))
+    .map((questionKey) => ({
+      organization_id: context.organizationId,
+      company_profile_id: companyProfile.id ?? null,
+      intake_template_id: templateId,
+      question_key: questionKey,
+      answer_value: { value: Boolean(demo.answers[questionKey]) },
+      triggers_documents: demo.applicability.requiredDocuments,
+      triggers_programs: demo.applicability.requiredPrograms,
+      created_by: context.userId,
+      updated_at: now
+    }));
+  if (intakeRows.length > 0) {
+    const { error } = await supabase.from("company_intake_responses").insert(intakeRows);
+    if (error) return { ok: false, message: error.message };
+    createdIntake = intakeRows.length;
+  }
+
+  const starterEvidence = demo.evidence.slice(0, 8);
+  const { data: existingEvidence } = await supabase
+    .from("compliance_evidence_map")
+    .select("requirement_name")
+    .eq("organization_id", context.organizationId)
+    .in(
+      "requirement_name",
+      starterEvidence.map((item) => item.requirementName)
+    );
+  const existingRequirementNames = new Set(((existingEvidence as Record<string, any>[] | null) ?? []).map((row) => row.requirement_name));
+  const evidenceRows = starterEvidence
+    .filter((item) => !existingRequirementNames.has(item.requirementName))
+    .map((item) => ({
+      organization_id: context.organizationId,
+      requirement_name: item.requirementName,
+      control_name: item.controlName,
+      evidence_type: item.evidenceType,
+      source_table: item.sourceTable,
+      required_frequency: "annual or event-driven",
+      evidence_status: item.evidenceStatus,
+      audit_ready: item.auditReady,
+      human_review_required: true,
+      created_by: context.userId,
+      updated_at: now
+    }));
+  if (evidenceRows.length > 0) {
+    const { error } = await supabase.from("compliance_evidence_map").insert(evidenceRows);
+    if (error) return { ok: false, message: error.message };
+    createdEvidence = evidenceRows.length;
+  }
+
+  if (createdIntake === 0 && createdEvidence === 0) {
+    return { ok: true, message: "Foundation starter records already exist. Edit one intake answer and one evidence row to finish verification." };
+  }
+
+  await writeFoundationAuditEvent(supabase, context, {
+    eventType: "foundation_starter_records_created",
+    summary: "Foundation starter intake and evidence records created for owner verification.",
+    sourceModule: "foundation",
+    targetModule: "foundation",
+    payload: { createdIntake, createdEvidence }
+  });
+
+  return {
+    ok: true,
+    message: `Created ${createdIntake} intake answer(s) and ${createdEvidence} evidence row(s). Now edit and save one of each to turn the checklist green.`
+  };
 }
 
 export async function addAuditReadinessNote(input: {

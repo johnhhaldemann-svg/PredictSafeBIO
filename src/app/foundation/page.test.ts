@@ -34,6 +34,10 @@ describe("foundation UI alignment", () => {
     expect(foundationClient).toContain("updateFoundationBioTypeSelectionAction");
     expect(foundationClient).toContain("updateFoundationIntakeResponseAction");
     expect(foundationClient).toContain("updateFoundationEvidenceReadinessAction");
+    expect(foundationClient).toContain("Create starter Foundation rows");
+    expect(foundationActions).toContain("createFoundationStarterRecordsAction");
+    expect(foundationData).toContain("createFoundationStarterRecords");
+    expect(foundationData).toContain("foundation_starter_records_created");
     expect(foundationClient).toContain("System Reliance edit workflows are locked");
     expect(foundationClient).toContain("Generate Action Plan");
     expect(foundationClient).toContain("SEED NORTHSTAR");
