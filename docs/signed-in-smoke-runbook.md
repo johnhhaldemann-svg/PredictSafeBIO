@@ -62,4 +62,4 @@ Expected member behavior:
 
 On 2026-06-01, signed-in production smoke passed for the owner and member saved-view paths above after PR #31 was promoted. The run confirmed the active saved-view summary rendered for each saved view, the sort control exposed Priority, Due date, Status, and Source module options, owner assignment/due-date controls were visible, and member assignment/due-date controls stayed hidden while status and note controls remained available.
 
-The `codex/task-priority-editing` slice adds owner-only priority editing to the task update form. Re-run the owner/member smoke after that branch is promoted and confirm owner priority controls are visible while member priority controls remain hidden.
+On 2026-06-01, signed-in production priority-control smoke passed after PR #33 was promoted. Owner priority controls were visible; member priority, assignment, and due-date controls stayed hidden while status and note controls remained available.

@@ -58,12 +58,13 @@ Last updated: 2026-06-01
 - The current command-center increment adds `/my-work`, connected command navigation across `/foundation`, `/my-work`, and `/workbench`, reusable Foundation task cards, work KPIs, source-resolution/closeout callouts, and notification read/unread controls.
 - Branch `codex/my-work-priority-filters` adds My Work KPI deep links into saved task views plus Overdue, High priority, and Urgent task filtering.
 - PR #31 merged the My Work dashboard polish slice into `main`: visible active saved-view state, task sorting controls, and the reusable signed-in smoke runbook.
-- Branch `codex/task-priority-editing` adds owner-only priority editing to Foundation task update forms and preserves assigned-member restrictions.
+- PR #33 merged owner-only priority editing to Foundation task update forms and preserves assigned-member restrictions.
 - Production route smoke on June 1, 2026 returned `200 OK` for `/foundation`, `/my-work`, `/workbench`, `/documents`, `/admin/audit`, and `/login`.
 - PR #29 merged My Work KPI deep links and saved-view filtering into `main` at `6853b6e`; production saved-view routes `/my-work?view=high_priority`, `/my-work?view=overdue`, `/my-work?view=blocked`, and `/my-work?view=ready` returned `200 OK`.
 - Reusable signed-in smoke accounts were created on June 1, 2026 and their generated passwords are stored outside the repo at `C:\Users\johnh\AppData\Local\PredictSafeBIO\smoke-accounts.json`.
 - Reusable smoke org `Codex Reusable Smoke Org` was seeded with five Foundation tasks covering high priority, overdue, blocked, ready-for-closure, and normal open work.
 - Signed-in production owner/member smoke for `/my-work?view=high_priority`, `/my-work?view=overdue`, `/my-work?view=blocked`, and `/my-work?view=ready` passed on June 1, 2026 after PR #31 promoted. Active saved-view summaries and sort controls rendered in production; owner assignment/due-date controls were visible; member assignment/due-date controls stayed hidden while status/note controls stayed available.
+- Signed-in production owner/member priority-control smoke passed on June 1, 2026 after PR #33 promoted: owner priority controls were visible, and member priority/assignment/due-date controls stayed hidden while status/note controls stayed available.
 - Signed-in owner smoke passed locally on June 1, 2026: `/foundation`, `/my-work`, and `/workbench` all returned `200`, showed the Codex smoke tasks, and exposed owner assignment plus due-date controls.
 - Signed-in assigned-member smoke passed locally on June 1, 2026: member views showed assigned task status/note/closeout controls, hid assignment and due-date fields, and rendered overdue, blocked, due-soon, and ready-for-closure notifications.
 - Notification action smoke passed locally on June 1, 2026: mark read, mark unread, and mark all read returned success redirects; assigned-member status update and note actions also returned success redirects.
