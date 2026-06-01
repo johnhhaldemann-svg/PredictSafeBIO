@@ -5,8 +5,8 @@ Last updated: 2026-06-01
 ## Immediate
 
 - Treat Supabase Auth hardening as deferred for now and keep the current demo/testing path on already-confirmed or existing signed-in users.
-- Next recommended product slice: owner/member dashboard polish, especially visible saved-view state, task sorting, and a clearer signed-in smoke runbook for reusable owner/member accounts.
-- Keep future signed-in smoke focused on existing accounts until custom SMTP and email confirmation are revisited.
+- Current product slice: owner/member dashboard polish on `codex/my-work-dashboard-polish`, adding visible saved-view state, task sorting, and a clearer signed-in smoke runbook.
+- Re-run signed-in production saved-view smoke after the dashboard-polish branch is promoted so screenshots capture the active saved-view state and sort control.
 
 ## Blockers And Watch Items
 
@@ -17,7 +17,8 @@ Last updated: 2026-06-01
 - Supabase built-in auth email sending is rate-limited; custom SMTP is still required before heavier public signup testing.
 - Supabase project is on the Pro plan, so leaked-password protection is supported, but Auth settings mutation is deferred until dashboard access or a Supabase Management API token is available.
 - Custom SMTP and a real signup/confirmation smoke are intentionally parked for now.
-- Command-center and upload smoke used disposable Codex owner/member accounts and task data on June 1, 2026; those records were cleaned up after smoke.
+- Reusable Codex owner/member smoke accounts now exist for saved-view smoke. Their generated passwords are stored outside the repo at `C:\Users\johnh\AppData\Local\PredictSafeBIO\smoke-accounts.json`.
+- Command-center and upload smoke used disposable Codex owner/member accounts and task data on June 1, 2026; those older disposable records were cleaned up after smoke.
 
 ## Command Center Increment
 
@@ -32,7 +33,8 @@ Last updated: 2026-06-01
 - PR #29 merged the `codex/my-work-priority-filters` slice into `main` at `6853b6e`: My Work KPI cards now deep-link to saved task views, Overdue and High priority saved views are available, urgent priority is filterable, and due-soon/overdue views exclude completed tasks.
 - Production route smoke on June 1, 2026 returned `200 OK` for `/foundation`, `/my-work`, `/workbench`, `/documents`, `/admin/audit`, and `/login`.
 - Production saved-view route smoke on June 1, 2026 returned `200 OK` for `/my-work?view=high_priority`, `/my-work?view=overdue`, `/my-work?view=blocked`, and `/my-work?view=ready`.
-- Signed-in production owner/member smoke for the new saved views is blocked until reusable owner/member credentials or a service-role key are available.
+- Reusable smoke org `Codex Reusable Smoke Org` was seeded with five assigned-member Foundation tasks covering high priority, overdue, blocked, ready-for-closure, and normal open work.
+- Signed-in production owner/member smoke for `/my-work?view=high_priority`, `/my-work?view=overdue`, `/my-work?view=blocked`, and `/my-work?view=ready` passed on June 1, 2026. Owner assignment/due-date controls were visible; member assignment/due-date controls stayed hidden while status/note controls stayed available.
 
 ## v1.1 Demo Hardening
 

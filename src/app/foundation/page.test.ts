@@ -283,6 +283,17 @@ describe("foundation UI alignment", () => {
     expect(myWorkPage).toContain("requestedView ?? (adminAccess.isOwner ? \"all\" : \"my_open\")");
     expect(myWorkPage).toContain("Ready for closure");
     expect(myWorkPage).toContain("High-priority work");
+    expect(reviewActionsPanel).toContain("savedTaskViews");
+    expect(reviewActionsPanel).toContain("Active saved view");
+    expect(reviewActionsPanel).toContain("saved-view-state");
+    expect(reviewActionsPanel).toContain("getSavedViewLabel");
+    expect(reviewActionsPanel).toContain("taskSortOptions");
+    expect(reviewActionsPanel).toContain("Sort");
+    expect(reviewActionsPanel).toContain("getSortedActions");
+    expect(reviewActionsPanel).toContain("comparePriority");
+    expect(reviewActionsPanel).toContain("compareDueDates");
+    expect(reviewActionsPanel).toContain("source_module");
+    expect(reviewActionsPanel).toContain("sorted by {getSortLabel(sortKey).toLowerCase()}");
     expect(myWorkPage).toContain("FoundationNotificationCenter");
     expect(myWorkPage).toContain("adminAccess.isOwner ? allActions");
     expect(myWorkPage).toContain("canEditAssignment={adminAccess.isOwner}");

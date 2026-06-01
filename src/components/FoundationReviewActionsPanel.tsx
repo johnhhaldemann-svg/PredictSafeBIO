@@ -6,6 +6,24 @@ import { useMemo, useState } from "react";
 import { addFoundationReviewTaskNoteAction, refreshFoundationSourceResolutionAction, updateFoundationReviewTaskStatusAction } from "@/app/foundation/actions";
 import type { FoundationAssigneeOption, FoundationReviewActionSummary } from "@/lib/supabase/data";
 
+const savedTaskViews = [
+  ["all", "All generated"],
+  ["my_open", "My open work"],
+  ["blocked", "Blocked"],
+  ["overdue", "Overdue"],
+  ["due_soon", "Due soon"],
+  ["high_priority", "High priority"],
+  ["ready", "Ready for closure"],
+  ["unassigned", "Unassigned"]
+] as const;
+
+const taskSortOptions = [
+  ["priority", "Priority"],
+  ["due_date", "Due date"],
+  ["status", "Status"],
+  ["source_module", "Source module"]
+] as const;
+
 export function FoundationReviewActionsPanel({
   actions,
   assignees = [],
@@ -41,13 +59,14 @@ export function FoundationReviewActionsPanel({
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
+  const [sortKey, setSortKey] = useState<(typeof taskSortOptions)[number][0]>("priority");
   const sourceOptions = useMemo(
     () => Array.from(new Set(actions.map((action) => action.sourceModule))).sort(),
     [actions]
   );
   const filteredActions = useMemo(
-    () =>
-      actions.filter((action) => {
+    () => {
+      const matchingActions = actions.filter((action) => {
         const searchText = [
           action.title,
           action.sourceLabel,
@@ -72,11 +91,14 @@ export function FoundationReviewActionsPanel({
         const sourceMatches = sourceFilter === "all" || action.sourceModule === sourceFilter;
         const savedViewMatches = getSavedViewMatch(savedView, action);
         return searchMatches && statusMatches && priorityMatches && sourceMatches && savedViewMatches;
-      }),
-    [actions, priorityFilter, savedView, searchQuery, sourceFilter, statusFilter]
+      });
+      return getSortedActions(matchingActions, sortKey);
+    },
+    [actions, priorityFilter, savedView, searchQuery, sortKey, sourceFilter, statusFilter]
   );
   const selectedAction = filteredActions.find((action) => action.id === selectedActionId) ?? filteredActions[0] ?? null;
   const readyForClosureActions = filteredActions.filter(isReadyForClosure);
+  const savedViewLabel = getSavedViewLabel(savedView);
 
   return (
     <section className="panel command-center-lane task-command-lane">
@@ -97,20 +119,20 @@ export function FoundationReviewActionsPanel({
       {actions.length > 0 ? (
         <>
           <div className="saved-view-bar" aria-label="Saved task views">
-            {[
-              ["all", "All generated"],
-              ["my_open", "My open work"],
-              ["blocked", "Blocked"],
-              ["overdue", "Overdue"],
-              ["due_soon", "Due soon"],
-              ["high_priority", "High priority"],
-              ["ready", "Ready for closure"],
-              ["unassigned", "Unassigned"]
-            ].map(([value, label]) => (
+            {savedTaskViews.map(([value, label]) => (
               <button className={savedView === value ? "button-primary compact" : "button-secondary compact"} key={value} type="button" onClick={() => setSavedView(value)}>
                 {label}
               </button>
             ))}
+          </div>
+          <div className="saved-view-state" aria-live="polite">
+            <div>
+              <span>Active saved view</span>
+              <strong>{savedViewLabel}</strong>
+            </div>
+            <p>
+              Showing {filteredActions.length} of {actions.length} tasks, sorted by {getSortLabel(sortKey).toLowerCase()}.
+            </p>
           </div>
           <div className="action-filter-bar" aria-label="Foundation review action filters">
             <label className="wide-field">
@@ -148,6 +170,16 @@ export function FoundationReviewActionsPanel({
                 {sourceOptions.map((sourceModule) => (
                   <option key={sourceModule} value={sourceModule}>
                     {sourceModule.replace(/_/g, " ")}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Sort
+              <select value={sortKey} onChange={(event) => setSortKey(event.target.value as typeof sortKey)}>
+                {taskSortOptions.map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
                   </option>
                 ))}
               </select>
@@ -493,6 +525,50 @@ function formatActionLabel(value: string) {
 
 function normalizeChipClass(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
+
+function getSavedViewLabel(savedView: string) {
+  return savedTaskViews.find(([value]) => value === savedView)?.[1] ?? "All generated";
+}
+
+function getSortLabel(sortKey: (typeof taskSortOptions)[number][0]) {
+  return taskSortOptions.find(([value]) => value === sortKey)?.[1] ?? "Priority";
+}
+
+function getSortedActions(actions: FoundationReviewActionSummary[], sortKey: (typeof taskSortOptions)[number][0]) {
+  return [...actions].sort((a, b) => {
+    if (sortKey === "due_date") return compareDueDates(a, b) || comparePriority(a, b) || compareTitle(a, b);
+    if (sortKey === "status") return compareText(a.status, b.status) || comparePriority(a, b) || compareTitle(a, b);
+    if (sortKey === "source_module") return compareText(a.sourceModule, b.sourceModule) || comparePriority(a, b) || compareTitle(a, b);
+    return comparePriority(a, b) || compareDueDates(a, b) || compareTitle(a, b);
+  });
+}
+
+function comparePriority(a: FoundationReviewActionSummary, b: FoundationReviewActionSummary) {
+  return getPriorityRank(a.priority) - getPriorityRank(b.priority);
+}
+
+function compareDueDates(a: FoundationReviewActionSummary, b: FoundationReviewActionSummary) {
+  if (!a.dueDate && !b.dueDate) return 0;
+  if (!a.dueDate) return 1;
+  if (!b.dueDate) return -1;
+  return a.dueDate.localeCompare(b.dueDate);
+}
+
+function compareTitle(a: FoundationReviewActionSummary, b: FoundationReviewActionSummary) {
+  return compareText(a.title, b.title);
+}
+
+function compareText(a: string, b: string) {
+  return a.localeCompare(b, undefined, { sensitivity: "base" });
+}
+
+function getPriorityRank(priority: string) {
+  if (priority === "urgent") return 0;
+  if (priority === "high") return 1;
+  if (priority === "medium") return 2;
+  if (priority === "low") return 3;
+  return 4;
 }
 
 function isReadyForClosure(action: FoundationReviewActionSummary) {
