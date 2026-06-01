@@ -70,4 +70,4 @@ On 2026-06-01, signed-in production priority-control smoke passed after PR #33 w
 
 On 2026-06-01, signed-in production bulk-control smoke passed after PR #35 was promoted. Owner and member runs confirmed selected counts updated, bulk status controls rendered, and no bulk assignment, due-date, or priority controls were exposed.
 
-The `codex/bulk-task-notes` slice adds selected-task bulk activity notes. Re-run owner/member smoke after promotion and confirm bulk note controls render for selected tasks, members can bulk note assigned tasks only, and no bulk assignment, due-date, or priority controls are exposed.
+On 2026-06-01, signed-in production bulk-note smoke passed after PR #37 was promoted. Owner and member runs confirmed bulk note controls rendered for selected tasks, selected counts synced, and no bulk assignment, due-date, or priority controls were exposed.
