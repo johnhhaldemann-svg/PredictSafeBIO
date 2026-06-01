@@ -13,8 +13,9 @@ Last updated: 2026-06-01
 - PR #21 added audit target links, short demo seed labels, and workflow helper tests.
 - PR #23 added assessment register filters, cleaner report sections, feature-flag metadata, and expanded LLM draft-assist gate documentation.
 - Branch `codex/map-aligned-platform` adds the connected Foundation / My Work / Workbench command-center increment.
+- PR #26 merged the connected Foundation / My Work / Workbench command-center increment into `main` at `f7c62cd525c96825e923778669ebd11a396bda3a`.
 - Release `v1.1-demo-hardening` exists at commit `c49c54c76bb15cb395574c3f72dae90f4898f801`.
-- Branch protection is restored to require one approving review.
+- Branch protection API response on June 1, 2026 showed required status checks and admin enforcement on `main`; no approving-review rule was returned by the API.
 - Dependency PRs #10, #12, and #13 were merged one at a time after refreshed CI and Vercel checks.
 - ESLint 10 remains closed because it still fails in the lint toolchain.
 
@@ -36,7 +37,7 @@ Last updated: 2026-06-01
 - Performance advisor notes: unused early-demo indexes and Auth DB connection strategy informational items.
 - Storage migration `enable_document_storage` has been applied.
 - Private bucket `biotech-documents` exists with four authenticated-only storage policies for select, insert, update, and delete.
-- Storage object count is currently 0 and document metadata records with `storage_path` are 0; signed-in upload smoke remains pending because it requires a real browser upload as the test user.
+- Signed-in private-bucket upload smoke passed locally on June 1, 2026: authenticated upload to `biotech-documents` persisted `storage_path`, the document detail page rendered the uploaded file, the draft report decoded, and `/admin/audit` linked to the smoke document.
 
 ## Current Product State
 
@@ -47,6 +48,7 @@ Last updated: 2026-06-01
 - Re-enable email confirmation after testing; configure custom SMTP before heavier signup testing.
 - v1.1 hardening adds clearer auth messages, optional document file upload metadata, and draft-only demo report downloads.
 - Auth hardening still needs dashboard confirmation: re-enable email confirmation, enable leaked-password protection if available, and configure custom SMTP before heavier signup testing.
+- Supabase organization plan is Pro, so leaked-password protection is available; enabling it, re-enabling email confirmation, and configuring SMTP still require dashboard/API Auth settings access plus real SMTP credentials.
 - Current product increment adds assessment review workflow, document recommendation history, Markdown demo reports, signed-in demo seed operations, and an explicit LLM draft-assist gate.
 - Supabase migration `assessment_review_workflow` has been applied; `assessments` now includes reviewer notes, reviewer identity, reviewed timestamp, and constrained review statuses.
 - Signed-in v1.1 smoke passed in production: review status changes saved reviewer notes, `human_review_status_changed` audit links opened the assessment, document recommendation history and report download worked, and `/admin/demo` seeded labeled demo assessment/document/audit records.
@@ -57,4 +59,5 @@ Last updated: 2026-06-01
 - Signed-in owner smoke passed locally on June 1, 2026: `/foundation`, `/my-work`, and `/workbench` all returned `200`, showed the Codex smoke tasks, and exposed owner assignment plus due-date controls.
 - Signed-in assigned-member smoke passed locally on June 1, 2026: member views showed assigned task status/note/closeout controls, hid assignment and due-date fields, and rendered overdue, blocked, due-soon, and ready-for-closure notifications.
 - Notification action smoke passed locally on June 1, 2026: mark read, mark unread, and mark all read returned success redirects; assigned-member status update and note actions also returned success redirects.
+- Disposable Codex command-center/upload smoke records were cleaned after verification: Codex smoke users, org, upload docs, private storage objects, tasks, notifications, and audit events all returned to zero.
 - Recommendations remain `Draft - Human Review Required`.
