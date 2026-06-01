@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import {
   addAuditReadinessNote,
   addFoundationReviewTaskNote,
+  addFoundationReviewTasksNote,
   createFoundationStarterRecords,
   createFoundationReviewActionFromSource,
   generateFoundationReviewActions,
@@ -144,6 +145,16 @@ export async function addFoundationReviewTaskNoteAction(formData: FormData) {
   const returnTo = normalizeFoundationReturnTo(String(formData.get("returnTo") ?? "/foundation"));
   const result = await addFoundationReviewTaskNote({
     taskId: String(formData.get("taskId") ?? ""),
+    note: String(formData.get("note") ?? "")
+  });
+  revalidateFoundationPaths();
+  redirectWithMessage(returnTo, result.message);
+}
+
+export async function addFoundationReviewTasksNoteAction(formData: FormData) {
+  const returnTo = normalizeFoundationReturnTo(String(formData.get("returnTo") ?? "/foundation"));
+  const result = await addFoundationReviewTasksNote({
+    taskIds: formData.getAll("taskIds").map(String),
     note: String(formData.get("note") ?? "")
   });
   revalidateFoundationPaths();

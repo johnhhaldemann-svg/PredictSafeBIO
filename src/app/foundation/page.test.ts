@@ -120,6 +120,7 @@ describe("foundation UI alignment", () => {
     expect(foundationData).toContain("getFoundationActionNextStep");
     expect(foundationData).toContain("getFoundationSourceResolutionStates");
     expect(foundationData).toContain("addFoundationReviewTaskNote");
+    expect(foundationData).toContain("addFoundationReviewTasksNote");
     expect(foundationData).toContain("getFoundationProductionVerificationSummary");
     expect(foundationData).toContain("getFoundationNotificationSummary");
     expect(foundationData).toContain("refreshFoundationSourceResolution");
@@ -138,6 +139,7 @@ describe("foundation UI alignment", () => {
     expect(foundationData).toContain("Foundation task ready for closure review");
     expect(foundationData).toContain("Members can update only Foundation review tasks assigned to them");
     expect(foundationData).toContain("Members can bulk update only Foundation review tasks assigned to them.");
+    expect(foundationData).toContain("Members can bulk note only Foundation review tasks assigned to them.");
     expect(foundationData).toContain("Members can update task status and notes only; priority, assignment, and due dates are owner-only.");
     expect(foundationData).toContain("normalizeFoundationTaskPriority");
     expect(foundationData).toContain("previousPriority");
@@ -158,7 +160,10 @@ describe("foundation UI alignment", () => {
     expect(reviewActionsPanel).toContain("canEditPriority");
     expect(reviewActionsPanel).toContain("<select name=\"priority\" defaultValue={action.priority}>");
     expect(reviewActionsPanel).toContain("updateFoundationReviewTasksStatusAction");
+    expect(reviewActionsPanel).toContain("addFoundationReviewTasksNoteAction");
     expect(reviewActionsPanel).toContain("Bulk status update");
+    expect(reviewActionsPanel).toContain("Bulk activity note");
+    expect(reviewActionsPanel).toContain("Add note to selected");
     expect(reviewActionsPanel).toContain("selectedVisibleTaskIds");
     expect(reviewActionsPanel).toContain("taskIds");
     expect(reviewActionsPanel).toContain("Select ${action.title}");
@@ -219,6 +224,7 @@ describe("foundation UI alignment", () => {
     expect(foundationActions).toContain("normalizeFoundationReturnTo");
     expect(foundationActions).toContain("if (formData.has(\"priority\"))");
     expect(foundationActions).toContain("updateFoundationReviewTasksStatusAction");
+    expect(foundationActions).toContain("addFoundationReviewTasksNoteAction");
     expect(foundationActions).toContain("formData.getAll(\"taskIds\")");
     expect(foundationActions).toContain("revalidatePath(\"/my-work\")");
     expect(foundationActions).toContain("\"/my-work\"");

@@ -41,6 +41,7 @@ Expected owner behavior:
 - Due-date controls are visible.
 - Status, note, source refresh, and closeout controls remain available.
 - Bulk status update controls appear after selecting one or more visible tasks.
+- Bulk activity note controls appear after selecting one or more visible tasks.
 
 ## Assigned-Member Smoke
 
@@ -59,6 +60,7 @@ Expected member behavior:
 - Assignment controls are hidden.
 - Due-date controls are hidden.
 - Bulk status update controls can update selected assigned tasks only.
+- Bulk activity note controls can add notes to selected assigned tasks only.
 
 ## Verification Notes
 
@@ -67,3 +69,5 @@ On 2026-06-01, signed-in production smoke passed for the owner and member saved-
 On 2026-06-01, signed-in production priority-control smoke passed after PR #33 was promoted. Owner priority controls were visible; member priority, assignment, and due-date controls stayed hidden while status and note controls remained available.
 
 On 2026-06-01, signed-in production bulk-control smoke passed after PR #35 was promoted. Owner and member runs confirmed selected counts updated, bulk status controls rendered, and no bulk assignment, due-date, or priority controls were exposed.
+
+The `codex/bulk-task-notes` slice adds selected-task bulk activity notes. Re-run owner/member smoke after promotion and confirm bulk note controls render for selected tasks, members can bulk note assigned tasks only, and no bulk assignment, due-date, or priority controls are exposed.
