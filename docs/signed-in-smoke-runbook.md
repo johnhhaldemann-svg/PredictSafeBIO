@@ -66,4 +66,4 @@ On 2026-06-01, signed-in production smoke passed for the owner and member saved-
 
 On 2026-06-01, signed-in production priority-control smoke passed after PR #33 was promoted. Owner priority controls were visible; member priority, assignment, and due-date controls stayed hidden while status and note controls remained available.
 
-The `codex/bulk-task-status-actions` slice adds selected-task bulk status updates. Re-run owner/member smoke after promotion and confirm owner bulk controls work on visible tasks, members can bulk update only assigned tasks, and no bulk assignment, due-date, or priority controls are exposed.
+On 2026-06-01, signed-in production bulk-control smoke passed after PR #35 was promoted. Owner and member runs confirmed selected counts updated, bulk status controls rendered, and no bulk assignment, due-date, or priority controls were exposed.
