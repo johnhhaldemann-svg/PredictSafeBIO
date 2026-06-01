@@ -172,6 +172,9 @@ describe("foundation UI alignment", () => {
     expect(reviewActionsPanel).toContain("Saved task views");
     expect(reviewActionsPanel).toContain("My open work");
     expect(reviewActionsPanel).toContain("Due soon");
+    expect(reviewActionsPanel).toContain("Overdue");
+    expect(reviewActionsPanel).toContain("High priority");
+    expect(reviewActionsPanel).toContain("<option value=\"urgent\">Urgent</option>");
     expect(reviewActionsPanel).toContain("task-role-chip");
     expect(reviewActionsPanel).toContain("Owner controls");
     expect(reviewActionsPanel).toContain("Assigned member");
@@ -274,11 +277,14 @@ describe("foundation UI alignment", () => {
     expect(myWorkPage).toContain("getFoundationNotificationSummary");
     expect(notificationCenter).toContain("notifications.unreadCount");
     expect(myWorkPage).toContain("getFoundationWorkKpis");
+    expect(myWorkPage).toContain("searchParams");
+    expect(myWorkPage).toContain("/my-work?view=overdue#my-work-actions");
+    expect(myWorkPage).toContain("/my-work?view=high_priority#my-work-actions");
+    expect(myWorkPage).toContain("requestedView ?? (adminAccess.isOwner ? \"all\" : \"my_open\")");
     expect(myWorkPage).toContain("Ready for closure");
     expect(myWorkPage).toContain("High-priority work");
     expect(myWorkPage).toContain("FoundationNotificationCenter");
     expect(myWorkPage).toContain("adminAccess.isOwner ? allActions");
-    expect(myWorkPage).toContain("initialSavedView={adminAccess.isOwner ? \"all\" : \"my_open\"}");
     expect(myWorkPage).toContain("canEditAssignment={adminAccess.isOwner}");
     expect(myWorkPage).toContain("canEditDueDate={adminAccess.isOwner}");
     expect(foundationPage).toContain("Source Drilldowns");

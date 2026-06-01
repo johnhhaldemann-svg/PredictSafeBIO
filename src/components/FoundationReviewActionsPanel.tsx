@@ -101,7 +101,9 @@ export function FoundationReviewActionsPanel({
               ["all", "All generated"],
               ["my_open", "My open work"],
               ["blocked", "Blocked"],
+              ["overdue", "Overdue"],
               ["due_soon", "Due soon"],
+              ["high_priority", "High priority"],
               ["ready", "Ready for closure"],
               ["unassigned", "Unassigned"]
             ].map(([value, label]) => (
@@ -133,6 +135,7 @@ export function FoundationReviewActionsPanel({
               Priority
               <select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)}>
                 <option value="all">All priorities</option>
+                <option value="urgent">Urgent</option>
                 <option value="high">High priority</option>
                 <option value="medium">Medium priority</option>
                 <option value="low">Low priority</option>
@@ -498,6 +501,8 @@ function isReadyForClosure(action: FoundationReviewActionSummary) {
 
 function getSavedViewMatch(savedView: string, action: FoundationReviewActionSummary) {
   if (savedView === "blocked") return action.status === "blocked";
+  if (savedView === "overdue") return isOverdue(action);
+  if (savedView === "high_priority") return action.status !== "complete" && ["high", "urgent"].includes(action.priority.toLowerCase());
   if (savedView === "ready") return isReadyForClosure(action);
   if (savedView === "unassigned") return !action.assignedTo;
   if (savedView === "my_open") return action.canUpdate && Boolean(action.assignedTo) && action.status !== "complete";
@@ -506,12 +511,22 @@ function getSavedViewMatch(savedView: string, action: FoundationReviewActionSumm
 }
 
 function isDueSoon(action: FoundationReviewActionSummary) {
+  if (action.status === "complete") return false;
   if (!action.dueDate) return false;
   const due = new Date(`${action.dueDate}T00:00:00`);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
   return days >= 0 && days <= 3;
+}
+
+function isOverdue(action: FoundationReviewActionSummary) {
+  if (action.status === "complete") return false;
+  if (!action.dueDate) return false;
+  const due = new Date(`${action.dueDate}T00:00:00`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return due.getTime() < today.getTime();
 }
 
 function getTaskRoleLabel(action: FoundationReviewActionSummary, canManage: boolean, canEditAssignment: boolean) {
