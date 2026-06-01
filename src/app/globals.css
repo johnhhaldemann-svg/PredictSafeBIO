@@ -1022,6 +1022,47 @@ button {
   line-height: 1.4;
 }
 
+.bulk-task-action-bar {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(140px, 0.45fr) minmax(220px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.bulk-task-action-bar div {
+  display: grid;
+  gap: 3px;
+}
+
+.bulk-task-action-bar span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.bulk-task-action-bar textarea {
+  min-height: 42px;
+}
+
+.task-select-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.task-select-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+}
+
 .action-filter-bar span {
   color: var(--muted);
   font-size: 12px;
@@ -3668,6 +3709,7 @@ pre {
   .task-note-form,
   .task-refresh-form,
   .source-action-form,
+  .bulk-task-action-bar,
   .action-filter-bar,
   .action-workspace,
   .task-context-block,

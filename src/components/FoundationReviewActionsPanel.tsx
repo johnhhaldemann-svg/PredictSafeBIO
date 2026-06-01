@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { ClipboardList } from "lucide-react";
 import { useMemo, useState } from "react";
-import { addFoundationReviewTaskNoteAction, refreshFoundationSourceResolutionAction, updateFoundationReviewTaskStatusAction } from "@/app/foundation/actions";
+import {
+  addFoundationReviewTaskNoteAction,
+  refreshFoundationSourceResolutionAction,
+  updateFoundationReviewTaskStatusAction,
+  updateFoundationReviewTasksStatusAction
+} from "@/app/foundation/actions";
 import type { FoundationAssigneeOption, FoundationReviewActionSummary } from "@/lib/supabase/data";
 
 const savedTaskViews = [
@@ -57,6 +62,7 @@ export function FoundationReviewActionsPanel({
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [savedView, setSavedView] = useState(initialSavedView);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [selectedActionId, setSelectedActionId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
@@ -101,6 +107,11 @@ export function FoundationReviewActionsPanel({
   const selectedAction = filteredActions.find((action) => action.id === selectedActionId) ?? filteredActions[0] ?? null;
   const readyForClosureActions = filteredActions.filter(isReadyForClosure);
   const savedViewLabel = getSavedViewLabel(savedView);
+  const selectedVisibleTaskIds = selectedTaskIds.filter((taskId) => filteredActions.some((action) => action.taskId === taskId));
+
+  function toggleSelectedTask(taskId: string) {
+    setSelectedTaskIds((current) => (current.includes(taskId) ? current.filter((id) => id !== taskId) : [...current, taskId]));
+  }
 
   return (
     <section className="panel command-center-lane task-command-lane">
@@ -198,6 +209,34 @@ export function FoundationReviewActionsPanel({
           <span>Review the source, add a closeout note, then complete the task.</span>
         </div>
       ) : null}
+      {canManage && filteredActions.some((action) => action.canUpdate && action.taskId) ? (
+        <form action={updateFoundationReviewTasksStatusAction} className="bulk-task-action-bar">
+          <div>
+            <strong>Bulk status update</strong>
+            <span>{selectedVisibleTaskIds.length} selected in this view</span>
+          </div>
+          {selectedVisibleTaskIds.map((taskId) => (
+            <input key={taskId} name="taskIds" type="hidden" value={taskId} />
+          ))}
+          <input name="returnTo" type="hidden" value={returnTo} />
+          <label>
+            Status
+            <select name="status" defaultValue="in_progress">
+              <option value="open">Open</option>
+              <option value="in_progress">In progress</option>
+              <option value="blocked">Blocked</option>
+              <option value="complete">Complete</option>
+            </select>
+          </label>
+          <label className="wide-field">
+            Closeout note
+            <textarea name="closeoutNote" placeholder="Required only when bulk completing selected tasks." rows={2} />
+          </label>
+          <button className="button-secondary compact" type="submit" disabled={selectedVisibleTaskIds.length < 1}>
+            Update selected
+          </button>
+        </form>
+      ) : null}
       <div className="action-workspace">
         <div className="action-list">
           {filteredActions.length > 0 ? (
@@ -205,7 +244,19 @@ export function FoundationReviewActionsPanel({
             <article className="action-row foundation-action-row" key={`${action.id}-${action.sourceModule}`}>
               <div className="foundation-action-header">
                 <div>
-                  <strong>{action.title}</strong>
+                  <div className="task-select-heading">
+                    {canManage && action.canUpdate && action.taskId ? (
+                      <label className="task-select-control">
+                        <input
+                          aria-label={`Select ${action.title}`}
+                          checked={selectedVisibleTaskIds.includes(action.taskId)}
+                          onChange={() => toggleSelectedTask(action.taskId as string)}
+                          type="checkbox"
+                        />
+                      </label>
+                    ) : null}
+                    <strong>{action.title}</strong>
+                  </div>
                   <span>{action.operatingState}</span>
                 </div>
                 <div className="task-chip-row" aria-label="Task state">

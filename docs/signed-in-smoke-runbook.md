@@ -40,6 +40,7 @@ Expected owner behavior:
 - Assignment controls are visible.
 - Due-date controls are visible.
 - Status, note, source refresh, and closeout controls remain available.
+- Bulk status update controls appear after selecting one or more visible tasks.
 
 ## Assigned-Member Smoke
 
@@ -57,9 +58,12 @@ Expected member behavior:
 - Priority controls are hidden.
 - Assignment controls are hidden.
 - Due-date controls are hidden.
+- Bulk status update controls can update selected assigned tasks only.
 
 ## Verification Notes
 
 On 2026-06-01, signed-in production smoke passed for the owner and member saved-view paths above after PR #31 was promoted. The run confirmed the active saved-view summary rendered for each saved view, the sort control exposed Priority, Due date, Status, and Source module options, owner assignment/due-date controls were visible, and member assignment/due-date controls stayed hidden while status and note controls remained available.
 
 On 2026-06-01, signed-in production priority-control smoke passed after PR #33 was promoted. Owner priority controls were visible; member priority, assignment, and due-date controls stayed hidden while status and note controls remained available.
+
+The `codex/bulk-task-status-actions` slice adds selected-task bulk status updates. Re-run owner/member smoke after promotion and confirm owner bulk controls work on visible tasks, members can bulk update only assigned tasks, and no bulk assignment, due-date, or priority controls are exposed.

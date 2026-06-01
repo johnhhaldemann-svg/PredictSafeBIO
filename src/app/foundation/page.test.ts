@@ -96,6 +96,7 @@ describe("foundation UI alignment", () => {
 
   it("adds owner-only task status controls and source drilldowns", () => {
     expect(foundationData).toContain("updateFoundationReviewTaskStatus");
+    expect(foundationData).toContain("updateFoundationReviewTasksStatus");
     expect(foundationData).toContain("getFoundationSourceDrilldownSummary");
     expect(foundationData).toContain("foundation_review_task_status_updated");
     expect(foundationData).toContain("Only generated Foundation review tasks can be updated");
@@ -136,6 +137,7 @@ describe("foundation UI alignment", () => {
     expect(foundationData).toContain("readyForClosureReview");
     expect(foundationData).toContain("Foundation task ready for closure review");
     expect(foundationData).toContain("Members can update only Foundation review tasks assigned to them");
+    expect(foundationData).toContain("Members can bulk update only Foundation review tasks assigned to them.");
     expect(foundationData).toContain("Members can update task status and notes only; priority, assignment, and due dates are owner-only.");
     expect(foundationData).toContain("normalizeFoundationTaskPriority");
     expect(foundationData).toContain("previousPriority");
@@ -155,6 +157,13 @@ describe("foundation UI alignment", () => {
     expect(reviewActionsPanel).toContain("canEditDueDate");
     expect(reviewActionsPanel).toContain("canEditPriority");
     expect(reviewActionsPanel).toContain("<select name=\"priority\" defaultValue={action.priority}>");
+    expect(reviewActionsPanel).toContain("updateFoundationReviewTasksStatusAction");
+    expect(reviewActionsPanel).toContain("Bulk status update");
+    expect(reviewActionsPanel).toContain("selectedVisibleTaskIds");
+    expect(reviewActionsPanel).toContain("taskIds");
+    expect(reviewActionsPanel).toContain("Select ${action.title}");
+    expect(reviewActionsPanel).not.toContain("name=\"assignedTo\" value={selectedVisibleTaskIds");
+    expect(reviewActionsPanel).not.toContain("name=\"priority\" value={selectedVisibleTaskIds");
     expect(reviewActionsPanel).toContain("initialSavedView");
     expect(reviewActionsPanel).toContain("laneLabel");
     expect(reviewActionsPanel).toContain("laneDescription");
@@ -209,6 +218,8 @@ describe("foundation UI alignment", () => {
     expect(reviewActionsPanel).toContain("actorRole");
     expect(foundationActions).toContain("normalizeFoundationReturnTo");
     expect(foundationActions).toContain("if (formData.has(\"priority\"))");
+    expect(foundationActions).toContain("updateFoundationReviewTasksStatusAction");
+    expect(foundationActions).toContain("formData.getAll(\"taskIds\")");
     expect(foundationActions).toContain("revalidatePath(\"/my-work\")");
     expect(foundationActions).toContain("\"/my-work\"");
     expect(foundationActions).toContain("addFoundationReviewTaskNoteAction");
