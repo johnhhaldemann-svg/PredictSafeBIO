@@ -1,62 +1,527 @@
+"use client";
+
 import Link from "next/link";
 import { ClipboardList } from "lucide-react";
-import { updateFoundationReviewTaskStatusAction } from "@/app/foundation/actions";
-import type { FoundationReviewActionSummary } from "@/lib/supabase/data";
+import { useMemo, useState } from "react";
+import { addFoundationReviewTaskNoteAction, refreshFoundationSourceResolutionAction, updateFoundationReviewTaskStatusAction } from "@/app/foundation/actions";
+import type { FoundationAssigneeOption, FoundationReviewActionSummary } from "@/lib/supabase/data";
 
 export function FoundationReviewActionsPanel({
   actions,
+  assignees = [],
   canManage = false,
+  canEditAssignment = true,
+  canEditDueDate = true,
   emptyMessage = "No open action-planning items have been generated yet.",
+  initialSavedView = "all",
+  laneDescription = "Source-traced actions, owner follow-through, activity notes, source resolution, and closure controls stay in one operating card.",
+  laneLabel = "Generated Actions",
+  primaryActionHref,
+  primaryActionLabel,
+  returnTo = "/foundation",
   title = "Source-traced follow-through"
 }: {
   actions: FoundationReviewActionSummary[];
+  assignees?: FoundationAssigneeOption[];
   canManage?: boolean;
+  canEditAssignment?: boolean;
+  canEditDueDate?: boolean;
   emptyMessage?: string;
+  initialSavedView?: string;
+  laneDescription?: string;
+  laneLabel?: string;
+  primaryActionHref?: string;
+  primaryActionLabel?: string;
+  returnTo?: string;
   title?: string;
 }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [savedView, setSavedView] = useState(initialSavedView);
+  const [selectedActionId, setSelectedActionId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
+  const sourceOptions = useMemo(
+    () => Array.from(new Set(actions.map((action) => action.sourceModule))).sort(),
+    [actions]
+  );
+  const filteredActions = useMemo(
+    () =>
+      actions.filter((action) => {
+        const searchText = [
+          action.title,
+          action.sourceLabel,
+          action.sourceModule,
+          action.assigneeName,
+          action.reason,
+          action.sourceResolutionState,
+          ...action.activityHistory.flatMap((event) => [
+            event.summary,
+            event.note ?? "",
+            event.closeoutNote ?? "",
+            event.actorRole ?? "",
+            event.status ?? "",
+            event.resolutionState ?? ""
+          ])
+        ]
+          .join(" ")
+          .toLowerCase();
+        const searchMatches = !searchQuery.trim() || searchText.includes(searchQuery.trim().toLowerCase());
+        const statusMatches = statusFilter === "all" || action.status === statusFilter;
+        const priorityMatches = priorityFilter === "all" || action.priority === priorityFilter;
+        const sourceMatches = sourceFilter === "all" || action.sourceModule === sourceFilter;
+        const savedViewMatches = getSavedViewMatch(savedView, action);
+        return searchMatches && statusMatches && priorityMatches && sourceMatches && savedViewMatches;
+      }),
+    [actions, priorityFilter, savedView, searchQuery, sourceFilter, statusFilter]
+  );
+  const selectedAction = filteredActions.find((action) => action.id === selectedActionId) ?? filteredActions[0] ?? null;
+  const readyForClosureActions = filteredActions.filter(isReadyForClosure);
+
   return (
-    <section className="panel">
-      <div className="panel-heading">
+    <section className="panel command-center-lane task-command-lane">
+      <div className="panel-heading command-center-lane-header">
         <div>
-          <p className="section-label">Action Planning</p>
+          <p className="section-label">{laneLabel}</p>
           <h2>{title}</h2>
+          <p className="muted">{laneDescription}</p>
         </div>
-        <ClipboardList size={22} />
+        {primaryActionHref && primaryActionLabel ? (
+          <Link className="button-primary compact" href={primaryActionHref}>
+            {primaryActionLabel}
+          </Link>
+        ) : (
+          <ClipboardList size={22} />
+        )}
       </div>
-      <div className="action-list">
-        {actions.length > 0 ? (
-          actions.map((action) => (
+      {actions.length > 0 ? (
+        <>
+          <div className="saved-view-bar" aria-label="Saved task views">
+            {[
+              ["all", "All generated"],
+              ["my_open", "My open work"],
+              ["blocked", "Blocked"],
+              ["due_soon", "Due soon"],
+              ["ready", "Ready for closure"],
+              ["unassigned", "Unassigned"]
+            ].map(([value, label]) => (
+              <button className={savedView === value ? "button-primary compact" : "button-secondary compact"} key={value} type="button" onClick={() => setSavedView(value)}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="action-filter-bar" aria-label="Foundation review action filters">
+            <label className="wide-field">
+              Search tasks
+              <input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search title, source, assignee, priority, status, or note text..."
+              />
+            </label>
+            <label>
+              Status
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                <option value="all">All statuses</option>
+                <option value="open">Open</option>
+                <option value="in_progress">In progress</option>
+                <option value="blocked">Blocked</option>
+                <option value="complete">Complete</option>
+              </select>
+            </label>
+            <label>
+              Priority
+              <select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)}>
+                <option value="all">All priorities</option>
+                <option value="high">High priority</option>
+                <option value="medium">Medium priority</option>
+                <option value="low">Low priority</option>
+              </select>
+            </label>
+            <label>
+              Source
+              <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}>
+                <option value="all">All sources</option>
+                {sourceOptions.map((sourceModule) => (
+                  <option key={sourceModule} value={sourceModule}>
+                    {sourceModule.replace(/_/g, " ")}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <span>
+              Showing {filteredActions.length} of {actions.length}
+            </span>
+          </div>
+        </>
+      ) : null}
+      {readyForClosureActions.length > 0 ? (
+        <div className="ready-closure-lane">
+          <strong>{readyForClosureActions.length} ready for closure review</strong>
+          <span>Review the source, add a closeout note, then complete the task.</span>
+        </div>
+      ) : null}
+      <div className="action-workspace">
+        <div className="action-list">
+          {filteredActions.length > 0 ? (
+            filteredActions.map((action) => (
             <article className="action-row foundation-action-row" key={`${action.id}-${action.sourceModule}`}>
-              <div>
-                <strong>{action.title}</strong>
-                <span>
-                  {action.priority} / {action.status}
-                </span>
+              <div className="foundation-action-header">
+                <div>
+                  <strong>{action.title}</strong>
+                  <span>{action.operatingState}</span>
+                </div>
+                <div className="task-chip-row" aria-label="Task state">
+                  <span className={`task-status-chip task-status-${normalizeChipClass(action.status)}`}>{formatActionLabel(action.status)}</span>
+                  <span className={`task-priority-chip task-priority-${normalizeChipClass(action.priority)}`}>{formatActionLabel(action.priority)}</span>
+                  <span className={`task-role-chip ${getTaskRoleClass(action, canManage, canEditAssignment)}`}>{getTaskRoleLabel(action, canManage, canEditAssignment)}</span>
+                </div>
               </div>
-              <p>
-                Source: <Link href={action.sourceHref}>{action.sourceLabel}</Link>
-                {action.dueDate ? ` / Due ${action.dueDate}` : ""}
-                {action.reason ? ` / ${action.reason}` : ""}
-              </p>
-              {canManage && action.taskId ? (
+              <div className="task-card-meta" aria-label="Task summary">
+                <span>
+                  Owner <strong>{action.assigneeName ?? "Unassigned"}</strong>
+                </span>
+                <span>
+                  Due <strong>{action.dueDate ?? "No due date"}</strong>
+                </span>
+                <span>
+                  Source <Link href={action.sourceHref}>{action.sourceLabel}</Link>
+                </span>
+                <span className={`task-aging-badge ${getTaskAgingClass(action)}`}>{getTaskAgingLabel(action)}</span>
+              </div>
+              {action.reason ? <p>{action.reason}</p> : null}
+              <CloseoutNoteCallout action={action} />
+              <div className="task-action-button-row">
+                <button className="button-secondary compact" type="button" onClick={() => setSelectedActionId(action.id)}>
+                  Open task detail
+                </button>
+                <Link className="button-secondary compact" href={action.sourceDetailHref}>
+                  Open source
+                </Link>
+              </div>
+              {isReadyForClosure(action) ? (
+                <div className="ready-closure-banner">
+                  <strong>Ready for closure review</strong>
+                  <span>Source resolution is clean. Add a closeout note before completing the task.</span>
+                </div>
+              ) : null}
+              <details className="source-detail-expander">
+                <summary>Action detail and source trace</summary>
+                <div className="action-detail-grid">
+                  <TaskContextBlock action={action} compact={false} />
+                  <div className="action-next-step">
+                    <strong>Next step</strong>
+                    <p>{action.nextStep}</p>
+                    <Link className="text-link" href={action.sourceDetailHref}>
+                      Open source section
+                    </Link>
+                  </div>
+                  <div className="action-next-step">
+                    <strong>Source resolution</strong>
+                    <p>{action.sourceResolutionState}</p>
+                    <p>{action.sourceResolutionDetail}</p>
+                  </div>
+                  {action.closeoutNote ? (
+                    <div className="action-next-step">
+                      <strong>Closeout note</strong>
+                      <p>{action.closeoutNote}</p>
+                    </div>
+                  ) : null}
+                  <div className="action-status-history">
+                    <strong>Activity history</strong>
+                    <TaskActivityTimeline events={action.activityHistory.slice(0, 5)} />
+                  </div>
+                </div>
+              </details>
+              {canManage && action.canUpdate && action.taskId ? (
                 <form action={updateFoundationReviewTaskStatusAction} className="task-status-form">
                   <input name="taskId" type="hidden" value={action.taskId} />
-                  <select name="status" defaultValue={action.status === "open" ? "in_progress" : action.status}>
-                    <option value="in_progress">In progress</option>
-                    <option value="complete">Complete</option>
-                    <option value="blocked">Blocked</option>
-                  </select>
+                  <input name="returnTo" type="hidden" value={returnTo} />
+                  <label>
+                    Status
+                    <select name="status" defaultValue={action.status === "open" ? "in_progress" : action.status}>
+                      <option value="open">Open</option>
+                      <option value="in_progress">In progress</option>
+                      <option value="complete">Complete</option>
+                      <option value="blocked">Blocked</option>
+                    </select>
+                  </label>
+                  {canEditDueDate ? (
+                    <label>
+                      Due date
+                      <input name="dueDate" type="date" defaultValue={action.dueDate ?? ""} />
+                    </label>
+                  ) : null}
+                  {canEditAssignment ? (
+                    <label>
+                      Assignee
+                      <select name="assignedTo" defaultValue={action.assignedTo ?? ""}>
+                        <option value="">Unassigned</option>
+                        {assignees.map((assignee) => (
+                          <option key={assignee.id} value={assignee.id}>
+                            {assignee.name}
+                            {assignee.role ? ` / ${assignee.role}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
+                  <label className="wide-field">
+                    Closeout note
+                    <textarea
+                      name="closeoutNote"
+                      placeholder="Required before marking complete; optional for other status changes."
+                      rows={2}
+                    />
+                  </label>
                   <button className="button-secondary compact" type="submit">
                     Update task
                   </button>
                 </form>
               ) : null}
+              {canManage && action.canUpdate && action.taskId ? (
+                <form action={addFoundationReviewTaskNoteAction} className="task-note-form">
+                  <input name="taskId" type="hidden" value={action.taskId} />
+                  <input name="returnTo" type="hidden" value={returnTo} />
+                  <label>
+                    Activity note
+                    <textarea name="note" placeholder="Add a human-review note without changing status." rows={2} />
+                  </label>
+                  <button className="button-secondary compact" type="submit">
+                    Add note
+                  </button>
+                </form>
+              ) : null}
+              {canManage && action.canUpdate && action.taskId ? (
+                <form action={refreshFoundationSourceResolutionAction} className="task-refresh-form">
+                  <input name="taskId" type="hidden" value={action.taskId} />
+                  <input name="returnTo" type="hidden" value={returnTo} />
+                  <button className="button-secondary compact" type="submit">
+                    Refresh source resolution
+                  </button>
+                </form>
+              ) : null}
             </article>
-          ))
-        ) : (
-          <p className="muted">{emptyMessage}</p>
-        )}
+            ))
+          ) : actions.length > 0 ? (
+            <TaskEmptyState
+              title="No tasks in this saved view"
+              message="Try another saved view, reset the filters, or generate/source a new Foundation review action."
+            />
+          ) : (
+            <TaskEmptyState title="This lane is clear" message={emptyMessage} />
+          )}
+        </div>
+        {selectedAction ? <TaskDetailDrawer action={selectedAction} /> : null}
       </div>
     </section>
   );
+}
+
+function TaskDetailDrawer({ action }: { action: FoundationReviewActionSummary }) {
+  return (
+    <aside className="task-detail-drawer" aria-label="Task detail drawer">
+      <div>
+        <p className="section-label">Task detail</p>
+        <h3>{action.title}</h3>
+      </div>
+      <div className="task-chip-row">
+        <span className={`task-status-chip task-status-${normalizeChipClass(action.status)}`}>{formatActionLabel(action.status)}</span>
+        <span className={`task-priority-chip task-priority-${normalizeChipClass(action.priority)}`}>{formatActionLabel(action.priority)}</span>
+        <span className="task-role-chip task-role-detail">Source-traced task</span>
+      </div>
+      <TaskContextBlock action={action} compact={false} />
+      {isReadyForClosure(action) ? (
+        <div className="ready-closure-banner">
+          <strong>Ready for closure</strong>
+          <span>Add a closeout note and complete the task after human review.</span>
+        </div>
+      ) : null}
+      <CloseoutNoteCallout action={action} />
+      <div className="action-status-history">
+        <strong>Activity timeline</strong>
+        <TaskActivityTimeline events={action.activityHistory.slice(0, 8)} />
+      </div>
+    </aside>
+  );
+}
+
+function TaskEmptyState({ title, message }: { title: string; message: string }) {
+  return (
+    <div className="task-lane-empty-state">
+      <strong>{title}</strong>
+      <p>{message}</p>
+    </div>
+  );
+}
+
+function TaskContextBlock({ action, compact = true }: { action: FoundationReviewActionSummary; compact?: boolean }) {
+  const resolution = getSourceResolutionDisplay(action.sourceResolutionState);
+
+  return (
+    <div className={compact ? "task-context-block" : "task-context-block task-context-expanded"} aria-label="Task context">
+      <div>
+        <span>Status</span>
+        <strong>{formatActionLabel(action.status)}</strong>
+      </div>
+      <div>
+        <span>Assignee</span>
+        <strong>{action.assigneeName ?? "Unassigned"}</strong>
+      </div>
+      <div>
+        <span>Due date</span>
+        <strong>{action.dueDate ?? "No due date"}</strong>
+      </div>
+      <div>
+        <span>Source</span>
+        <strong>{formatActionLabel(action.sourceModule)}</strong>
+        <Link className="text-link" href={action.sourceDetailHref}>
+          {action.sourceLabel}
+        </Link>
+      </div>
+      <div className="task-context-resolution">
+        <span>Source resolution</span>
+        <strong className={`source-resolution-chip source-resolution-${resolution.className}`}>{resolution.label}</strong>
+        {!compact ? <p>{action.sourceResolutionDetail}</p> : null}
+      </div>
+    </div>
+  );
+}
+
+function TaskActivityTimeline({ events }: { events: FoundationReviewActionSummary["activityHistory"] }) {
+  if (events.length < 1) return <p>No activity history has been written yet.</p>;
+
+  return (
+    <ol className="compact-timeline rich-activity-timeline">
+      {events.map((event) => (
+        <li key={`${event.eventType}-${event.createdAt ?? event.summary}`}>
+          <div className="activity-event-heading">
+            <strong>{getActivityTitle(event)}</strong>
+            <span>{event.createdAt ? new Date(event.createdAt).toLocaleString() : "Pending timestamp"}</span>
+          </div>
+          <div className="activity-event-meta">
+            <span>{formatActionLabel(event.eventType)}</span>
+            <span>{formatActionLabel(event.actorRole ?? "system")}</span>
+          </div>
+          <div className="activity-event-details">
+            {getActivityDetails(event).map((detail) => (
+              <p key={detail}>{detail}</p>
+            ))}
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function getActivityTitle(event: FoundationReviewActionSummary["activityHistory"][number]) {
+  if (event.closeoutNote && event.status === "complete") return "Closed with closeout note";
+  if (event.eventType === "foundation_review_task_note_added") return "Note added";
+  if (event.eventType === "foundation_source_resolution_refreshed") return "Source refreshed";
+  if (event.previousAssignedTo !== event.assignedTo) return "Assignment changed";
+  if (event.previousDueDate !== event.dueDate) return "Due date changed";
+  if (event.status) return "Status changed";
+  return "Activity recorded";
+}
+
+function getActivityDetails(event: FoundationReviewActionSummary["activityHistory"][number]) {
+  const details = [];
+  if (event.previousStatus || event.status) {
+    details.push(`Status: ${formatNullableValue(event.previousStatus)} -> ${formatNullableValue(event.status)}`);
+  }
+  if (event.previousAssignedTo !== event.assignedTo && (event.previousAssignedTo || event.assignedTo)) {
+    details.push(`Assignee: ${formatNullableValue(event.previousAssigneeName ?? event.previousAssignedTo)} -> ${formatNullableValue(event.assigneeName ?? event.assignedTo)}`);
+  }
+  if (event.previousDueDate !== event.dueDate && (event.previousDueDate || event.dueDate)) {
+    details.push(`Due date: ${formatNullableValue(event.previousDueDate)} -> ${formatNullableValue(event.dueDate)}`);
+  }
+  if (event.resolutionState) details.push(`Source resolution: ${event.resolutionState}`);
+  if (event.resolutionDetail) details.push(event.resolutionDetail);
+  if (event.note) details.push(`Note: ${event.note}`);
+  if (event.closeoutNote) details.push(`Closeout note: ${event.closeoutNote}`);
+  if (details.length < 1) details.push(event.summary);
+  return details;
+}
+
+function formatNullableValue(value?: string | null) {
+  return value ? formatActionLabel(value) : "none";
+}
+
+function getSourceResolutionDisplay(state: string) {
+  const normalized = state.toLowerCase();
+  if (normalized.includes("appears resolved")) return { label: "Resolved", className: "resolved" };
+  if (normalized.includes("no exact source")) return { label: "No exact source", className: "no-source" };
+  if (normalized.includes("manual")) return { label: "Manual review", className: "manual-review" };
+  return { label: "Needs review", className: "needs-review" };
+}
+
+function CloseoutNoteCallout({ action }: { action: FoundationReviewActionSummary }) {
+  if (action.status !== "complete" || !action.closeoutNote?.trim()) return null;
+
+  return (
+    <div className="task-closeout-note">
+      <strong>Closeout note</strong>
+      <p>{action.closeoutNote}</p>
+    </div>
+  );
+}
+
+function getTaskAgingLabel(action: FoundationReviewActionSummary) {
+  if (action.status === "complete") return "Completed";
+  if (action.status === "blocked") return "Blocked";
+  if (!action.dueDate) return "No due date";
+  const due = new Date(`${action.dueDate}T00:00:00`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
+  if (days < 0) return "Overdue";
+  if (days <= 3) return "Due soon";
+  return "On track";
+}
+
+function getTaskAgingClass(action: FoundationReviewActionSummary) {
+  const label = getTaskAgingLabel(action).toLowerCase().replace(/\s+/g, "-");
+  return `task-aging-${label}`;
+}
+
+function formatActionLabel(value: string) {
+  return value.replace(/_/g, " ");
+}
+
+function normalizeChipClass(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
+
+function isReadyForClosure(action: FoundationReviewActionSummary) {
+  return action.status !== "complete" && action.sourceResolutionState === "Source appears resolved";
+}
+
+function getSavedViewMatch(savedView: string, action: FoundationReviewActionSummary) {
+  if (savedView === "blocked") return action.status === "blocked";
+  if (savedView === "ready") return isReadyForClosure(action);
+  if (savedView === "unassigned") return !action.assignedTo;
+  if (savedView === "my_open") return action.canUpdate && Boolean(action.assignedTo) && action.status !== "complete";
+  if (savedView === "due_soon") return isDueSoon(action);
+  return true;
+}
+
+function isDueSoon(action: FoundationReviewActionSummary) {
+  if (!action.dueDate) return false;
+  const due = new Date(`${action.dueDate}T00:00:00`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
+  return days >= 0 && days <= 3;
+}
+
+function getTaskRoleLabel(action: FoundationReviewActionSummary, canManage: boolean, canEditAssignment: boolean) {
+  if (!canManage || !action.canUpdate) return "Read-only";
+  if (canEditAssignment) return "Owner controls";
+  return "Assigned member";
+}
+
+function getTaskRoleClass(action: FoundationReviewActionSummary, canManage: boolean, canEditAssignment: boolean) {
+  if (!canManage || !action.canUpdate) return "task-role-readonly";
+  if (canEditAssignment) return "task-role-owner";
+  return "task-role-member";
 }

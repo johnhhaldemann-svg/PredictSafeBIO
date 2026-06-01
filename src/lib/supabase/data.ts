@@ -44,7 +44,8 @@ import {
   defaultApplicabilityRules,
   foundationMethodNames,
   foundationProgramNames,
-  northStarFoundationDemo
+  northStarFoundationDemo,
+  type FoundationIntakeAnswers
 } from "@/lib/foundation/engine";
 import {
   changePlanPriorities,
@@ -258,14 +259,158 @@ export type FoundationReviewActionSummary = {
   title: string;
   priority: string;
   status: string;
+  operatingState: string;
+  canUpdate: boolean;
+  assignedTo?: string | null;
+  assigneeName?: string | null;
   sourceModule: string;
   sourceRecordId?: string;
   sourceLabel: string;
   sourceHref: string;
+  sourceDetailHref: string;
+  sourceResolutionState: string;
+  sourceResolutionDetail: string;
   dueDate?: string | null;
   recommendationId?: string;
   reason?: string;
+  nextStep: string;
+  closeoutNote?: string | null;
   createdAt?: string;
+  statusHistory: Array<{
+    eventType: AuditEvent["eventType"];
+    summary: string;
+    createdAt?: string;
+    status?: string;
+    previousStatus?: string | null;
+    note?: string;
+    closeoutNote?: string | null;
+    actorRole?: string | null;
+    previousDueDate?: string | null;
+    dueDate?: string | null;
+    previousAssignedTo?: string | null;
+    assignedTo?: string | null;
+    previousAssigneeName?: string | null;
+    assigneeName?: string | null;
+    resolutionState?: string | null;
+    resolutionDetail?: string | null;
+    readyForClosureReview?: boolean | null;
+  }>;
+  activityHistory: Array<{
+    eventType: AuditEvent["eventType"];
+    summary: string;
+    createdAt?: string;
+    status?: string;
+    previousStatus?: string | null;
+    note?: string;
+    closeoutNote?: string | null;
+    actorRole?: string | null;
+    previousDueDate?: string | null;
+    dueDate?: string | null;
+    previousAssignedTo?: string | null;
+    assignedTo?: string | null;
+    previousAssigneeName?: string | null;
+    assigneeName?: string | null;
+    resolutionState?: string | null;
+    resolutionDetail?: string | null;
+    readyForClosureReview?: boolean | null;
+  }>;
+};
+
+export type FoundationProductionVerificationSummary = {
+  latestWorkflowSave?: {
+    eventType: AuditEvent["eventType"];
+    summary: string;
+    createdAt?: string;
+  };
+  latestTaskUpdate?: {
+    eventType: AuditEvent["eventType"];
+    summary: string;
+    createdAt?: string;
+  };
+  latestAuditEvent?: {
+    eventType: AuditEvent["eventType"];
+    summary: string;
+    createdAt?: string;
+  };
+  environment: string;
+  deploymentUrl: string;
+  productionReady: boolean;
+  reason: string;
+};
+
+export type FoundationNotificationSummary = {
+  unreadCount: number;
+  notifications: Array<{
+    id: string;
+    title: string;
+    body: string;
+    notificationType: string;
+    label: string;
+    taskId?: string | null;
+    createdAt?: string;
+    readAt?: string | null;
+  }>;
+};
+
+export type FoundationAssigneeOption = {
+  id: string;
+  name: string;
+  role?: string | null;
+};
+
+export type FoundationDuplicateSkipSummary = {
+  title: string;
+  sourceModule: string;
+  sourceRecordId?: string;
+  reason: string;
+};
+
+export type FoundationVerificationStatusSummary = {
+  checklist: Array<{
+    key: string;
+    label: string;
+    status: "pass" | "pending";
+    detail: string;
+    eventTypes: AuditEvent["eventType"][];
+  }>;
+  latestWorkflowSave?: {
+    eventType: AuditEvent["eventType"];
+    summary: string;
+    createdAt?: string;
+    sourceModule?: string;
+    targetModule?: string;
+  };
+  latestReviewActionRun?: {
+    summary: string;
+    createdAt?: string;
+    created: number;
+    candidateCount: number;
+    skippedDuplicates: FoundationDuplicateSkipSummary[];
+  };
+  latestAuditEvent?: {
+    eventType: AuditEvent["eventType"];
+    summary: string;
+    createdAt?: string;
+    sourceModule?: string;
+    targetModule?: string;
+    draftOnly: boolean;
+  };
+  latestFinalSignoff?: {
+    id: string;
+    note: string;
+    createdAt?: string;
+  };
+  allChecklistPassed: boolean;
+  productionPromotionAllowed: boolean;
+  productionGateReason: string;
+};
+
+export type FoundationOperationsDashboardSummary = {
+  readinessScore: number;
+  openActions: number;
+  blockedTasks: number;
+  duplicatePreserved: number;
+  latestRunSummary?: string;
 };
 
 export type ChangePlanItem = ChangePlanRow & {
@@ -697,17 +842,24 @@ export async function getDocumentRecommendationHistory(documentId: string): Prom
   });
 }
 
-export async function listAuditEvents(): Promise<AuditEvent[]> {
+export async function listAuditEvents(filters?: { eventType?: string; sourceModule?: string }): Promise<AuditEvent[]> {
   const context = await getProfileContext();
-  if (!context) return demoAuditEvents;
+  if (!context) return filterAuditEvents(demoAuditEvents, filters);
 
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("audit_events")
     .select("*")
     .eq("organization_id", context.organizationId)
     .order("created_at", { ascending: false })
     .limit(100);
+  if (filters?.eventType && filters.eventType !== "all") {
+    query = query.eq("event_type", filters.eventType);
+  }
+  if (filters?.sourceModule && filters.sourceModule !== "all") {
+    query = query.contains("payload", { sourceModule: filters.sourceModule });
+  }
+  const { data, error } = await query;
 
   if (error || !data) return demoAuditEvents;
 
@@ -1171,12 +1323,12 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
 
   try {
     const supabase = await createSupabaseServerClient();
-    const [taskRows, recommendationRows] = await Promise.all([
+    const [taskRows, recommendationRows, profileRows, auditRows] = await Promise.all([
       supabase
         .from("tasks")
-        .select("id,title,priority,status,due_date,source_module,source_record_id,created_at")
+        .select("id,title,priority,status,due_date,assigned_to,source_module,source_record_id,created_at")
         .eq("organization_id", context.organizationId)
-        .in("status", ["open", "in_progress"])
+        .in("status", ["open", "in_progress", "blocked", "complete"])
         .in("source_module", foundationReviewSourceModules)
         .order("created_at", { ascending: false })
         .limit(20),
@@ -1186,10 +1338,42 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
         .eq("organization_id", context.organizationId)
         .contains("payload", { actionType: "foundation_review_action" })
         .order("created_at", { ascending: false })
-        .limit(20)
+        .limit(20),
+      supabase.from("profiles").select("id,full_name,role").eq("organization_id", context.organizationId).order("full_name"),
+      supabase
+        .from("audit_events")
+        .select("event_type,summary,created_at,payload")
+        .eq("organization_id", context.organizationId)
+        .in("event_type", [
+          "foundation_review_actions_generated",
+          "foundation_review_task_status_updated",
+          "foundation_review_task_note_added",
+          "foundation_source_resolution_refreshed"
+        ])
+        .order("created_at", { ascending: false })
+        .limit(80)
     ]);
 
+    const taskData = (taskRows.data as Record<string, any>[]) ?? [];
+    await createFoundationDueNotifications(supabase, context.organizationId, taskData);
     const recommendations = ((recommendationRows.data as Record<string, any>[]) ?? []).filter((row) => row.payload?.draftOnly !== false);
+    const profiles = new Map(((profileRows.data as Record<string, any>[]) ?? []).map((row) => [row.id, row]));
+    const auditEvents = ((auditRows.data as Record<string, any>[]) ?? []).map((row) => ({
+      eventType: row.event_type as AuditEvent["eventType"],
+      summary: String(row.summary ?? ""),
+      createdAt: row.created_at,
+      payload: row.payload ?? {}
+    }));
+    const sourceResolutionStates = await getFoundationSourceResolutionStates(supabase, context.organizationId, [
+      ...taskData.map((row) => ({
+        sourceModule: String(row.source_module ?? "foundation"),
+        sourceRecordId: row.source_record_id ? String(row.source_record_id) : undefined
+      })),
+      ...recommendations.map((row) => ({
+        sourceModule: String(row.payload?.sourceModule ?? "foundation"),
+        sourceRecordId: row.payload?.sourceRecordId ? String(row.payload.sourceRecordId) : undefined
+      }))
+    ]);
     const recommendationBySource = new Map<string, Record<string, any>>();
     for (const row of recommendations) {
       const key = foundationActionKey(row.payload?.sourceModule, row.payload?.sourceRecordId, row.title);
@@ -1197,26 +1381,40 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
     }
 
     const actions = new Map<string, FoundationReviewActionSummary>();
-    for (const row of ((taskRows.data as Record<string, any>[]) ?? [])) {
+    for (const row of taskData) {
       const sourceModule = String(row.source_module ?? "foundation");
       const sourceRecordId = row.source_record_id ? String(row.source_record_id) : undefined;
       const key = foundationActionKey(sourceModule, sourceRecordId, row.title) ?? row.id;
       const recommendation = recommendationBySource.get(key);
       const source = getFoundationSourceTarget(sourceModule);
+      const statusHistory = getFoundationTaskStatusHistory(auditEvents, row.id, sourceRecordId, profiles);
+      const activityHistory = getFoundationTaskActivityHistory(auditEvents, row.id, sourceRecordId, profiles);
+      const sourceResolution = getFoundationSourceResolution(sourceResolutionStates, sourceModule, sourceRecordId);
       actions.set(key, {
         id: row.id,
         taskId: row.id,
         title: row.title,
         priority: row.priority ?? "medium",
         status: row.status ?? "open",
+        operatingState: getFoundationActionOperatingState(row.status ?? "open", row.due_date),
+        canUpdate: context.role === "owner" || row.assigned_to === context.userId,
+        assignedTo: row.assigned_to ?? null,
+        assigneeName: profiles.get(row.assigned_to)?.full_name ?? null,
         sourceModule,
         sourceRecordId,
         sourceLabel: source.label,
-        sourceHref: source.href,
+        sourceHref: getFoundationExactSourceHref(sourceModule, sourceRecordId),
+        sourceDetailHref: getFoundationExactSourceHref(sourceModule, sourceRecordId),
+        sourceResolutionState: sourceResolution.state,
+        sourceResolutionDetail: sourceResolution.detail,
         dueDate: row.due_date,
         recommendationId: recommendation?.id,
         reason: recommendation?.payload?.reason,
-        createdAt: row.created_at
+        nextStep: getFoundationActionNextStep(row.status ?? "open", row.assigned_to, row.due_date),
+        closeoutNote: getFoundationTaskCloseoutNote(statusHistory),
+        createdAt: row.created_at,
+        statusHistory,
+        activityHistory
       });
     }
 
@@ -1226,24 +1424,277 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
       const key = foundationActionKey(sourceModule, sourceRecordId, row.title) ?? row.id;
       if (actions.has(key)) continue;
       const source = getFoundationSourceTarget(sourceModule);
+      const sourceResolution = getFoundationSourceResolution(sourceResolutionStates, sourceModule, sourceRecordId);
       actions.set(key, {
         id: row.id,
         title: row.title,
         priority: "medium",
         status: row.label ?? "Draft - Human Review Required",
+        operatingState: "Draft recommendation",
+        canUpdate: context.role === "owner",
         sourceModule,
         sourceRecordId,
         sourceLabel: source.label,
-        sourceHref: source.href,
+        sourceHref: getFoundationExactSourceHref(sourceModule, sourceRecordId),
+        sourceDetailHref: getFoundationExactSourceHref(sourceModule, sourceRecordId),
+        sourceResolutionState: sourceResolution.state,
+        sourceResolutionDetail: sourceResolution.detail,
         recommendationId: row.id,
         reason: row.payload?.reason,
-        createdAt: row.created_at
+        nextStep: "Create or link a review task before operational follow-through.",
+        createdAt: row.created_at,
+        statusHistory: [],
+        activityHistory: []
       });
     }
 
     return Array.from(actions.values()).slice(0, 12);
   } catch {
     return [];
+  }
+}
+
+export async function getFoundationAssigneeOptions(): Promise<FoundationAssigneeOption[]> {
+  const context = await getProfileContext();
+  if (!context) return [];
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id,full_name,role")
+      .eq("organization_id", context.organizationId)
+      .order("full_name");
+
+    if (error || !data) return [];
+    return data.map((row) => ({
+      id: row.id,
+      name: row.full_name ?? row.role ?? "Workspace user",
+      role: row.role
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function getFoundationVerificationStatusSummary(): Promise<FoundationVerificationStatusSummary> {
+  const context = await getProfileContext();
+  if (!context) return demoFoundationVerificationStatusSummary();
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const workflowEvents = [
+      "foundation_biotype_selection_updated",
+      "foundation_intake_response_updated",
+      "foundation_evidence_readiness_updated",
+      "foundation_audit_readiness_note_added",
+      "foundation_review_task_status_updated"
+    ];
+    const [saveResult, runResult, latestResult, checklistResult, signoffResult] = await Promise.all([
+      supabase
+        .from("audit_events")
+        .select("event_type,summary,payload,created_at")
+        .eq("organization_id", context.organizationId)
+        .in("event_type", workflowEvents)
+        .order("created_at", { ascending: false })
+        .limit(1),
+      supabase
+        .from("audit_events")
+        .select("event_type,summary,payload,created_at")
+        .eq("organization_id", context.organizationId)
+        .eq("event_type", "foundation_review_actions_generated")
+        .order("created_at", { ascending: false })
+        .limit(1),
+      supabase
+        .from("audit_events")
+        .select("event_type,summary,payload,created_at")
+        .eq("organization_id", context.organizationId)
+        .order("created_at", { ascending: false })
+        .limit(1),
+      supabase
+        .from("audit_events")
+        .select("event_type,summary,payload,created_at")
+        .eq("organization_id", context.organizationId)
+        .in("event_type", [...workflowEvents, "foundation_review_actions_generated"])
+        .order("created_at", { ascending: false })
+        .limit(50),
+      supabase
+        .from("audit_readiness_notes")
+        .select("id,note,created_at")
+        .eq("organization_id", context.organizationId)
+        .eq("note_type", "final_preview_signoff")
+        .order("created_at", { ascending: false })
+        .limit(1)
+    ]);
+
+    const checklist = buildFoundationVerificationChecklist((checklistResult.data as Record<string, any>[]) ?? []);
+    const latestWorkflowSave = mapFoundationWorkflowSave((saveResult.data?.[0] as Record<string, any> | undefined) ?? null);
+    const latestReviewActionRun = mapFoundationReviewRun((runResult.data?.[0] as Record<string, any> | undefined) ?? null);
+    const latestAuditEvent = mapFoundationLatestAudit((latestResult.data?.[0] as Record<string, any> | undefined) ?? null);
+    const latestFinalSignoff = mapFoundationFinalSignoff((signoffResult.data?.[0] as Record<string, any> | undefined) ?? null);
+    const allChecklistPassed = checklist.every((step) => step.status === "pass");
+    const productionPromotionAllowed = allChecklistPassed && Boolean(latestFinalSignoff);
+
+    return {
+      checklist,
+      latestWorkflowSave,
+      latestReviewActionRun,
+      latestAuditEvent,
+      latestFinalSignoff,
+      allChecklistPassed,
+      productionPromotionAllowed,
+      productionGateReason: productionPromotionAllowed
+        ? "Owner verification passed and final preview signoff is captured."
+        : allChecklistPassed
+          ? "Verification checklist passed; final preview signoff is still required."
+          : "Production promotion is blocked until every owner verification checklist item passes."
+    };
+  } catch {
+    return demoFoundationVerificationStatusSummary();
+  }
+}
+
+export async function getFoundationProductionVerificationSummary(): Promise<FoundationProductionVerificationSummary> {
+  const context = await getProfileContext();
+  const environment = process.env.VERCEL_ENV ?? "local";
+  const deploymentUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://127.0.0.1:3001";
+  if (!context) {
+    return {
+      environment,
+      deploymentUrl,
+      productionReady: false,
+      reason: "Sign in to verify production workflow evidence."
+    };
+  }
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data } = await supabase
+      .from("audit_events")
+      .select("event_type,summary,created_at,payload")
+      .eq("organization_id", context.organizationId)
+      .in("event_type", [
+        "foundation_biotype_selection_updated",
+        "foundation_intake_response_updated",
+        "foundation_evidence_readiness_updated",
+        "foundation_audit_readiness_note_added",
+        "foundation_review_actions_generated",
+        "foundation_review_task_status_updated",
+        "foundation_review_task_note_added",
+        "foundation_source_resolution_refreshed"
+      ])
+      .order("created_at", { ascending: false })
+      .limit(30);
+    const rows = (data as Record<string, any>[] | null) ?? [];
+    const latestWorkflowSave = rows.find((row) =>
+      ["foundation_biotype_selection_updated", "foundation_intake_response_updated", "foundation_evidence_readiness_updated", "foundation_audit_readiness_note_added"].includes(
+        String(row.event_type)
+      )
+    );
+    const latestTaskUpdate = rows.find(
+      (row) =>
+        row.event_type === "foundation_review_task_status_updated" ||
+        row.event_type === "foundation_review_task_note_added" ||
+        row.event_type === "foundation_source_resolution_refreshed"
+    );
+    const latestAuditEvent = rows[0];
+    const productionReady = Boolean(latestWorkflowSave && latestTaskUpdate && latestAuditEvent);
+
+    return {
+      latestWorkflowSave: latestWorkflowSave ? mapProductionVerificationEvent(latestWorkflowSave) : undefined,
+      latestTaskUpdate: latestTaskUpdate ? mapProductionVerificationEvent(latestTaskUpdate) : undefined,
+      latestAuditEvent: latestAuditEvent ? mapProductionVerificationEvent(latestAuditEvent) : undefined,
+      environment,
+      deploymentUrl,
+      productionReady,
+      reason: productionReady
+        ? "Latest workflow save, task activity, and audit event are present. Promotion can be considered after route smoke testing."
+        : "Production verification is blocked until workflow save, task activity, and audit evidence are all present."
+    };
+  } catch {
+    return {
+      environment,
+      deploymentUrl,
+      productionReady: false,
+      reason: "Production verification could not read the audit trail."
+    };
+  }
+}
+
+export async function getFoundationNotificationSummary(): Promise<FoundationNotificationSummary> {
+  const context = await getProfileContext();
+  if (!context) return { unreadCount: 0, notifications: [] };
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("id,title,body,notification_type,task_id,read_at,created_at")
+      .eq("organization_id", context.organizationId)
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(12);
+
+    if (error || !data) return { unreadCount: 0, notifications: [] };
+    const notifications = data.map((row) => ({
+      id: row.id,
+      title: row.title,
+      body: row.body ?? "",
+      notificationType: row.notification_type ?? "task",
+      label: getFoundationNotificationLabel(row.notification_type ?? "task"),
+      taskId: row.task_id,
+      createdAt: row.created_at,
+      readAt: row.read_at
+    }));
+    return {
+      unreadCount: notifications.filter((notification) => !notification.readAt).length,
+      notifications
+    };
+  } catch {
+    return { unreadCount: 0, notifications: [] };
+  }
+}
+
+export async function updateFoundationNotificationReadState(input: { notificationId: string; read: boolean }): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in to update notification state." };
+
+  const notificationId = String(input.notificationId ?? "").trim();
+  if (!notificationId) return { ok: false, message: "Choose a notification to update." };
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read_at: input.read ? new Date().toISOString() : null })
+      .eq("organization_id", context.organizationId)
+      .eq("user_id", context.userId)
+      .eq("id", notificationId);
+
+    if (error) return { ok: false, message: error.message };
+    return { ok: true, message: input.read ? "Notification marked read." : "Notification marked unread." };
+  } catch {
+    return { ok: false, message: "Notification state could not be updated." };
+  }
+}
+
+export async function markAllFoundationNotificationsRead(): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in to clear notifications." };
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("organization_id", context.organizationId)
+      .eq("user_id", context.userId)
+      .is("read_at", null);
+
+    if (error) return { ok: false, message: error.message };
+    return { ok: true, message: "Unread notifications marked read." };
+  } catch {
+    return { ok: false, message: "Notifications could not be cleared." };
   }
 }
 
@@ -1422,6 +1873,57 @@ export async function getAuditReadinessConsoleSummary(): Promise<AuditReadinessC
     };
   } catch {
     return demoAuditReadinessConsoleSummary();
+  }
+}
+
+export async function getFoundationOperationsDashboardSummary(): Promise<FoundationOperationsDashboardSummary> {
+  const context = await getProfileContext();
+  if (!context) {
+    const demo = demoIntelligenceFoundationSummary();
+    return {
+      readinessScore: demo.readiness.overallScore,
+      openActions: 0,
+      blockedTasks: 0,
+      duplicatePreserved: 1,
+      latestRunSummary: "Demo Foundation action planning has not been verified by an owner."
+    };
+  }
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const [scoreRow, taskRows, latestRun] = await Promise.all([
+      latestRow(supabase, "audit_readiness_scores", context.organizationId, "id,overall_score,generated_at"),
+      supabase
+        .from("tasks")
+        .select("id,status")
+        .eq("organization_id", context.organizationId)
+        .in("source_module", foundationReviewSourceModules),
+      supabase
+        .from("audit_events")
+        .select("summary,payload,created_at")
+        .eq("organization_id", context.organizationId)
+        .eq("event_type", "foundation_review_actions_generated")
+        .order("created_at", { ascending: false })
+        .limit(1)
+    ]);
+    const tasks = (taskRows.data as Record<string, any>[] | null) ?? [];
+    const run = (latestRun.data?.[0] as Record<string, any> | undefined) ?? null;
+    return {
+      readinessScore: Number((scoreRow as Record<string, any> | null)?.overall_score ?? demoIntelligenceFoundationSummary().readiness.overallScore),
+      openActions: tasks.filter((task) => task.status === "open" || task.status === "in_progress").length,
+      blockedTasks: tasks.filter((task) => task.status === "blocked").length,
+      duplicatePreserved: normalizeSkippedDuplicates(run?.payload?.skippedDuplicates).length,
+      latestRunSummary: run?.summary
+    };
+  } catch {
+    const demo = demoIntelligenceFoundationSummary();
+    return {
+      readinessScore: demo.readiness.overallScore,
+      openActions: 0,
+      blockedTasks: 0,
+      duplicatePreserved: 0,
+      latestRunSummary: "Foundation operations dashboard fallback active."
+    };
   }
 }
 
@@ -1754,9 +2256,128 @@ export async function updateFoundationEvidenceReadiness(input: {
   return { ok: true, message: "Evidence readiness updated as draft - human review required." };
 }
 
+export async function createFoundationStarterRecords(): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before creating Foundation starter records." };
+  if (context.role !== "owner") return { ok: false, message: "Only organization owners can create Foundation starter records." };
+
+  const supabase = await createSupabaseServerClient();
+  const companyProfile = await getCompanyProfile();
+  const demo = northStarFoundationDemo();
+  const now = new Date().toISOString();
+  let createdIntake = 0;
+  let createdEvidence = 0;
+
+  const templateName = "PredictSafeBIO Foundation Starter Intake";
+  const { data: existingTemplate } = await supabase
+    .from("company_intake_templates")
+    .select("id")
+    .eq("organization_id", context.organizationId)
+    .eq("name", templateName)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let templateId = (existingTemplate as Record<string, any> | null)?.id as string | undefined;
+  if (!templateId) {
+    const { data: template, error: templateError } = await supabase
+      .from("company_intake_templates")
+      .insert({
+        organization_id: context.organizationId,
+        name: templateName,
+        version_label: "starter-v1",
+        active: true,
+        sections: [
+          { key: "materials", title: "Materials and samples" },
+          { key: "equipment", title: "Equipment and controls" },
+          { key: "readiness", title: "Documents, training, incidents, and evidence" }
+        ]
+      })
+      .select("id")
+      .single();
+    if (templateError || !template) return { ok: false, message: templateError?.message ?? "Could not create starter intake template." };
+    templateId = template.id;
+  }
+
+  const starterAnswerKeys = (Object.keys(demo.answers) as Array<keyof FoundationIntakeAnswers>).slice(0, 6);
+  const { data: existingResponses } = await supabase
+    .from("company_intake_responses")
+    .select("question_key")
+    .eq("organization_id", context.organizationId)
+    .in("question_key", starterAnswerKeys);
+  const existingQuestionKeys = new Set(((existingResponses as Record<string, any>[] | null) ?? []).map((row) => row.question_key));
+  const intakeRows = starterAnswerKeys
+    .filter((questionKey) => !existingQuestionKeys.has(questionKey))
+    .map((questionKey) => ({
+      organization_id: context.organizationId,
+      company_profile_id: companyProfile.id ?? null,
+      intake_template_id: templateId,
+      question_key: questionKey,
+      answer_value: { value: Boolean(demo.answers[questionKey]) },
+      triggers_documents: demo.applicability.requiredDocuments,
+      triggers_programs: demo.applicability.requiredPrograms,
+      created_by: context.userId,
+      updated_at: now
+    }));
+  if (intakeRows.length > 0) {
+    const { error } = await supabase.from("company_intake_responses").insert(intakeRows);
+    if (error) return { ok: false, message: error.message };
+    createdIntake = intakeRows.length;
+  }
+
+  const starterEvidence = demo.evidence.slice(0, 8);
+  const { data: existingEvidence } = await supabase
+    .from("compliance_evidence_map")
+    .select("requirement_name")
+    .eq("organization_id", context.organizationId)
+    .in(
+      "requirement_name",
+      starterEvidence.map((item) => item.requirementName)
+    );
+  const existingRequirementNames = new Set(((existingEvidence as Record<string, any>[] | null) ?? []).map((row) => row.requirement_name));
+  const evidenceRows = starterEvidence
+    .filter((item) => !existingRequirementNames.has(item.requirementName))
+    .map((item) => ({
+      organization_id: context.organizationId,
+      requirement_name: item.requirementName,
+      control_name: item.controlName,
+      evidence_type: item.evidenceType,
+      source_table: item.sourceTable,
+      required_frequency: "annual or event-driven",
+      evidence_status: item.evidenceStatus,
+      audit_ready: item.auditReady,
+      human_review_required: true,
+      created_by: context.userId,
+      updated_at: now
+    }));
+  if (evidenceRows.length > 0) {
+    const { error } = await supabase.from("compliance_evidence_map").insert(evidenceRows);
+    if (error) return { ok: false, message: error.message };
+    createdEvidence = evidenceRows.length;
+  }
+
+  if (createdIntake === 0 && createdEvidence === 0) {
+    return { ok: true, message: "Foundation starter records already exist. Edit one intake answer and one evidence row to finish verification." };
+  }
+
+  await writeFoundationAuditEvent(supabase, context, {
+    eventType: "foundation_starter_records_created",
+    summary: "Foundation starter intake and evidence records created for owner verification.",
+    sourceModule: "foundation",
+    targetModule: "foundation",
+    payload: { createdIntake, createdEvidence }
+  });
+
+  return {
+    ok: true,
+    message: `Created ${createdIntake} intake answer(s) and ${createdEvidence} evidence row(s). Now edit and save one of each to turn the checklist green.`
+  };
+}
+
 export async function addAuditReadinessNote(input: {
   auditReadinessScoreId?: string | null;
   note: string;
+  noteType?: string;
 }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before adding audit readiness notes." };
@@ -1764,6 +2385,7 @@ export async function addAuditReadinessNote(input: {
 
   const note = input.note.trim();
   if (note.length < 3) return { ok: false, message: "Add a short audit readiness note before saving." };
+  const noteType = input.noteType === "final_preview_signoff" ? "final_preview_signoff" : "human_review_note";
 
   const supabase = await createSupabaseServerClient();
   const score =
@@ -1776,7 +2398,7 @@ export async function addAuditReadinessNote(input: {
       organization_id: context.organizationId,
       audit_readiness_score_id: score,
       note,
-      note_type: "human_review_note",
+      note_type: noteType,
       draft_only: true,
       human_review_required: true,
       created_by: context.userId
@@ -1788,15 +2410,24 @@ export async function addAuditReadinessNote(input: {
 
   await writeFoundationAuditEvent(supabase, context, {
     eventType: "foundation_audit_readiness_note_added",
-    summary: "Audit readiness note added; this does not approve or certify readiness.",
+    summary:
+      noteType === "final_preview_signoff"
+        ? "Final preview signoff note added; production promotion remains subject to verification and deployment review."
+        : "Audit readiness note added; this does not approve or certify readiness.",
     sourceModule: "audit_readiness",
     sourceRecordId: score ?? data.id,
     targetModule: "audit_readiness",
     targetRecordId: data.id,
-    payload: { noteId: data.id, auditReadinessScoreId: score }
+    payload: { noteId: data.id, auditReadinessScoreId: score, noteType }
   });
 
-  return { ok: true, message: "Audit readiness note added as draft - human review required." };
+  return {
+    ok: true,
+    message:
+      noteType === "final_preview_signoff"
+        ? "Final preview signoff captured as draft - human review required."
+        : "Audit readiness note added as draft - human review required."
+  };
 }
 
 export async function seedNorthStarWithConfirmation(confirmation: string): Promise<FoundationActionResult> {
@@ -1888,12 +2519,21 @@ export async function generateFoundationReviewActions(): Promise<FoundationActio
   }
 
   let created = 0;
+  const skippedDuplicates: FoundationDuplicateSkipSummary[] = [];
   for (const candidate of candidates) {
     const [duplicateTask, duplicateRecommendation] = await Promise.all([
       hasOpenFoundationTask(supabase, context.organizationId, candidate.sourceModule, candidate.sourceRecordId, candidate.title),
       hasOpenFoundationRecommendation(supabase, context.organizationId, candidate.sourceModule, candidate.sourceRecordId, candidate.title)
     ]);
-    if (duplicateTask || duplicateRecommendation) continue;
+    if (duplicateTask || duplicateRecommendation) {
+      skippedDuplicates.push({
+        title: candidate.title,
+        sourceModule: candidate.sourceModule,
+        sourceRecordId: candidate.sourceRecordId,
+        reason: duplicateTask && duplicateRecommendation ? "Existing open task and draft recommendation" : duplicateTask ? "Existing open task" : "Existing draft recommendation"
+      });
+      continue;
+    }
 
     const dueDate = new Date(Date.now() + (candidate.priority === "high" ? 7 : 14) * 86400000).toISOString().slice(0, 10);
     const { data: task } = await supabase
@@ -1951,30 +2591,136 @@ export async function generateFoundationReviewActions(): Promise<FoundationActio
     targetModule: "task",
     targetRecordId: runId,
     runId,
-    payload: { created, candidateCount: candidates.length }
+    payload: { created, candidateCount: candidates.length, skippedDuplicates }
   });
 
   return {
     ok: true,
-    message: created > 0 ? `${created} review action(s) generated as draft tasks.` : "No new review actions needed; existing open actions were preserved."
+    message:
+      created > 0
+        ? `${created} review action(s) generated as draft tasks. ${skippedDuplicates.length} duplicate(s) preserved.`
+        : `No new review actions needed; ${skippedDuplicates.length} existing open action(s) were preserved.`
   };
+}
+
+export async function createFoundationReviewActionFromSource(input: {
+  sourceModule: string;
+  sourceRecordId: string;
+  title: string;
+  reason: string;
+  priority?: string;
+}): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before creating Foundation review actions." };
+  if (context.role !== "owner") return { ok: false, message: "Only organization owners can create Foundation review actions." };
+
+  const sourceModule = normalizeFoundationReviewSourceModule(input.sourceModule);
+  if (!sourceModule) return { ok: false, message: "Choose a valid Foundation source module." };
+  if (!isUuid(input.sourceRecordId)) return { ok: false, message: "Source record must be a saved Foundation record." };
+
+  const candidate: FoundationReviewActionCandidate = {
+    sourceModule,
+    sourceRecordId: input.sourceRecordId,
+    title: input.title.trim().slice(0, 160) || `Review ${sourceModule.replace(/_/g, " ")}`,
+    priority: input.priority === "high" ? "high" : "medium",
+    reason: input.reason.trim().slice(0, 500) || "Owner-created review action from Foundation source drilldown."
+  };
+
+  const supabase = await createSupabaseServerClient();
+  const [duplicateTask, duplicateRecommendation] = await Promise.all([
+    hasOpenFoundationTask(supabase, context.organizationId, candidate.sourceModule, candidate.sourceRecordId, candidate.title),
+    hasOpenFoundationRecommendation(supabase, context.organizationId, candidate.sourceModule, candidate.sourceRecordId, candidate.title)
+  ]);
+  if (duplicateTask || duplicateRecommendation) {
+    return {
+      ok: true,
+      message: duplicateTask ? "Existing open task preserved for this source." : "Existing draft recommendation preserved for this source."
+    };
+  }
+
+  const runId = randomUUID();
+  const dueDate = new Date(Date.now() + (candidate.priority === "high" ? 7 : 14) * 86400000).toISOString().slice(0, 10);
+  const { data: task, error: taskError } = await supabase
+    .from("tasks")
+    .insert({
+      organization_id: context.organizationId,
+      source_module: candidate.sourceModule,
+      source_record_id: candidate.sourceRecordId,
+      assigned_to: context.userId,
+      title: candidate.title,
+      status: "open",
+      due_date: dueDate,
+      priority: candidate.priority,
+      created_by: context.userId
+    })
+    .select("id")
+    .single();
+
+  if (taskError || !task?.id) return { ok: false, message: taskError?.message ?? "Foundation review task could not be created." };
+
+  await supabase.from("document_recommendations").insert({
+    organization_id: context.organizationId,
+    recommendation_type: "gap",
+    title: candidate.title,
+    label: "Draft - Human Review Required",
+    human_review_required: true,
+    created_by: context.userId,
+    payload: withAuditTrace(
+      {
+        runId,
+        actionType: "foundation_review_action",
+        sourceModule: candidate.sourceModule,
+        sourceRecordId: candidate.sourceRecordId,
+        taskId: task.id,
+        reason: candidate.reason
+      },
+      {
+        sourceModule: candidate.sourceModule,
+        sourceRecordId: candidate.sourceRecordId,
+        targetModule: "task",
+        targetRecordId: task.id,
+        runId,
+        draftOnly: true
+      }
+    )
+  });
+
+  await writeFoundationAuditEvent(supabase, context, {
+    eventType: "foundation_review_actions_generated",
+    summary: `Foundation source review action created: ${candidate.title}.`,
+    sourceModule: candidate.sourceModule,
+    sourceRecordId: candidate.sourceRecordId,
+    targetModule: "task",
+    targetRecordId: task.id,
+    runId,
+    payload: { created: 1, candidateCount: 1, skippedDuplicates: [], sourceCreated: true }
+  });
+
+  return { ok: true, message: "Foundation source review action created as a draft task." };
 }
 
 export async function updateFoundationReviewTaskStatus(input: {
   taskId: string;
   status: string;
+  dueDate?: string | null;
+  assignedTo?: string | null;
+  closeoutNote?: string | null;
 }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before updating Foundation review tasks." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can update Foundation review tasks." };
-
   const status = normalizeFoundationTaskStatus(input.status);
   if (!status) return { ok: false, message: "Choose a valid Foundation review task status." };
+  const hasDueDateInput = Object.prototype.hasOwnProperty.call(input, "dueDate");
+  const hasAssignedToInput = Object.prototype.hasOwnProperty.call(input, "assignedTo");
+  const closeoutNote = String(input.closeoutNote ?? "").trim();
+  if (status === "complete" && closeoutNote.length < 8) {
+    return { ok: false, message: "Add a short closeout note before completing this Foundation review task." };
+  }
 
   const supabase = await createSupabaseServerClient();
   const { data: task, error: readError } = await supabase
     .from("tasks")
-    .select("id,title,status,source_module,source_record_id")
+    .select("id,title,status,due_date,assigned_to,source_module,source_record_id")
     .eq("organization_id", context.organizationId)
     .eq("id", input.taskId)
     .single();
@@ -1983,10 +2729,30 @@ export async function updateFoundationReviewTaskStatus(input: {
   if (!foundationReviewSourceModules.includes(String(task.source_module))) {
     return { ok: false, message: "Only generated Foundation review tasks can be updated from this panel." };
   }
+  const actorRole = context.role === "owner" ? "owner" : "assigned_member";
+  const isOwner = context.role === "owner";
+  if (!isOwner && task.assigned_to !== context.userId) {
+    return { ok: false, message: "Members can update only Foundation review tasks assigned to them." };
+  }
+  if (!isOwner && (hasAssignedToInput || hasDueDateInput)) {
+    return { ok: false, message: "Members can update task status and notes only; assignment and due dates are owner-only." };
+  }
+
+  const dueDate = isOwner && hasDueDateInput ? normalizeFoundationDueDate(input.dueDate) : task.due_date;
+  if (isOwner && input.dueDate && !dueDate) return { ok: false, message: "Choose a valid due date for this Foundation review task." };
+  const assignedTo = isOwner && hasAssignedToInput ? (input.assignedTo ? String(input.assignedTo) : null) : task.assigned_to;
+  if (assignedTo) {
+    const { count, error: assigneeError } = await supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", context.organizationId)
+      .eq("id", assignedTo);
+    if (assigneeError || (count ?? 0) < 1) return { ok: false, message: "Choose a valid assignee from this organization." };
+  }
 
   const { error } = await supabase
     .from("tasks")
-    .update({ status, updated_at: new Date().toISOString() })
+    .update({ status, due_date: dueDate, assigned_to: assignedTo, updated_at: new Date().toISOString() })
     .eq("organization_id", context.organizationId)
     .eq("id", task.id);
 
@@ -2003,11 +2769,138 @@ export async function updateFoundationReviewTaskStatus(input: {
       taskId: task.id,
       title: task.title,
       previousStatus: task.status,
-      status
+      status,
+      previousDueDate: task.due_date,
+      dueDate,
+      previousAssignedTo: task.assigned_to,
+      assignedTo,
+      closeoutNote: closeoutNote || null,
+      actorRole
     }
   });
 
+  if (assignedTo && assignedTo !== task.assigned_to) {
+    await createFoundationTaskNotificationIfMissing(supabase, context.organizationId, assignedTo, task.id, "foundation_task_assigned", {
+      title: "Foundation task assigned",
+      body: `${task.title} was assigned to you for human review follow-through.`
+    });
+  }
+  if (status === "blocked") {
+    await createFoundationTaskNotificationIfMissing(supabase, context.organizationId, assignedTo, task.id, "foundation_task_blocked", {
+      title: "Foundation task blocked",
+      body: `${task.title} was marked blocked and needs owner or assigned-review attention.`
+    });
+  }
+
   return { ok: true, message: `Foundation review task marked ${status}.` };
+}
+
+export async function addFoundationReviewTaskNote(input: { taskId: string; note: string }): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before adding Foundation task notes." };
+
+  const note = String(input.note ?? "").trim();
+  if (note.length < 4) return { ok: false, message: "Add a short activity note before saving." };
+
+  const supabase = await createSupabaseServerClient();
+  const { data: task, error: readError } = await supabase
+    .from("tasks")
+    .select("id,title,assigned_to,source_module,source_record_id")
+    .eq("organization_id", context.organizationId)
+    .eq("id", input.taskId)
+    .single();
+
+  if (readError || !task) return { ok: false, message: readError?.message ?? "Foundation review task could not be found." };
+  if (!foundationReviewSourceModules.includes(String(task.source_module))) {
+    return { ok: false, message: "Only generated Foundation review tasks can receive notes from this panel." };
+  }
+  if (context.role !== "owner" && task.assigned_to !== context.userId) {
+    return { ok: false, message: "Members can add notes only to Foundation review tasks assigned to them." };
+  }
+
+  await writeFoundationAuditEvent(supabase, context, {
+    eventType: "foundation_review_task_note_added",
+    summary: `Foundation review task note added for ${task.title}.`,
+    sourceModule: task.source_module ?? "foundation",
+    sourceRecordId: task.source_record_id ?? task.id,
+    targetModule: "task",
+    targetRecordId: task.id,
+    payload: {
+      taskId: task.id,
+      title: task.title,
+      note,
+      actorRole: context.role === "owner" ? "owner" : "assigned_member",
+      draftOnly: true
+    }
+  });
+
+  return { ok: true, message: "Foundation review task note added." };
+}
+
+export async function refreshFoundationSourceResolution(input: { taskId: string }): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before refreshing source resolution." };
+
+  const supabase = await createSupabaseServerClient();
+  const { data: task, error: readError } = await supabase
+    .from("tasks")
+    .select("id,title,assigned_to,source_module,source_record_id")
+    .eq("organization_id", context.organizationId)
+    .eq("id", input.taskId)
+    .single();
+
+  if (readError || !task) return { ok: false, message: readError?.message ?? "Foundation review task could not be found." };
+  if (!foundationReviewSourceModules.includes(String(task.source_module))) {
+    return { ok: false, message: "Only generated Foundation review tasks can refresh source resolution." };
+  }
+  if (context.role !== "owner" && task.assigned_to !== context.userId) {
+    return { ok: false, message: "Members can refresh only Foundation review tasks assigned to them." };
+  }
+
+  const sourceModule = String(task.source_module ?? "foundation");
+  const sourceRecordId = task.source_record_id ? String(task.source_record_id) : undefined;
+  const states = await getFoundationSourceResolutionStates(supabase, context.organizationId, [{ sourceModule, sourceRecordId }]);
+  const resolution = getFoundationSourceResolution(states, sourceModule, sourceRecordId);
+  const readyForClosure = resolution.state === "Source appears resolved";
+
+  await writeFoundationAuditEvent(supabase, context, {
+    eventType: "foundation_source_resolution_refreshed",
+    summary: readyForClosure
+      ? `Foundation source resolution refreshed for ${task.title}; ready for closure review.`
+      : `Foundation source resolution refreshed for ${task.title}; source still needs review.`,
+    sourceModule,
+    sourceRecordId: sourceRecordId ?? task.id,
+    targetModule: "task",
+    targetRecordId: task.id,
+    payload: {
+      taskId: task.id,
+      title: task.title,
+      resolutionState: resolution.state,
+      resolutionDetail: resolution.detail,
+      readyForClosureReview: readyForClosure,
+      actorRole: context.role === "owner" ? "owner" : "assigned_member",
+      draftOnly: true
+    }
+  });
+
+  if (readyForClosure) {
+    await createFoundationTaskNotificationIfMissing(
+      supabase,
+      context.organizationId,
+      task.assigned_to,
+      task.id,
+      "foundation_task_ready_for_closure",
+      {
+        title: "Foundation task ready for closure review",
+        body: `${task.title} source appears resolved. Add a human closeout note before completing the task.`
+      }
+    );
+  }
+
+  return {
+    ok: true,
+    message: readyForClosure ? "Source refreshed; action is ready for closure review." : "Source refreshed; review is still needed."
+  };
 }
 
 export async function getErgonomicLevel1Summary(): Promise<ErgonomicLevel1Summary> {
@@ -4041,6 +4934,213 @@ function getFoundationSourceTarget(sourceModule: string) {
   return targets[sourceModule] ?? { label: sourceModule.replace(/_/g, " "), href: "/foundation" };
 }
 
+function getFoundationExactSourceHref(sourceModule: string, sourceRecordId?: string) {
+  if (sourceRecordId && foundationReviewSourceModules.includes(sourceModule)) {
+    return `/foundation#source-${sourceModule}-${sourceRecordId}`;
+  }
+  return getFoundationSourceTarget(sourceModule).href;
+}
+
+function getFoundationActionOperatingState(status: string, dueDate?: string | null) {
+  if (status === "complete") return "Closed with human review";
+  if (status === "blocked") return "Blocked - owner decision needed";
+  if (status === "in_progress") return "Active review underway";
+  if (!dueDate) return "Open - needs schedule";
+  const due = new Date(`${dueDate}T00:00:00`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return due.getTime() < today.getTime() ? "Open - overdue" : "Open - queued";
+}
+
+function getFoundationActionNextStep(status: string, assignedTo?: string | null, dueDate?: string | null) {
+  if (status === "complete") return "Confirm evidence and audit trail remain linked; no further draft action is implied.";
+  if (status === "blocked") return "Capture the blocker, owner decision, or missing evidence before moving forward.";
+  if (!assignedTo) return "Assign an owner so follow-through is accountable.";
+  if (!dueDate) return "Set a due date and move the task to in progress when review starts.";
+  if (status === "in_progress") return "Complete the source review, update evidence, then close or block with notes.";
+  return "Move to in progress when the assigned owner starts review.";
+}
+
+function getFoundationTaskStatusHistory(
+  auditEvents: Array<{ eventType: AuditEvent["eventType"]; summary: string; createdAt?: string; payload: Record<string, any> }>,
+  taskId: string,
+  sourceRecordId?: string,
+  profiles?: Map<string, Record<string, any>>
+): FoundationReviewActionSummary["statusHistory"] {
+  return auditEvents
+    .filter((event) => {
+      const payload = event.payload ?? {};
+      return payload.taskId === taskId || payload.targetRecordId === taskId || (sourceRecordId && payload.sourceRecordId === sourceRecordId);
+    })
+    .slice(0, 5)
+    .map((event) => ({
+      eventType: event.eventType,
+      summary: event.summary,
+      createdAt: event.createdAt,
+      status: typeof event.payload.status === "string" ? event.payload.status : undefined,
+      previousStatus: typeof event.payload.previousStatus === "string" ? event.payload.previousStatus : null,
+      note: typeof event.payload.note === "string" ? event.payload.note : undefined,
+      closeoutNote: typeof event.payload.closeoutNote === "string" ? event.payload.closeoutNote : null,
+      actorRole: typeof event.payload.actorRole === "string" ? event.payload.actorRole : null,
+      previousDueDate: typeof event.payload.previousDueDate === "string" ? event.payload.previousDueDate : null,
+      dueDate: typeof event.payload.dueDate === "string" ? event.payload.dueDate : null,
+      previousAssignedTo: typeof event.payload.previousAssignedTo === "string" ? event.payload.previousAssignedTo : null,
+      assignedTo: typeof event.payload.assignedTo === "string" ? event.payload.assignedTo : null,
+      previousAssigneeName: getProfileDisplayName(profiles, event.payload.previousAssignedTo),
+      assigneeName: getProfileDisplayName(profiles, event.payload.assignedTo),
+      resolutionState: typeof event.payload.resolutionState === "string" ? event.payload.resolutionState : null,
+      resolutionDetail: typeof event.payload.resolutionDetail === "string" ? event.payload.resolutionDetail : null,
+      readyForClosureReview: typeof event.payload.readyForClosureReview === "boolean" ? event.payload.readyForClosureReview : null
+    }));
+}
+
+function getFoundationTaskActivityHistory(
+  auditEvents: Array<{ eventType: AuditEvent["eventType"]; summary: string; createdAt?: string; payload: Record<string, any> }>,
+  taskId: string,
+  sourceRecordId?: string,
+  profiles?: Map<string, Record<string, any>>
+): FoundationReviewActionSummary["activityHistory"] {
+  return auditEvents
+    .filter((event) => {
+      const payload = event.payload ?? {};
+      return payload.taskId === taskId || payload.targetRecordId === taskId || (sourceRecordId && payload.sourceRecordId === sourceRecordId);
+    })
+    .slice(0, 8)
+    .map((event) => ({
+      eventType: event.eventType,
+      summary: event.summary,
+      createdAt: event.createdAt,
+      status: typeof event.payload.status === "string" ? event.payload.status : undefined,
+      previousStatus: typeof event.payload.previousStatus === "string" ? event.payload.previousStatus : null,
+      note: typeof event.payload.note === "string" ? event.payload.note : undefined,
+      closeoutNote: typeof event.payload.closeoutNote === "string" ? event.payload.closeoutNote : null,
+      actorRole: typeof event.payload.actorRole === "string" ? event.payload.actorRole : null,
+      previousDueDate: typeof event.payload.previousDueDate === "string" ? event.payload.previousDueDate : null,
+      dueDate: typeof event.payload.dueDate === "string" ? event.payload.dueDate : null,
+      previousAssignedTo: typeof event.payload.previousAssignedTo === "string" ? event.payload.previousAssignedTo : null,
+      assignedTo: typeof event.payload.assignedTo === "string" ? event.payload.assignedTo : null,
+      previousAssigneeName: getProfileDisplayName(profiles, event.payload.previousAssignedTo),
+      assigneeName: getProfileDisplayName(profiles, event.payload.assignedTo),
+      resolutionState: typeof event.payload.resolutionState === "string" ? event.payload.resolutionState : null,
+      resolutionDetail: typeof event.payload.resolutionDetail === "string" ? event.payload.resolutionDetail : null,
+      readyForClosureReview: typeof event.payload.readyForClosureReview === "boolean" ? event.payload.readyForClosureReview : null
+    }));
+}
+
+function getFoundationTaskCloseoutNote(statusHistory: FoundationReviewActionSummary["statusHistory"]) {
+  return statusHistory.find((event) => event.status === "complete" && event.closeoutNote)?.closeoutNote ?? null;
+}
+
+function getProfileDisplayName(profiles: Map<string, Record<string, any>> | undefined, profileId: unknown) {
+  if (typeof profileId !== "string" || !profileId) return null;
+  const profile = profiles?.get(profileId);
+  return profile?.full_name ?? profile?.role ?? profileId;
+}
+
+type FoundationSourceResolutionState = {
+  state: string;
+  detail: string;
+};
+
+async function getFoundationSourceResolutionStates(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  organizationId: string,
+  refs: Array<{ sourceModule: string; sourceRecordId?: string }>
+): Promise<Map<string, FoundationSourceResolutionState>> {
+  const states = new Map<string, FoundationSourceResolutionState>();
+  const refsByModule = new Map<string, string[]>();
+  for (const ref of refs) {
+    if (!ref.sourceRecordId) continue;
+    refsByModule.set(ref.sourceModule, [...(refsByModule.get(ref.sourceModule) ?? []), ref.sourceRecordId]);
+  }
+
+  const evidenceIds = Array.from(new Set(refsByModule.get("evidence_map") ?? []));
+  const trainingIds = Array.from(new Set(refsByModule.get("training_assignment") ?? []));
+  const equipmentIds = Array.from(new Set(refsByModule.get("equipment") ?? []));
+  const incidentIds = Array.from(new Set(refsByModule.get("incident") ?? []));
+
+  const [evidenceRows, trainingRows, equipmentRows, incidentRows] = await Promise.all([
+    evidenceIds.length > 0
+      ? supabase
+          .from("compliance_evidence_map")
+          .select("id,evidence_status,audit_ready,human_review_required")
+          .eq("organization_id", organizationId)
+          .in("id", evidenceIds)
+      : Promise.resolve({ data: [] }),
+    trainingIds.length > 0
+      ? supabase
+          .from("training_assignments")
+          .select("id,status,completed_at,expires_at")
+          .eq("organization_id", organizationId)
+          .in("id", trainingIds)
+      : Promise.resolve({ data: [] }),
+    equipmentIds.length > 0
+      ? supabase
+          .from("equipment")
+          .select("id,status,qualification_status")
+          .eq("organization_id", organizationId)
+          .in("id", equipmentIds)
+      : Promise.resolve({ data: [] }),
+    incidentIds.length > 0
+      ? supabase
+          .from("incidents")
+          .select("id,status,severity")
+          .eq("organization_id", organizationId)
+          .in("id", incidentIds)
+      : Promise.resolve({ data: [] })
+  ]);
+
+  for (const row of ((evidenceRows.data as Record<string, any>[]) ?? [])) {
+    const resolved = row.audit_ready === true && row.evidence_status === "current";
+    states.set(`evidence_map:${row.id}`, {
+      state: resolved ? "Source appears resolved" : "Source still needs evidence review",
+      detail: `Evidence status ${row.evidence_status ?? "unknown"}; audit ready ${row.audit_ready ? "yes" : "no"}; human review ${row.human_review_required ? "required" : "not flagged"}.`
+    });
+  }
+  for (const row of ((trainingRows.data as Record<string, any>[]) ?? [])) {
+    const resolved = row.status === "completed" && Boolean(row.completed_at);
+    states.set(`training_assignment:${row.id}`, {
+      state: resolved ? "Source appears resolved" : "Training source still needs review",
+      detail: `Training status ${row.status ?? "unknown"}${row.expires_at ? `; expires ${row.expires_at}` : ""}.`
+    });
+  }
+  for (const row of ((equipmentRows.data as Record<string, any>[]) ?? [])) {
+    const resolved = row.status === "active" && ["qualified", "current", "ready"].includes(String(row.qualification_status ?? "").toLowerCase());
+    states.set(`equipment:${row.id}`, {
+      state: resolved ? "Source appears resolved" : "Equipment source still needs review",
+      detail: `Equipment status ${row.status ?? "unknown"}; qualification ${row.qualification_status ?? "not recorded"}.`
+    });
+  }
+  for (const row of ((incidentRows.data as Record<string, any>[]) ?? [])) {
+    const resolved = row.status === "closed";
+    states.set(`incident:${row.id}`, {
+      state: resolved ? "Source appears resolved" : "Incident source still needs review",
+      detail: `Incident status ${row.status ?? "unknown"}; severity ${row.severity ?? "not recorded"}.`
+    });
+  }
+
+  return states;
+}
+
+function getFoundationSourceResolution(
+  states: Map<string, FoundationSourceResolutionState>,
+  sourceModule: string,
+  sourceRecordId?: string
+): FoundationSourceResolutionState {
+  if (!sourceRecordId) {
+    return {
+      state: "No exact source linked",
+      detail: "This action is not tied to a source row yet, so resolution must be reviewed manually."
+    };
+  }
+  return (
+    states.get(`${sourceModule}:${sourceRecordId}`) ?? {
+      state: "Manual source review required",
+      detail: "No automated source-resolution signal is available for this source module yet."
+    }
+  );
+}
+
 function getReadinessTrend(latest: number, previous?: number) {
   if (typeof previous !== "number") return "not_enough_data" as const;
   if (latest > previous) return "improving" as const;
@@ -4055,6 +5155,104 @@ function dedupeReadinessGaps(gaps: Array<{ label: string; status: string; source
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
+  });
+}
+
+function filterAuditEvents(events: AuditEvent[], filters?: { eventType?: string; sourceModule?: string }) {
+  return events.filter((event) => {
+    const eventMatches = !filters?.eventType || filters.eventType === "all" || event.eventType === filters.eventType;
+    const sourceMatches =
+      !filters?.sourceModule ||
+      filters.sourceModule === "all" ||
+      String((event.payload as Record<string, unknown> | undefined)?.sourceModule ?? "") === filters.sourceModule;
+    return eventMatches && sourceMatches;
+  });
+}
+
+function mapFoundationWorkflowSave(row: Record<string, any> | null): FoundationVerificationStatusSummary["latestWorkflowSave"] {
+  if (!row) return undefined;
+  return {
+    eventType: row.event_type,
+    summary: row.summary,
+    createdAt: row.created_at,
+    sourceModule: row.payload?.sourceModule,
+    targetModule: row.payload?.targetModule
+  };
+}
+
+function mapProductionVerificationEvent(row: Record<string, any>) {
+  return {
+    eventType: row.event_type as AuditEvent["eventType"],
+    summary: String(row.summary ?? ""),
+    createdAt: row.created_at
+  };
+}
+
+function mapFoundationReviewRun(row: Record<string, any> | null): FoundationVerificationStatusSummary["latestReviewActionRun"] {
+  if (!row) return undefined;
+  return {
+    summary: row.summary,
+    createdAt: row.created_at,
+    created: Number(row.payload?.created ?? 0),
+    candidateCount: Number(row.payload?.candidateCount ?? 0),
+    skippedDuplicates: normalizeSkippedDuplicates(row.payload?.skippedDuplicates)
+  };
+}
+
+function mapFoundationLatestAudit(row: Record<string, any> | null): FoundationVerificationStatusSummary["latestAuditEvent"] {
+  if (!row) return undefined;
+  return {
+    eventType: row.event_type,
+    summary: row.summary,
+    createdAt: row.created_at,
+    sourceModule: row.payload?.sourceModule,
+    targetModule: row.payload?.targetModule,
+    draftOnly: row.payload?.draftOnly !== false
+  };
+}
+
+function mapFoundationFinalSignoff(row: Record<string, any> | null): FoundationVerificationStatusSummary["latestFinalSignoff"] {
+  if (!row) return undefined;
+  return {
+    id: row.id,
+    note: row.note,
+    createdAt: row.created_at
+  };
+}
+
+function buildFoundationVerificationChecklist(rows: Record<string, any>[]): FoundationVerificationStatusSummary["checklist"] {
+  const steps: Array<{
+    key: string;
+    label: string;
+    eventTypes: AuditEvent["eventType"][];
+  }> = [
+    { key: "biotypes", label: "BioTypes saved", eventTypes: ["foundation_biotype_selection_updated"] },
+    { key: "intake", label: "Intake edited", eventTypes: ["foundation_intake_response_updated"] },
+    { key: "evidence", label: "Evidence readiness updated", eventTypes: ["foundation_evidence_readiness_updated"] },
+    { key: "note", label: "Audit note added", eventTypes: ["foundation_audit_readiness_note_added"] },
+    { key: "actions", label: "Action plan generated", eventTypes: ["foundation_review_actions_generated"] },
+    { key: "taskStatus", label: "Task status updated", eventTypes: ["foundation_review_task_status_updated"] }
+  ];
+  return steps.map((step) => {
+    const match = rows.find((row) => step.eventTypes.includes(row.event_type));
+    return {
+      ...step,
+      status: match ? ("pass" as const) : ("pending" as const),
+      detail: match?.created_at ? `Last seen ${new Date(match.created_at).toLocaleString()}` : "Pending owner verification"
+    };
+  });
+}
+
+function normalizeSkippedDuplicates(value: unknown): FoundationDuplicateSkipSummary[] {
+  if (!Array.isArray(value)) return [];
+  return value.slice(0, 8).map((item) => {
+    const row = (item ?? {}) as Record<string, unknown>;
+    return {
+      title: String(row.title ?? "Duplicate review action"),
+      sourceModule: String(row.sourceModule ?? "foundation"),
+      sourceRecordId: row.sourceRecordId ? String(row.sourceRecordId) : undefined,
+      reason: String(row.reason ?? "Existing open action")
+    };
   });
 }
 
@@ -4073,6 +5271,46 @@ function demoAuditReadinessConsoleSummary(): AuditReadinessConsoleSummary {
     notes: [],
     humanReviewStatus: "Draft - human review required",
     draftOnly: true
+  };
+}
+
+function demoFoundationVerificationStatusSummary(): FoundationVerificationStatusSummary {
+  const checklist = buildFoundationVerificationChecklist([]);
+  return {
+    checklist,
+    latestWorkflowSave: {
+      eventType: "foundation_evidence_readiness_updated",
+      summary: "Demo evidence readiness update available for owner verification.",
+      createdAt: undefined,
+      sourceModule: "evidence_map",
+      targetModule: "compliance_evidence_map"
+    },
+    latestReviewActionRun: {
+      summary: "Demo action planning run. Draft outputs require human review.",
+      createdAt: undefined,
+      created: 0,
+      candidateCount: 2,
+      skippedDuplicates: [
+        {
+          title: "Review evidence gap - Biosafety Manual acknowledgement",
+          sourceModule: "evidence_map",
+          sourceRecordId: "demo-evidence-0",
+          reason: "Existing open task"
+        }
+      ]
+    },
+    latestAuditEvent: {
+      eventType: "foundation_review_actions_generated",
+      summary: "Demo action generation audit event.",
+      createdAt: undefined,
+      sourceModule: "foundation",
+      targetModule: "task",
+      draftOnly: true
+    },
+    latestFinalSignoff: undefined,
+    allChecklistPassed: false,
+    productionPromotionAllowed: false,
+    productionGateReason: "Production promotion is blocked until owner verification and final preview signoff are captured."
   };
 }
 
@@ -4285,12 +5523,118 @@ async function writeFoundationAuditEvent(
   });
 }
 
+async function createFoundationTaskNotification(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  organizationId: string,
+  userId: string | null,
+  taskId: string,
+  notificationType: string,
+  input: { title: string; body: string }
+) {
+  if (!userId) return;
+  await supabase.from("notifications").insert({
+    organization_id: organizationId,
+    user_id: userId,
+    task_id: taskId,
+    notification_type: notificationType,
+    title: input.title,
+    body: input.body
+  });
+}
+
+async function createFoundationTaskNotificationIfMissing(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  organizationId: string,
+  userId: string | null,
+  taskId: string,
+  notificationType: string,
+  input: { title: string; body: string },
+  since?: string
+) {
+  if (!userId) return;
+  let query = supabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", organizationId)
+    .eq("user_id", userId)
+    .eq("task_id", taskId)
+    .eq("notification_type", notificationType);
+  if (since) query = query.gte("created_at", since);
+  const { count, error } = await query;
+  if (error || (count ?? 0) > 0) return;
+  await createFoundationTaskNotification(supabase, organizationId, userId, taskId, notificationType, input);
+}
+
+async function createFoundationDueNotifications(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  organizationId: string,
+  tasks: Array<Record<string, any>>
+) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const since = new Date(today).toISOString();
+  for (const task of tasks) {
+    if (!task.assigned_to || !task.due_date || task.status === "complete") continue;
+    const due = new Date(`${task.due_date}T00:00:00`);
+    const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
+    if (days < 0) {
+      await createFoundationTaskNotificationIfMissing(
+        supabase,
+        organizationId,
+        task.assigned_to,
+        task.id,
+        "foundation_task_overdue",
+        {
+          title: "Foundation task overdue",
+          body: `${task.title} is overdue and still needs human review follow-through.`
+        },
+        since
+      );
+    } else if (days <= 3) {
+      await createFoundationTaskNotificationIfMissing(
+        supabase,
+        organizationId,
+        task.assigned_to,
+        task.id,
+        "foundation_task_due_soon",
+        {
+          title: "Foundation task due soon",
+          body: `${task.title} is due ${task.due_date}; review source evidence before closeout.`
+        },
+        since
+      );
+    }
+  }
+}
+
+function getFoundationNotificationLabel(notificationType: string) {
+  if (notificationType === "foundation_task_assigned") return "Assigned";
+  if (notificationType === "foundation_task_blocked") return "Blocked";
+  if (notificationType === "foundation_task_due_soon") return "Due soon";
+  if (notificationType === "foundation_task_overdue") return "Overdue";
+  if (notificationType === "foundation_task_ready_for_closure") return "Ready for closure";
+  return "Task";
+}
+
 function normalizeFoundationEvidenceStatus(status: string): FoundationEvidenceStatus {
   return foundationEvidenceStatuses.includes(status as FoundationEvidenceStatus) ? (status as FoundationEvidenceStatus) : "review_needed";
 }
 
 function normalizeFoundationTaskStatus(status: string) {
-  return ["in_progress", "complete", "blocked"].includes(status) ? (status as "in_progress" | "complete" | "blocked") : null;
+  return ["open", "in_progress", "complete", "blocked"].includes(status) ? (status as "open" | "in_progress" | "complete" | "blocked") : null;
+}
+
+function normalizeFoundationReviewSourceModule(sourceModule: string) {
+  return foundationReviewSourceModules.includes(sourceModule) ? sourceModule : null;
+}
+
+function normalizeFoundationDueDate(dueDate?: string | null) {
+  if (!dueDate) return null;
+  return /^\d{4}-\d{2}-\d{2}$/.test(dueDate) ? dueDate : null;
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
 function isFoundationGapStatus(status: unknown) {

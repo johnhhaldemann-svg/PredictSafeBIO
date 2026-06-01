@@ -30,6 +30,7 @@ export function getAuditEventTarget(event: AuditEvent): { href: string; label: s
   const assessmentId = typeof payload.assessmentId === "string" ? payload.assessmentId : null;
   const documentId = typeof payload.documentId === "string" ? payload.documentId : null;
   const sourceModule = typeof payload.sourceModule === "string" ? payload.sourceModule : null;
+  const sourceRecordId = typeof payload.sourceRecordId === "string" ? payload.sourceRecordId : null;
   const targetModule = typeof payload.targetModule === "string" ? payload.targetModule : null;
 
   if (assessmentId) {
@@ -38,6 +39,10 @@ export function getAuditEventTarget(event: AuditEvent): { href: string; label: s
 
   if (documentId) {
     return { href: `/documents/${documentId}`, label: "Open document" };
+  }
+
+  if (sourceModule && sourceRecordId && isFoundationSourceModule(sourceModule)) {
+    return { href: `/foundation#source-${sourceModule}-${sourceRecordId}`, label: "Open exact source" };
   }
 
   if (sourceModule?.startsWith("foundation") || targetModule?.startsWith("foundation")) {
@@ -69,6 +74,10 @@ export function getAuditEventTarget(event: AuditEvent): { href: string; label: s
   }
 
   return null;
+}
+
+function isFoundationSourceModule(sourceModule: string) {
+  return ["evidence_map", "training_assignment", "equipment", "incident", "biotype_selection", "audit_readiness"].includes(sourceModule);
 }
 
 export function getDemoSeedLabel(value?: string | null) {

@@ -3,6 +3,9 @@ import { WorkbenchClient } from "@/components/WorkbenchClient";
 import {
   getAuditReadinessConsoleSummary,
   getFoundationAdminAccessSummary,
+  getFoundationAssigneeOptions,
+  getFoundationNotificationSummary,
+  getFoundationProductionVerificationSummary,
   getFoundationReviewActionsSummary,
   getIntelligenceFoundationWorkbenchInput,
   listChangePlanItems,
@@ -11,10 +14,13 @@ import {
 } from "@/lib/supabase/data";
 
 export default async function WorkbenchPage() {
-  const [initialInput, foundationActions, adminAccess, assessments, documents, auditReadiness, changePlan] = await Promise.all([
+  const [initialInput, foundationActions, adminAccess, assignees, notifications, productionVerification, assessments, documents, auditReadiness, changePlan] = await Promise.all([
     getIntelligenceFoundationWorkbenchInput(),
     getFoundationReviewActionsSummary(),
     getFoundationAdminAccessSummary(),
+    getFoundationAssigneeOptions(),
+    getFoundationNotificationSummary(),
+    getFoundationProductionVerificationSummary(),
     listAssessments(),
     listDocuments(),
     getAuditReadinessConsoleSummary(),
@@ -51,7 +57,15 @@ export default async function WorkbenchPage() {
   return (
     <AppShell>
       <div className="page-stack">
-        <WorkbenchClient foundationActions={foundationActions} initialInput={initialInput} commandCenter={commandCenter} />
+        <WorkbenchClient
+          assignees={assignees}
+          canManageFoundationActions={adminAccess.signedIn}
+          foundationActions={foundationActions}
+          initialInput={initialInput}
+          notifications={notifications}
+          productionVerification={productionVerification}
+          commandCenter={commandCenter}
+        />
       </div>
     </AppShell>
   );

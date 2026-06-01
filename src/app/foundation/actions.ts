@@ -4,11 +4,17 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   addAuditReadinessNote,
+  addFoundationReviewTaskNote,
+  createFoundationStarterRecords,
+  createFoundationReviewActionFromSource,
   generateFoundationReviewActions,
+  markAllFoundationNotificationsRead,
+  refreshFoundationSourceResolution,
   seedNorthStarWithConfirmation,
   updateFoundationBioTypeSelection,
   updateFoundationEvidenceReadiness,
   updateFoundationIntakeResponse,
+  updateFoundationNotificationReadState,
   updateFoundationReviewTaskStatus,
   type FoundationActionResult
 } from "@/lib/supabase/data";
@@ -22,8 +28,17 @@ function revalidateFoundationPaths() {
   revalidatePath("/foundation");
   revalidatePath("/operations");
   revalidatePath("/workbench");
+  revalidatePath("/my-work");
   revalidatePath("/admin/audit");
   revalidatePath("/company-profile");
+}
+
+function normalizeFoundationReturnTo(value: string) {
+  return ["/foundation", "/operations", "/workbench", "/my-work", "/admin/audit"].includes(value) ? value : "/foundation";
+}
+
+function normalizeNotificationReturnTo(value: string) {
+  return ["/workbench", "/my-work"].includes(value) ? value : "/my-work";
 }
 
 function redirectFoundationResult(result: FoundationActionResult): never {
@@ -62,10 +77,24 @@ export async function updateFoundationEvidenceReadinessAction(formData: FormData
   redirectFoundationResult(result);
 }
 
+export async function createFoundationStarterRecordsAction() {
+  const result = await createFoundationStarterRecords();
+  redirectFoundationResult(result);
+}
+
 export async function addAuditReadinessNoteAction(formData: FormData) {
   const result = await addAuditReadinessNote({
     auditReadinessScoreId: String(formData.get("auditReadinessScoreId") ?? "") || null,
     note: String(formData.get("note") ?? "")
+  });
+  redirectFoundationResult(result);
+}
+
+export async function addFoundationFinalPreviewSignoffAction(formData: FormData) {
+  const result = await addAuditReadinessNote({
+    auditReadinessScoreId: String(formData.get("auditReadinessScoreId") ?? "") || null,
+    note: String(formData.get("note") ?? ""),
+    noteType: "final_preview_signoff"
   });
   redirectFoundationResult(result);
 }
@@ -76,9 +105,70 @@ export async function generateFoundationReviewActionsAction() {
 }
 
 export async function updateFoundationReviewTaskStatusAction(formData: FormData) {
-  const result = await updateFoundationReviewTaskStatus({
+  const returnTo = normalizeFoundationReturnTo(String(formData.get("returnTo") ?? "/foundation"));
+  const input = {
     taskId: String(formData.get("taskId") ?? ""),
-    status: String(formData.get("status") ?? "")
+    status: String(formData.get("status") ?? ""),
+    closeoutNote: String(formData.get("closeoutNote") ?? "") || null
+  } as {
+    taskId: string;
+    status: string;
+    dueDate?: string | null;
+    assignedTo?: string | null;
+    closeoutNote?: string | null;
+  };
+  if (formData.has("dueDate")) input.dueDate = String(formData.get("dueDate") ?? "") || null;
+  if (formData.has("assignedTo")) input.assignedTo = String(formData.get("assignedTo") ?? "") || null;
+  const result = await updateFoundationReviewTaskStatus({
+    ...input
+  });
+  revalidateFoundationPaths();
+  redirectWithMessage(returnTo, result.message);
+}
+
+export async function addFoundationReviewTaskNoteAction(formData: FormData) {
+  const returnTo = normalizeFoundationReturnTo(String(formData.get("returnTo") ?? "/foundation"));
+  const result = await addFoundationReviewTaskNote({
+    taskId: String(formData.get("taskId") ?? ""),
+    note: String(formData.get("note") ?? "")
+  });
+  revalidateFoundationPaths();
+  redirectWithMessage(returnTo, result.message);
+}
+
+export async function refreshFoundationSourceResolutionAction(formData: FormData) {
+  const returnTo = normalizeFoundationReturnTo(String(formData.get("returnTo") ?? "/foundation"));
+  const result = await refreshFoundationSourceResolution({
+    taskId: String(formData.get("taskId") ?? "")
+  });
+  revalidateFoundationPaths();
+  redirectWithMessage(returnTo, result.message);
+}
+
+export async function updateFoundationNotificationReadStateAction(formData: FormData) {
+  const returnTo = normalizeNotificationReturnTo(String(formData.get("returnTo") ?? "/my-work"));
+  const result = await updateFoundationNotificationReadState({
+    notificationId: String(formData.get("notificationId") ?? ""),
+    read: String(formData.get("read") ?? "true") === "true"
+  });
+  revalidateFoundationPaths();
+  redirectWithMessage(returnTo, result.message);
+}
+
+export async function markAllFoundationNotificationsReadAction(formData: FormData) {
+  const returnTo = normalizeNotificationReturnTo(String(formData.get("returnTo") ?? "/my-work"));
+  const result = await markAllFoundationNotificationsRead();
+  revalidateFoundationPaths();
+  redirectWithMessage(returnTo, result.message);
+}
+
+export async function createFoundationReviewActionFromSourceAction(formData: FormData) {
+  const result = await createFoundationReviewActionFromSource({
+    sourceModule: String(formData.get("sourceModule") ?? ""),
+    sourceRecordId: String(formData.get("sourceRecordId") ?? ""),
+    title: String(formData.get("title") ?? ""),
+    reason: String(formData.get("reason") ?? ""),
+    priority: String(formData.get("priority") ?? "medium")
   });
   redirectFoundationResult(result);
 }

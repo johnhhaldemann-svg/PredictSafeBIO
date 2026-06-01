@@ -1,6 +1,6 @@
 # PredictSafeBIO Project State
 
-Last updated: 2026-05-28
+Last updated: 2026-06-01
 
 ## Repository
 
@@ -12,6 +12,7 @@ Last updated: 2026-05-28
 - PR #15 fixed Supabase auth confirmation callbacks for both PKCE `code` links and `token_hash` links.
 - PR #21 added audit target links, short demo seed labels, and workflow helper tests.
 - PR #23 added assessment register filters, cleaner report sections, feature-flag metadata, and expanded LLM draft-assist gate documentation.
+- Branch `codex/map-aligned-platform` adds the connected Foundation / My Work / Workbench command-center increment.
 - Release `v1.1-demo-hardening` exists at commit `c49c54c76bb15cb395574c3f72dae90f4898f801`.
 - Branch protection is restored to require one approving review.
 - Dependency PRs #10, #12, and #13 were merged one at a time after refreshed CI and Vercel checks.
@@ -52,4 +53,8 @@ Last updated: 2026-05-28
 - Demo seed evidence: `Demo seed 6e0c12c4`, assessment `362e02bb-8a11-48f1-933c-1fddbacbf7cd`, document `e425c0c4-42fd-48df-87ab-648f9a4191c2`.
 - v1.2 work is focused on assessment register filtering, clearer draft-only report structure, auth/upload hardening follow-up, and an explicit no-LLM implementation gate.
 - v1.2 connector checks confirm `biotech-documents` is private and has authenticated org-scoped select, insert, update, and delete policies.
+- The current command-center increment adds `/my-work`, connected command navigation across `/foundation`, `/my-work`, and `/workbench`, reusable Foundation task cards, work KPIs, source-resolution/closeout callouts, and notification read/unread controls.
+- Signed-in owner smoke passed locally on June 1, 2026: `/foundation`, `/my-work`, and `/workbench` all returned `200`, showed the Codex smoke tasks, and exposed owner assignment plus due-date controls.
+- Signed-in assigned-member smoke passed locally on June 1, 2026: member views showed assigned task status/note/closeout controls, hid assignment and due-date fields, and rendered overdue, blocked, due-soon, and ready-for-closure notifications.
+- Notification action smoke passed locally on June 1, 2026: mark read, mark unread, and mark all read returned success redirects; assigned-member status update and note actions also returned success redirects.
 - Recommendations remain `Draft - Human Review Required`.

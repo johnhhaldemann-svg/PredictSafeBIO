@@ -4,6 +4,7 @@ import { DatabaseZap, FileCheck2, GitBranch, ListChecks, NotebookPen, Wand2 } fr
 import type { IntelligenceFoundationSummary } from "@/lib/supabase/data";
 import {
   addAuditReadinessNoteAction,
+  createFoundationStarterRecordsAction,
   generateFoundationReviewActionsAction,
   seedNorthStarWithConfirmationAction,
   updateFoundationBioTypeSelectionAction,
@@ -83,22 +84,26 @@ export function FoundationWorkflowClient({ canManage, summary }: { canManage: bo
           <ListChecks size={22} />
         </div>
         <div className="action-list">
-          {summary.intake.slice(0, 6).map((item) => (
-            <form action={updateFoundationIntakeResponseAction} className="inline-edit-row" key={item.id ?? item.question}>
-              <input name="responseId" type="hidden" value={item.id ?? ""} />
-              <div>
-                <strong>{item.question}</strong>
-                <span>{item.triggers}</span>
-              </div>
-              <select name="answer" defaultValue={String(item.booleanValue)} disabled={!item.id}>
-                <option value="true">Yes</option>
-                <option value="false">No</option>
-              </select>
-              <button className="button-secondary" disabled={!item.id} type="submit">
-                Save
-              </button>
-            </form>
-          ))}
+          {summary.intake.length > 0 ? (
+            summary.intake.slice(0, 6).map((item) => (
+              <form action={updateFoundationIntakeResponseAction} className="inline-edit-row" key={item.id ?? item.question}>
+                <input name="responseId" type="hidden" value={item.id ?? ""} />
+                <div>
+                  <strong>{item.question}</strong>
+                  <span>{item.triggers}</span>
+                </div>
+                <select name="answer" defaultValue={String(item.booleanValue)} disabled={!item.id}>
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+                <button className="button-secondary" disabled={!item.id} type="submit">
+                  Save
+                </button>
+              </form>
+            ))
+          ) : (
+            <FoundationStarterEmptyState type="intake" />
+          )}
         </div>
       </div>
 
@@ -111,29 +116,33 @@ export function FoundationWorkflowClient({ canManage, summary }: { canManage: bo
           <FileCheck2 size={22} />
         </div>
         <div className="action-list">
-          {summary.evidence.slice(0, 6).map((item) => (
-            <form action={updateFoundationEvidenceReadinessAction} className="inline-edit-row evidence-edit-row" key={item.id ?? item.requirement}>
-              <input name="evidenceId" type="hidden" value={item.id ?? ""} />
-              <div>
-                <strong>{item.requirement}</strong>
-                <span>{item.auditReady ? "audit-ready" : "gap"}</span>
-              </div>
-              <select name="status" defaultValue={item.status} disabled={!item.id}>
-                {evidenceStatuses.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-              <label className="check-row small-check-row">
-                <input defaultChecked={item.auditReady} name="auditReady" type="checkbox" disabled={!item.id} />
-                <span>Ready</span>
-              </label>
-              <button className="button-secondary" disabled={!item.id} type="submit">
-                Save
-              </button>
-            </form>
-          ))}
+          {summary.evidence.length > 0 ? (
+            summary.evidence.slice(0, 6).map((item) => (
+              <form action={updateFoundationEvidenceReadinessAction} className="inline-edit-row evidence-edit-row" key={item.id ?? item.requirement}>
+                <input name="evidenceId" type="hidden" value={item.id ?? ""} />
+                <div>
+                  <strong>{item.requirement}</strong>
+                  <span>{item.auditReady ? "audit-ready" : "gap"}</span>
+                </div>
+                <select name="status" defaultValue={item.status} disabled={!item.id}>
+                  {evidenceStatuses.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+                <label className="check-row small-check-row">
+                  <input defaultChecked={item.auditReady} name="auditReady" type="checkbox" disabled={!item.id} />
+                  <span>Ready</span>
+                </label>
+                <button className="button-secondary" disabled={!item.id} type="submit">
+                  Save
+                </button>
+              </form>
+            ))
+          ) : (
+            <FoundationStarterEmptyState type="evidence" />
+          )}
         </div>
       </div>
 
@@ -210,5 +219,23 @@ export function FoundationWorkflowClient({ canManage, summary }: { canManage: bo
         </form>
       </div>
     </section>
+  );
+}
+
+function FoundationStarterEmptyState({ type }: { type: "intake" | "evidence" }) {
+  return (
+    <div className="empty-action-state">
+      <strong>{type === "intake" ? "No intake answers are available yet." : "No evidence readiness rows are available yet."}</strong>
+      <p>
+        Create lightweight starter rows for this organization, then change and save one {type === "intake" ? "Yes/No intake answer" : "evidence readiness row"} to complete
+        owner verification.
+      </p>
+      <form action={createFoundationStarterRecordsAction}>
+        <button className="button-secondary" type="submit">
+          <DatabaseZap size={16} />
+          Create starter Foundation rows
+        </button>
+      </form>
+    </div>
   );
 }

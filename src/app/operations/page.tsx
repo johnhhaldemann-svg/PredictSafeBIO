@@ -5,16 +5,25 @@ import { FoundationReviewActionsPanel } from "@/components/FoundationReviewActio
 import { createMapOperationsBundleAction } from "./actions";
 import { assessBioRisk } from "@/lib/bio-ai/engine";
 import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
-import { getFoundationAdminAccessSummary, getFoundationReviewActionsSummary, getMapOperationsSummary } from "@/lib/supabase/data";
+import {
+  getFoundationAdminAccessSummary,
+  getFoundationAssigneeOptions,
+  getFoundationOperationsDashboardSummary,
+  getFoundationReviewActionsSummary,
+  getMapOperationsSummary
+} from "@/lib/supabase/data";
 
 export default async function OperationsPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const params = await searchParams;
-  const [summary, foundationActions, adminAccess] = await Promise.all([
+  const [summary, foundationActions, adminAccess, assignees, foundationOps] = await Promise.all([
     getMapOperationsSummary(),
     getFoundationReviewActionsSummary(),
-    getFoundationAdminAccessSummary()
+    getFoundationAdminAccessSummary(),
+    getFoundationAssigneeOptions(),
+    getFoundationOperationsDashboardSummary()
   ]);
   const assessment = assessBioRisk(summary.latestAssessmentInput);
+  const blockedFoundationActions = foundationActions.filter((action) => action.status === "blocked");
 
   return (
     <AppShell>
@@ -87,6 +96,29 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
           ))}
         </section>
 
+        <section className="ops-foundation-grid" aria-label="Foundation operations dashboard">
+          <article>
+            <span>Foundation readiness</span>
+            <strong>{foundationOps.readinessScore}</strong>
+            <small>Latest audit-readiness score</small>
+          </article>
+          <article>
+            <span>Open generated actions</span>
+            <strong>{foundationOps.openActions}</strong>
+            <small>Open or in progress</small>
+          </article>
+          <article>
+            <span>Blocked tasks</span>
+            <strong>{foundationOps.blockedTasks}</strong>
+            <small>Needs owner attention</small>
+          </article>
+          <article>
+            <span>Duplicate preserved</span>
+            <strong>{foundationOps.duplicatePreserved}</strong>
+            <small>{foundationOps.latestRunSummary ?? "No generated action run yet"}</small>
+          </article>
+        </section>
+
         <section className="split-list wide">
           <div className="panel">
             <div className="panel-heading">
@@ -151,10 +183,27 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
 
         <FoundationReviewActionsPanel
           actions={foundationActions.slice(0, 6)}
-          canManage={adminAccess.isOwner}
+          assignees={assignees}
+          canManage={adminAccess.signedIn}
+          canEditAssignment={adminAccess.isOwner}
+          canEditDueDate={adminAccess.isOwner}
           emptyMessage="No open Foundation review actions yet. Generate them from the Foundation page."
+          returnTo="/operations"
           title="Open review actions"
         />
+
+        {adminAccess.isOwner && blockedFoundationActions.length > 0 ? (
+          <FoundationReviewActionsPanel
+            actions={blockedFoundationActions.slice(0, 6)}
+            assignees={assignees}
+            canManage={adminAccess.signedIn}
+            canEditAssignment={adminAccess.isOwner}
+            canEditDueDate={adminAccess.isOwner}
+            emptyMessage="No blocked Foundation tasks need quick action."
+            returnTo="/operations"
+            title="Blocked task quick actions"
+          />
+        ) : null}
       </div>
     </AppShell>
   );

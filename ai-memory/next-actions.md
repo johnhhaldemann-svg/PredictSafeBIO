@@ -1,9 +1,10 @@
 # PredictSafeBIO Next Actions
 
-Last updated: 2026-05-28
+Last updated: 2026-06-01
 
 ## Immediate
 
+- Open a draft PR for `codex/map-aligned-platform` and let CI/Vercel verify the command-center increment.
 - Re-enable Supabase email confirmation in Auth provider settings.
 - Enable leaked-password protection if available on the current Supabase plan.
 - Test a signed-in upload now that the `biotech-documents` storage migration is applied.
@@ -18,6 +19,15 @@ Last updated: 2026-05-28
 - Supabase built-in auth email sending is rate-limited; custom SMTP is required before heavier public signup testing.
 - Connector checks confirm the `biotech-documents` bucket is private and policies exist, but object count and persisted `storage_path` count are still `0`.
 - Automated signed-in storage smoke requires either a real browser session or temporary test credentials.
+- Command-center smoke used disposable Codex owner/member accounts and task data on June 1, 2026; those records can be cleaned later if demo data hygiene becomes important.
+
+## Command Center Increment
+
+- `/my-work` is implemented as the focused assigned-work lane for Foundation-generated review tasks.
+- `/foundation`, `/my-work`, and `/workbench` now share command navigation, task-card patterns, source trace detail, source-resolution refresh, activity timelines, closeout note display, and My Work handoffs.
+- Owner smoke passed locally for `/foundation`, `/my-work`, and `/workbench`: owner can see all smoke tasks and edit assignment/due-date fields.
+- Assigned-member smoke passed locally: member can update status, add notes, refresh source resolution, and close assigned tasks, while assignment and due-date fields are hidden.
+- Notification smoke passed locally for overdue, blocked, due-soon, ready-for-closure, mark read, mark unread, and mark all read.
 
 ## v1.1 Demo Hardening
 
