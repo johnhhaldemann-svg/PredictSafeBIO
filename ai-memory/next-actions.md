@@ -4,22 +4,21 @@ Last updated: 2026-06-01
 
 ## Immediate
 
-- Open a draft PR for `codex/map-aligned-platform` and let CI/Vercel verify the command-center increment.
 - Re-enable Supabase email confirmation in Auth provider settings.
 - Enable leaked-password protection if available on the current Supabase plan.
-- Test a signed-in upload now that the `biotech-documents` storage migration is applied.
 - Configure custom SMTP before heavier signup testing.
-- Run the remaining v1.2 signed-in browser smoke for document upload and polished report downloads.
+- Run a dashboard/API Auth settings pass with a Supabase Management API token and real SMTP credentials.
 
 ## Blockers And Watch Items
 
 - ESLint 10 should remain closed until it is handled as an intentional toolchain upgrade.
 - Dependabot PRs for TypeScript, lucide-react, and Node types were merged after refreshed CI/Vercel checks.
-- Branch protection currently requires one approving review; solo-owner merges need a temporary settings adjustment or a second authorized reviewer.
+- PR #26 merged into `main` after refreshed GitHub Actions and Vercel checks passed.
+- Branch protection API response on June 1, 2026 showed required status checks and admin enforcement, but did not show an approving-review rule.
 - Supabase built-in auth email sending is rate-limited; custom SMTP is required before heavier public signup testing.
-- Connector checks confirm the `biotech-documents` bucket is private and policies exist, but object count and persisted `storage_path` count are still `0`.
-- Automated signed-in storage smoke requires either a real browser session or temporary test credentials.
-- Command-center smoke used disposable Codex owner/member accounts and task data on June 1, 2026; those records can be cleaned later if demo data hygiene becomes important.
+- Supabase project is on the Pro plan, so leaked-password protection is supported, but Auth settings mutation still needs dashboard access or a Supabase Management API token.
+- Custom SMTP still needs actual provider credentials: sender/from address, host, port, username, and password.
+- Command-center and upload smoke used disposable Codex owner/member accounts and task data on June 1, 2026; those records were cleaned up after smoke.
 
 ## Command Center Increment
 
@@ -28,6 +27,9 @@ Last updated: 2026-06-01
 - Owner smoke passed locally for `/foundation`, `/my-work`, and `/workbench`: owner can see all smoke tasks and edit assignment/due-date fields.
 - Assigned-member smoke passed locally: member can update status, add notes, refresh source resolution, and close assigned tasks, while assignment and due-date fields are hidden.
 - Notification smoke passed locally for overdue, blocked, due-soon, ready-for-closure, mark read, mark unread, and mark all read.
+- PR #26 merged into `main` at `f7c62cd525c96825e923778669ebd11a396bda3a`.
+- Signed-in document upload smoke passed against the private `biotech-documents` bucket using authenticated Supabase storage: uploaded object found, `storage_path` persisted, document detail rendered the uploaded file, draft report decoded, and `/admin/audit` linked back to the smoke document.
+- Disposable Codex smoke users, org, tasks, notifications, audit events, upload document rows, and storage objects were cleaned back to zero.
 
 ## v1.1 Demo Hardening
 
