@@ -5,7 +5,7 @@ Last updated: 2026-06-01
 ## Immediate
 
 - Treat Supabase Auth hardening as deferred for now and keep the current demo/testing path on already-confirmed or existing signed-in users.
-- Use the merged command-center/My Work increment as the current baseline for the next product slice.
+- Finish and merge the `codex/my-work-priority-filters` slice if PR checks pass.
 - Keep future signed-in smoke focused on existing accounts until custom SMTP and email confirmation are revisited.
 
 ## Blockers And Watch Items
@@ -29,6 +29,8 @@ Last updated: 2026-06-01
 - PR #26 merged into `main` at `f7c62cd525c96825e923778669ebd11a396bda3a`.
 - Signed-in document upload smoke passed against the private `biotech-documents` bucket using authenticated Supabase storage: uploaded object found, `storage_path` persisted, document detail rendered the uploaded file, draft report decoded, and `/admin/audit` linked back to the smoke document.
 - Disposable Codex smoke users, org, tasks, notifications, audit events, upload document rows, and storage objects were cleaned back to zero.
+- Next slice started on `codex/my-work-priority-filters`: My Work KPI cards now deep-link to saved task views, Overdue and High priority saved views are available, urgent priority is filterable, and due-soon/overdue views exclude completed tasks.
+- Production route smoke on June 1, 2026 returned `200 OK` for `/foundation`, `/my-work`, `/workbench`, `/documents`, `/admin/audit`, and `/login`.
 
 ## v1.1 Demo Hardening
 

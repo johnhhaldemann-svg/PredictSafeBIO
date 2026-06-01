@@ -11,7 +11,19 @@ import {
   getFoundationReviewActionsSummary
 } from "@/lib/supabase/data";
 
-export default async function MyWorkPage() {
+const savedViews = ["all", "my_open", "blocked", "due_soon", "ready", "unassigned", "overdue", "high_priority"] as const;
+
+function normalizeSavedView(value?: string) {
+  return savedViews.includes(value as (typeof savedViews)[number]) ? value : undefined;
+}
+
+export default async function MyWorkPage({
+  searchParams
+}: {
+  searchParams?: Promise<{ view?: string }>;
+}) {
+  const params = await searchParams;
+  const requestedView = normalizeSavedView(params?.view);
   const [allActions, adminAccess, assignees, notificationSummary] = await Promise.all([
     getFoundationReviewActionsSummary(),
     getFoundationAdminAccessSummary(),
@@ -85,11 +97,11 @@ export default async function MyWorkPage() {
             </Link>
           </div>
           <div className="assigned-work-filter-grid" aria-label="My Work task KPIs">
-            <Link href="#my-work-actions">
+            <Link href="/my-work?view=overdue#my-work-actions">
               <strong>{kpis.overdue}</strong>
               <span>Overdue</span>
             </Link>
-            <Link href="#my-work-actions">
+            <Link href="/my-work?view=blocked#my-work-actions">
               <strong>{kpis.blocked}</strong>
               <span>Blocked</span>
             </Link>
@@ -97,15 +109,15 @@ export default async function MyWorkPage() {
               <strong>{kpis.completedThisWeek}</strong>
               <span>Completed this week</span>
             </Link>
-            <Link href="#my-work-actions">
+            <Link href="/my-work?view=unassigned#my-work-actions">
               <strong>{kpis.unassigned}</strong>
               <span>Unassigned</span>
             </Link>
-            <Link href="#my-work-actions">
+            <Link href="/my-work?view=ready#my-work-actions">
               <strong>{kpis.readyForClosure}</strong>
               <span>Ready for closure</span>
             </Link>
-            <Link href="#my-work-actions">
+            <Link href="/my-work?view=high_priority#my-work-actions">
               <strong>{kpis.highPriority}</strong>
               <span>High-priority work</span>
             </Link>
@@ -141,7 +153,7 @@ export default async function MyWorkPage() {
                   ? "No generated Foundation review tasks are available yet."
                   : "No Foundation review tasks are assigned to you yet."
               }
-              initialSavedView={adminAccess.isOwner ? "all" : "my_open"}
+              initialSavedView={requestedView ?? (adminAccess.isOwner ? "all" : "my_open")}
               returnTo="/my-work"
               laneLabel="Assigned Work"
               laneDescription="Use this lane for daily task updates, closeout notes, source refreshes, and traceable human-review activity."
