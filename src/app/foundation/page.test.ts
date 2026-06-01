@@ -164,6 +164,10 @@ describe("foundation UI alignment", () => {
     expect(reviewActionsPanel).toContain("Bulk status update");
     expect(reviewActionsPanel).toContain("Bulk activity note");
     expect(reviewActionsPanel).toContain("Add note to selected");
+    expect(reviewActionsPanel).toContain("Bulk closeout");
+    expect(reviewActionsPanel).toContain("Complete selected");
+    expect(reviewActionsPanel).toContain("name=\"status\" type=\"hidden\" value=\"complete\"");
+    expect(reviewActionsPanel).toContain("Required to complete selected tasks.");
     expect(reviewActionsPanel).toContain("selectedVisibleTaskIds");
     expect(reviewActionsPanel).toContain("taskIds");
     expect(reviewActionsPanel).toContain("Select ${action.title}");
@@ -226,6 +230,7 @@ describe("foundation UI alignment", () => {
     expect(foundationActions).toContain("updateFoundationReviewTasksStatusAction");
     expect(foundationActions).toContain("addFoundationReviewTasksNoteAction");
     expect(foundationActions).toContain("formData.getAll(\"taskIds\")");
+    expect(foundationData).toContain("Add a short closeout note before completing selected Foundation review tasks.");
     expect(foundationActions).toContain("revalidatePath(\"/my-work\")");
     expect(foundationActions).toContain("\"/my-work\"");
     expect(foundationActions).toContain("addFoundationReviewTaskNoteAction");

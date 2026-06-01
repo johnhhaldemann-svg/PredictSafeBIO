@@ -255,6 +255,24 @@ export function FoundationReviewActionsPanel({
               Add note to selected
             </button>
           </form>
+          <form action={updateFoundationReviewTasksStatusAction} className="bulk-task-action-bar bulk-closeout-action-bar">
+            <div>
+              <strong>Bulk closeout</strong>
+              <span>{selectedVisibleTaskIds.length} selected in this view</span>
+            </div>
+            {selectedVisibleTaskIds.map((taskId) => (
+              <input key={taskId} name="taskIds" type="hidden" value={taskId} />
+            ))}
+            <input name="returnTo" type="hidden" value={returnTo} />
+            <input name="status" type="hidden" value="complete" />
+            <label className="wide-field">
+              Closeout note
+              <textarea name="closeoutNote" placeholder="Required to complete selected tasks." rows={2} />
+            </label>
+            <button className="button-secondary compact" type="submit" disabled={selectedVisibleTaskIds.length < 1}>
+              Complete selected
+            </button>
+          </form>
         </div>
       ) : null}
       <div className="action-workspace">
