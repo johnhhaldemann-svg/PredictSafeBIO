@@ -6,7 +6,7 @@ Last checked: 2026-06-01
 
 - Project: `predictsafe-bio`
 - Production URL: `https://predictsafe-bio.vercel.app`
-- Latest main commit verified locally after command-center/My Work memory update: `180612e`
+- Latest main commit verified locally after My Work priority filter merge: `6853b6e`
 - Latest passing CI run on `main`: `26583182299`
 
 Production routes verified with `200 OK`:
@@ -14,6 +14,10 @@ Production routes verified with `200 OK`:
 - `/workbench`
 - `/foundation`
 - `/my-work`
+- `/my-work?view=high_priority`
+- `/my-work?view=overdue`
+- `/my-work?view=blocked`
+- `/my-work?view=ready`
 - `/assessments`
 - `/assessments?review=reviewed_monitoring&level=critical&reviewer=reviewed`
 - `/company-profile`
@@ -70,8 +74,10 @@ Remaining / Deferred:
 - PR #23 merged assessment register filters, report polish, and expanded LLM draft-assist gate detail.
 - PR #26 merged the connected Foundation / My Work / Workbench command-center increment.
 - PR #27 recorded the command-center smoke results in memory.
+- PR #29 merged My Work KPI deep links plus Overdue, High priority, and Urgent saved-view filtering.
 - Signed-in product smoke passed: review status updates saved reviewer notes and audit events, audit links opened target records, document recommendation history and Markdown report download worked, and `/admin/demo` seeded labeled demo records.
 - Signed-in command-center smoke passed locally: owner `/foundation`, `/my-work`, and `/workbench`; assigned-member status/note/closeout behavior; notification read/unread and mark-all-read actions.
+- Signed-in owner/member production smoke for the new saved views is still blocked on reusable owner/member credentials or a service-role key; unauthenticated production route checks for the saved-view URLs returned `200 OK`.
 - Signed-in document upload smoke passed locally against `biotech-documents`; disposable smoke records and objects were cleaned afterward.
 - Demo seed evidence: `Demo seed 6e0c12c4`, assessment `362e02bb-8a11-48f1-933c-1fddbacbf7cd`, document `e425c0c4-42fd-48df-87ab-648f9a4191c2`.
 - v1.2 route smoke passed for `/assessments` filter URL, `/documents`, and `/admin/audit`; Supabase dashboard auth hardening remains deferred.
