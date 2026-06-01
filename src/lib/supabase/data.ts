@@ -282,6 +282,8 @@ export type FoundationReviewActionSummary = {
     createdAt?: string;
     status?: string;
     previousStatus?: string | null;
+    priority?: string | null;
+    previousPriority?: string | null;
     note?: string;
     closeoutNote?: string | null;
     actorRole?: string | null;
@@ -301,6 +303,8 @@ export type FoundationReviewActionSummary = {
     createdAt?: string;
     status?: string;
     previousStatus?: string | null;
+    priority?: string | null;
+    previousPriority?: string | null;
     note?: string;
     closeoutNote?: string | null;
     actorRole?: string | null;
@@ -2702,6 +2706,7 @@ export async function createFoundationReviewActionFromSource(input: {
 export async function updateFoundationReviewTaskStatus(input: {
   taskId: string;
   status: string;
+  priority?: string | null;
   dueDate?: string | null;
   assignedTo?: string | null;
   closeoutNote?: string | null;
@@ -2710,6 +2715,7 @@ export async function updateFoundationReviewTaskStatus(input: {
   if (!context) return { ok: false, message: "Sign in and finish onboarding before updating Foundation review tasks." };
   const status = normalizeFoundationTaskStatus(input.status);
   if (!status) return { ok: false, message: "Choose a valid Foundation review task status." };
+  const hasPriorityInput = Object.prototype.hasOwnProperty.call(input, "priority");
   const hasDueDateInput = Object.prototype.hasOwnProperty.call(input, "dueDate");
   const hasAssignedToInput = Object.prototype.hasOwnProperty.call(input, "assignedTo");
   const closeoutNote = String(input.closeoutNote ?? "").trim();
@@ -2720,7 +2726,7 @@ export async function updateFoundationReviewTaskStatus(input: {
   const supabase = await createSupabaseServerClient();
   const { data: task, error: readError } = await supabase
     .from("tasks")
-    .select("id,title,status,due_date,assigned_to,source_module,source_record_id")
+    .select("id,title,priority,status,due_date,assigned_to,source_module,source_record_id")
     .eq("organization_id", context.organizationId)
     .eq("id", input.taskId)
     .single();
@@ -2734,10 +2740,12 @@ export async function updateFoundationReviewTaskStatus(input: {
   if (!isOwner && task.assigned_to !== context.userId) {
     return { ok: false, message: "Members can update only Foundation review tasks assigned to them." };
   }
-  if (!isOwner && (hasAssignedToInput || hasDueDateInput)) {
-    return { ok: false, message: "Members can update task status and notes only; assignment and due dates are owner-only." };
+  if (!isOwner && (hasAssignedToInput || hasDueDateInput || hasPriorityInput)) {
+    return { ok: false, message: "Members can update task status and notes only; priority, assignment, and due dates are owner-only." };
   }
 
+  const priority = isOwner && hasPriorityInput ? normalizeFoundationTaskPriority(input.priority) : task.priority;
+  if (isOwner && hasPriorityInput && !priority) return { ok: false, message: "Choose a valid priority for this Foundation review task." };
   const dueDate = isOwner && hasDueDateInput ? normalizeFoundationDueDate(input.dueDate) : task.due_date;
   if (isOwner && input.dueDate && !dueDate) return { ok: false, message: "Choose a valid due date for this Foundation review task." };
   const assignedTo = isOwner && hasAssignedToInput ? (input.assignedTo ? String(input.assignedTo) : null) : task.assigned_to;
@@ -2752,7 +2760,7 @@ export async function updateFoundationReviewTaskStatus(input: {
 
   const { error } = await supabase
     .from("tasks")
-    .update({ status, due_date: dueDate, assigned_to: assignedTo, updated_at: new Date().toISOString() })
+    .update({ status, priority, due_date: dueDate, assigned_to: assignedTo, updated_at: new Date().toISOString() })
     .eq("organization_id", context.organizationId)
     .eq("id", task.id);
 
@@ -2770,6 +2778,8 @@ export async function updateFoundationReviewTaskStatus(input: {
       title: task.title,
       previousStatus: task.status,
       status,
+      previousPriority: task.priority,
+      priority,
       previousDueDate: task.due_date,
       dueDate,
       previousAssignedTo: task.assigned_to,
@@ -2792,7 +2802,7 @@ export async function updateFoundationReviewTaskStatus(input: {
     });
   }
 
-  return { ok: true, message: `Foundation review task marked ${status}.` };
+  return { ok: true, message: `Foundation review task updated to ${status}.` };
 }
 
 export async function addFoundationReviewTaskNote(input: { taskId: string; note: string }): Promise<FoundationActionResult> {
@@ -4979,6 +4989,8 @@ function getFoundationTaskStatusHistory(
       createdAt: event.createdAt,
       status: typeof event.payload.status === "string" ? event.payload.status : undefined,
       previousStatus: typeof event.payload.previousStatus === "string" ? event.payload.previousStatus : null,
+      priority: typeof event.payload.priority === "string" ? event.payload.priority : null,
+      previousPriority: typeof event.payload.previousPriority === "string" ? event.payload.previousPriority : null,
       note: typeof event.payload.note === "string" ? event.payload.note : undefined,
       closeoutNote: typeof event.payload.closeoutNote === "string" ? event.payload.closeoutNote : null,
       actorRole: typeof event.payload.actorRole === "string" ? event.payload.actorRole : null,
@@ -5012,6 +5024,8 @@ function getFoundationTaskActivityHistory(
       createdAt: event.createdAt,
       status: typeof event.payload.status === "string" ? event.payload.status : undefined,
       previousStatus: typeof event.payload.previousStatus === "string" ? event.payload.previousStatus : null,
+      priority: typeof event.payload.priority === "string" ? event.payload.priority : null,
+      previousPriority: typeof event.payload.previousPriority === "string" ? event.payload.previousPriority : null,
       note: typeof event.payload.note === "string" ? event.payload.note : undefined,
       closeoutNote: typeof event.payload.closeoutNote === "string" ? event.payload.closeoutNote : null,
       actorRole: typeof event.payload.actorRole === "string" ? event.payload.actorRole : null,
@@ -5622,6 +5636,11 @@ function normalizeFoundationEvidenceStatus(status: string): FoundationEvidenceSt
 
 function normalizeFoundationTaskStatus(status: string) {
   return ["open", "in_progress", "complete", "blocked"].includes(status) ? (status as "open" | "in_progress" | "complete" | "blocked") : null;
+}
+
+function normalizeFoundationTaskPriority(priority?: string | null) {
+  const value = String(priority ?? "");
+  return ["low", "medium", "high", "urgent"].includes(value) ? (value as "low" | "medium" | "high" | "urgent") : null;
 }
 
 function normalizeFoundationReviewSourceModule(sourceModule: string) {

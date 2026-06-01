@@ -6,7 +6,8 @@ Last updated: 2026-06-01
 
 - Treat Supabase Auth hardening as deferred for now and keep the current demo/testing path on already-confirmed or existing signed-in users.
 - PR #31 completed the owner/member dashboard polish slice: visible saved-view state, task sorting, and a clearer signed-in smoke runbook.
-- Next product decision can move to task priority editing, richer owner/member dashboard polish, or another focused workflow increment.
+- Current product slice: owner-only task priority editing on `codex/task-priority-editing`.
+- After merge, re-run owner/member My Work smoke and confirm owner priority controls are visible while member priority controls remain hidden.
 
 ## Blockers And Watch Items
 
@@ -32,6 +33,7 @@ Last updated: 2026-06-01
 - Disposable Codex smoke users, org, tasks, notifications, audit events, upload document rows, and storage objects were cleaned back to zero.
 - PR #29 merged the `codex/my-work-priority-filters` slice into `main` at `6853b6e`: My Work KPI cards now deep-link to saved task views, Overdue and High priority saved views are available, urgent priority is filterable, and due-soon/overdue views exclude completed tasks.
 - PR #31 merged the `codex/my-work-dashboard-polish` slice into `main`: saved views now show an active-view summary and support sorting by priority, due date, status, and source module.
+- Branch `codex/task-priority-editing` adds owner-only priority editing to Foundation task update forms while keeping assigned members limited to status, notes, source refresh, and closeout.
 - Production route smoke on June 1, 2026 returned `200 OK` for `/foundation`, `/my-work`, `/workbench`, `/documents`, `/admin/audit`, and `/login`.
 - Production saved-view route smoke on June 1, 2026 returned `200 OK` for `/my-work?view=high_priority`, `/my-work?view=overdue`, `/my-work?view=blocked`, and `/my-work?view=ready`.
 - Reusable smoke org `Codex Reusable Smoke Org` was seeded with five assigned-member Foundation tasks covering high priority, overdue, blocked, ready-for-closure, and normal open work.

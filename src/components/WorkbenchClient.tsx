@@ -647,6 +647,7 @@ export function WorkbenchClient({
           canManage={canManageFoundationActions}
           canEditAssignment={commandSummary.ownerMode}
           canEditDueDate={commandSummary.ownerMode}
+          canEditPriority={commandSummary.ownerMode}
           emptyMessage="No assigned Foundation work matches these filters."
           laneLabel="Operating Work"
           laneDescription="Review generated Foundation tasks by status, priority, due date, assignee, and source trace from the Workbench command center."

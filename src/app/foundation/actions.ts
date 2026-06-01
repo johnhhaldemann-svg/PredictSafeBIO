@@ -113,10 +113,12 @@ export async function updateFoundationReviewTaskStatusAction(formData: FormData)
   } as {
     taskId: string;
     status: string;
+    priority?: string | null;
     dueDate?: string | null;
     assignedTo?: string | null;
     closeoutNote?: string | null;
   };
+  if (formData.has("priority")) input.priority = String(formData.get("priority") ?? "") || null;
   if (formData.has("dueDate")) input.dueDate = String(formData.get("dueDate") ?? "") || null;
   if (formData.has("assignedTo")) input.assignedTo = String(formData.get("assignedTo") ?? "") || null;
   const result = await updateFoundationReviewTaskStatus({
