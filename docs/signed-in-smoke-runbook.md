@@ -74,4 +74,4 @@ On 2026-06-01, signed-in production bulk-control smoke passed after PR #35 was p
 
 On 2026-06-01, signed-in production bulk-note smoke passed after PR #37 was promoted. Owner and member runs confirmed bulk note controls rendered for selected tasks, selected counts synced, and no bulk assignment, due-date, or priority controls were exposed.
 
-The `codex/bulk-task-closeout` slice adds an explicit selected-task bulk closeout control. Re-run owner/member smoke after promotion and confirm bulk closeout renders, requires a closeout note, and exposes no bulk assignment, due-date, or priority controls.
+On 2026-06-01, signed-in production bulk-closeout smoke passed after PR #39 was promoted. Owner and member runs confirmed bulk closeout controls rendered, selected counts synced, the complete status was carried by a hidden field, a closeout note field was present, and no bulk assignment, due-date, or priority controls were exposed.
