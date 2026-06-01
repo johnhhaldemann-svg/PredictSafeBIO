@@ -14,6 +14,7 @@
 - Open `/company-profile` and show the live organization profile.
 - Open `/my-work` and show the assigned-work command lane.
 - Click KPI deep links such as `/my-work?view=high_priority`, `/my-work?view=overdue`, `/my-work?view=blocked`, and `/my-work?view=ready` to show saved task views for owner/member follow-through.
+- Point out the active saved-view state and task sorting controls so screenshots clearly show which view and order are being demoed.
 - Explain that owners can manage assignment and due dates, while assigned members can update status, notes, source refresh, and closeout for their own tasks.
 
 ## 3. Assessment Save And Review

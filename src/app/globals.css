@@ -926,6 +926,38 @@ button {
   margin-bottom: 10px;
 }
 
+.saved-view-state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  padding: 10px 12px;
+}
+
+.saved-view-state div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.saved-view-state span,
+.saved-view-state p {
+  margin: 0;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.saved-view-state strong {
+  color: #172554;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
 .action-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 0.42fr);
@@ -3655,11 +3687,16 @@ pre {
   }
 
   .foundation-action-header,
+  .saved-view-state,
   .task-chip-row,
   .task-action-button-row,
   .notification-actions {
     align-items: stretch;
     justify-content: flex-start;
+  }
+
+  .saved-view-state {
+    flex-direction: column;
   }
 
   .task-chip-row {
