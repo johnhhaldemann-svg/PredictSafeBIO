@@ -2922,6 +2922,54 @@ export async function addFoundationReviewTaskNote(input: { taskId: string; note:
   return { ok: true, message: "Foundation review task note added." };
 }
 
+export async function addFoundationReviewTasksNote(input: { taskIds: string[]; note: string }): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before adding Foundation task notes." };
+
+  const note = String(input.note ?? "").trim();
+  if (note.length < 4) return { ok: false, message: "Add a short bulk activity note before saving." };
+  const taskIds = Array.from(new Set(input.taskIds.map(String).filter(isUuid)));
+  if (taskIds.length < 1) return { ok: false, message: "Select at least one Foundation review task for the bulk note." };
+
+  const supabase = await createSupabaseServerClient();
+  const { data: taskRows, error: readError } = await supabase
+    .from("tasks")
+    .select("id,title,assigned_to,source_module,source_record_id")
+    .eq("organization_id", context.organizationId)
+    .in("id", taskIds);
+
+  if (readError) return { ok: false, message: readError.message };
+  const tasks = (taskRows as Record<string, any>[] | null) ?? [];
+  if (tasks.length !== taskIds.length) return { ok: false, message: "One or more selected Foundation review tasks could not be found." };
+  if (tasks.some((task) => !foundationReviewSourceModules.includes(String(task.source_module)))) {
+    return { ok: false, message: "Only generated Foundation review tasks can receive bulk notes from this panel." };
+  }
+  if (context.role !== "owner" && tasks.some((task) => task.assigned_to !== context.userId)) {
+    return { ok: false, message: "Members can bulk note only Foundation review tasks assigned to them." };
+  }
+
+  for (const task of tasks) {
+    await writeFoundationAuditEvent(supabase, context, {
+      eventType: "foundation_review_task_note_added",
+      summary: `Foundation review task bulk note added for ${task.title}.`,
+      sourceModule: task.source_module ?? "foundation",
+      sourceRecordId: task.source_record_id ?? task.id,
+      targetModule: "task",
+      targetRecordId: task.id,
+      payload: {
+        taskId: task.id,
+        title: task.title,
+        note,
+        actorRole: context.role === "owner" ? "owner" : "assigned_member",
+        bulkNote: true,
+        draftOnly: true
+      }
+    });
+  }
+
+  return { ok: true, message: `Bulk activity note added to ${tasks.length} Foundation review tasks.` };
+}
+
 export async function refreshFoundationSourceResolution(input: { taskId: string }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before refreshing source resolution." };

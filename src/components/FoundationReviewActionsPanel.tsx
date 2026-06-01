@@ -5,6 +5,7 @@ import { ClipboardList } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   addFoundationReviewTaskNoteAction,
+  addFoundationReviewTasksNoteAction,
   refreshFoundationSourceResolutionAction,
   updateFoundationReviewTaskStatusAction,
   updateFoundationReviewTasksStatusAction
@@ -210,32 +211,51 @@ export function FoundationReviewActionsPanel({
         </div>
       ) : null}
       {canManage && filteredActions.some((action) => action.canUpdate && action.taskId) ? (
-        <form action={updateFoundationReviewTasksStatusAction} className="bulk-task-action-bar">
-          <div>
-            <strong>Bulk status update</strong>
-            <span>{selectedVisibleTaskIds.length} selected in this view</span>
-          </div>
-          {selectedVisibleTaskIds.map((taskId) => (
-            <input key={taskId} name="taskIds" type="hidden" value={taskId} />
-          ))}
-          <input name="returnTo" type="hidden" value={returnTo} />
-          <label>
-            Status
-            <select name="status" defaultValue="in_progress">
-              <option value="open">Open</option>
-              <option value="in_progress">In progress</option>
-              <option value="blocked">Blocked</option>
-              <option value="complete">Complete</option>
-            </select>
-          </label>
-          <label className="wide-field">
-            Closeout note
-            <textarea name="closeoutNote" placeholder="Required only when bulk completing selected tasks." rows={2} />
-          </label>
-          <button className="button-secondary compact" type="submit" disabled={selectedVisibleTaskIds.length < 1}>
-            Update selected
-          </button>
-        </form>
+        <div className="bulk-task-action-stack">
+          <form action={updateFoundationReviewTasksStatusAction} className="bulk-task-action-bar">
+            <div>
+              <strong>Bulk status update</strong>
+              <span>{selectedVisibleTaskIds.length} selected in this view</span>
+            </div>
+            {selectedVisibleTaskIds.map((taskId) => (
+              <input key={taskId} name="taskIds" type="hidden" value={taskId} />
+            ))}
+            <input name="returnTo" type="hidden" value={returnTo} />
+            <label>
+              Status
+              <select name="status" defaultValue="in_progress">
+                <option value="open">Open</option>
+                <option value="in_progress">In progress</option>
+                <option value="blocked">Blocked</option>
+                <option value="complete">Complete</option>
+              </select>
+            </label>
+            <label className="wide-field">
+              Closeout note
+              <textarea name="closeoutNote" placeholder="Required only when bulk completing selected tasks." rows={2} />
+            </label>
+            <button className="button-secondary compact" type="submit" disabled={selectedVisibleTaskIds.length < 1}>
+              Update selected
+            </button>
+          </form>
+          <form action={addFoundationReviewTasksNoteAction} className="bulk-task-action-bar bulk-note-action-bar">
+            <div>
+              <strong>Bulk activity note</strong>
+              <span>{selectedVisibleTaskIds.length} selected in this view</span>
+            </div>
+            {selectedVisibleTaskIds.map((taskId) => (
+              <input key={taskId} name="taskIds" type="hidden" value={taskId} />
+            ))}
+            <input name="returnTo" type="hidden" value={returnTo} />
+            <label className="wide-field">
+              Note
+              <textarea name="note" placeholder="Add the same activity note to selected tasks." rows={2} />
+            </label>
+            <button className="button-secondary compact" type="submit" disabled={selectedVisibleTaskIds.length < 1}>
+              Add note to selected
+            </button>
+          </form>
+        </div>
       ) : null}
       <div className="action-workspace">
         <div className="action-list">
