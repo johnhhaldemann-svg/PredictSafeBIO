@@ -42,6 +42,7 @@ Expected owner behavior:
 - Status, note, source refresh, and closeout controls remain available.
 - Bulk status update controls appear after selecting one or more visible tasks.
 - Bulk activity note controls appear after selecting one or more visible tasks.
+- Bulk closeout controls appear after selecting one or more visible tasks and require a closeout note.
 
 ## Assigned-Member Smoke
 
@@ -61,6 +62,7 @@ Expected member behavior:
 - Due-date controls are hidden.
 - Bulk status update controls can update selected assigned tasks only.
 - Bulk activity note controls can add notes to selected assigned tasks only.
+- Bulk closeout controls can complete selected assigned tasks only and require a closeout note.
 
 ## Verification Notes
 
@@ -71,3 +73,5 @@ On 2026-06-01, signed-in production priority-control smoke passed after PR #33 w
 On 2026-06-01, signed-in production bulk-control smoke passed after PR #35 was promoted. Owner and member runs confirmed selected counts updated, bulk status controls rendered, and no bulk assignment, due-date, or priority controls were exposed.
 
 On 2026-06-01, signed-in production bulk-note smoke passed after PR #37 was promoted. Owner and member runs confirmed bulk note controls rendered for selected tasks, selected counts synced, and no bulk assignment, due-date, or priority controls were exposed.
+
+The `codex/bulk-task-closeout` slice adds an explicit selected-task bulk closeout control. Re-run owner/member smoke after promotion and confirm bulk closeout renders, requires a closeout note, and exposes no bulk assignment, due-date, or priority controls.

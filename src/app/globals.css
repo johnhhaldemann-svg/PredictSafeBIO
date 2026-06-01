@@ -1043,6 +1043,16 @@ button {
   grid-template-columns: minmax(180px, 0.8fr) minmax(280px, 1fr) auto;
 }
 
+.bulk-closeout-action-bar {
+  grid-template-columns: minmax(180px, 0.8fr) minmax(280px, 1fr) auto;
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.bulk-closeout-action-bar div span {
+  color: #166534;
+}
+
 .bulk-task-action-bar div {
   display: grid;
   gap: 3px;

@@ -10,7 +10,7 @@ Last updated: 2026-06-01
 - PR #35 completed selected-task bulk status updates for Foundation/My Work task lanes.
 - PR #37 completed selected-task bulk activity notes for Foundation/My Work task lanes.
 - Priority-change notifications remain a later decision; the current task priority slice records activity history only.
-- Next product decision can move to richer owner/member dashboard polish, bulk closeout ergonomics, or another focused workflow increment.
+- Current product slice: explicit selected-task bulk closeout ergonomics on `codex/bulk-task-closeout`.
 - Keep SMTP/Auth hardening, LLM draft assist, and priority-change notifications deferred until intentionally reopened.
 
 ## Blockers And Watch Items
@@ -40,6 +40,7 @@ Last updated: 2026-06-01
 - PR #33 merged owner-only priority editing to Foundation task update forms while keeping assigned members limited to status, notes, source refresh, and closeout.
 - PR #35 merged selected-task bulk status updates. Owners can bulk update visible tasks; assigned members can bulk update only tasks assigned to them, with no bulk assignment, due-date, or priority editing.
 - PR #37 merged selected-task bulk activity notes. Owners can bulk note visible tasks; assigned members can bulk note only tasks assigned to them.
+- Branch `codex/bulk-task-closeout` adds an explicit selected-task bulk closeout form that completes selected tasks with a required closeout note.
 - Production route smoke on June 1, 2026 returned `200 OK` for `/foundation`, `/my-work`, `/workbench`, `/documents`, `/admin/audit`, and `/login`.
 - Production saved-view route smoke on June 1, 2026 returned `200 OK` for `/my-work?view=high_priority`, `/my-work?view=overdue`, `/my-work?view=blocked`, and `/my-work?view=ready`.
 - Reusable smoke org `Codex Reusable Smoke Org` was seeded with five assigned-member Foundation tasks covering high priority, overdue, blocked, ready-for-closure, and normal open work.
