@@ -58,6 +58,4 @@ Expected member behavior:
 
 ## Verification Notes
 
-On 2026-06-01, signed-in production smoke passed for the owner and member saved-view paths above. The member run confirmed assignment and due-date controls stayed hidden while status and note controls remained available.
-
-The branch `codex/my-work-dashboard-polish` adds a clearer visible active saved-view state and task sorting controls. Re-run this runbook after that branch is promoted to production so screenshots show the active saved-view summary and sorting state.
+On 2026-06-01, signed-in production smoke passed for the owner and member saved-view paths above after PR #31 was promoted. The run confirmed the active saved-view summary rendered for each saved view, the sort control exposed Priority, Due date, Status, and Source module options, owner assignment/due-date controls were visible, and member assignment/due-date controls stayed hidden while status and note controls remained available.

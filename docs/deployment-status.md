@@ -75,12 +75,12 @@ Remaining / Deferred:
 - PR #26 merged the connected Foundation / My Work / Workbench command-center increment.
 - PR #27 recorded the command-center smoke results in memory.
 - PR #29 merged My Work KPI deep links plus Overdue, High priority, and Urgent saved-view filtering.
+- PR #31 merged My Work active saved-view state, task sorting controls, and the signed-in smoke runbook.
 - Reusable signed-in smoke accounts were created on 2026-06-01 and stored outside the repo at `C:\Users\johnh\AppData\Local\PredictSafeBIO\smoke-accounts.json`.
 - Reusable smoke org `Codex Reusable Smoke Org` was seeded with five Foundation tasks covering high priority, overdue, blocked, ready-for-closure, and normal open work.
 - Signed-in product smoke passed: review status updates saved reviewer notes and audit events, audit links opened target records, document recommendation history and Markdown report download worked, and `/admin/demo` seeded labeled demo records.
 - Signed-in command-center smoke passed locally: owner `/foundation`, `/my-work`, and `/workbench`; assigned-member status/note/closeout behavior; notification read/unread and mark-all-read actions.
-- Signed-in owner/member production smoke for `/my-work?view=high_priority`, `/my-work?view=overdue`, `/my-work?view=blocked`, and `/my-work?view=ready` passed on 2026-06-01 using the reusable smoke accounts. Owner assignment/due-date controls were visible; member assignment/due-date controls stayed hidden while status/note controls stayed available.
-- Branch `codex/my-work-dashboard-polish` adds visible active saved-view state and task sorting controls; re-run signed-in smoke after that branch is promoted so screenshots capture the new UI state.
+- Signed-in owner/member production smoke for `/my-work?view=high_priority`, `/my-work?view=overdue`, `/my-work?view=blocked`, and `/my-work?view=ready` passed on 2026-06-01 using the reusable smoke accounts. The active saved-view summary and sort control rendered in production; owner assignment/due-date controls were visible; member assignment/due-date controls stayed hidden while status/note controls stayed available.
 - Signed-in document upload smoke passed locally against `biotech-documents`; disposable smoke records and objects were cleaned afterward.
 - Demo seed evidence: `Demo seed 6e0c12c4`, assessment `362e02bb-8a11-48f1-933c-1fddbacbf7cd`, document `e425c0c4-42fd-48df-87ab-648f9a4191c2`.
 - v1.2 route smoke passed for `/assessments` filter URL, `/documents`, and `/admin/audit`; Supabase dashboard auth hardening remains deferred.
