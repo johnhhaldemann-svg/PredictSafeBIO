@@ -16,6 +16,7 @@ import {
   updateFoundationIntakeResponse,
   updateFoundationNotificationReadState,
   updateFoundationReviewTaskStatus,
+  updateFoundationReviewTasksStatus,
   type FoundationActionResult
 } from "@/lib/supabase/data";
 
@@ -123,6 +124,17 @@ export async function updateFoundationReviewTaskStatusAction(formData: FormData)
   if (formData.has("assignedTo")) input.assignedTo = String(formData.get("assignedTo") ?? "") || null;
   const result = await updateFoundationReviewTaskStatus({
     ...input
+  });
+  revalidateFoundationPaths();
+  redirectWithMessage(returnTo, result.message);
+}
+
+export async function updateFoundationReviewTasksStatusAction(formData: FormData) {
+  const returnTo = normalizeFoundationReturnTo(String(formData.get("returnTo") ?? "/foundation"));
+  const result = await updateFoundationReviewTasksStatus({
+    taskIds: formData.getAll("taskIds").map(String),
+    status: String(formData.get("status") ?? ""),
+    closeoutNote: String(formData.get("closeoutNote") ?? "") || null
   });
   revalidateFoundationPaths();
   redirectWithMessage(returnTo, result.message);

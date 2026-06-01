@@ -2805,6 +2805,81 @@ export async function updateFoundationReviewTaskStatus(input: {
   return { ok: true, message: `Foundation review task updated to ${status}.` };
 }
 
+export async function updateFoundationReviewTasksStatus(input: { taskIds: string[]; status: string; closeoutNote?: string | null }): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in and finish onboarding before updating Foundation review tasks." };
+  const status = normalizeFoundationTaskStatus(input.status);
+  if (!status) return { ok: false, message: "Choose a valid Foundation review task status." };
+  const taskIds = Array.from(new Set(input.taskIds.map(String).filter(isUuid)));
+  if (taskIds.length < 1) return { ok: false, message: "Select at least one Foundation review task." };
+  const closeoutNote = String(input.closeoutNote ?? "").trim();
+  if (status === "complete" && closeoutNote.length < 8) {
+    return { ok: false, message: "Add a short closeout note before completing selected Foundation review tasks." };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data: taskRows, error: readError } = await supabase
+    .from("tasks")
+    .select("id,title,status,priority,due_date,assigned_to,source_module,source_record_id")
+    .eq("organization_id", context.organizationId)
+    .in("id", taskIds);
+
+  if (readError) return { ok: false, message: readError.message };
+  const tasks = (taskRows as Record<string, any>[] | null) ?? [];
+  if (tasks.length !== taskIds.length) return { ok: false, message: "One or more selected Foundation review tasks could not be found." };
+  if (tasks.some((task) => !foundationReviewSourceModules.includes(String(task.source_module)))) {
+    return { ok: false, message: "Only generated Foundation review tasks can be bulk updated from this panel." };
+  }
+
+  const isOwner = context.role === "owner";
+  if (!isOwner && tasks.some((task) => task.assigned_to !== context.userId)) {
+    return { ok: false, message: "Members can bulk update only Foundation review tasks assigned to them." };
+  }
+
+  const { error } = await supabase
+    .from("tasks")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("organization_id", context.organizationId)
+    .in("id", taskIds);
+
+  if (error) return { ok: false, message: error.message };
+
+  const actorRole = isOwner ? "owner" : "assigned_member";
+  for (const task of tasks) {
+    await writeFoundationAuditEvent(supabase, context, {
+      eventType: "foundation_review_task_status_updated",
+      summary: `Foundation review task bulk updated to ${status}.`,
+      sourceModule: task.source_module ?? "foundation",
+      sourceRecordId: task.source_record_id ?? task.id,
+      targetModule: "task",
+      targetRecordId: task.id,
+      payload: {
+        taskId: task.id,
+        title: task.title,
+        previousStatus: task.status,
+        status,
+        previousPriority: task.priority,
+        priority: task.priority,
+        previousDueDate: task.due_date,
+        dueDate: task.due_date,
+        previousAssignedTo: task.assigned_to,
+        assignedTo: task.assigned_to,
+        closeoutNote: closeoutNote || null,
+        actorRole,
+        bulkUpdate: true
+      }
+    });
+    if (status === "blocked") {
+      await createFoundationTaskNotificationIfMissing(supabase, context.organizationId, task.assigned_to, task.id, "foundation_task_blocked", {
+        title: "Foundation task blocked",
+        body: `${task.title} was marked blocked in a bulk update and needs owner or assigned-review attention.`
+      });
+    }
+  }
+
+  return { ok: true, message: `${tasks.length} Foundation review tasks updated to ${status}.` };
+}
+
 export async function addFoundationReviewTaskNote(input: { taskId: string; note: string }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before adding Foundation task notes." };

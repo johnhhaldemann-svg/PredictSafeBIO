@@ -59,6 +59,7 @@ Last updated: 2026-06-01
 - Branch `codex/my-work-priority-filters` adds My Work KPI deep links into saved task views plus Overdue, High priority, and Urgent task filtering.
 - PR #31 merged the My Work dashboard polish slice into `main`: visible active saved-view state, task sorting controls, and the reusable signed-in smoke runbook.
 - PR #33 merged owner-only priority editing to Foundation task update forms and preserves assigned-member restrictions.
+- Branch `codex/bulk-task-status-actions` adds selected-task bulk status updates while preserving owner/member boundaries and avoiding bulk priority, assignment, or due-date edits.
 - Production route smoke on June 1, 2026 returned `200 OK` for `/foundation`, `/my-work`, `/workbench`, `/documents`, `/admin/audit`, and `/login`.
 - PR #29 merged My Work KPI deep links and saved-view filtering into `main` at `6853b6e`; production saved-view routes `/my-work?view=high_priority`, `/my-work?view=overdue`, `/my-work?view=blocked`, and `/my-work?view=ready` returned `200 OK`.
 - Reusable signed-in smoke accounts were created on June 1, 2026 and their generated passwords are stored outside the repo at `C:\Users\johnh\AppData\Local\PredictSafeBIO\smoke-accounts.json`.
