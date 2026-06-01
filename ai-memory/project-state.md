@@ -7,7 +7,7 @@ Last updated: 2026-06-01
 - GitHub repository: `johnhhaldemann-svg/PredictSafeBIO`
 - Visibility: public
 - Protected branch: `main`
-- Latest main commit verified locally after deferred Auth hardening status merge: `61199b4`.
+- Latest main commit verified locally after My Work priority filter merge: `6853b6e`.
 - PR #9 recovered the closed-but-unmerged MVP foundation work from PRs #4, #5, #6, and #7.
 - PR #15 fixed Supabase auth confirmation callbacks for both PKCE `code` links and `token_hash` links.
 - PR #21 added audit target links, short demo seed labels, and workflow helper tests.
@@ -58,6 +58,8 @@ Last updated: 2026-06-01
 - The current command-center increment adds `/my-work`, connected command navigation across `/foundation`, `/my-work`, and `/workbench`, reusable Foundation task cards, work KPIs, source-resolution/closeout callouts, and notification read/unread controls.
 - Branch `codex/my-work-priority-filters` adds My Work KPI deep links into saved task views plus Overdue, High priority, and Urgent task filtering.
 - Production route smoke on June 1, 2026 returned `200 OK` for `/foundation`, `/my-work`, `/workbench`, `/documents`, `/admin/audit`, and `/login`.
+- PR #29 merged My Work KPI deep links and saved-view filtering into `main` at `6853b6e`; production saved-view routes `/my-work?view=high_priority`, `/my-work?view=overdue`, `/my-work?view=blocked`, and `/my-work?view=ready` returned `200 OK`.
+- Signed-in production owner/member smoke for the new saved views remains blocked on reusable owner/member credentials or a service-role key.
 - Signed-in owner smoke passed locally on June 1, 2026: `/foundation`, `/my-work`, and `/workbench` all returned `200`, showed the Codex smoke tasks, and exposed owner assignment plus due-date controls.
 - Signed-in assigned-member smoke passed locally on June 1, 2026: member views showed assigned task status/note/closeout controls, hid assignment and due-date fields, and rendered overdue, blocked, due-soon, and ready-for-closure notifications.
 - Notification action smoke passed locally on June 1, 2026: mark read, mark unread, and mark all read returned success redirects; assigned-member status update and note actions also returned success redirects.
