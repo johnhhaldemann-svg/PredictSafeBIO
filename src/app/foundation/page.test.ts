@@ -136,7 +136,9 @@ describe("foundation UI alignment", () => {
     expect(foundationData).toContain("readyForClosureReview");
     expect(foundationData).toContain("Foundation task ready for closure review");
     expect(foundationData).toContain("Members can update only Foundation review tasks assigned to them");
-    expect(foundationData).toContain("Members can update task status and notes only; assignment and due dates are owner-only.");
+    expect(foundationData).toContain("Members can update task status and notes only; priority, assignment, and due dates are owner-only.");
+    expect(foundationData).toContain("normalizeFoundationTaskPriority");
+    expect(foundationData).toContain("previousPriority");
     expect(foundationData).toContain("actorRole");
     expect(foundationData).toContain("previousStatus");
     expect(foundationData).toContain("previousDueDate");
@@ -151,6 +153,8 @@ describe("foundation UI alignment", () => {
     expect(reviewActionsPanel).toContain("dueDate");
     expect(reviewActionsPanel).toContain("canEditAssignment");
     expect(reviewActionsPanel).toContain("canEditDueDate");
+    expect(reviewActionsPanel).toContain("canEditPriority");
+    expect(reviewActionsPanel).toContain("<select name=\"priority\" defaultValue={action.priority}>");
     expect(reviewActionsPanel).toContain("initialSavedView");
     expect(reviewActionsPanel).toContain("laneLabel");
     expect(reviewActionsPanel).toContain("laneDescription");
@@ -199,10 +203,12 @@ describe("foundation UI alignment", () => {
     expect(reviewActionsPanel).toContain("Closed with closeout note");
     expect(reviewActionsPanel).toContain("Assignment changed");
     expect(reviewActionsPanel).toContain("Due date changed");
+    expect(reviewActionsPanel).toContain("Priority changed");
     expect(reviewActionsPanel).toContain("Source refreshed");
     expect(reviewActionsPanel).toContain("activity-event-meta");
     expect(reviewActionsPanel).toContain("actorRole");
     expect(foundationActions).toContain("normalizeFoundationReturnTo");
+    expect(foundationActions).toContain("if (formData.has(\"priority\"))");
     expect(foundationActions).toContain("revalidatePath(\"/my-work\")");
     expect(foundationActions).toContain("\"/my-work\"");
     expect(foundationActions).toContain("addFoundationReviewTaskNoteAction");
@@ -255,6 +261,7 @@ describe("foundation UI alignment", () => {
     expect(workbenchClient).toContain("Workbench-to-Foundation context");
     expect(workbenchClient).toContain("canManageFoundationActions");
     expect(workbenchClient).toContain("canEditAssignment={commandSummary.ownerMode}");
+    expect(workbenchClient).toContain("canEditPriority={commandSummary.ownerMode}");
     expect(workbenchClient).toContain("href=\"/my-work\"");
     expect(workbenchClient).toContain("productionVerification");
     expect(workbenchClient).toContain("getAssignedWorkDueBucket");
@@ -298,6 +305,7 @@ describe("foundation UI alignment", () => {
     expect(myWorkPage).toContain("adminAccess.isOwner ? allActions");
     expect(myWorkPage).toContain("canEditAssignment={adminAccess.isOwner}");
     expect(myWorkPage).toContain("canEditDueDate={adminAccess.isOwner}");
+    expect(myWorkPage).toContain("canEditPriority={adminAccess.isOwner}");
     expect(foundationPage).toContain("Source Drilldowns");
     expect(foundationPage).toContain("source-drilldown-grid");
     expect(foundationPage).toContain("getFoundationSourceDrilldownSummary");

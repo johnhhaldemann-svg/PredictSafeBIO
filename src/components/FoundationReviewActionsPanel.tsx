@@ -30,6 +30,7 @@ export function FoundationReviewActionsPanel({
   canManage = false,
   canEditAssignment = true,
   canEditDueDate = true,
+  canEditPriority = true,
   emptyMessage = "No open action-planning items have been generated yet.",
   initialSavedView = "all",
   laneDescription = "Source-traced actions, owner follow-through, activity notes, source resolution, and closure controls stay in one operating card.",
@@ -44,6 +45,7 @@ export function FoundationReviewActionsPanel({
   canManage?: boolean;
   canEditAssignment?: boolean;
   canEditDueDate?: boolean;
+  canEditPriority?: boolean;
   emptyMessage?: string;
   initialSavedView?: string;
   laneDescription?: string;
@@ -281,6 +283,17 @@ export function FoundationReviewActionsPanel({
                       <option value="blocked">Blocked</option>
                     </select>
                   </label>
+                  {canEditPriority ? (
+                    <label>
+                      Priority
+                      <select name="priority" defaultValue={action.priority}>
+                        <option value="urgent">Urgent</option>
+                        <option value="high">High priority</option>
+                        <option value="medium">Medium priority</option>
+                        <option value="low">Low priority</option>
+                      </select>
+                    </label>
+                  ) : null}
                   {canEditDueDate ? (
                     <label>
                       Due date
@@ -455,6 +468,7 @@ function getActivityTitle(event: FoundationReviewActionSummary["activityHistory"
   if (event.eventType === "foundation_source_resolution_refreshed") return "Source refreshed";
   if (event.previousAssignedTo !== event.assignedTo) return "Assignment changed";
   if (event.previousDueDate !== event.dueDate) return "Due date changed";
+  if (event.previousPriority !== event.priority) return "Priority changed";
   if (event.status) return "Status changed";
   return "Activity recorded";
 }
@@ -463,6 +477,9 @@ function getActivityDetails(event: FoundationReviewActionSummary["activityHistor
   const details = [];
   if (event.previousStatus || event.status) {
     details.push(`Status: ${formatNullableValue(event.previousStatus)} -> ${formatNullableValue(event.status)}`);
+  }
+  if (event.previousPriority !== event.priority && (event.previousPriority || event.priority)) {
+    details.push(`Priority: ${formatNullableValue(event.previousPriority)} -> ${formatNullableValue(event.priority)}`);
   }
   if (event.previousAssignedTo !== event.assignedTo && (event.previousAssignedTo || event.assignedTo)) {
     details.push(`Assignee: ${formatNullableValue(event.previousAssigneeName ?? event.previousAssignedTo)} -> ${formatNullableValue(event.assigneeName ?? event.assignedTo)}`);

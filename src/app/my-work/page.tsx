@@ -148,6 +148,7 @@ export default async function MyWorkPage({
               canManage={adminAccess.signedIn}
               canEditAssignment={adminAccess.isOwner}
               canEditDueDate={adminAccess.isOwner}
+              canEditPriority={adminAccess.isOwner}
               emptyMessage={
                 adminAccess.isOwner
                   ? "No generated Foundation review tasks are available yet."

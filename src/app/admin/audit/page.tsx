@@ -45,6 +45,7 @@ export default async function AuditPage({
           canManage={adminAccess.signedIn}
           canEditAssignment={adminAccess.isOwner}
           canEditDueDate={adminAccess.isOwner}
+          canEditPriority={adminAccess.isOwner}
           emptyMessage="No open Foundation review actions are waiting for human review."
           returnTo="/admin/audit"
           title="Open source-traced actions"

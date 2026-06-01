@@ -521,6 +521,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           canManage={adminAccess.signedIn}
           canEditAssignment={adminAccess.isOwner}
           canEditDueDate={adminAccess.isOwner}
+          canEditPriority={adminAccess.isOwner}
           laneLabel="Generated Actions"
           laneDescription="These are the canonical Foundation task cards: source trace, assignment, due date, source resolution, activity, and closeout in one place."
           primaryActionHref="/my-work"
