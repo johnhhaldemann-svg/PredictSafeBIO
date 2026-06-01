@@ -4,10 +4,9 @@ Last updated: 2026-06-01
 
 ## Immediate
 
-- Re-enable Supabase email confirmation in Auth provider settings.
-- Enable leaked-password protection if available on the current Supabase plan.
-- Configure custom SMTP before heavier signup testing.
-- Run a dashboard/API Auth settings pass with a Supabase Management API token and real SMTP credentials.
+- Treat Supabase Auth hardening as deferred for now and keep the current demo/testing path on already-confirmed or existing signed-in users.
+- Use the merged command-center/My Work increment as the current baseline for the next product slice.
+- Keep future signed-in smoke focused on existing accounts until custom SMTP and email confirmation are revisited.
 
 ## Blockers And Watch Items
 
@@ -15,9 +14,9 @@ Last updated: 2026-06-01
 - Dependabot PRs for TypeScript, lucide-react, and Node types were merged after refreshed CI/Vercel checks.
 - PR #26 merged into `main` after refreshed GitHub Actions and Vercel checks passed.
 - Branch protection API response on June 1, 2026 showed required status checks and admin enforcement, but did not show an approving-review rule.
-- Supabase built-in auth email sending is rate-limited; custom SMTP is required before heavier public signup testing.
-- Supabase project is on the Pro plan, so leaked-password protection is supported, but Auth settings mutation still needs dashboard access or a Supabase Management API token.
-- Custom SMTP still needs actual provider credentials: sender/from address, host, port, username, and password.
+- Supabase built-in auth email sending is rate-limited; custom SMTP is still required before heavier public signup testing.
+- Supabase project is on the Pro plan, so leaked-password protection is supported, but Auth settings mutation is deferred until dashboard access or a Supabase Management API token is available.
+- Custom SMTP and a real signup/confirmation smoke are intentionally parked for now.
 - Command-center and upload smoke used disposable Codex owner/member accounts and task data on June 1, 2026; those records were cleaned up after smoke.
 
 ## Command Center Increment

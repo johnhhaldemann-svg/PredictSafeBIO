@@ -1,17 +1,19 @@
 # Deployment Status
 
-Last checked: 2026-05-28
+Last checked: 2026-06-01
 
 ## Vercel
 
 - Project: `predictsafe-bio`
 - Production URL: `https://predictsafe-bio.vercel.app`
-- Latest production commit verified locally after v1.2 report/filter hardening: `49867cab05f53008b0c6f4eac1dca082fb8d95cf`
+- Latest main commit verified locally after command-center/My Work memory update: `180612e`
 - Latest passing CI run on `main`: `26583182299`
 
 Production routes verified with `200 OK`:
 
 - `/workbench`
+- `/foundation`
+- `/my-work`
 - `/assessments`
 - `/assessments?review=reviewed_monitoring&level=critical&reviewer=reviewed`
 - `/company-profile`
@@ -27,15 +29,15 @@ Production routes verified with `200 OK`:
 - Applied migrations include `enable_auth_onboarding` and `enable_document_storage`.
 - Private bucket `biotech-documents` exists and is not public.
 - Storage policies present: select, insert, update, and delete for `authenticated` users scoped by organization path.
-- Storage verification on 2026-05-28: bucket `biotech-documents` is private, storage object count is `0`, and document metadata records with `storage_path` are `0`.
+- Storage verification on 2026-06-01: signed-in private-bucket upload smoke passed, `storage_path` persisted, the uploaded object was found, document detail rendered the linked file, draft report download decoded, and `/admin/audit` linked back to the smoke document. Disposable smoke rows and storage objects were cleaned back to zero after verification.
 - Supabase connector check passed.
 - RLS is enabled and policies are present on the eight MVP public tables.
 - Real smoke-test evidence: 1 user, 1 profile, 1 company profile, 1 assessment, 2 assessment signals, 1 document, 6 draft recommendations, and 4 audit events.
 - All 6 document recommendations are labeled `Draft - Human Review Required`.
 - Security advisor currently reports leaked password protection disabled.
 - Performance advisor reports informational unused-index/Auth-connection notes.
-- Email confirmation was temporarily disabled during smoke testing due to the built-in email throttle; custom SMTP is required before heavier signup testing.
-- v1.2 signed-in upload smoke is pending because a real signed-in browser upload is required; connector verification confirms the bucket/policies exist but no file has been uploaded yet.
+- Email confirmation was temporarily disabled during smoke testing due to the built-in email throttle; owner chose to defer the SMTP/Auth hardening pass for now.
+- Custom SMTP and leaked-password protection remain recommended before heavier public signup testing.
 
 ## GitHub
 
@@ -57,17 +59,21 @@ Completed:
 - Created release `v1.1-demo-hardening` from commit `c49c54c76bb15cb395574c3f72dae90f4898f801`.
 - Restored required approving reviews to `1` after solo-owner merge workarounds.
 
-Remaining:
+Remaining / Deferred:
 
-- Re-enable email confirmation after smoke testing.
-- Enable leaked-password protection if available on the current Supabase plan.
+- Re-enable email confirmation when SMTP/Auth hardening resumes.
+- Enable leaked-password protection when dashboard/API Auth settings access is available.
 - Configure custom SMTP before heavier public signup testing.
-- Run signed-in document upload smoke and confirm `storage_bucket` and `storage_path` persist.
+- Run one real signup/confirmation smoke after custom SMTP is configured.
 - Assessment review workflow migration has been applied and verified.
 - PR #21 merged audit target links, short demo seed labels, and additional workflow helper tests.
 - PR #23 merged assessment register filters, report polish, and expanded LLM draft-assist gate detail.
+- PR #26 merged the connected Foundation / My Work / Workbench command-center increment.
+- PR #27 recorded the command-center smoke results in memory.
 - Signed-in product smoke passed: review status updates saved reviewer notes and audit events, audit links opened target records, document recommendation history and Markdown report download worked, and `/admin/demo` seeded labeled demo records.
+- Signed-in command-center smoke passed locally: owner `/foundation`, `/my-work`, and `/workbench`; assigned-member status/note/closeout behavior; notification read/unread and mark-all-read actions.
+- Signed-in document upload smoke passed locally against `biotech-documents`; disposable smoke records and objects were cleaned afterward.
 - Demo seed evidence: `Demo seed 6e0c12c4`, assessment `362e02bb-8a11-48f1-933c-1fddbacbf7cd`, document `e425c0c4-42fd-48df-87ab-648f9a4191c2`.
-- v1.2 route smoke passed for `/assessments` filter URL, `/documents`, and `/admin/audit`; signed-in upload smoke and Supabase dashboard auth hardening remain pending.
+- v1.2 route smoke passed for `/assessments` filter URL, `/documents`, and `/admin/audit`; Supabase dashboard auth hardening remains deferred.
 - Keep LLM draft assist disabled unless the gate in `docs/llm-draft-assist-gate.md` is intentionally opened later.
 - Keep ESLint 10 closed until the lint toolchain is intentionally upgraded.
