@@ -7,7 +7,7 @@ Last updated: 2026-06-01
 - GitHub repository: `johnhhaldemann-svg/PredictSafeBIO`
 - Visibility: public
 - Protected branch: `main`
-- Latest main commit verified locally after v1.2 report/filter hardening: `49867cab05f53008b0c6f4eac1dca082fb8d95cf`
+- Latest main commit verified locally after command-center/My Work memory update: `180612e`.
 - PR #9 recovered the closed-but-unmerged MVP foundation work from PRs #4, #5, #6, and #7.
 - PR #15 fixed Supabase auth confirmation callbacks for both PKCE `code` links and `token_hash` links.
 - PR #21 added audit target links, short demo seed labels, and workflow helper tests.
@@ -47,8 +47,8 @@ Last updated: 2026-06-01
 - Email confirmation was temporarily disabled during smoke testing because built-in Supabase auth email sending hit the project throttle.
 - Re-enable email confirmation after testing; configure custom SMTP before heavier signup testing.
 - v1.1 hardening adds clearer auth messages, optional document file upload metadata, and draft-only demo report downloads.
-- Auth hardening still needs dashboard confirmation: re-enable email confirmation, enable leaked-password protection if available, and configure custom SMTP before heavier signup testing.
-- Supabase organization plan is Pro, so leaked-password protection is available; enabling it, re-enabling email confirmation, and configuring SMTP still require dashboard/API Auth settings access plus real SMTP credentials.
+- Auth hardening is deferred by owner decision for now: re-enable email confirmation, enable leaked-password protection, configure custom SMTP, and run real signup/confirmation smoke later.
+- Supabase organization plan is Pro, so leaked-password protection is available when the Auth settings pass is resumed.
 - Current product increment adds assessment review workflow, document recommendation history, Markdown demo reports, signed-in demo seed operations, and an explicit LLM draft-assist gate.
 - Supabase migration `assessment_review_workflow` has been applied; `assessments` now includes reviewer notes, reviewer identity, reviewed timestamp, and constrained review statuses.
 - Signed-in v1.1 smoke passed in production: review status changes saved reviewer notes, `human_review_status_changed` audit links opened the assessment, document recommendation history and report download worked, and `/admin/demo` seeded labeled demo assessment/document/audit records.
