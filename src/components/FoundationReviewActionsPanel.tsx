@@ -10,19 +10,33 @@ export function FoundationReviewActionsPanel({
   actions,
   assignees = [],
   canManage = false,
+  canEditAssignment = true,
+  canEditDueDate = true,
   emptyMessage = "No open action-planning items have been generated yet.",
+  initialSavedView = "all",
+  laneDescription = "Source-traced actions, owner follow-through, activity notes, source resolution, and closure controls stay in one operating card.",
+  laneLabel = "Generated Actions",
+  primaryActionHref,
+  primaryActionLabel,
   returnTo = "/foundation",
   title = "Source-traced follow-through"
 }: {
   actions: FoundationReviewActionSummary[];
   assignees?: FoundationAssigneeOption[];
   canManage?: boolean;
+  canEditAssignment?: boolean;
+  canEditDueDate?: boolean;
   emptyMessage?: string;
+  initialSavedView?: string;
+  laneDescription?: string;
+  laneLabel?: string;
+  primaryActionHref?: string;
+  primaryActionLabel?: string;
   returnTo?: string;
   title?: string;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [savedView, setSavedView] = useState("all");
+  const [savedView, setSavedView] = useState(initialSavedView);
   const [selectedActionId, setSelectedActionId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
@@ -41,7 +55,14 @@ export function FoundationReviewActionsPanel({
           action.assigneeName,
           action.reason,
           action.sourceResolutionState,
-          ...action.activityHistory.flatMap((event) => [event.summary, event.note ?? "", event.closeoutNote ?? ""])
+          ...action.activityHistory.flatMap((event) => [
+            event.summary,
+            event.note ?? "",
+            event.closeoutNote ?? "",
+            event.actorRole ?? "",
+            event.status ?? "",
+            event.resolutionState ?? ""
+          ])
         ]
           .join(" ")
           .toLowerCase();
@@ -58,24 +79,31 @@ export function FoundationReviewActionsPanel({
   const readyForClosureActions = filteredActions.filter(isReadyForClosure);
 
   return (
-    <section className="panel">
-      <div className="panel-heading">
+    <section className="panel command-center-lane task-command-lane">
+      <div className="panel-heading command-center-lane-header">
         <div>
-          <p className="section-label">Action Planning</p>
+          <p className="section-label">{laneLabel}</p>
           <h2>{title}</h2>
+          <p className="muted">{laneDescription}</p>
         </div>
-        <ClipboardList size={22} />
+        {primaryActionHref && primaryActionLabel ? (
+          <Link className="button-primary compact" href={primaryActionHref}>
+            {primaryActionLabel}
+          </Link>
+        ) : (
+          <ClipboardList size={22} />
+        )}
       </div>
       {actions.length > 0 ? (
         <>
           <div className="saved-view-bar" aria-label="Saved task views">
             {[
-              ["all", "All"],
-              ["assigned", "Assigned to me"],
+              ["all", "All generated"],
+              ["my_open", "My open work"],
               ["blocked", "Blocked"],
+              ["due_soon", "Due soon"],
               ["ready", "Ready for closure"],
-              ["unassigned", "Unassigned"],
-              ["due_week", "Due this week"]
+              ["unassigned", "Unassigned"]
             ].map(([value, label]) => (
               <button className={savedView === value ? "button-primary compact" : "button-secondary compact"} key={value} type="button" onClick={() => setSavedView(value)}>
                 {label}
@@ -146,6 +174,7 @@ export function FoundationReviewActionsPanel({
                 <div className="task-chip-row" aria-label="Task state">
                   <span className={`task-status-chip task-status-${normalizeChipClass(action.status)}`}>{formatActionLabel(action.status)}</span>
                   <span className={`task-priority-chip task-priority-${normalizeChipClass(action.priority)}`}>{formatActionLabel(action.priority)}</span>
+                  <span className={`task-role-chip ${getTaskRoleClass(action, canManage, canEditAssignment)}`}>{getTaskRoleLabel(action, canManage, canEditAssignment)}</span>
                 </div>
               </div>
               <div className="task-card-meta" aria-label="Task summary">
@@ -161,9 +190,15 @@ export function FoundationReviewActionsPanel({
                 <span className={`task-aging-badge ${getTaskAgingClass(action)}`}>{getTaskAgingLabel(action)}</span>
               </div>
               {action.reason ? <p>{action.reason}</p> : null}
-              <button className="button-secondary compact" type="button" onClick={() => setSelectedActionId(action.id)}>
-                Open task detail
-              </button>
+              <CloseoutNoteCallout action={action} />
+              <div className="task-action-button-row">
+                <button className="button-secondary compact" type="button" onClick={() => setSelectedActionId(action.id)}>
+                  Open task detail
+                </button>
+                <Link className="button-secondary compact" href={action.sourceDetailHref}>
+                  Open source
+                </Link>
+              </div>
               {isReadyForClosure(action) ? (
                 <div className="ready-closure-banner">
                   <strong>Ready for closure review</strong>
@@ -173,28 +208,7 @@ export function FoundationReviewActionsPanel({
               <details className="source-detail-expander">
                 <summary>Action detail and source trace</summary>
                 <div className="action-detail-grid">
-                  <dl>
-                    <div>
-                      <dt>Module</dt>
-                      <dd>{action.sourceModule.replace(/_/g, " ")}</dd>
-                    </div>
-                    <div>
-                      <dt>Record</dt>
-                      <dd>{action.sourceRecordId ?? "not linked"}</dd>
-                    </div>
-                    <div>
-                      <dt>Recommendation</dt>
-                      <dd>{action.recommendationId ?? "task only"}</dd>
-                    </div>
-                    <div>
-                      <dt>Assignee</dt>
-                      <dd>{action.assigneeName ?? "Unassigned"}</dd>
-                    </div>
-                    <div>
-                      <dt>Due date</dt>
-                      <dd>{action.dueDate ?? "No due date"}</dd>
-                    </div>
-                  </dl>
+                  <TaskContextBlock action={action} compact={false} />
                   <div className="action-next-step">
                     <strong>Next step</strong>
                     <p>{action.nextStep}</p>
@@ -215,20 +229,7 @@ export function FoundationReviewActionsPanel({
                   ) : null}
                   <div className="action-status-history">
                     <strong>Activity history</strong>
-                    {action.activityHistory.length > 0 ? (
-                      <ol className="compact-timeline">
-                        {action.activityHistory.slice(0, 5).map((event) => (
-                          <li key={`${event.eventType}-${event.createdAt ?? event.summary}`}>
-                            <span>{event.createdAt ? new Date(event.createdAt).toLocaleString() : "Pending timestamp"}</span>
-                            <p>{event.status ? `${event.status}: ${event.summary}` : event.summary}</p>
-                            {event.note ? <p>{event.note}</p> : null}
-                            {event.closeoutNote ? <p>Closeout: {event.closeoutNote}</p> : null}
-                          </li>
-                        ))}
-                      </ol>
-                    ) : (
-                      <p>No activity history has been written yet.</p>
-                    )}
+                    <TaskActivityTimeline events={action.activityHistory.slice(0, 5)} />
                   </div>
                 </div>
               </details>
@@ -245,22 +246,26 @@ export function FoundationReviewActionsPanel({
                       <option value="blocked">Blocked</option>
                     </select>
                   </label>
-                  <label>
-                    Due date
-                    <input name="dueDate" type="date" defaultValue={action.dueDate ?? ""} />
-                  </label>
-                  <label>
-                    Assignee
-                    <select name="assignedTo" defaultValue={action.assignedTo ?? ""}>
-                      <option value="">Unassigned</option>
-                      {assignees.map((assignee) => (
-                        <option key={assignee.id} value={assignee.id}>
-                          {assignee.name}
-                          {assignee.role ? ` / ${assignee.role}` : ""}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  {canEditDueDate ? (
+                    <label>
+                      Due date
+                      <input name="dueDate" type="date" defaultValue={action.dueDate ?? ""} />
+                    </label>
+                  ) : null}
+                  {canEditAssignment ? (
+                    <label>
+                      Assignee
+                      <select name="assignedTo" defaultValue={action.assignedTo ?? ""}>
+                        <option value="">Unassigned</option>
+                        {assignees.map((assignee) => (
+                          <option key={assignee.id} value={assignee.id}>
+                            {assignee.name}
+                            {assignee.role ? ` / ${assignee.role}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
                   <label className="wide-field">
                     Closeout note
                     <textarea
@@ -299,9 +304,12 @@ export function FoundationReviewActionsPanel({
             </article>
             ))
           ) : actions.length > 0 ? (
-            <p className="muted">No generated actions match the selected filters.</p>
+            <TaskEmptyState
+              title="No tasks in this saved view"
+              message="Try another saved view, reset the filters, or generate/source a new Foundation review action."
+            />
           ) : (
-            <p className="muted">{emptyMessage}</p>
+            <TaskEmptyState title="This lane is clear" message={emptyMessage} />
           )}
         </div>
         {selectedAction ? <TaskDetailDrawer action={selectedAction} /> : null}
@@ -320,49 +328,141 @@ function TaskDetailDrawer({ action }: { action: FoundationReviewActionSummary })
       <div className="task-chip-row">
         <span className={`task-status-chip task-status-${normalizeChipClass(action.status)}`}>{formatActionLabel(action.status)}</span>
         <span className={`task-priority-chip task-priority-${normalizeChipClass(action.priority)}`}>{formatActionLabel(action.priority)}</span>
+        <span className="task-role-chip task-role-detail">Source-traced task</span>
       </div>
-      <dl>
-        <div>
-          <dt>Owner</dt>
-          <dd>{action.assigneeName ?? "Unassigned"}</dd>
-        </div>
-        <div>
-          <dt>Due</dt>
-          <dd>{action.dueDate ?? "No due date"}</dd>
-        </div>
-        <div>
-          <dt>Source</dt>
-          <dd>
-            <Link href={action.sourceDetailHref}>{action.sourceLabel}</Link>
-          </dd>
-        </div>
-        <div>
-          <dt>Resolution</dt>
-          <dd>{action.sourceResolutionState}</dd>
-        </div>
-      </dl>
+      <TaskContextBlock action={action} compact={false} />
       {isReadyForClosure(action) ? (
         <div className="ready-closure-banner">
           <strong>Ready for closure</strong>
           <span>Add a closeout note and complete the task after human review.</span>
         </div>
       ) : null}
+      <CloseoutNoteCallout action={action} />
       <div className="action-status-history">
-        <strong>Compact activity timeline</strong>
-        {action.activityHistory.length > 0 ? (
-          <ol className="compact-timeline">
-            {action.activityHistory.slice(0, 6).map((event) => (
-              <li key={`${event.eventType}-${event.createdAt ?? event.summary}`}>
-                <span>{event.createdAt ? new Date(event.createdAt).toLocaleString() : "Pending timestamp"}</span>
-                <p>{event.note ?? event.summary}</p>
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <p>No activity history has been written yet.</p>
-        )}
+        <strong>Activity timeline</strong>
+        <TaskActivityTimeline events={action.activityHistory.slice(0, 8)} />
       </div>
     </aside>
+  );
+}
+
+function TaskEmptyState({ title, message }: { title: string; message: string }) {
+  return (
+    <div className="task-lane-empty-state">
+      <strong>{title}</strong>
+      <p>{message}</p>
+    </div>
+  );
+}
+
+function TaskContextBlock({ action, compact = true }: { action: FoundationReviewActionSummary; compact?: boolean }) {
+  const resolution = getSourceResolutionDisplay(action.sourceResolutionState);
+
+  return (
+    <div className={compact ? "task-context-block" : "task-context-block task-context-expanded"} aria-label="Task context">
+      <div>
+        <span>Status</span>
+        <strong>{formatActionLabel(action.status)}</strong>
+      </div>
+      <div>
+        <span>Assignee</span>
+        <strong>{action.assigneeName ?? "Unassigned"}</strong>
+      </div>
+      <div>
+        <span>Due date</span>
+        <strong>{action.dueDate ?? "No due date"}</strong>
+      </div>
+      <div>
+        <span>Source</span>
+        <strong>{formatActionLabel(action.sourceModule)}</strong>
+        <Link className="text-link" href={action.sourceDetailHref}>
+          {action.sourceLabel}
+        </Link>
+      </div>
+      <div className="task-context-resolution">
+        <span>Source resolution</span>
+        <strong className={`source-resolution-chip source-resolution-${resolution.className}`}>{resolution.label}</strong>
+        {!compact ? <p>{action.sourceResolutionDetail}</p> : null}
+      </div>
+    </div>
+  );
+}
+
+function TaskActivityTimeline({ events }: { events: FoundationReviewActionSummary["activityHistory"] }) {
+  if (events.length < 1) return <p>No activity history has been written yet.</p>;
+
+  return (
+    <ol className="compact-timeline rich-activity-timeline">
+      {events.map((event) => (
+        <li key={`${event.eventType}-${event.createdAt ?? event.summary}`}>
+          <div className="activity-event-heading">
+            <strong>{getActivityTitle(event)}</strong>
+            <span>{event.createdAt ? new Date(event.createdAt).toLocaleString() : "Pending timestamp"}</span>
+          </div>
+          <div className="activity-event-meta">
+            <span>{formatActionLabel(event.eventType)}</span>
+            <span>{formatActionLabel(event.actorRole ?? "system")}</span>
+          </div>
+          <div className="activity-event-details">
+            {getActivityDetails(event).map((detail) => (
+              <p key={detail}>{detail}</p>
+            ))}
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function getActivityTitle(event: FoundationReviewActionSummary["activityHistory"][number]) {
+  if (event.closeoutNote && event.status === "complete") return "Closed with closeout note";
+  if (event.eventType === "foundation_review_task_note_added") return "Note added";
+  if (event.eventType === "foundation_source_resolution_refreshed") return "Source refreshed";
+  if (event.previousAssignedTo !== event.assignedTo) return "Assignment changed";
+  if (event.previousDueDate !== event.dueDate) return "Due date changed";
+  if (event.status) return "Status changed";
+  return "Activity recorded";
+}
+
+function getActivityDetails(event: FoundationReviewActionSummary["activityHistory"][number]) {
+  const details = [];
+  if (event.previousStatus || event.status) {
+    details.push(`Status: ${formatNullableValue(event.previousStatus)} -> ${formatNullableValue(event.status)}`);
+  }
+  if (event.previousAssignedTo !== event.assignedTo && (event.previousAssignedTo || event.assignedTo)) {
+    details.push(`Assignee: ${formatNullableValue(event.previousAssigneeName ?? event.previousAssignedTo)} -> ${formatNullableValue(event.assigneeName ?? event.assignedTo)}`);
+  }
+  if (event.previousDueDate !== event.dueDate && (event.previousDueDate || event.dueDate)) {
+    details.push(`Due date: ${formatNullableValue(event.previousDueDate)} -> ${formatNullableValue(event.dueDate)}`);
+  }
+  if (event.resolutionState) details.push(`Source resolution: ${event.resolutionState}`);
+  if (event.resolutionDetail) details.push(event.resolutionDetail);
+  if (event.note) details.push(`Note: ${event.note}`);
+  if (event.closeoutNote) details.push(`Closeout note: ${event.closeoutNote}`);
+  if (details.length < 1) details.push(event.summary);
+  return details;
+}
+
+function formatNullableValue(value?: string | null) {
+  return value ? formatActionLabel(value) : "none";
+}
+
+function getSourceResolutionDisplay(state: string) {
+  const normalized = state.toLowerCase();
+  if (normalized.includes("appears resolved")) return { label: "Resolved", className: "resolved" };
+  if (normalized.includes("no exact source")) return { label: "No exact source", className: "no-source" };
+  if (normalized.includes("manual")) return { label: "Manual review", className: "manual-review" };
+  return { label: "Needs review", className: "needs-review" };
+}
+
+function CloseoutNoteCallout({ action }: { action: FoundationReviewActionSummary }) {
+  if (action.status !== "complete" || !action.closeoutNote?.trim()) return null;
+
+  return (
+    <div className="task-closeout-note">
+      <strong>Closeout note</strong>
+      <p>{action.closeoutNote}</p>
+    </div>
   );
 }
 
@@ -400,16 +500,28 @@ function getSavedViewMatch(savedView: string, action: FoundationReviewActionSumm
   if (savedView === "blocked") return action.status === "blocked";
   if (savedView === "ready") return isReadyForClosure(action);
   if (savedView === "unassigned") return !action.assignedTo;
-  if (savedView === "assigned") return action.canUpdate && Boolean(action.assignedTo);
-  if (savedView === "due_week") return isDueThisWeek(action);
+  if (savedView === "my_open") return action.canUpdate && Boolean(action.assignedTo) && action.status !== "complete";
+  if (savedView === "due_soon") return isDueSoon(action);
   return true;
 }
 
-function isDueThisWeek(action: FoundationReviewActionSummary) {
+function isDueSoon(action: FoundationReviewActionSummary) {
   if (!action.dueDate) return false;
   const due = new Date(`${action.dueDate}T00:00:00`);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
-  return days >= 0 && days <= 7;
+  return days >= 0 && days <= 3;
+}
+
+function getTaskRoleLabel(action: FoundationReviewActionSummary, canManage: boolean, canEditAssignment: boolean) {
+  if (!canManage || !action.canUpdate) return "Read-only";
+  if (canEditAssignment) return "Owner controls";
+  return "Assigned member";
+}
+
+function getTaskRoleClass(action: FoundationReviewActionSummary, canManage: boolean, canEditAssignment: boolean) {
+  if (!canManage || !action.canUpdate) return "task-role-readonly";
+  if (canEditAssignment) return "task-role-owner";
+  return "task-role-member";
 }

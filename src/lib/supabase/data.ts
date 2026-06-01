@@ -281,16 +281,38 @@ export type FoundationReviewActionSummary = {
     summary: string;
     createdAt?: string;
     status?: string;
+    previousStatus?: string | null;
     note?: string;
     closeoutNote?: string | null;
+    actorRole?: string | null;
+    previousDueDate?: string | null;
+    dueDate?: string | null;
+    previousAssignedTo?: string | null;
+    assignedTo?: string | null;
+    previousAssigneeName?: string | null;
+    assigneeName?: string | null;
+    resolutionState?: string | null;
+    resolutionDetail?: string | null;
+    readyForClosureReview?: boolean | null;
   }>;
   activityHistory: Array<{
     eventType: AuditEvent["eventType"];
     summary: string;
     createdAt?: string;
     status?: string;
+    previousStatus?: string | null;
     note?: string;
     closeoutNote?: string | null;
+    actorRole?: string | null;
+    previousDueDate?: string | null;
+    dueDate?: string | null;
+    previousAssignedTo?: string | null;
+    assignedTo?: string | null;
+    previousAssigneeName?: string | null;
+    assigneeName?: string | null;
+    resolutionState?: string | null;
+    resolutionDetail?: string | null;
+    readyForClosureReview?: boolean | null;
   }>;
 };
 
@@ -322,6 +344,8 @@ export type FoundationNotificationSummary = {
     id: string;
     title: string;
     body: string;
+    notificationType: string;
+    label: string;
     taskId?: string | null;
     createdAt?: string;
     readAt?: string | null;
@@ -1330,6 +1354,8 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
         .limit(80)
     ]);
 
+    const taskData = (taskRows.data as Record<string, any>[]) ?? [];
+    await createFoundationDueNotifications(supabase, context.organizationId, taskData);
     const recommendations = ((recommendationRows.data as Record<string, any>[]) ?? []).filter((row) => row.payload?.draftOnly !== false);
     const profiles = new Map(((profileRows.data as Record<string, any>[]) ?? []).map((row) => [row.id, row]));
     const auditEvents = ((auditRows.data as Record<string, any>[]) ?? []).map((row) => ({
@@ -1339,10 +1365,10 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
       payload: row.payload ?? {}
     }));
     const sourceResolutionStates = await getFoundationSourceResolutionStates(supabase, context.organizationId, [
-      ...(((taskRows.data as Record<string, any>[]) ?? []).map((row) => ({
+      ...taskData.map((row) => ({
         sourceModule: String(row.source_module ?? "foundation"),
         sourceRecordId: row.source_record_id ? String(row.source_record_id) : undefined
-      }))),
+      })),
       ...recommendations.map((row) => ({
         sourceModule: String(row.payload?.sourceModule ?? "foundation"),
         sourceRecordId: row.payload?.sourceRecordId ? String(row.payload.sourceRecordId) : undefined
@@ -1355,14 +1381,14 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
     }
 
     const actions = new Map<string, FoundationReviewActionSummary>();
-    for (const row of ((taskRows.data as Record<string, any>[]) ?? [])) {
+    for (const row of taskData) {
       const sourceModule = String(row.source_module ?? "foundation");
       const sourceRecordId = row.source_record_id ? String(row.source_record_id) : undefined;
       const key = foundationActionKey(sourceModule, sourceRecordId, row.title) ?? row.id;
       const recommendation = recommendationBySource.get(key);
       const source = getFoundationSourceTarget(sourceModule);
-      const statusHistory = getFoundationTaskStatusHistory(auditEvents, row.id, sourceRecordId);
-      const activityHistory = getFoundationTaskActivityHistory(auditEvents, row.id, sourceRecordId);
+      const statusHistory = getFoundationTaskStatusHistory(auditEvents, row.id, sourceRecordId, profiles);
+      const activityHistory = getFoundationTaskActivityHistory(auditEvents, row.id, sourceRecordId, profiles);
       const sourceResolution = getFoundationSourceResolution(sourceResolutionStates, sourceModule, sourceRecordId);
       actions.set(key, {
         id: row.id,
@@ -1603,7 +1629,7 @@ export async function getFoundationNotificationSummary(): Promise<FoundationNoti
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from("notifications")
-      .select("id,title,body,task_id,read_at,created_at")
+      .select("id,title,body,notification_type,task_id,read_at,created_at")
       .eq("organization_id", context.organizationId)
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false })
@@ -1614,6 +1640,8 @@ export async function getFoundationNotificationSummary(): Promise<FoundationNoti
       id: row.id,
       title: row.title,
       body: row.body ?? "",
+      notificationType: row.notification_type ?? "task",
+      label: getFoundationNotificationLabel(row.notification_type ?? "task"),
       taskId: row.task_id,
       createdAt: row.created_at,
       readAt: row.read_at
@@ -1624,6 +1652,49 @@ export async function getFoundationNotificationSummary(): Promise<FoundationNoti
     };
   } catch {
     return { unreadCount: 0, notifications: [] };
+  }
+}
+
+export async function updateFoundationNotificationReadState(input: { notificationId: string; read: boolean }): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in to update notification state." };
+
+  const notificationId = String(input.notificationId ?? "").trim();
+  if (!notificationId) return { ok: false, message: "Choose a notification to update." };
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read_at: input.read ? new Date().toISOString() : null })
+      .eq("organization_id", context.organizationId)
+      .eq("user_id", context.userId)
+      .eq("id", notificationId);
+
+    if (error) return { ok: false, message: error.message };
+    return { ok: true, message: input.read ? "Notification marked read." : "Notification marked unread." };
+  } catch {
+    return { ok: false, message: "Notification state could not be updated." };
+  }
+}
+
+export async function markAllFoundationNotificationsRead(): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Sign in to clear notifications." };
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("organization_id", context.organizationId)
+      .eq("user_id", context.userId)
+      .is("read_at", null);
+
+    if (error) return { ok: false, message: error.message };
+    return { ok: true, message: "Unread notifications marked read." };
+  } catch {
+    return { ok: false, message: "Notifications could not be cleared." };
   }
 }
 
@@ -2639,8 +2710,8 @@ export async function updateFoundationReviewTaskStatus(input: {
   if (!context) return { ok: false, message: "Sign in and finish onboarding before updating Foundation review tasks." };
   const status = normalizeFoundationTaskStatus(input.status);
   if (!status) return { ok: false, message: "Choose a valid Foundation review task status." };
-  const dueDate = normalizeFoundationDueDate(input.dueDate);
-  if (input.dueDate && !dueDate) return { ok: false, message: "Choose a valid due date for this Foundation review task." };
+  const hasDueDateInput = Object.prototype.hasOwnProperty.call(input, "dueDate");
+  const hasAssignedToInput = Object.prototype.hasOwnProperty.call(input, "assignedTo");
   const closeoutNote = String(input.closeoutNote ?? "").trim();
   if (status === "complete" && closeoutNote.length < 8) {
     return { ok: false, message: "Add a short closeout note before completing this Foundation review task." };
@@ -2658,11 +2729,18 @@ export async function updateFoundationReviewTaskStatus(input: {
   if (!foundationReviewSourceModules.includes(String(task.source_module))) {
     return { ok: false, message: "Only generated Foundation review tasks can be updated from this panel." };
   }
-  if (context.role !== "owner" && task.assigned_to !== context.userId) {
+  const actorRole = context.role === "owner" ? "owner" : "assigned_member";
+  const isOwner = context.role === "owner";
+  if (!isOwner && task.assigned_to !== context.userId) {
     return { ok: false, message: "Members can update only Foundation review tasks assigned to them." };
   }
+  if (!isOwner && (hasAssignedToInput || hasDueDateInput)) {
+    return { ok: false, message: "Members can update task status and notes only; assignment and due dates are owner-only." };
+  }
 
-  const assignedTo = input.assignedTo ? String(input.assignedTo) : null;
+  const dueDate = isOwner && hasDueDateInput ? normalizeFoundationDueDate(input.dueDate) : task.due_date;
+  if (isOwner && input.dueDate && !dueDate) return { ok: false, message: "Choose a valid due date for this Foundation review task." };
+  const assignedTo = isOwner && hasAssignedToInput ? (input.assignedTo ? String(input.assignedTo) : null) : task.assigned_to;
   if (assignedTo) {
     const { count, error: assigneeError } = await supabase
       .from("profiles")
@@ -2696,17 +2774,23 @@ export async function updateFoundationReviewTaskStatus(input: {
       dueDate,
       previousAssignedTo: task.assigned_to,
       assignedTo,
-      closeoutNote: closeoutNote || null
+      closeoutNote: closeoutNote || null,
+      actorRole
     }
   });
 
-  await createFoundationTaskNotification(supabase, context.organizationId, assignedTo, task.id, {
-    title: status === "blocked" ? "Foundation task blocked" : "Foundation task updated",
-    body:
-      status === "blocked"
-        ? `${task.title} was marked blocked and needs review.`
-        : `${task.title} was updated to ${status.replace(/_/g, " ")}.`
-  });
+  if (assignedTo && assignedTo !== task.assigned_to) {
+    await createFoundationTaskNotificationIfMissing(supabase, context.organizationId, assignedTo, task.id, "foundation_task_assigned", {
+      title: "Foundation task assigned",
+      body: `${task.title} was assigned to you for human review follow-through.`
+    });
+  }
+  if (status === "blocked") {
+    await createFoundationTaskNotificationIfMissing(supabase, context.organizationId, assignedTo, task.id, "foundation_task_blocked", {
+      title: "Foundation task blocked",
+      body: `${task.title} was marked blocked and needs owner or assigned-review attention.`
+    });
+  }
 
   return { ok: true, message: `Foundation review task marked ${status}.` };
 }
@@ -2745,6 +2829,7 @@ export async function addFoundationReviewTaskNote(input: { taskId: string; note:
       taskId: task.id,
       title: task.title,
       note,
+      actorRole: context.role === "owner" ? "owner" : "assigned_member",
       draftOnly: true
     }
   });
@@ -2793,9 +2878,24 @@ export async function refreshFoundationSourceResolution(input: { taskId: string 
       resolutionState: resolution.state,
       resolutionDetail: resolution.detail,
       readyForClosureReview: readyForClosure,
+      actorRole: context.role === "owner" ? "owner" : "assigned_member",
       draftOnly: true
     }
   });
+
+  if (readyForClosure) {
+    await createFoundationTaskNotificationIfMissing(
+      supabase,
+      context.organizationId,
+      task.assigned_to,
+      task.id,
+      "foundation_task_ready_for_closure",
+      {
+        title: "Foundation task ready for closure review",
+        body: `${task.title} source appears resolved. Add a human closeout note before completing the task.`
+      }
+    );
+  }
 
   return {
     ok: true,
@@ -4864,7 +4964,8 @@ function getFoundationActionNextStep(status: string, assignedTo?: string | null,
 function getFoundationTaskStatusHistory(
   auditEvents: Array<{ eventType: AuditEvent["eventType"]; summary: string; createdAt?: string; payload: Record<string, any> }>,
   taskId: string,
-  sourceRecordId?: string
+  sourceRecordId?: string,
+  profiles?: Map<string, Record<string, any>>
 ): FoundationReviewActionSummary["statusHistory"] {
   return auditEvents
     .filter((event) => {
@@ -4877,15 +4978,27 @@ function getFoundationTaskStatusHistory(
       summary: event.summary,
       createdAt: event.createdAt,
       status: typeof event.payload.status === "string" ? event.payload.status : undefined,
+      previousStatus: typeof event.payload.previousStatus === "string" ? event.payload.previousStatus : null,
       note: typeof event.payload.note === "string" ? event.payload.note : undefined,
-      closeoutNote: typeof event.payload.closeoutNote === "string" ? event.payload.closeoutNote : null
+      closeoutNote: typeof event.payload.closeoutNote === "string" ? event.payload.closeoutNote : null,
+      actorRole: typeof event.payload.actorRole === "string" ? event.payload.actorRole : null,
+      previousDueDate: typeof event.payload.previousDueDate === "string" ? event.payload.previousDueDate : null,
+      dueDate: typeof event.payload.dueDate === "string" ? event.payload.dueDate : null,
+      previousAssignedTo: typeof event.payload.previousAssignedTo === "string" ? event.payload.previousAssignedTo : null,
+      assignedTo: typeof event.payload.assignedTo === "string" ? event.payload.assignedTo : null,
+      previousAssigneeName: getProfileDisplayName(profiles, event.payload.previousAssignedTo),
+      assigneeName: getProfileDisplayName(profiles, event.payload.assignedTo),
+      resolutionState: typeof event.payload.resolutionState === "string" ? event.payload.resolutionState : null,
+      resolutionDetail: typeof event.payload.resolutionDetail === "string" ? event.payload.resolutionDetail : null,
+      readyForClosureReview: typeof event.payload.readyForClosureReview === "boolean" ? event.payload.readyForClosureReview : null
     }));
 }
 
 function getFoundationTaskActivityHistory(
   auditEvents: Array<{ eventType: AuditEvent["eventType"]; summary: string; createdAt?: string; payload: Record<string, any> }>,
   taskId: string,
-  sourceRecordId?: string
+  sourceRecordId?: string,
+  profiles?: Map<string, Record<string, any>>
 ): FoundationReviewActionSummary["activityHistory"] {
   return auditEvents
     .filter((event) => {
@@ -4898,13 +5011,30 @@ function getFoundationTaskActivityHistory(
       summary: event.summary,
       createdAt: event.createdAt,
       status: typeof event.payload.status === "string" ? event.payload.status : undefined,
+      previousStatus: typeof event.payload.previousStatus === "string" ? event.payload.previousStatus : null,
       note: typeof event.payload.note === "string" ? event.payload.note : undefined,
-      closeoutNote: typeof event.payload.closeoutNote === "string" ? event.payload.closeoutNote : null
+      closeoutNote: typeof event.payload.closeoutNote === "string" ? event.payload.closeoutNote : null,
+      actorRole: typeof event.payload.actorRole === "string" ? event.payload.actorRole : null,
+      previousDueDate: typeof event.payload.previousDueDate === "string" ? event.payload.previousDueDate : null,
+      dueDate: typeof event.payload.dueDate === "string" ? event.payload.dueDate : null,
+      previousAssignedTo: typeof event.payload.previousAssignedTo === "string" ? event.payload.previousAssignedTo : null,
+      assignedTo: typeof event.payload.assignedTo === "string" ? event.payload.assignedTo : null,
+      previousAssigneeName: getProfileDisplayName(profiles, event.payload.previousAssignedTo),
+      assigneeName: getProfileDisplayName(profiles, event.payload.assignedTo),
+      resolutionState: typeof event.payload.resolutionState === "string" ? event.payload.resolutionState : null,
+      resolutionDetail: typeof event.payload.resolutionDetail === "string" ? event.payload.resolutionDetail : null,
+      readyForClosureReview: typeof event.payload.readyForClosureReview === "boolean" ? event.payload.readyForClosureReview : null
     }));
 }
 
 function getFoundationTaskCloseoutNote(statusHistory: FoundationReviewActionSummary["statusHistory"]) {
   return statusHistory.find((event) => event.status === "complete" && event.closeoutNote)?.closeoutNote ?? null;
+}
+
+function getProfileDisplayName(profiles: Map<string, Record<string, any>> | undefined, profileId: unknown) {
+  if (typeof profileId !== "string" || !profileId) return null;
+  const profile = profiles?.get(profileId);
+  return profile?.full_name ?? profile?.role ?? profileId;
 }
 
 type FoundationSourceResolutionState = {
@@ -5398,6 +5528,7 @@ async function createFoundationTaskNotification(
   organizationId: string,
   userId: string | null,
   taskId: string,
+  notificationType: string,
   input: { title: string; body: string }
 ) {
   if (!userId) return;
@@ -5405,10 +5536,84 @@ async function createFoundationTaskNotification(
     organization_id: organizationId,
     user_id: userId,
     task_id: taskId,
-    notification_type: "foundation_review_task",
+    notification_type: notificationType,
     title: input.title,
     body: input.body
   });
+}
+
+async function createFoundationTaskNotificationIfMissing(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  organizationId: string,
+  userId: string | null,
+  taskId: string,
+  notificationType: string,
+  input: { title: string; body: string },
+  since?: string
+) {
+  if (!userId) return;
+  let query = supabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", organizationId)
+    .eq("user_id", userId)
+    .eq("task_id", taskId)
+    .eq("notification_type", notificationType);
+  if (since) query = query.gte("created_at", since);
+  const { count, error } = await query;
+  if (error || (count ?? 0) > 0) return;
+  await createFoundationTaskNotification(supabase, organizationId, userId, taskId, notificationType, input);
+}
+
+async function createFoundationDueNotifications(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  organizationId: string,
+  tasks: Array<Record<string, any>>
+) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const since = new Date(today).toISOString();
+  for (const task of tasks) {
+    if (!task.assigned_to || !task.due_date || task.status === "complete") continue;
+    const due = new Date(`${task.due_date}T00:00:00`);
+    const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
+    if (days < 0) {
+      await createFoundationTaskNotificationIfMissing(
+        supabase,
+        organizationId,
+        task.assigned_to,
+        task.id,
+        "foundation_task_overdue",
+        {
+          title: "Foundation task overdue",
+          body: `${task.title} is overdue and still needs human review follow-through.`
+        },
+        since
+      );
+    } else if (days <= 3) {
+      await createFoundationTaskNotificationIfMissing(
+        supabase,
+        organizationId,
+        task.assigned_to,
+        task.id,
+        "foundation_task_due_soon",
+        {
+          title: "Foundation task due soon",
+          body: `${task.title} is due ${task.due_date}; review source evidence before closeout.`
+        },
+        since
+      );
+    }
+  }
+}
+
+function getFoundationNotificationLabel(notificationType: string) {
+  if (notificationType === "foundation_task_assigned") return "Assigned";
+  if (notificationType === "foundation_task_blocked") return "Blocked";
+  if (notificationType === "foundation_task_due_soon") return "Due soon";
+  if (notificationType === "foundation_task_overdue") return "Overdue";
+  if (notificationType === "foundation_task_ready_for_closure") return "Ready for closure";
+  return "Task";
 }
 
 function normalizeFoundationEvidenceStatus(status: string): FoundationEvidenceStatus {

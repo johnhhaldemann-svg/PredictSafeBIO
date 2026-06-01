@@ -6,6 +6,7 @@ import { AlertTriangle, Beaker, CheckCircle2, ClipboardList, Gauge, Save, Shield
 import { assessBioRisk } from "@/lib/bio-ai/engine";
 import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import type { BioAiInput, BioSignalType } from "@/lib/bio-ai/types";
+import { getFoundationDueBucket, getFoundationWorkKpis, isFoundationReadyForClosure } from "@/lib/foundation/work-kpis";
 import { commonUtilities, gapModuleCards, platformCategories } from "@/lib/platform-outline";
 import type {
   FoundationAssigneeOption,
@@ -13,6 +14,7 @@ import type {
   FoundationProductionVerificationSummary,
   FoundationReviewActionSummary
 } from "@/lib/supabase/data";
+import { FoundationNotificationCenter } from "./FoundationNotificationCenter";
 import { FoundationReviewActionsPanel } from "./FoundationReviewActionsPanel";
 import { StatusBadge } from "./StatusBadge";
 
@@ -105,6 +107,7 @@ export function WorkbenchClient({
   const [workStatusFilter, setWorkStatusFilter] = useState("all");
   const [workPriorityFilter, setWorkPriorityFilter] = useState("all");
   const [workSourceFilter, setWorkSourceFilter] = useState("all");
+  const [workSpecialFilter, setWorkSpecialFilter] = useState("all");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "blocked" | "error">("idle");
   const [saveMessage, setSaveMessage] = useState("Assessment has not been saved yet.");
   const assessment = useMemo(() => assessBioRisk(input), [input]);
@@ -161,9 +164,16 @@ export function WorkbenchClient({
         const priorityMatches = workPriorityFilter === "all" || action.priority === workPriorityFilter;
         const sourceMatches = workSourceFilter === "all" || action.sourceModule === workSourceFilter;
         const dueMatches = dueFilter === "all" || getAssignedWorkDueBucket(action) === dueFilter;
-        return assigneeMatches && statusMatches && priorityMatches && sourceMatches && dueMatches;
+        const specialMatches =
+          workSpecialFilter === "all" ||
+          (workSpecialFilter === "completed_week" &&
+            action.status === "complete" &&
+            action.activityHistory.some((event) => event.status === "complete" && event.createdAt && new Date(event.createdAt) >= getWeekStart())) ||
+          (workSpecialFilter === "ready" && isFoundationReadyForClosure(action)) ||
+          (workSpecialFilter === "high_priority" && action.status !== "complete" && ["high", "urgent"].includes(action.priority.toLowerCase()));
+        return assigneeMatches && statusMatches && priorityMatches && sourceMatches && dueMatches && specialMatches;
       }),
-    [assignedFilter, dueFilter, foundationActions, workPriorityFilter, workSourceFilter, workStatusFilter]
+    [assignedFilter, dueFilter, foundationActions, workPriorityFilter, workSourceFilter, workSpecialFilter, workStatusFilter]
   );
   const productionPanel = productionVerification ?? {
     environment: "local",
@@ -171,18 +181,8 @@ export function WorkbenchClient({
     productionReady: false,
     reason: "Production verification has not been loaded for this workbench session."
   };
-  const notificationPanel = notifications ?? { unreadCount: 0, notifications: [] };
-  const workKpis = useMemo(() => {
-    const now = new Date();
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - 7);
-    return {
-      overdue: foundationActions.filter((action) => getAssignedWorkDueBucket(action) === "overdue" && action.status !== "complete").length,
-      blocked: foundationActions.filter((action) => action.status === "blocked").length,
-      completedThisWeek: foundationActions.filter((action) => action.status === "complete" && action.activityHistory.some((event) => event.status === "complete" && event.createdAt && new Date(event.createdAt) >= weekStart)).length,
-      unassigned: foundationActions.filter((action) => !action.assignedTo && action.taskId).length
-    };
-  }, [foundationActions]);
+  const notificationPanel = useMemo(() => notifications ?? { unreadCount: 0, notifications: [] }, [notifications]);
+  const workKpis = useMemo(() => getFoundationWorkKpis(foundationActions, notificationPanel), [foundationActions, notificationPanel]);
   const myAssignee = useMemo(() => {
     const assignedAction = foundationActions.find((action) => action.canUpdate && action.assignedTo);
     return assignedAction?.assignedTo ?? assignees[0]?.id ?? null;
@@ -241,6 +241,24 @@ export function WorkbenchClient({
   return (
     <div className="page-stack">
       <section className="command-center panel" aria-labelledby="command-center-title">
+        <div className="command-center-lane-header command-summary-header">
+          <div>
+            <p className="section-label">Command Summary</p>
+            <h2>Connected operating command center</h2>
+            <p className="muted">Move from source intelligence to assigned work, production verification, notifications, and BioRisk review without losing context.</p>
+          </div>
+          <nav className="command-center-link-strip" aria-label="Workbench command center navigation">
+            <Link className="button-primary compact" href="/workbench">
+              Command Summary
+            </Link>
+            <Link className="button-secondary compact" href="/my-work">
+              Operating Work
+            </Link>
+            <Link className="button-secondary compact" href="/foundation">
+              Source Intelligence
+            </Link>
+          </nav>
+        </div>
         <div className="command-hero">
           <div>
             <p className="section-label">PredictSafeBIO Command Center</p>
@@ -301,6 +319,7 @@ export function WorkbenchClient({
                     <Link href={action.sourceHref}>{action.sourceLabel}</Link>
                     {action.reason ? ` - ${action.reason}` : ""}
                   </p>
+                  <WorkbenchCloseoutNote action={action} />
                   <details className="source-detail-expander">
                     <summary>Action detail</summary>
                     <div className="action-detail-grid">
@@ -429,64 +448,31 @@ export function WorkbenchClient({
       </section>
 
       <section className="panel production-verification-panel" aria-labelledby="production-verification-title">
-        <div className="panel-heading">
+        <div className="panel-heading production-verification-heading">
           <div>
-            <p className="section-label">Production verification</p>
+            <p className="section-label">Production Verification</p>
             <h2 id="production-verification-title">{productionPanel.productionReady ? "Operating evidence ready" : "Operating evidence pending"}</h2>
+            <p className="muted">Latest workflow save, task update, audit event, deployment status, and promotion readiness are tracked here.</p>
           </div>
-          <ShieldCheck size={22} />
+          <span className={productionPanel.productionReady ? "production-state-badge state-ready" : "production-state-badge state-pending"}>
+            {productionPanel.productionReady ? "Ready" : "Blocked"}
+          </span>
         </div>
-        <div className="verification-export-grid">
-          <article>
-            <strong>Latest workflow save</strong>
-            <span>{productionPanel.latestWorkflowSave?.summary ?? "Pending workflow save evidence"}</span>
-          </article>
-          <article>
-            <strong>Latest task activity</strong>
-            <span>{productionPanel.latestTaskUpdate?.summary ?? "Pending task status or note evidence"}</span>
-          </article>
-          <article>
-            <strong>Latest audit event</strong>
-            <span>{productionPanel.latestAuditEvent?.eventType ?? "Pending audit event"}</span>
-          </article>
-          <article>
-            <strong>Deployment</strong>
-            <span>
-              {productionPanel.environment} / {productionPanel.deploymentUrl}
-            </span>
-          </article>
-        </div>
+        <ProductionVerificationEvidenceGrid productionPanel={productionPanel} />
         <div className={productionPanel.productionReady ? "verification-pass-box" : "verification-pending-box"}>
-          <strong>{productionPanel.productionReady ? "Production-ready signal present" : "Production readiness blocked"}</strong>
+          <strong>{productionPanel.productionReady ? "Production-ready evidence present" : "Promotion blocked by missing operating evidence"}</strong>
           <span>{productionPanel.reason}</span>
+          <small>
+            Operating evidence only. This does not certify compliance, approve documents, close CAPAs, validate systems, or replace human review.
+          </small>
         </div>
       </section>
 
-      <section className="panel notification-center-panel" aria-labelledby="notification-center-title">
-        <div className="panel-heading">
-          <div>
-            <p className="section-label">Notification center</p>
-            <h2 id="notification-center-title">{notificationPanel.unreadCount} unread operating notification(s)</h2>
-          </div>
-          <ClipboardList size={22} />
-        </div>
-        <div className="notification-list">
-          {notificationPanel.notifications.length > 0 ? (
-            notificationPanel.notifications.slice(0, 6).map((notification) => (
-              <article className={notification.readAt ? "notification-row" : "notification-row notification-unread"} key={notification.id}>
-                <div>
-                  <strong>{notification.title}</strong>
-                  <span>{notification.createdAt ? new Date(notification.createdAt).toLocaleString() : "Pending timestamp"}</span>
-                </div>
-                <p>{notification.body}</p>
-                {notification.taskId ? <Link className="text-link" href="#assigned-work-console">Open My Work</Link> : null}
-              </article>
-            ))
-          ) : (
-            <p className="muted">No task notifications have been created yet.</p>
-          )}
-        </div>
-      </section>
+      <FoundationNotificationCenter
+        notifications={notificationPanel}
+        returnTo="/workbench"
+        title="Assigned, blocked, due-soon, overdue, and ready-for-closure alerts keep operating work visible."
+      />
 
       <section className="panel workbench-source-summary" aria-labelledby="source-summary-title">
         <div className="panel-heading">
@@ -521,30 +507,59 @@ export function WorkbenchClient({
       </section>
 
       <section className="assigned-work-console" id="assigned-work-console" aria-labelledby="assigned-work-title">
-        <div className="panel-heading">
+        <div className="panel-heading command-center-lane-header">
           <div>
-            <p className="section-label">Assigned operating work</p>
-            <h2 id="assigned-work-title">My Assigned Work</h2>
+            <p className="section-label">Operating Work</p>
+            <h2 id="assigned-work-title">Foundation task lanes</h2>
+            <p className="muted">The same task cards used in Foundation and My Work are filtered here for command-center follow-through.</p>
           </div>
-          <ClipboardList size={22} />
+          <Link className="button-primary compact" href="/my-work">
+            Open My Work
+          </Link>
         </div>
         <div className="assigned-work-filter-grid">
-          <article>
+          <button type="button" onClick={() => {
+            setWorkSpecialFilter("all");
+            setDueFilter("overdue");
+          }}>
             <strong>{workKpis.overdue}</strong>
             <span>Overdue</span>
-          </article>
-          <article>
+          </button>
+          <button type="button" onClick={() => {
+            setWorkSpecialFilter("all");
+            setWorkStatusFilter("blocked");
+          }}>
             <strong>{workKpis.blocked}</strong>
             <span>Blocked</span>
-          </article>
-          <article>
+          </button>
+          <button type="button" onClick={() => {
+            setWorkStatusFilter("all");
+            setWorkSpecialFilter("completed_week");
+          }}>
             <strong>{workKpis.completedThisWeek}</strong>
             <span>Completed this week</span>
-          </article>
-          <article>
+          </button>
+          <button type="button" onClick={() => {
+            setWorkSpecialFilter("all");
+            setAssignedFilter("unassigned");
+          }}>
             <strong>{workKpis.unassigned}</strong>
             <span>Unassigned</span>
-          </article>
+          </button>
+          <button type="button" onClick={() => {
+            setWorkStatusFilter("all");
+            setWorkSpecialFilter("ready");
+          }}>
+            <strong>{workKpis.readyForClosure}</strong>
+            <span>Ready for closure</span>
+          </button>
+          <button type="button" onClick={() => {
+            setWorkPriorityFilter("all");
+            setWorkSpecialFilter("high_priority");
+          }}>
+            <strong>{workKpis.highPriority}</strong>
+            <span>High-priority work</span>
+          </button>
         </div>
         <div className="quick-filter-row" aria-label="My Work quick filters">
           <button className="button-secondary compact" type="button" onClick={() => setAssignedFilter(myAssignee ?? "all")} disabled={!myAssignee}>
@@ -565,6 +580,7 @@ export function WorkbenchClient({
               setWorkStatusFilter("all");
               setWorkPriorityFilter("all");
               setWorkSourceFilter("all");
+              setWorkSpecialFilter("all");
             }}
           >
             Reset filters
@@ -629,7 +645,13 @@ export function WorkbenchClient({
           actions={assignedWorkActions}
           assignees={assignees}
           canManage={canManageFoundationActions}
+          canEditAssignment={commandSummary.ownerMode}
+          canEditDueDate={commandSummary.ownerMode}
           emptyMessage="No assigned Foundation work matches these filters."
+          laneLabel="Operating Work"
+          laneDescription="Review generated Foundation tasks by status, priority, due date, assignee, and source trace from the Workbench command center."
+          primaryActionHref="/my-work"
+          primaryActionLabel="Open My Work"
           returnTo="/workbench"
           title="Filtered Foundation review tasks"
         />
@@ -683,10 +705,10 @@ export function WorkbenchClient({
       </section>
 
       <div className="workbench-grid">
-        <section className="panel intake-panel" aria-labelledby="intake-title">
+        <section className="panel intake-panel command-center-lane" aria-labelledby="intake-title">
         <div className="panel-heading">
           <div>
-            <p className="section-label">Risk Intelligence</p>
+            <p className="section-label">BioRisk Engine</p>
             <h1 id="intake-title">BioRisk Scoring Engine</h1>
           </div>
           <Beaker size={22} />
@@ -883,6 +905,7 @@ export function WorkbenchClient({
                     <Link href={action.sourceHref}>{action.sourceLabel}</Link>
                     {action.reason ? ` - ${action.reason}` : ""}
                   </p>
+                  <WorkbenchCloseoutNote action={action} />
                   <details className="source-detail-expander">
                     <summary>Action detail</summary>
                     <div className="action-next-step">
@@ -936,6 +959,109 @@ export function WorkbenchClient({
   );
 }
 
+function WorkbenchCloseoutNote({ action }: { action: FoundationReviewActionSummary }) {
+  if (action.status !== "complete" || !action.closeoutNote?.trim()) return null;
+
+  return (
+    <div className="task-closeout-note">
+      <strong>Closeout note</strong>
+      <p>{action.closeoutNote}</p>
+    </div>
+  );
+}
+
+function ProductionVerificationEvidenceGrid({ productionPanel }: { productionPanel: FoundationProductionVerificationSummary }) {
+  const evidenceRows = [
+    {
+      label: "Latest workflow save",
+      passed: Boolean(productionPanel.latestWorkflowSave),
+      state: "evidence" as const,
+      eventType: productionPanel.latestWorkflowSave?.eventType,
+      timestamp: productionPanel.latestWorkflowSave?.createdAt,
+      detail: productionPanel.latestWorkflowSave?.summary ?? "Pending workflow save evidence."
+    },
+    {
+      label: "Latest task update",
+      passed: Boolean(productionPanel.latestTaskUpdate),
+      state: "evidence" as const,
+      eventType: productionPanel.latestTaskUpdate?.eventType,
+      timestamp: productionPanel.latestTaskUpdate?.createdAt,
+      detail: productionPanel.latestTaskUpdate?.summary ?? "Pending task status, note, or source-refresh evidence."
+    },
+    {
+      label: "Latest audit event",
+      passed: Boolean(productionPanel.latestAuditEvent),
+      state: "evidence" as const,
+      eventType: productionPanel.latestAuditEvent?.eventType,
+      timestamp: productionPanel.latestAuditEvent?.createdAt,
+      detail: productionPanel.latestAuditEvent?.summary ?? "Pending latest audit event."
+    },
+    {
+      label: "Deployment status",
+      passed: Boolean(productionPanel.deploymentUrl),
+      state: "deployment" as const,
+      eventType: productionPanel.environment,
+      timestamp: undefined,
+      detail: `${productionPanel.environment} / ${productionPanel.deploymentUrl}`
+    },
+    {
+      label: "Promotion readiness",
+      passed: productionPanel.productionReady,
+      state: "decision" as const,
+      eventType: productionPanel.productionReady ? "promotion_ready" : "promotion_blocked",
+      timestamp: undefined,
+      detail: productionPanel.productionReady ? "Promotion evidence is present for this operating check." : productionPanel.reason
+    }
+  ];
+  const missingEvidence = evidenceRows.filter((row) => !row.passed && row.state !== "deployment").map((row) => row.label);
+
+  return (
+    <>
+      <div className="production-evidence-list">
+        {evidenceRows.map((row) => (
+          <article
+            className={[
+              "production-evidence-row",
+              row.state === "deployment" ? "evidence-deployment" : row.passed ? "evidence-pass" : "evidence-pending"
+            ].join(" ")}
+            key={row.label}
+          >
+            <div className="production-evidence-row-header">
+              <span>{row.state === "deployment" ? "Live target" : row.passed ? "Pass" : "Pending"}</span>
+              <strong>{row.label}</strong>
+            </div>
+            <p>{row.detail}</p>
+            <dl>
+              <div>
+                <dt>Event</dt>
+                <dd>{row.eventType ?? "Pending"}</dd>
+              </div>
+              <div>
+                <dt>Time</dt>
+                <dd>{row.timestamp ? new Date(row.timestamp).toLocaleString() : "Not captured"}</dd>
+              </div>
+            </dl>
+          </article>
+        ))}
+      </div>
+      {!productionPanel.productionReady ? (
+        <div className="production-missing-evidence">
+          <strong>Missing evidence checklist</strong>
+          {missingEvidence.length > 0 ? (
+            <ul>
+              {missingEvidence.map((label) => (
+                <li key={label}>{label}</li>
+              ))}
+            </ul>
+          ) : (
+            <p>Evidence is present, but final promotion readiness is still blocked by the operating decision rule.</p>
+          )}
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 function getWorkbenchTaskAgingClass(action: FoundationReviewActionSummary) {
   if (action.status === "complete") return "task-aging-completed";
   if (action.status === "blocked") return "task-aging-blocked";
@@ -950,12 +1076,11 @@ function getWorkbenchTaskAgingClass(action: FoundationReviewActionSummary) {
 }
 
 function getAssignedWorkDueBucket(action: FoundationReviewActionSummary) {
-  if (!action.dueDate) return "unscheduled";
-  const due = new Date(`${action.dueDate}T00:00:00`);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
-  if (days < 0) return "overdue";
-  if (days <= 3) return "due_soon";
-  return "scheduled";
+  return getFoundationDueBucket(action);
+}
+
+function getWeekStart() {
+  const weekStart = new Date();
+  weekStart.setDate(weekStart.getDate() - 7);
+  return weekStart;
 }

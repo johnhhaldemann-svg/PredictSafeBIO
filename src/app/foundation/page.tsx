@@ -72,17 +72,25 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           <h1>Compliance Map & AI Guardrails</h1>
         </header>
 
-        <section className="panel inline-action-panel">
+        <section className="panel inline-action-panel command-center-lane">
           <div>
-            <p className="section-label">Common Utilities Across All Categories</p>
+            <p className="section-label">Source Intelligence</p>
             <h2>{summary.companyName}</h2>
             <p className="muted">
               Company profile intelligence, BioType branching, evidence tracking, change impact, and audit readiness feed deterministic AI context.
             </p>
           </div>
-          <Link className="button-secondary" href="#foundation-workflows">
-            {adminAccess.isOwner ? "Review platform controls" : "View owner controls"}
-          </Link>
+          <nav className="command-center-link-strip" aria-label="Foundation command center navigation">
+            <Link className="button-primary compact" href="/foundation">
+              Source Intelligence
+            </Link>
+            <Link className="button-secondary compact" href="/my-work">
+              Open My Work
+            </Link>
+            <Link className="button-secondary compact" href="/workbench">
+              Open Workbench
+            </Link>
+          </nav>
         </section>
 
         <section className={`panel access-banner ${adminAccess.isOwner ? "access-enabled" : "access-readonly"}`}>
@@ -92,13 +100,13 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
 
         {params.message ? <p className="form-message">{params.message}</p> : null}
 
-        <section className="panel foundation-workbench-handoff">
+        <section className="panel foundation-workbench-handoff command-center-lane">
           <div>
-            <p className="section-label">Workbench handoff</p>
+            <p className="section-label">Generated Actions</p>
             <h2>{reviewActions.filter((action) => action.status !== "complete").length} task(s) waiting in My Work</h2>
             <p className="muted">Foundation source gaps and review actions are routed to the Workbench operating console for assignment, notes, due dates, and closure review.</p>
           </div>
-          <Link className="button-primary" href="/workbench#assigned-work-console">
+          <Link className="button-primary" href="/my-work">
             Open My Work
           </Link>
         </section>
@@ -402,7 +410,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
             </div>
           </div>
 
-          <div className="panel" id="audit-readiness-console">
+          <div className="panel command-center-lane" id="audit-readiness-console">
             <div className="panel-heading">
               <div>
                 <p className="section-label">Audit Readiness</p>
@@ -507,7 +515,18 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           </div>
         </section>
 
-        <FoundationReviewActionsPanel actions={reviewActions.slice(0, 8)} assignees={assignees} canManage={adminAccess.signedIn} returnTo="/foundation" />
+        <FoundationReviewActionsPanel
+          actions={reviewActions.slice(0, 8)}
+          assignees={assignees}
+          canManage={adminAccess.signedIn}
+          canEditAssignment={adminAccess.isOwner}
+          canEditDueDate={adminAccess.isOwner}
+          laneLabel="Generated Actions"
+          laneDescription="These are the canonical Foundation task cards: source trace, assignment, due date, source resolution, activity, and closeout in one place."
+          primaryActionHref="/my-work"
+          primaryActionLabel="Open My Work"
+          returnTo="/foundation"
+        />
 
         <section className="panel verification-export-panel">
           <div className="panel-heading">
@@ -543,10 +562,10 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           </div>
         </section>
 
-        <section className="panel">
+        <section className="panel command-center-lane">
           <div className="panel-heading">
             <div>
-              <p className="section-label">Compliance source drilldowns</p>
+              <p className="section-label">Source Drilldowns</p>
               <h2>Traceable source detail</h2>
             </div>
             <FileSearch size={22} />
