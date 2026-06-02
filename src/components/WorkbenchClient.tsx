@@ -230,7 +230,7 @@ export function WorkbenchClient({
       setSaveState(response.status === 401 ? "blocked" : "error");
       setSaveMessage(
         response.status === 401
-          ? "Sign in and finish onboarding to save assessments to Supabase."
+          ? "Sign in to your workspace to save assessments."
           : result.message ?? "Assessment could not be saved."
       );
     } catch (error) {
@@ -451,20 +451,20 @@ export function WorkbenchClient({
       <section className="panel production-verification-panel" aria-labelledby="production-verification-title">
         <div className="panel-heading production-verification-heading">
           <div>
-            <p className="section-label">Production Verification</p>
-            <h2 id="production-verification-title">{productionPanel.productionReady ? "Operating evidence ready" : "Operating evidence pending"}</h2>
-            <p className="muted">Latest workflow save, task update, audit event, deployment status, and promotion readiness are tracked here.</p>
+            <p className="section-label">Workspace Activity</p>
+            <h2 id="production-verification-title">{productionPanel.productionReady ? "Workspace active" : "No recent activity"}</h2>
+            <p className="muted">Recent workflow saves, task updates, and audit events confirm your workspace is being used.</p>
           </div>
           <span className={productionPanel.productionReady ? "production-state-badge state-ready" : "production-state-badge state-pending"}>
-            {productionPanel.productionReady ? "Ready" : "Blocked"}
+            {productionPanel.productionReady ? "Active" : "Pending"}
           </span>
         </div>
         <ProductionVerificationEvidenceGrid productionPanel={productionPanel} />
         <div className={productionPanel.productionReady ? "verification-pass-box" : "verification-pending-box"}>
-          <strong>{productionPanel.productionReady ? "Production-ready evidence present" : "Promotion blocked by missing operating evidence"}</strong>
-          <span>{productionPanel.reason}</span>
+          <strong>{productionPanel.productionReady ? "Workspace activity confirmed" : "Complete your first workflow steps to activate this panel"}</strong>
+          <span>{productionPanel.productionReady ? productionPanel.reason : "Run an assessment, update a task, or log a document to start capturing workspace activity."}</span>
           <small>
-            Operating evidence only. This does not certify compliance, approve documents, close CAPAs, validate systems, or replace human review.
+            Activity summary only. This does not certify compliance, approve documents, close CAPAs, validate systems, or replace human review.
           </small>
         </div>
       </section>
@@ -999,20 +999,20 @@ function ProductionVerificationEvidenceGrid({ productionPanel }: { productionPan
       detail: productionPanel.latestAuditEvent?.summary ?? "Pending latest audit event."
     },
     {
-      label: "Deployment status",
+      label: "Connected workspace",
       passed: Boolean(productionPanel.deploymentUrl),
       state: "deployment" as const,
       eventType: productionPanel.environment,
       timestamp: undefined,
-      detail: `${productionPanel.environment} / ${productionPanel.deploymentUrl}`
+      detail: productionPanel.deploymentUrl || "Workspace URL not configured"
     },
     {
-      label: "Promotion readiness",
+      label: "Overall status",
       passed: productionPanel.productionReady,
       state: "decision" as const,
-      eventType: productionPanel.productionReady ? "promotion_ready" : "promotion_blocked",
+      eventType: productionPanel.productionReady ? "active" : "pending",
       timestamp: undefined,
-      detail: productionPanel.productionReady ? "Promotion evidence is present for this operating check." : productionPanel.reason
+      detail: productionPanel.productionReady ? "Your workspace has recent activity across all tracked areas." : "Complete your first workflow steps to mark this workspace active."
     }
   ];
   const missingEvidence = evidenceRows.filter((row) => !row.passed && row.state !== "deployment").map((row) => row.label);
@@ -1048,7 +1048,7 @@ function ProductionVerificationEvidenceGrid({ productionPanel }: { productionPan
       </div>
       {!productionPanel.productionReady ? (
         <div className="production-missing-evidence">
-          <strong>Missing evidence checklist</strong>
+          <strong>Getting started</strong>
           {missingEvidence.length > 0 ? (
             <ul>
               {missingEvidence.map((label) => (
@@ -1056,7 +1056,7 @@ function ProductionVerificationEvidenceGrid({ productionPanel }: { productionPan
               ))}
             </ul>
           ) : (
-            <p>Evidence is present, but final promotion readiness is still blocked by the operating decision rule.</p>
+            <p>All activity areas are covered. Your workspace status will update shortly.</p>
           )}
         </div>
       ) : null}

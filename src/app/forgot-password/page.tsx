@@ -26,7 +26,7 @@ export default async function ForgotPasswordPage({ searchParams }: ForgotPasswor
         <div>
           <p className="section-label">Password reset</p>
           <h1 id="forgot-password-title">Reset your password</h1>
-          <p className="auth-copy">Request a Supabase recovery link, then return to set a new password for your workspace account.</p>
+          <p className="auth-copy">Enter your email and we&apos;ll send you a link to reset your password.</p>
         </div>
         {params.message ? <p className="form-message">{params.message}</p> : null}
         {auth.signedIn ? (
