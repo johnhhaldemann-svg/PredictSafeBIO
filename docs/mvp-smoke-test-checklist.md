@@ -10,6 +10,17 @@ Use a real email inbox for the test account. Do not commit passwords, tokens, or
 4. Sign in at `/login`.
 5. Complete `/onboarding` using the seeded demo company profile fields.
 6. Confirm `/company-profile` shows the signed-in organization's company profile instead of demo fallback data.
+7. Open `/account` and confirm email, full name, role, organization ID, and password-update link render.
+8. Update the full name and confirm the account page returns a success message.
+9. Update company profile basics from `/account` or `/company-profile` and confirm `/admin/audit` records the change.
+
+## Password Recovery
+
+1. Open `/forgot-password`.
+2. Request a reset link for the smoke-test user.
+3. Open the recovery email and confirm it lands on `/account/password`.
+4. Set a new password and confirm the app redirects to `/workbench` with a success message.
+5. Sign out and sign back in with the new password.
 
 ## Assessment Persistence
 

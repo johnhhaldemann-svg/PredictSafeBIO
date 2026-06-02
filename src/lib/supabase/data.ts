@@ -14,6 +14,11 @@ import { demoAuditEvents, demoCompanyProfile, demoDocuments } from "@/lib/demo-d
 import { generateDocumentGapRecommendations, generateDocumentUpdateRecommendations } from "@/lib/documents/recommendations";
 import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import {
+  changedCompanyProfileFields,
+  type AccountProfileUpdateInput,
+  type CompanyProfileUpdateInput
+} from "@/lib/account-profile";
+import {
   buildErgonomicRiskSignal,
   ergonomicLabel,
   safePredictErgoAiInsight,
@@ -123,10 +128,16 @@ type ProfileContext = {
 export type AuthSummary = {
   configured: boolean;
   signedIn: boolean;
+  userId?: string;
   userEmail?: string;
+  fullName?: string | null;
   organizationId?: string;
   role?: string;
   needsOnboarding: boolean;
+};
+
+export type AccountSummary = AuthSummary & {
+  companyProfile: CompanyProfile | null;
 };
 
 export type MapOperationsBundleInput = {
@@ -552,11 +563,13 @@ export async function getAuthSummary(): Promise<AuthSummary> {
       return { configured: true, signedIn: false, needsOnboarding: false };
     }
 
-    const { data } = await supabase.from("profiles").select("organization_id,role").eq("id", user.id).maybeSingle();
+    const { data } = await supabase.from("profiles").select("organization_id,role,full_name").eq("id", user.id).maybeSingle();
     return {
       configured: true,
       signedIn: true,
+      userId: user.id,
       userEmail: user.email ?? undefined,
+      fullName: data?.full_name ?? null,
       organizationId: data?.organization_id ?? undefined,
       role: data?.role ?? undefined,
       needsOnboarding: !data?.organization_id
@@ -566,6 +579,11 @@ export async function getAuthSummary(): Promise<AuthSummary> {
   }
 }
 
+export async function getAccountSummary(): Promise<AccountSummary> {
+  const auth = await getAuthSummary();
+  if (!auth.signedIn || !auth.organizationId) return { ...auth, companyProfile: null };
+  return { ...auth, companyProfile: await getCompanyProfile() };
+}
 export async function getCompanyProfile(): Promise<CompanyProfile> {
   const context = await getProfileContext();
   if (!context) return demoCompanyProfile;
@@ -597,6 +615,89 @@ export async function getCompanyProfile(): Promise<CompanyProfile> {
   };
 }
 
+export async function updateAccountProfile(input: AccountProfileUpdateInput): Promise<FoundationActionResult> {
+  if (!isSupabaseConfigured()) return { ok: false, message: "Supabase is not configured." };
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if (!user) return { ok: false, message: "Sign in before updating your account profile." };
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({ full_name: input.fullName, updated_at: new Date().toISOString() })
+      .eq("id", user.id)
+      .select("organization_id,full_name")
+      .maybeSingle();
+
+    if (error) return { ok: false, message: error.message };
+    if (!data) return { ok: false, message: "Account profile was not found. Finish onboarding first." };
+
+    if (data.organization_id) {
+      await supabase.from("audit_events").insert({
+        organization_id: data.organization_id,
+        actor_id: user.id,
+        event_type: "account_profile_updated",
+        summary: "Account profile name updated.",
+        payload: withAuditTrace({ updatedFields: ["fullName"] }, { sourceModule: "company_profile", targetModule: "company_profile" })
+      });
+    }
+
+    return { ok: true, message: "Account profile updated." };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Account profile update failed." };
+  }
+}
+
+export async function updateCompanyProfile(input: CompanyProfileUpdateInput): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Finish onboarding before updating company profile details." };
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const previous = await getCompanyProfile();
+    const now = new Date().toISOString();
+    const values = {
+      organization_id: context.organizationId,
+      company_name: input.companyName,
+      primary_site: input.primarySite,
+      operating_areas: input.operatingAreas,
+      programs: input.programs,
+      quality_system_scope: input.qualitySystemScope,
+      biosafety_levels: input.biosafetyLevels,
+      review_owner_roles: input.reviewOwnerRoles,
+      document_families: input.documentFamilies,
+      updated_at: now
+    };
+
+    const result = previous.id
+      ? await supabase.from("company_profiles").update(values).eq("id", previous.id)
+      : await supabase.from("company_profiles").insert({ ...values, created_by: context.userId, created_at: now });
+
+    if (result.error) return { ok: false, message: result.error.message };
+
+    await supabase.from("audit_events").insert({
+      organization_id: context.organizationId,
+      actor_id: context.userId,
+      event_type: "company_profile_updated",
+      summary: `Company profile updated for ${input.companyName}.`,
+      payload: withAuditTrace(
+        {
+          companyName: input.companyName,
+          changedFields: previous.id ? changedCompanyProfileFields(previous, input) : ["created"]
+        },
+        { sourceModule: "company_profile", targetModule: "company_profile" }
+      )
+    });
+
+    return { ok: true, message: "Company profile updated." };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Company profile update failed." };
+  }
+}
 export async function listAssessments(): Promise<SavedAssessmentSummary[]> {
   const context = await getProfileContext();
   if (!context) {

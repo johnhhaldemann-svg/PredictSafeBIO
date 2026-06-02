@@ -53,6 +53,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               </button>
             </form>
             <p className="auth-switch">
+              Forgot your password? <Link href="/forgot-password">Send a reset link</Link>
+            </p>
+            <p className="auth-switch">
               New to PredictSafeBIO? <Link href={`/signup?next=${encodeURIComponent(next)}`}>Create an account</Link>
             </p>
           </>

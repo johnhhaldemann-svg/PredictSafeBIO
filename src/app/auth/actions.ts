@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { demoCompanyProfile } from "@/lib/demo-data";
 import type { ReviewOwnerRole } from "@/lib/bio-ai/types";
+import { authMessage, friendlyAuthError, passwordMeetsMinimum, safeAuthNext } from "@/lib/auth-routing";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function field(formData: FormData, name: string) {
@@ -20,31 +21,6 @@ function listField(formData: FormData, name: string) {
     .filter(Boolean);
 }
 
-function safeNext(value: FormDataEntryValue | null) {
-  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : "/workbench";
-}
-
-function authMessage(path: string, message: string) {
-  const [pathname, query = ""] = path.split("?");
-  const params = new URLSearchParams(query);
-  params.set("message", message);
-  return `${pathname}?${params.toString()}`;
-}
-
-function friendlyAuthError(message: string) {
-  const normalized = message.toLowerCase();
-  if (normalized.includes("email rate limit")) {
-    return "Supabase email rate limit reached. Wait for the throttle window to reset, or configure custom SMTP before more signup testing.";
-  }
-  if (normalized.includes("email not confirmed")) {
-    return "Email is not confirmed yet. Open the Supabase confirmation email, then sign in again.";
-  }
-  if (normalized.includes("already registered") || normalized.includes("already been registered")) {
-    return "An account already exists for that email. Sign in, or use the confirmation email if it is still pending.";
-  }
-  return message;
-}
-
 async function createClientOrRedirect(path: string) {
   try {
     return await createSupabaseServerClient();
@@ -54,7 +30,7 @@ async function createClientOrRedirect(path: string) {
 }
 
 export async function signInAction(formData: FormData) {
-  const next = safeNext(formData.get("next"));
+  const next = safeAuthNext(formData.get("next"));
   const email = field(formData, "email");
   const password = field(formData, "password");
 
@@ -81,7 +57,7 @@ export async function signInAction(formData: FormData) {
 }
 
 export async function signUpAction(formData: FormData) {
-  const next = safeNext(formData.get("next")) || "/onboarding";
+  const next = safeAuthNext(formData.get("next"), "/onboarding");
   const email = field(formData, "email");
   const password = field(formData, "password");
 
@@ -109,6 +85,60 @@ export async function signUpAction(formData: FormData) {
   }
 
   redirect("/onboarding");
+}
+
+export async function requestPasswordResetAction(formData: FormData) {
+  const email = field(formData, "email");
+
+  if (!email) {
+    redirect(authMessage("/forgot-password", "Email is required."));
+  }
+
+  const supabase = await createClientOrRedirect("/forgot-password");
+  const origin = (await headers()).get("origin");
+  const redirectTo = origin ? `${origin}/auth/confirm?next=${encodeURIComponent("/account/password")}` : undefined;
+  const { error } = await supabase.auth.resetPasswordForEmail(email, redirectTo ? { redirectTo } : undefined);
+
+  if (error) {
+    redirect(authMessage("/forgot-password", friendlyAuthError(error.message)));
+  }
+
+  redirect(authMessage("/login", "Password reset email sent. Open the link, then set a new password."));
+}
+
+export async function updatePasswordAction(formData: FormData) {
+  const password = field(formData, "password");
+  const confirmPassword = field(formData, "confirmPassword");
+
+  if (!password || !confirmPassword) {
+    redirect(authMessage("/account/password", "Enter and confirm the new password."));
+  }
+
+  if (password !== confirmPassword) {
+    redirect(authMessage("/account/password", "Passwords do not match."));
+  }
+
+  if (!passwordMeetsMinimum(password)) {
+    redirect(authMessage("/account/password", "Use a password with at least 8 characters."));
+  }
+
+  const supabase = await createClientOrRedirect("/account/password");
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(authMessage("/login?next=%2Faccount%2Fpassword", "Open the reset email link or sign in before changing your password."));
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    redirect(authMessage("/account/password", friendlyAuthError(error.message)));
+  }
+
+  revalidatePath("/", "layout");
+  redirect(authMessage("/workbench", "Password updated."));
 }
 
 export async function signOutAction() {
