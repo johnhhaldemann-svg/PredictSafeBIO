@@ -35,7 +35,7 @@ describe("foundation UI alignment", () => {
     expect(companyProfilePage).toContain("Selected operating profile");
   });
 
-  it("adds MVP edit workflows without restoring one-click NorthStar seeding", () => {
+  it("adds Foundation edit workflows without restoring one-click demo seeding", () => {
     expect(foundationPage).toContain("FoundationWorkflowClient");
     expect(foundationPage).toContain("getFoundationAdminAccessSummary");
     expect(foundationPage).toContain("canManage={adminAccess.isOwner}");
@@ -48,7 +48,7 @@ describe("foundation UI alignment", () => {
     expect(foundationData).toContain("foundation_starter_records_created");
     expect(foundationClient).toContain("System Reliance edit workflows are locked");
     expect(foundationClient).toContain("Generate Action Plan");
-    expect(foundationClient).toContain("SEED NORTHSTAR");
+    expect(foundationClient).toContain("SEED DEMO DATA");
     expect(foundationClient).toContain("Current foundation counts");
     expect(foundationActions).toContain("seedNorthStarWithConfirmationAction");
     expect(foundationActions).not.toContain("seedIntelligenceFoundationAction");

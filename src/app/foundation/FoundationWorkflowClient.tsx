@@ -30,7 +30,7 @@ export function FoundationWorkflowClient({ canManage, summary }: { canManage: bo
         </div>
         <p className="muted">
           Read-only compliance intelligence remains visible. Sign in as an organization owner to edit BioTypes, intake answers, evidence
-          readiness, audit notes, action planning, or NorthStar demo seeds.
+          readiness, audit notes, action planning, or seed demo data.
         </p>
       </section>
     );
@@ -192,12 +192,12 @@ export function FoundationWorkflowClient({ canManage, summary }: { canManage: bo
         <div className="panel-heading">
           <div>
             <p className="section-label">Admin Utilities</p>
-            <h2>NorthStar seed guard</h2>
+            <h2>Demo data seed guard</h2>
           </div>
           <DatabaseZap size={22} />
         </div>
         <p className="muted">
-          This creates another draft NorthStar dataset. It does not approve records, certify compliance, close CAPAs, or validate readiness.
+          This creates another draft demo dataset. It does not approve records, certify compliance, close CAPAs, or validate readiness.
         </p>
         <div className="seed-count-grid" aria-label="Current foundation counts">
           {summary.counts.slice(0, 6).map((item) => (
@@ -209,12 +209,12 @@ export function FoundationWorkflowClient({ canManage, summary }: { canManage: bo
         </div>
         <form action={seedNorthStarWithConfirmationAction} className="stacked-form">
           <label>
-            Type SEED NORTHSTAR to confirm
-            <input autoComplete="off" name="confirmation" placeholder="SEED NORTHSTAR" />
+            Type SEED DEMO DATA to confirm
+            <input autoComplete="off" name="confirmation" placeholder="SEED DEMO DATA" />
           </label>
           <button className="button-secondary" type="submit">
             <DatabaseZap size={16} />
-            Seed NorthStar
+            Seed demo data
           </button>
         </form>
       </div>
