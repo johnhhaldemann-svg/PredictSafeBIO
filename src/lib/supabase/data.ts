@@ -997,7 +997,7 @@ export async function getFoundationAdminAccessSummary(): Promise<FoundationAdmin
     message: isOwner
       ? "Owner access active. Foundation edit and demo controls are enabled."
       : auth.signedIn
-        ? "Read-only foundation view. Owner access is required for MVP edit workflows and NorthStar seeding."
+        ? "Read-only foundation view. Owner access is required for compliance map workflows and demo data seeding."
         : "Read-only demo view. Sign in as an organization owner to use Foundation edit workflows."
   };
 }
@@ -1987,8 +1987,8 @@ export async function addAuditReadinessNote(input: {
 }
 
 export async function seedNorthStarWithConfirmation(confirmation: string): Promise<FoundationActionResult> {
-  if (confirmation.trim() !== "SEED NORTHSTAR") {
-    return { ok: false, message: "Type SEED NORTHSTAR to create another NorthStar demo dataset." };
+  if (confirmation.trim() !== "SEED DEMO DATA") {
+    return { ok: false, message: "Type SEED DEMO DATA to create another demo dataset." };
   }
 
   const context = await getProfileContext();
