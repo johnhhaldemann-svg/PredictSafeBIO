@@ -69,7 +69,7 @@ export async function persistDocumentRecommendationsAction(formData: FormData) {
 
   const result = await persistDocumentRecommendations(document);
   if (!result.ok) {
-    redirectWithMessage(`/documents/${documentId}`, "Sign in and finish onboarding before persisting document recommendations.");
+    redirectWithMessage(`/documents/${documentId}`, "Sign in to your workspace to save document recommendations.");
   }
 
   revalidatePath(`/documents/${documentId}`);

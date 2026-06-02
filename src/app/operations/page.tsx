@@ -93,7 +93,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
             </form>
           ) : (
             <p className="form-message">
-              Sign in and finish onboarding before creating HSE operations records.{" "}
+              Sign in to create HSE operations records.{" "}
               <Link href="/login?next=/operations">Go to sign in</Link>
             </p>
           )}

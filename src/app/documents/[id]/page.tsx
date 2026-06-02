@@ -87,7 +87,7 @@ export default async function DocumentDetailPage({
             <p className="section-label">Drafting & AI-Assisted Updates</p>
             <h2>Save draft recommendations</h2>
             <p className="muted">
-              Persists gap and draft update recommendations to Supabase and writes an audit event. All recommendations remain draft-only.
+              Saves gap and draft update recommendations and writes an audit event. All recommendations remain draft-only.
             </p>
           </div>
           <button className="button-primary" type="submit">

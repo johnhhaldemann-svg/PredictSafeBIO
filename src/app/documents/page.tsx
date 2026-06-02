@@ -104,7 +104,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
             </form>
           ) : (
             <p className="form-message">
-              Sign in and finish onboarding before creating controlled document metadata.{" "}
+              Sign in to create controlled document records.{" "}
               <Link href="/login?next=/documents">Go to sign in</Link>
             </p>
           )}

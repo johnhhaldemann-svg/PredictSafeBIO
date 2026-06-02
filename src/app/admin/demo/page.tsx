@@ -34,7 +34,7 @@ export default async function AdminDemoPage({ searchParams }: { searchParams: Pr
             </form>
           ) : (
             <p className="form-message">
-              Sign in as an organization owner and finish onboarding before seeding demo records.{" "}
+              Sign in as an organization owner to seed demo records.{" "}
               <Link href="/login?next=/admin/demo">Go to sign in</Link>
             </p>
           )}

@@ -15,7 +15,28 @@ const foundationAuditEventTypes = [
   "foundation_review_task_note_added",
   "foundation_source_resolution_refreshed"
 ];
+const auditEventTypeLabels: Record<string, string> = {
+  all: "All event types",
+  foundation_biotype_selection_updated: "BioType selection updated",
+  foundation_intake_response_updated: "Intake response updated",
+  foundation_evidence_readiness_updated: "Evidence readiness updated",
+  foundation_audit_readiness_note_added: "Audit readiness note added",
+  foundation_review_actions_generated: "Review actions generated",
+  foundation_review_task_status_updated: "Review task status updated",
+  foundation_review_task_note_added: "Review task note added",
+  foundation_source_resolution_refreshed: "Source resolution refreshed"
+};
 const foundationSourceModules = ["all", "foundation", "evidence_map", "training_assignment", "equipment", "incident", "biotype_selection", "audit_readiness"];
+const sourceModuleLabels: Record<string, string> = {
+  all: "All source modules",
+  foundation: "Foundation",
+  evidence_map: "Evidence Map",
+  training_assignment: "Training",
+  equipment: "Equipment",
+  incident: "Incident",
+  biotype_selection: "BioType Selection",
+  audit_readiness: "Audit Readiness"
+};
 
 export default async function AuditPage({
   searchParams
@@ -63,7 +84,7 @@ export default async function AuditPage({
               <select name="eventType" defaultValue={eventType}>
                 {foundationAuditEventTypes.map((type) => (
                   <option key={type} value={type}>
-                    {type.replace(/_/g, " ")}
+                    {auditEventTypeLabels[type] ?? type.replace(/_/g, " ")}
                   </option>
                 ))}
               </select>
@@ -73,7 +94,7 @@ export default async function AuditPage({
               <select name="sourceModule" defaultValue={sourceModule}>
                 {foundationSourceModules.map((module) => (
                   <option key={module} value={module}>
-                    {module.replace(/_/g, " ")}
+                    {sourceModuleLabels[module] ?? module.replace(/_/g, " ")}
                   </option>
                 ))}
               </select>
