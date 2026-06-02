@@ -116,7 +116,18 @@ export default async function AssessmentsPage({ searchParams }: { searchParams: 
               ))}
             </tbody>
           </table>
-          {filteredAssessments.length === 0 ? <p className="empty-table-note">No BioRisk records match the selected filters.</p> : null}
+          {filteredAssessments.length === 0 && assessments.length === 0 ? (
+            <div className="empty-action-state">
+              <strong>No risk assessments saved yet.</strong>
+              <p>
+                Run a BioRisk assessment on the{" "}
+                <Link href="/workbench">Workbench</Link> and save it to start building your risk register.
+                Assessments track risk level, score, reviewer activity, and source evidence over time.
+              </p>
+            </div>
+          ) : filteredAssessments.length === 0 ? (
+            <p className="empty-table-note">No BioRisk records match the selected filters. <Link href="/assessments">Clear filters</Link></p>
+          ) : null}
         </section>
       </div>
     </AppShell>
