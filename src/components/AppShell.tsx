@@ -72,7 +72,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
       <main className="main-panel">
         <header className="app-header" aria-label="Account status">
           <div>
-            <p className="header-kicker">{auth.configured ? "Supabase connected" : "Demo mode"}</p>
+            <p className="header-kicker">{auth.configured ? "Workspace connected" : "Demo mode"}</p>
             <strong>{auth.signedIn ? auth.userEmail : "Public workbench"}</strong>
           </div>
           <div className="auth-actions">
@@ -110,13 +110,9 @@ export async function AppShell({ children }: { children: ReactNode }) {
           <div className="demo-mode-banner" role="status" aria-live="polite">
             <ShieldCheck size={15} />
             <strong>Demo mode</strong>
-            {" — Supabase environment variables are not configured. All data shown is local demo fallback and is not persisted. Configure "}
-            <code>NEXT_PUBLIC_SUPABASE_URL</code>
-            {" and "}
-            <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>
-            {" in "}
-            <code>.env.local</code>
-            {" to connect a live workspace."}
+            {" — You’re viewing sample data. "}
+            <a href="/signup" className="text-link">Sign up</a>
+            {" to create your organization’s live workspace."}
           </div>
         )}
         {children}

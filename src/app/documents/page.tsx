@@ -30,56 +30,56 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
               <div className="form-grid">
                 <label>
                   Title
-                  <input name="title" defaultValue="Sterility Assay Review SOP" required />
+                  <input name="title" placeholder="e.g. Sterility Assay Review SOP" required />
                 </label>
                 <label>
                   Document type
                   <select name="documentType" defaultValue="sop">
-                    <option value="sop">sop</option>
-                    <option value="batch_record">batch_record</option>
-                    <option value="protocol">protocol</option>
-                    <option value="training">training</option>
-                    <option value="validation">validation</option>
-                    <option value="policy">policy</option>
-                    <option value="other">other</option>
+                    <option value="sop">SOP</option>
+                    <option value="batch_record">Batch Record</option>
+                    <option value="protocol">Protocol</option>
+                    <option value="training">Training</option>
+                    <option value="validation">Validation</option>
+                    <option value="policy">Policy</option>
+                    <option value="other">Other</option>
                   </select>
                 </label>
                 <label>
                   Status
-                  <select name="status" defaultValue="in_review">
-                    <option value="draft">draft</option>
-                    <option value="in_review">in_review</option>
-                    <option value="approved">approved</option>
-                    <option value="obsolete">obsolete</option>
-                    <option value="unknown">unknown</option>
+                  <select name="status" defaultValue="draft">
+                    <option value="draft">Draft</option>
+                    <option value="in_review">In Review</option>
+                    <option value="approved">Approved</option>
+                    <option value="obsolete">Obsolete</option>
+                    <option value="unknown">Unknown</option>
                   </select>
                 </label>
                 <label>
                   Owner role
                   <select name="ownerRole" defaultValue="qa">
-                    <option value="responsible_scientist">responsible_scientist</option>
-                    <option value="principal_investigator">principal_investigator</option>
-                    <option value="qa">qa</option>
-                    <option value="quality_unit">quality_unit</option>
-                    <option value="biosafety_officer">biosafety_officer</option>
-                    <option value="ehs">ehs</option>
-                    <option value="manufacturing_lead">manufacturing_lead</option>
-                    <option value="validation_lead">validation_lead</option>
-                    <option value="regulatory_affairs">regulatory_affairs</option>
-                    <option value="clinical_operations">clinical_operations</option>
+                    <option value="responsible_scientist">Responsible Scientist</option>
+                    <option value="principal_investigator">Principal Investigator</option>
+                    <option value="qa">QA</option>
+                    <option value="quality_unit">Quality Unit</option>
+                    <option value="biosafety_officer">Biosafety Officer</option>
+                    <option value="ehs">EHS</option>
+                    <option value="manufacturing_lead">Manufacturing Lead</option>
+                    <option value="validation_lead">Validation Lead</option>
+                    <option value="regulatory_affairs">Regulatory Affairs</option>
+                    <option value="clinical_operations">Clinical Operations</option>
                   </select>
                 </label>
                 <label>
                   Area
-                  <input name="area" defaultValue="QC Microbiology Lab" />
+                  <input name="area" placeholder="e.g. QC Microbiology Lab" />
                 </label>
                 <label>
                   Related process
-                  <input name="relatedProcess" defaultValue="Sterility assay review" />
+                  <input name="relatedProcess" placeholder="e.g. Sterility assay review" />
                 </label>
                 <label>
                   Revision
-                  <input name="revision" defaultValue="0.3" />
+                  <input name="revision" placeholder="e.g. 1.0" />
                 </label>
                 <label>
                   Next review date
@@ -94,7 +94,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
                 Known gaps
                 <textarea
                   name="gaps"
-                  defaultValue={"QA assessment timing not explicit\nBatch impact language needs owner review"}
+                  placeholder={"e.g. Review timing not documented\nOwner sign-off procedure unclear"}
                   rows={4}
                 />
               </label>
