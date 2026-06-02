@@ -26,6 +26,13 @@ import {
 import { addFoundationFinalPreviewSignoffAction, createFoundationReviewActionFromSourceAction } from "./actions";
 import { FoundationWorkflowClient } from "./FoundationWorkflowClient";
 
+
+/** Returns the resolved value or the fallback if the promise rejects,
+ *  preventing a single failing fetch from crashing the whole page. */
+function safeSettle<T>(promise: Promise<T>, fallback: T): Promise<T> {
+  return promise.catch(() => fallback);
+}
+
 const sourceDrilldownIds: Record<string, string> = {
   evidence_map: "evidence-drilldown",
   biotype_selection: "biotype-drilldown",
@@ -41,13 +48,49 @@ function sourceRecordAnchor(sourceModule: string, sourceRecordId?: string) {
 export default async function FoundationPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const params = await searchParams;
   const [summary, adminAccess, auditConsole, reviewActions, sourceDrilldowns, verificationStatus, assignees] = await Promise.all([
-    getIntelligenceFoundationSummary(),
-    getFoundationAdminAccessSummary(),
-    getAuditReadinessConsoleSummary(),
-    getFoundationReviewActionsSummary(),
-    getFoundationSourceDrilldownSummary(),
-    getFoundationVerificationStatusSummary(),
-    getFoundationAssigneeOptions()
+    safeSettle(getIntelligenceFoundationSummary(), {
+      companyName: "Demo Workspace",
+      counts: [],
+      coreComponents: [],
+      biotypes: [],
+      intake: [],
+      programs: [],
+      methods: [],
+      applicability: [],
+      evidence: [],
+      changes: [],
+      readiness: { overallScore: 0, documentsScore: 0, trainingScore: 0, capaScore: 0, incidentsScore: 0, equipmentScore: 0, evidenceScore: 0, topGaps: [] },
+      auditReadinessNotes: [],
+      aiWorkflow: [],
+      humanValidationWorkflow: [],
+      guardrailText: "Draft - Human Review Required",
+      latestAssessmentInput: {}
+    } as Awaited<ReturnType<typeof getIntelligenceFoundationSummary>>),
+    safeSettle(getFoundationAdminAccessSummary(), {
+      configured: false,
+      signedIn: false,
+      isOwner: false,
+      message: "Could not load access summary."
+    }),
+    safeSettle(getAuditReadinessConsoleSummary(), {
+      latestScore: 0,
+      trend: "not_enough_data" as const,
+      recentScores: [],
+      unresolvedGaps: [],
+      generatedActions: [],
+      notes: [],
+      humanReviewStatus: "Draft - human review required",
+      draftOnly: true
+    }),
+    safeSettle(getFoundationReviewActionsSummary(), []),
+    safeSettle(getFoundationSourceDrilldownSummary(), { groups: [] }),
+    safeSettle(getFoundationVerificationStatusSummary(), {
+      checklist: [],
+      allChecklistPassed: false,
+      productionPromotionAllowed: false,
+      productionGateReason: "Could not load verification status."
+    } as Awaited<ReturnType<typeof getFoundationVerificationStatusSummary>>),
+    safeSettle(getFoundationAssigneeOptions(), [])
   ]);
   const assessment = assessBioRisk(summary.latestAssessmentInput);
   const verificationSummaryText = [

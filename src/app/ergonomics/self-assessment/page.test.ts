@@ -32,8 +32,9 @@ describe("ergonomic Level 1 UI", () => {
   it("adds access from Inspections and the Ergonomics sidebar section", () => {
     expect(inspections).toContain("ergonomic.inspectionType.title");
     expect(inspections).toContain("ergonomic.level2InspectionType.title");
-    expect(inspections).toContain("Start Hazard Screening");
-    expect(inspections).toContain("Open Audit Evaluation");
+    // Button text is rendered as hardcoded labels alongside the dynamic titles
+    expect(inspections).toContain("Start screening");
+    expect(inspections).toContain("Open evaluation");
     expect(shell).toContain("HSE Management");
     expect(shell).toContain("/ergonomics/self-assessment");
   });

@@ -43,7 +43,6 @@ import {
   isUuid,
   normalizeBioTypeKeys,
   normalizeFoundationDueDate,
-  normalizeFoundationEvidenceStatus,
   normalizeFoundationTaskPriority,
   normalizeFoundationTaskStatus
 } from "@/lib/foundation/action-inputs";
@@ -101,6 +100,18 @@ import {
 import { createSupabaseServerClient } from "./server";
 import { isSupabaseConfigured } from "./env";
 import { getAuthSummary, getCompanyProfile } from "./account-service";
+import {
+  updateFoundationBioTypeSelection,
+  updateFoundationEvidenceReadiness,
+  updateFoundationIntakeResponse
+} from "./foundation-write-service";
+
+// Internal imports from extracted service files — used by functions remaining in this file.
+import type { ProfileContext } from "./data-helpers";
+import type { SavedAssessmentSummary, SavedAssessmentDetail } from "./assessment-service";
+import { saveDocumentMetadata, persistDocumentRecommendations } from "./document-service";
+import type { SaveDocumentMetadataInput } from "./document-service";
+
 
 export {
   getAccountSummary,
@@ -109,70 +120,43 @@ export {
   updateAccountProfile,
   updateCompanyProfile
 } from "./account-service";
+export {
+  updateFoundationBioTypeSelection,
+  updateFoundationEvidenceReadiness,
+  updateFoundationIntakeResponse
+} from "./foundation-write-service";
 export type { AccountSummary, AuthSummary } from "./account-service";
 export type { FoundationEvidenceStatus } from "@/lib/foundation/action-inputs";
 
-export type SavedAssessmentSummary = {
-  id: string;
-  workflow: string;
-  area: string;
-  score: number;
-  level: BioAiAssessment["level"];
-  confidence: BioAiAssessment["confidence"];
-  humanReviewRequired: boolean;
-  humanReviewStatus: HumanReviewStatus | string;
-  reviewedAt?: string | null;
-  createdAt?: string;
-};
+// ---------------------------------------------------------------------------
+// Domain service re-exports — functions extracted to focused service files.
+// Consumers importing from "@/lib/supabase/data" continue to work unchanged.
+// See docs/data-service-split-plan.md for the remaining extraction roadmap.
+// ---------------------------------------------------------------------------
+export {
+  listAssessments,
+  getAssessmentDetail,
+  updateAssessmentReview,
+  saveAssessment
+} from "./assessment-service";
+export type {
+  SavedAssessmentSummary,
+  SavedAssessmentDetail
+} from "./assessment-service";
 
-export type SavedAssessmentDetail = SavedAssessmentSummary & {
-  input: BioAiInput;
-  output: BioAiAssessment;
-  signals: BioAiSignal[];
-  auditEvents: AuditEvent[];
-  humanReviewStatus: HumanReviewStatus | string;
-  reviewerNotes?: string | null;
-  reviewedBy?: string | null;
-  reviewedAt?: string | null;
-};
+export {
+  listDocuments,
+  getDocument,
+  getDocumentRecommendationHistory,
+  saveDocumentMetadata,
+  persistDocumentRecommendations
+} from "./document-service";
+export type {
+  DocumentRecommendationRecord,
+  DocumentRecommendationRun,
+  SaveDocumentMetadataInput
+} from "./document-service";
 
-export type DocumentRecommendationRecord = {
-  id: string;
-  recommendationType: "gap" | "draft_update";
-  title: string;
-  label: string;
-  humanReviewRequired: boolean;
-  payload: Record<string, unknown>;
-  createdBy?: string | null;
-  createdAt?: string;
-};
-
-export type DocumentRecommendationRun = {
-  runKey: string;
-  createdAt?: string;
-  auditEvent?: AuditEvent;
-  recommendations: DocumentRecommendationRecord[];
-};
-
-export type SaveDocumentMetadataInput = {
-  title: string;
-  documentType: DocumentMetadata["documentType"];
-  status: DocumentMetadata["status"];
-  ownerRole: DocumentMetadata["ownerRole"];
-  area?: string | null;
-  relatedProcess?: string | null;
-  revision?: string | null;
-  effectiveDate?: string | null;
-  nextReviewDate?: string | null;
-  gaps?: string[];
-  file?: File | null;
-};
-
-type ProfileContext = {
-  userId: string;
-  organizationId: string;
-  role: string;
-};
 
 export type MapOperationsBundleInput = {
   siteName: string;
@@ -542,255 +526,6 @@ export type AuditReadinessConsoleSummary = {
   humanReviewStatus: string;
   draftOnly: boolean;
 };
-
-export async function listAssessments(): Promise<SavedAssessmentSummary[]> {
-  const context = await getProfileContext();
-  if (!context) {
-    return [
-      demoAssessmentSummary("demo-critical-contamination", {
-        siteName: "Demo Biotech Site",
-        area: "QC Microbiology Lab",
-        workflow: "Sterility assay review",
-        batchOrLot: "LOT-0001",
-        controlEffectiveness: "partial",
-        contaminationSuspected: true,
-        productQualityImpactPotential: true,
-        gxpImpact: true,
-        signals: [{ type: "contamination_event", label: "Unexpected microbial growth", severity: "high" }]
-      }),
-      demoAssessmentSummary("demo-training-gap", {
-        siteName: "Demo Biotech Site",
-        area: "Cell Therapy Suite",
-        workflow: "Media change",
-        controlEffectiveness: "effective",
-        missingRequiredTraining: true,
-        signals: [{ type: "training_gap", label: "Expired aseptic technique training", severity: "low" }]
-      })
-    ];
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("assessments")
-    .select("id,input_snapshot,score,level,confidence,human_review_required,human_review_status,reviewed_at,created_at")
-    .eq("organization_id", context.organizationId)
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  if (error || !data) return [];
-
-  return data.map((row) => {
-    const input = row.input_snapshot as BioAiInput;
-    return {
-      id: row.id,
-      workflow: input.workflow ?? "Untitled workflow",
-      area: input.area ?? "Unassigned area",
-      score: row.score,
-      level: row.level,
-      confidence: row.confidence,
-      humanReviewRequired: row.human_review_required,
-      humanReviewStatus: row.human_review_status,
-      reviewedAt: row.reviewed_at,
-      createdAt: row.created_at
-    };
-  });
-}
-
-export async function getAssessmentDetail(assessmentId: string): Promise<SavedAssessmentDetail | null> {
-  const context = await getProfileContext();
-  if (!context) {
-    return demoAssessmentDetail(assessmentId);
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("assessments")
-    .select("id,input_snapshot,output_snapshot,score,level,confidence,human_review_required,human_review_status,reviewer_notes,reviewed_by,reviewed_at,created_at")
-    .eq("organization_id", context.organizationId)
-    .eq("id", assessmentId)
-    .maybeSingle();
-
-  if (error || !data) return null;
-
-  const { data: signals } = await supabase
-    .from("assessment_signals")
-    .select("payload")
-    .eq("organization_id", context.organizationId)
-    .eq("assessment_id", assessmentId)
-    .order("created_at", { ascending: true });
-
-  const { data: auditRows } = await supabase
-    .from("audit_events")
-    .select("*")
-    .eq("organization_id", context.organizationId)
-    .order("created_at", { ascending: false })
-    .limit(100);
-
-  const input = data.input_snapshot as BioAiInput;
-  const output = data.output_snapshot as BioAiAssessment;
-  const auditEvents = (auditRows ?? [])
-    .filter((event) => {
-      const payload = event.payload as Record<string, unknown> | null;
-      return payload?.assessmentId === assessmentId;
-    })
-    .map(mapAuditEvent);
-
-  return {
-    id: data.id,
-    workflow: input.workflow ?? "Untitled workflow",
-    area: input.area ?? "Unassigned area",
-    score: data.score,
-    level: data.level,
-    confidence: data.confidence,
-    humanReviewRequired: data.human_review_required,
-    humanReviewStatus: data.human_review_status,
-    reviewerNotes: data.reviewer_notes,
-    reviewedBy: data.reviewed_by,
-    reviewedAt: data.reviewed_at,
-    createdAt: data.created_at,
-    input,
-    output,
-    signals: (signals ?? []).map((signal) => signal.payload as BioAiSignal),
-    auditEvents
-  };
-}
-
-export async function updateAssessmentReview(
-  assessmentId: string,
-  status: HumanReviewStatus,
-  reviewerNotes: string
-): Promise<{ ok: true } | { ok: false; message: string }> {
-  const context = await getProfileContext();
-  if (!context) {
-    return { ok: false, message: "Sign in and finish onboarding before updating review status." };
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const reviewedAt = new Date().toISOString();
-  const { data: assessment, error } = await supabase
-    .from("assessments")
-    .update({
-      human_review_status: status,
-      reviewer_notes: reviewerNotes || null,
-      reviewed_by: context.userId,
-      reviewed_at: reviewedAt
-    })
-    .eq("organization_id", context.organizationId)
-    .eq("id", assessmentId)
-    .select("id,score,level")
-    .single();
-
-  if (error || !assessment) {
-    return { ok: false, message: error?.message ?? "Assessment review status could not be updated." };
-  }
-
-  await supabase.from("audit_events").insert({
-    organization_id: context.organizationId,
-    actor_id: context.userId,
-    event_type: "human_review_status_changed",
-    summary: `Assessment review status changed to ${status}.`,
-    payload: withAuditTrace(
-      { assessmentId, status, reviewerNotes, reviewedAt, level: assessment.level, score: assessment.score },
-      {
-        sourceModule: "assessment",
-        sourceRecordId: assessmentId,
-        targetModule: "assessment",
-        targetRecordId: assessmentId,
-        draftOnly: status !== "reviewed_monitoring" && status !== "routine_monitoring"
-      }
-    )
-  });
-
-  return { ok: true };
-}
-
-export async function listDocuments(): Promise<DocumentMetadata[]> {
-  const context = await getProfileContext();
-  if (!context) return demoDocuments;
-
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("document_metadata")
-    .select("*")
-    .eq("organization_id", context.organizationId)
-    .order("updated_at", { ascending: false })
-    .limit(100);
-
-  if (error || !data) return [];
-
-  return data.map(mapDocument);
-}
-
-export async function getDocument(documentId: string): Promise<DocumentMetadata | null> {
-  const context = await getProfileContext();
-  if (!context) {
-    return demoDocuments.find((document) => document.id === documentId) ?? demoDocuments[0] ?? null;
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("document_metadata")
-    .select("*")
-    .eq("organization_id", context.organizationId)
-    .eq("id", documentId)
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return mapDocument(data);
-}
-
-export async function getDocumentRecommendationHistory(documentId: string): Promise<DocumentRecommendationRun[]> {
-  const context = await getProfileContext();
-  if (!context) return [];
-
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("document_recommendations")
-    .select("*")
-    .eq("organization_id", context.organizationId)
-    .eq("document_id", documentId)
-    .order("created_at", { ascending: false });
-
-  if (error || !data) return [];
-
-  const { data: auditRows } = await supabase
-    .from("audit_events")
-    .select("*")
-    .eq("organization_id", context.organizationId)
-    .eq("event_type", "document_recommendation_generated")
-    .order("created_at", { ascending: false })
-    .limit(100);
-
-  const audits = (auditRows ?? []).map(mapAuditEvent).filter((event) => {
-    const payload = event.payload as Record<string, unknown> | undefined;
-    return payload?.documentId === documentId;
-  });
-
-  const grouped = new Map<string, DocumentRecommendationRecord[]>();
-  for (const row of data) {
-    const payload = (row.payload ?? {}) as Record<string, unknown>;
-    const runKey = typeof payload.runId === "string" ? payload.runId : row.created_at ?? row.id;
-    const record: DocumentRecommendationRecord = {
-      id: row.id,
-      recommendationType: row.recommendation_type,
-      title: row.title,
-      label: row.label,
-      humanReviewRequired: row.human_review_required,
-      payload,
-      createdBy: row.created_by,
-      createdAt: row.created_at
-    };
-    grouped.set(runKey, [...(grouped.get(runKey) ?? []), record]);
-  }
-
-  return [...grouped.entries()].map(([runKey, recommendations]) => {
-    const createdAt = recommendations[0]?.createdAt;
-    const auditEvent =
-      audits.find((event) => (event.payload as Record<string, unknown> | undefined)?.runId === runKey) ??
-      audits.find((event) => event.createdAt === createdAt);
-    return { runKey, createdAt, auditEvent, recommendations };
-  });
-}
 
 export async function listAuditEvents(filters?: { eventType?: string; sourceModule?: string }): Promise<AuditEvent[]> {
   const context = await getProfileContext();
@@ -2075,135 +1810,6 @@ export async function updateChangePlanItem(input: ChangePlanItemInput): Promise<
 
   if (error || !data) return { ok: false, message: error?.message ?? "Change Plan item could not be updated." };
   return { ok: true, message: "Change Plan item updated." };
-}
-
-export async function updateFoundationBioTypeSelection(input: {
-  primaryBioType: string;
-  secondaryBioTypes: string[];
-}): Promise<FoundationActionResult> {
-  const context = await getProfileContext();
-  if (!context) return { ok: false, message: "Sign in and finish onboarding before updating BioType selection." };
-  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can update Foundation BioType selections." };
-
-  const primaryBioType = normalizeBioTypeKey(input.primaryBioType);
-  if (!primaryBioType) return { ok: false, message: "Choose a valid primary BioType." };
-
-  const secondaryBioTypes = normalizeBioTypeKeys(input.secondaryBioTypes).filter((key) => key !== primaryBioType);
-  const supabase = await createSupabaseServerClient();
-  const companyProfile = await getCompanyProfile();
-  const latestSelection = (await latestRow(
-    supabase,
-    "organization_biotype_selections",
-    context.organizationId,
-    "id"
-  )) as Record<string, any> | null;
-
-  const payload = {
-    organization_id: context.organizationId,
-    company_profile_id: companyProfile.id ?? null,
-    primary_biotype_key: primaryBioType,
-    secondary_biotype_keys: secondaryBioTypes,
-    selection_status: "draft_human_review_required",
-    selection_reason: "Updated from PredictSafeBIO Intelligence Foundation MVP edit workflow.",
-    human_review_required: true,
-    created_by: context.userId
-  };
-
-  const query = latestSelection?.id
-    ? supabase
-        .from("organization_biotype_selections")
-        .update(payload)
-        .eq("organization_id", context.organizationId)
-        .eq("id", latestSelection.id)
-        .select("id")
-        .single()
-    : supabase.from("organization_biotype_selections").insert(payload).select("id").single();
-
-  const { data, error } = await query;
-  if (error || !data) return { ok: false, message: error?.message ?? "BioType selection could not be updated." };
-
-  await writeFoundationAuditEvent(supabase, context, {
-    eventType: "foundation_biotype_selection_updated",
-    summary: "Foundation BioType selection updated; human review required.",
-    sourceModule: "biotype_selection",
-    sourceRecordId: data.id,
-    targetModule: "foundation",
-    targetRecordId: data.id,
-    payload: { primaryBioType, secondaryBioTypes }
-  });
-
-  return { ok: true, message: "BioType selection updated as draft - human review required." };
-}
-
-export async function updateFoundationIntakeResponse(input: {
-  responseId: string;
-  answer: boolean;
-}): Promise<FoundationActionResult> {
-  const context = await getProfileContext();
-  if (!context) return { ok: false, message: "Sign in and finish onboarding before updating intake responses." };
-  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can update Foundation intake responses." };
-
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("company_intake_responses")
-    .update({ answer_value: { value: input.answer }, updated_at: new Date().toISOString() })
-    .eq("organization_id", context.organizationId)
-    .eq("id", input.responseId)
-    .select("id,question_key")
-    .single();
-
-  if (error || !data) return { ok: false, message: error?.message ?? "Intake response could not be updated." };
-
-  await writeFoundationAuditEvent(supabase, context, {
-    eventType: "foundation_intake_response_updated",
-    summary: `Foundation intake response updated for ${data.question_key}.`,
-    sourceModule: "foundation",
-    sourceRecordId: data.id,
-    targetModule: "foundation",
-    targetRecordId: data.id,
-    payload: { responseId: data.id, questionKey: data.question_key, answer: input.answer }
-  });
-
-  return { ok: true, message: "Intake answer updated as draft - human review required." };
-}
-
-export async function updateFoundationEvidenceReadiness(input: {
-  evidenceId: string;
-  status: string;
-  auditReady: boolean;
-}): Promise<FoundationActionResult> {
-  const context = await getProfileContext();
-  if (!context) return { ok: false, message: "Sign in and finish onboarding before updating evidence readiness." };
-  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can update Foundation evidence readiness." };
-
-  const status = normalizeFoundationEvidenceStatus(input.status);
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("compliance_evidence_map")
-    .update({
-      evidence_status: status,
-      audit_ready: input.auditReady,
-      human_review_required: true,
-      updated_at: new Date().toISOString()
-    })
-    .eq("organization_id", context.organizationId)
-    .eq("id", input.evidenceId)
-    .select("id,requirement_name")
-    .single();
-
-  if (error || !data) return { ok: false, message: error?.message ?? "Evidence readiness could not be updated." };
-
-  await writeFoundationAuditEvent(supabase, context, {
-    eventType: "foundation_evidence_readiness_updated",
-    summary: `Foundation evidence readiness updated for ${data.requirement_name}.`,
-    sourceModule: "evidence_map",
-    sourceRecordId: data.id,
-    targetModule: "audit_readiness",
-    targetRecordId: data.id,
-    payload: { evidenceId: data.id, requirementName: data.requirement_name, status, auditReady: input.auditReady }
-  });
-
-  return { ok: true, message: "Evidence readiness updated as draft - human review required." };
 }
 
 export async function createFoundationStarterRecords(): Promise<FoundationActionResult> {
@@ -4521,133 +4127,6 @@ export async function seedIntelligenceFoundation(): Promise<{ ok: true; seedLabe
   }
 }
 
-export async function saveAssessment(input: BioAiInput) {
-  const context = await getProfileContext();
-  if (!context) {
-    return {
-      ok: false,
-      status: 401,
-      message: isSupabaseConfigured()
-        ? "Sign in and create a profile with an organization before saving assessments."
-        : "Supabase environment variables are not configured; assessment can run locally but cannot be saved yet."
-    };
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const assessment = assessBioRisk(input);
-  const { data, error } = await supabase
-    .from("assessments")
-    .insert({
-      organization_id: context.organizationId,
-      created_by: context.userId,
-      input_snapshot: input,
-      output_snapshot: assessment,
-      score: assessment.score,
-      level: assessment.level,
-      confidence: assessment.confidence,
-      human_review_required: assessment.humanReviewRequired,
-      human_review_status: assessment.humanReviewRequired ? "draft_human_review_required" : "routine_monitoring"
-    })
-    .select("id")
-    .single();
-
-  if (error || !data) {
-    return { ok: false, status: 500, message: error?.message ?? "Could not save assessment." };
-  }
-
-  const signals = input.signals ?? [];
-  if (signals.length > 0) {
-    await supabase.from("assessment_signals").insert(
-      signals.map((signal) => ({
-        organization_id: context.organizationId,
-        assessment_id: data.id,
-        signal_type: signal.type,
-        label: signal.label,
-        payload: signal
-      }))
-    );
-  }
-
-  await supabase.from("audit_events").insert({
-    organization_id: context.organizationId,
-    actor_id: context.userId,
-    event_type: "assessment_saved",
-    summary: `Assessment saved with ${assessment.level} risk and score ${assessment.score}.`,
-    payload: withAuditTrace(
-      { assessmentId: data.id, level: assessment.level, score: assessment.score, sourceTrace: assessment.sourceTrace },
-      {
-        sourceModule: "assessment",
-        sourceRecordId: data.id,
-        targetModule: "assessment",
-        targetRecordId: data.id,
-        draftOnly: assessment.humanReviewRequired
-      }
-    )
-  });
-
-  return { ok: true, status: 201, id: data.id, assessment };
-}
-
-export async function persistDocumentRecommendations(document: DocumentMetadata) {
-  const context = await getProfileContext();
-  const gapRecommendations = generateDocumentGapRecommendations(document);
-  const updateRecommendations = generateDocumentUpdateRecommendations(document);
-
-  if (!context || !document.id) {
-    return { ok: false, gapRecommendations, updateRecommendations };
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const rows = [
-    ...gapRecommendations.map((recommendation) => ({
-      organization_id: context.organizationId,
-      document_id: document.id,
-      recommendation_type: "gap",
-      title: recommendation.title,
-      payload: recommendation,
-      created_by: context.userId
-    })),
-    ...updateRecommendations.map((recommendation) => ({
-      organization_id: context.organizationId,
-      document_id: document.id,
-      recommendation_type: "draft_update",
-      title: recommendation.title,
-      payload: recommendation,
-      created_by: context.userId
-    }))
-  ];
-
-  if (rows.length > 0) {
-    const runId = randomUUID();
-    const generatedAt = new Date().toISOString();
-    await supabase.from("document_recommendations").insert(
-      rows.map((row) => ({
-        ...row,
-        payload: { ...(row.payload as Record<string, unknown>), runId, generatedAt }
-      }))
-    );
-    await supabase.from("audit_events").insert({
-      organization_id: context.organizationId,
-      actor_id: context.userId,
-      event_type: "document_recommendation_generated",
-      summary: `Generated draft document recommendations for ${document.title}.`,
-      payload: withAuditTrace(
-        { documentId: document.id, count: rows.length, runId, generatedAt },
-        {
-          sourceModule: "document",
-          sourceRecordId: document.id,
-          targetModule: "document_recommendation",
-          targetRecordId: document.id,
-          runId,
-          draftOnly: true
-        }
-      )
-    });
-  }
-
-  return { ok: true, gapRecommendations, updateRecommendations };
-}
-
 export async function seedDemoWorkspace(): Promise<
   { ok: true; assessmentId: string; documentId: string; seedLabel: string } | { ok: false; message: string }
 > {
@@ -4739,95 +4218,6 @@ export async function seedDemoWorkspace(): Promise<
   });
 
   return { ok: true, assessmentId: assessmentRow.id, documentId: documentResult.document.id, seedLabel };
-}
-
-export async function saveDocumentMetadata(input: SaveDocumentMetadataInput) {
-  const context = await getProfileContext();
-  if (!context) {
-    return {
-      ok: false,
-      status: 401,
-      message: isSupabaseConfigured()
-        ? "Sign in and finish onboarding before saving document metadata."
-        : "Supabase environment variables are not configured; document metadata cannot be saved yet."
-    };
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const uploadFile = input.file && input.file.size > 0 ? input.file : null;
-  const { data, error } = await supabase
-    .from("document_metadata")
-    .insert({
-      organization_id: context.organizationId,
-      title: input.title,
-      document_type: input.documentType,
-      status: input.status,
-      owner_role: input.ownerRole,
-      area: input.area || null,
-      related_process: input.relatedProcess || null,
-      revision: input.revision || null,
-      effective_date: input.effectiveDate || null,
-      next_review_date: input.nextReviewDate || null,
-      gaps: input.gaps ?? [],
-      created_by: context.userId
-    })
-    .select("*")
-    .single();
-
-  if (error || !data) {
-    return { ok: false, status: 500, message: error?.message ?? "Could not save document metadata." };
-  }
-
-  let uploadWarning: string | undefined;
-  let storageBucket: string | null = null;
-  let storagePath: string | null = null;
-
-  if (uploadFile) {
-    storageBucket = "biotech-documents";
-    const safeName = uploadFile.name.replace(/[^a-zA-Z0-9._-]/g, "-").replace(/-+/g, "-");
-    storagePath = `${context.organizationId}/${data.id}/${safeName}`;
-    const buffer = Buffer.from(await uploadFile.arrayBuffer());
-    const { error: uploadError } = await supabase.storage.from(storageBucket).upload(storagePath, buffer, {
-      contentType: uploadFile.type || "application/octet-stream",
-      upsert: false
-    });
-
-    if (uploadError) {
-      uploadWarning = `Metadata saved, but file upload failed: ${uploadError.message}`;
-      storageBucket = null;
-      storagePath = null;
-    } else {
-      await supabase
-        .from("document_metadata")
-        .update({ storage_bucket: storageBucket, storage_path: storagePath, updated_at: new Date().toISOString() })
-        .eq("organization_id", context.organizationId)
-        .eq("id", data.id);
-    }
-  }
-
-  await supabase.from("audit_events").insert({
-    organization_id: context.organizationId,
-    actor_id: context.userId,
-    event_type: "document_metadata_created",
-    summary: `Document metadata created for ${input.title}.`,
-    payload: withAuditTrace(
-      { documentId: data.id, title: input.title, documentType: input.documentType, storageBucket, storagePath },
-      {
-        sourceModule: "document",
-        sourceRecordId: data.id,
-        targetModule: "document",
-        targetRecordId: data.id,
-        draftOnly: input.status !== "approved"
-      }
-    )
-  });
-
-  return {
-    ok: true,
-    status: 201,
-    document: mapDocument({ ...data, storage_bucket: storageBucket, storage_path: storagePath }),
-    message: uploadWarning
-  };
 }
 
 async function getProfileContext(): Promise<ProfileContext | null> {

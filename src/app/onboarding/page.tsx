@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
-import { ClipboardCheck } from "lucide-react";
+import { ClipboardCheck, ShieldAlert } from "lucide-react";
 import { completeOnboardingAction } from "@/app/auth/actions";
 import { demoCompanyProfile } from "@/lib/demo-data";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { hasValidInviteForCurrentUser } from "@/lib/supabase/invite-service";
 
 type OnboardingPageProps = {
   searchParams: Promise<{ message?: string }>;
@@ -24,6 +25,10 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
     redirect("/workbench");
   }
 
+  // Invite-only guard: when NEXT_PUBLIC_INVITE_ONLY=true, a valid pending invite
+  // is required. In demo mode or when invite-only is off, this is a no-op.
+  const inviteValid = await hasValidInviteForCurrentUser();
+
   return (
     <main className="onboarding-page">
       <section className="onboarding-panel" aria-labelledby="onboarding-title">
@@ -38,6 +43,15 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
           These defaults come from the current demo company profile so the live Supabase path starts with the same biotech operating context.
         </p>
         {params.message ? <p className="form-message">{params.message}</p> : null}
+        {!inviteValid && (
+          <div className="auth-hardening-warning" role="alert">
+            <ShieldAlert size={15} />
+            <span>
+              <strong>Invite required.</strong> This workspace is invite-only.
+              Ask your organization owner to send you an invite link before continuing.
+            </span>
+          </div>
+        )}
         <form action={completeOnboardingAction} className="onboarding-form">
           <div className="form-grid">
             <label>

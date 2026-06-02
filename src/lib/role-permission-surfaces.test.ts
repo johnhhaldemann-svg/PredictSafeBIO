@@ -36,9 +36,10 @@ describe("role permission surfaces", () => {
     expect(operationsPage).toContain('href="/login?next=/operations"');
   });
 
-  it("keeps training readonly and admin seeding owner-only until the next CRUD slice", () => {
+  it("keeps training CRUD owner-gated and admin seeding owner-only", () => {
     expect(trainingMatrixPage).toContain("Training remains human validated");
-    expect(trainingMatrixPage).not.toContain("<form");
+    // Training CRUD (mark complete, delete, create) is now implemented and owner-gated
+    expect(trainingMatrixPage).toContain("adminAccess.isOwner");
     expect(adminDemoPage).toContain("canManageWorkspace(auth)");
     expect(adminDemoPage).toContain("canSeedDemo");
   });

@@ -8,6 +8,7 @@ const foundationActions = readFileSync(join(process.cwd(), "src/app/foundation/a
 const foundationData = readFileSync(join(process.cwd(), "src/lib/supabase/data.ts"), "utf8");
 const foundationActionInputs = readFileSync(join(process.cwd(), "src/lib/foundation/action-inputs.ts"), "utf8");
 const foundationReviewActions = readFileSync(join(process.cwd(), "src/lib/foundation/review-actions.ts"), "utf8");
+const foundationWriteService = readFileSync(join(process.cwd(), "src/lib/supabase/foundation-write-service.ts"), "utf8");
 const companyProfilePage = readFileSync(join(process.cwd(), "src/app/company-profile/page.tsx"), "utf8");
 const operationsPage = readFileSync(join(process.cwd(), "src/app/operations/page.tsx"), "utf8");
 const workbenchPage = readFileSync(join(process.cwd(), "src/app/workbench/page.tsx"), "utf8");
@@ -53,7 +54,8 @@ describe("foundation UI alignment", () => {
     expect(foundationActions).not.toContain("seedIntelligenceFoundationAction");
     expect(foundationData).toContain("hasOpenFoundationRecommendation");
     expect(foundationData).toContain("actionType: \"foundation_review_action\"");
-    expect(foundationData).toContain("Only organization owners can update Foundation");
+    expect(foundationData).toContain("./foundation-write-service");
+    expect(foundationWriteService).toContain("Only organization owners can update Foundation");
     expect(foundationData).toContain("Only organization owners can generate Foundation review actions");
   });
 
