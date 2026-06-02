@@ -51,39 +51,39 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
               <div className="form-grid">
                 <label>
                   Site
-                  <input name="siteName" defaultValue="PredictSafeBIO Pilot Site" />
+                  <input name="siteName" placeholder="e.g. Main Campus Lab" />
                 </label>
                 <label>
                   Lab
-                  <input name="labName" defaultValue="QC Microbiology Lab" />
+                  <input name="labName" placeholder="e.g. QC Microbiology Lab" />
                 </label>
                 <label>
                   Workflow
-                  <input name="workflow" defaultValue="Biosafety readiness review" />
+                  <input name="workflow" placeholder="e.g. Biosafety readiness review" />
                 </label>
                 <label>
                   Reference
-                  <input name="referenceTitle" defaultValue="Pilot biosafety reference" />
+                  <input name="referenceTitle" placeholder="e.g. Biosafety reference document" />
                 </label>
                 <label>
                   Document
-                  <input name="documentTitle" defaultValue="Biosafety and BBP SOP" />
+                  <input name="documentTitle" placeholder="e.g. Biosafety and BBP SOP" />
                 </label>
                 <label>
                   Training
-                  <input name="trainingTitle" defaultValue="Annual biosafety and BBP training" />
+                  <input name="trainingTitle" placeholder="e.g. Annual biosafety training" />
                 </label>
                 <label>
                   Incident
-                  <input name="incidentTitle" defaultValue="Biosafety deviation readiness review" />
+                  <input name="incidentTitle" placeholder="e.g. Biosafety deviation — investigation" />
                 </label>
                 <label>
                   Equipment tag
-                  <input name="equipmentTag" defaultValue="BSC-001" />
+                  <input name="equipmentTag" placeholder="e.g. BSC-001" />
                 </label>
                 <label>
                   Sample ID
-                  <input name="sampleIdentifier" defaultValue="SAMPLE-001" />
+                  <input name="sampleIdentifier" placeholder="e.g. SAMPLE-001" />
                 </label>
               </div>
               <button className="button-primary" type="submit">
