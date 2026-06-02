@@ -6,6 +6,7 @@ const foundationPage = readFileSync(join(process.cwd(), "src/app/foundation/page
 const foundationClient = readFileSync(join(process.cwd(), "src/app/foundation/FoundationWorkflowClient.tsx"), "utf8");
 const foundationActions = readFileSync(join(process.cwd(), "src/app/foundation/actions.ts"), "utf8");
 const foundationData = readFileSync(join(process.cwd(), "src/lib/supabase/data.ts"), "utf8");
+const foundationActionInputs = readFileSync(join(process.cwd(), "src/lib/foundation/action-inputs.ts"), "utf8");
 const foundationReviewActions = readFileSync(join(process.cwd(), "src/lib/foundation/review-actions.ts"), "utf8");
 const companyProfilePage = readFileSync(join(process.cwd(), "src/app/company-profile/page.tsx"), "utf8");
 const operationsPage = readFileSync(join(process.cwd(), "src/app/operations/page.tsx"), "utf8");
@@ -143,7 +144,8 @@ describe("foundation UI alignment", () => {
     expect(foundationData).toContain("Members can bulk update only Foundation review tasks assigned to them.");
     expect(foundationData).toContain("Members can bulk note only Foundation review tasks assigned to them.");
     expect(foundationData).toContain("Members can update task status and notes only; priority, assignment, and due dates are owner-only.");
-    expect(foundationData).toContain("normalizeFoundationTaskPriority");
+    expect(foundationData).toContain("@/lib/foundation/action-inputs");
+    expect(foundationActionInputs).toContain("normalizeFoundationTaskPriority");
     expect(foundationData).toContain("previousPriority");
     expect(foundationData).toContain("actorRole");
     expect(foundationData).toContain("previousStatus");

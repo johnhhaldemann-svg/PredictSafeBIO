@@ -40,6 +40,14 @@ import {
   type BioTypeKey
 } from "@/lib/foundation/biotypes";
 import {
+  isUuid,
+  normalizeBioTypeKeys,
+  normalizeFoundationDueDate,
+  normalizeFoundationEvidenceStatus,
+  normalizeFoundationTaskPriority,
+  normalizeFoundationTaskStatus
+} from "@/lib/foundation/action-inputs";
+import {
   applyFoundationContext,
   defaultApplicabilityRules,
   foundationMethodNames,
@@ -102,6 +110,7 @@ export {
   updateCompanyProfile
 } from "./account-service";
 export type { AccountSummary, AuthSummary } from "./account-service";
+export type { FoundationEvidenceStatus } from "@/lib/foundation/action-inputs";
 
 export type SavedAssessmentSummary = {
   id: string;
@@ -533,9 +542,6 @@ export type AuditReadinessConsoleSummary = {
   humanReviewStatus: string;
   draftOnly: boolean;
 };
-
-const foundationEvidenceStatuses = ["current", "ready", "review_needed", "missing", "expired", "open", "out_of_tolerance"] as const;
-export type FoundationEvidenceStatus = (typeof foundationEvidenceStatuses)[number];
 
 export async function listAssessments(): Promise<SavedAssessmentSummary[]> {
   const context = await getProfileContext();
@@ -5456,28 +5462,6 @@ async function writeFoundationAuditEvent(
   });
 }
 
-function normalizeFoundationEvidenceStatus(status: string): FoundationEvidenceStatus {
-  return foundationEvidenceStatuses.includes(status as FoundationEvidenceStatus) ? (status as FoundationEvidenceStatus) : "review_needed";
-}
-
-function normalizeFoundationTaskStatus(status: string) {
-  return ["open", "in_progress", "complete", "blocked"].includes(status) ? (status as "open" | "in_progress" | "complete" | "blocked") : null;
-}
-
-function normalizeFoundationTaskPriority(priority?: string | null) {
-  const value = String(priority ?? "");
-  return ["low", "medium", "high", "urgent"].includes(value) ? (value as "low" | "medium" | "high" | "urgent") : null;
-}
-
-function normalizeFoundationDueDate(dueDate?: string | null) {
-  if (!dueDate) return null;
-  return /^\d{4}-\d{2}-\d{2}$/.test(dueDate) ? dueDate : null;
-}
-
-function isUuid(value: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-}
-
 function trainingReadinessFromStatus(status: string): TrainingMatrixRow["readiness"] {
   if (status === "completed" || status === "waived") return "Current";
   if (status === "expired") return "Expired";
@@ -5551,11 +5535,6 @@ function summarizeJson(value: unknown) {
   }
   if (value == null) return "none";
   return String(value);
-}
-
-function normalizeBioTypeKeys(value: unknown): BioTypeKey[] {
-  const rawValues = Array.isArray(value) ? value : typeof value === "string" ? [value] : [];
-  return rawValues.map((item) => normalizeBioTypeKey(String(item))).filter((item): item is BioTypeKey => Boolean(item));
 }
 
 function normalizeTaskType(value: unknown): ErgonomicTaskType {
