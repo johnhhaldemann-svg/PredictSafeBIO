@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckCircle, ClipboardCheck, FileText, Plus, ShieldCheck, Trash2, TrendingUp } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { formatOwnerRole } from "@/lib/display-labels";
 import { getFoundationAdminAccessSummary, getTrainingMatrixSummary } from "@/lib/supabase/data";
 import {
   createTrainingRequirementAction,
@@ -87,7 +88,7 @@ export default async function TrainingMatrixPage({ searchParams }: { searchParam
                 <tr key={row.id}>
                   <td>{row.requirement}</td>
                   <td>{row.source}</td>
-                  <td>{row.ownerRole}</td>
+                  <td>{formatOwnerRole(row.ownerRole ?? "")}</td>
                   <td>
                     <Link href={row.documentHref}>{row.documentTitle}</Link>
                   </td>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, CircleDot, Clock, Plus, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { formatOwnerRole } from "@/lib/display-labels";
 import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
 import {
   capaStatusLabels,
@@ -128,7 +129,7 @@ export default async function CapaListPage({ searchParams }: Props) {
                       </span>
                     </div>
                     <p>
-                      {record.ownerRole ? `Owner: ${record.ownerRole} · ` : ""}
+                      {record.ownerRole ? `Owner: ${formatOwnerRole(record.ownerRole)} · ` : ""}
                       {record.dueDate ? (
                         <span className={overdue ? "text-danger" : ""}>
                           Due {new Date(record.dueDate).toLocaleDateString()}

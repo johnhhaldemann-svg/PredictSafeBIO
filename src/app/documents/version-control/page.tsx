@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CheckCircle2, GitBranch, History, ListChecks, Plus, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { generateDocumentGapRecommendations, generateDocumentUpdateRecommendations } from "@/lib/documents/recommendations";
+import { formatDocumentStatus } from "@/lib/display-labels";
 import { getFoundationAdminAccessSummary, listDocuments } from "@/lib/supabase/data";
 import { getVersionHistories } from "@/lib/supabase/version-service";
 import { approvalDecisionAction, logVersionAction, requestApprovalAction } from "./actions";
@@ -119,7 +120,7 @@ export default async function VersionControlPage({ searchParams }: Props) {
                         <span className={rs.urgent ? "status-expired" : ""}>{rs.label}</span>
                         {" · "}
                         <span className={doc.status === "approved" ? "status-current" : "status-needs-review"}>
-                          {doc.status}
+                          {formatDocumentStatus(doc.status)}
                         </span>
                         {latestApproval && (
                           <>

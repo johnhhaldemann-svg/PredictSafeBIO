@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { createDocumentMetadataAction } from "@/app/documents/actions";
 import { generateDocumentGapRecommendations } from "@/lib/documents/recommendations";
+import { formatDocumentStatus, formatDocumentType } from "@/lib/display-labels";
 import { getAuthSummary, listDocuments } from "@/lib/supabase/data";
 import { canCreateWorkspaceRecord } from "@/lib/role-permissions";
 
@@ -121,9 +122,9 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
             const gaps = generateDocumentGapRecommendations(document);
             return (
               <Link href={`/documents/${document.id}`} className="document-card" key={document.id}>
-                <span>{document.documentType}</span>
+                <span>{formatDocumentType(document.documentType)}</span>
                 <strong>{document.title}</strong>
-                <p>Status: {document.status}</p>
+                <p>Status: {formatDocumentStatus(document.status)}</p>
                 <p>{gaps.length} document gap recommendation{gaps.length === 1 ? "" : "s"}</p>
               </Link>
             );
