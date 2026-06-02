@@ -31,14 +31,14 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           </span>
           <div>
             <strong>PredictSafeBIO</strong>
-            <span>AI Engine MVP</span>
+            <span>Biosafety Intelligence</span>
           </div>
         </div>
         <div>
-          <p className="section-label">Create access</p>
-          <h1 id="signup-title">Sign up</h1>
+          <p className="section-label">Create your workspace</p>
+          <h1 id="signup-title">Get started</h1>
           <p className="auth-copy">
-            Create a Supabase Auth user, then finish onboarding to seed your organization and company profile.
+            Create your account to set up your organization&apos;s biosafety management workspace.
           </p>
         </div>
         {auth.signedIn ? (
@@ -51,11 +51,8 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           <div className="auth-hardening-warning" role="alert">
             <AlertTriangle size={15} />
             <span>
-              <strong>Email confirmation is disabled.</strong> Unverified signups are a spam and abuse
-              vector. Re-enable email confirmation in Supabase Auth settings and configure custom SMTP
-              before any public-facing demo or pilot. Remove{" "}
-              <code>NEXT_PUBLIC_EMAIL_CONFIRMATION_DISABLED=true</code> from <code>.env.local</code>{" "}
-              when done.
+              <strong>Email verification is currently disabled.</strong> Your account will be active
+              immediately after sign-up.
             </span>
           </div>
         )}
@@ -67,8 +64,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         ) : (
           <>
             <p className="auth-note">
-              Email confirmation should be enabled for MVP hardening. If signup email throttling
-              appears, configure custom SMTP before heavier testing.
+              You&apos;ll receive a confirmation email. Click the link inside to activate your account before signing in.
             </p>
             <form action={signUpAction} className="auth-form">
               <input type="hidden" name="next" value={next} />

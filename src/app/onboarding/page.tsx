@@ -35,12 +35,12 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
         <div className="panel-heading">
           <div>
             <p className="section-label">Organization setup</p>
-            <h1 id="onboarding-title">Seed your MVP workspace</h1>
+            <h1 id="onboarding-title">Set up your workspace</h1>
           </div>
           <ClipboardCheck size={24} />
         </div>
         <p className="auth-copy">
-          These defaults come from the current demo company profile so the live Supabase path starts with the same biotech operating context.
+          Tell us about your organization. This shapes your biosafety assessments, document library, and audit-readiness tracking.
         </p>
         {params.message ? <p className="form-message">{params.message}</p> : null}
         {!inviteValid && (
@@ -56,52 +56,100 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
           <div className="form-grid">
             <label>
               Organization name
-              <input name="organizationName" defaultValue={demoCompanyProfile.companyName} required />
+              <input
+                name="organizationName"
+                placeholder={demoCompanyProfile.companyName}
+                required
+                autoComplete="organization"
+              />
             </label>
             <label>
-              Full name
-              <input name="fullName" defaultValue={user.email ?? ""} required />
+              Your full name
+              <input
+                name="fullName"
+                placeholder="e.g. Dr. Jane Smith"
+                defaultValue=""
+                required
+                autoComplete="name"
+              />
             </label>
             <label>
               Company name
-              <input name="companyName" defaultValue={demoCompanyProfile.companyName} required />
+              <input
+                name="companyName"
+                placeholder={demoCompanyProfile.companyName}
+                required
+                autoComplete="organization"
+              />
             </label>
             <label>
               Primary site
-              <input name="primarySite" defaultValue={demoCompanyProfile.primarySite} required />
+              <input
+                name="primarySite"
+                placeholder={demoCompanyProfile.primarySite}
+                autoComplete="off"
+              />
             </label>
+          </div>
+
+          <div className="onboarding-section-divider">
+            <p className="section-label">Operating context — optional, helps personalize your workspace</p>
           </div>
 
           <div className="form-grid wide-fields">
             <label>
               Operating areas
-              <textarea name="operatingAreas" defaultValue={demoCompanyProfile.operatingAreas.join("\n")} rows={5} />
+              <textarea
+                name="operatingAreas"
+                placeholder={demoCompanyProfile.operatingAreas.join("\n")}
+                rows={4}
+              />
             </label>
             <label>
               Programs
-              <textarea name="programs" defaultValue={demoCompanyProfile.programs.join("\n")} rows={5} />
+              <textarea
+                name="programs"
+                placeholder={demoCompanyProfile.programs.join("\n")}
+                rows={4}
+              />
             </label>
             <label>
               Quality scope
-              <textarea name="qualityScope" defaultValue={demoCompanyProfile.qualitySystemScope.join("\n")} rows={5} />
+              <textarea
+                name="qualityScope"
+                placeholder={demoCompanyProfile.qualitySystemScope.join("\n")}
+                rows={4}
+              />
             </label>
             <label>
               Biosafety levels
-              <textarea name="biosafetyLevels" defaultValue={demoCompanyProfile.biosafetyLevels.join("\n")} rows={5} />
+              <textarea
+                name="biosafetyLevels"
+                placeholder={demoCompanyProfile.biosafetyLevels.join("\n")}
+                rows={4}
+              />
             </label>
             <label>
               Review owner roles
-              <textarea name="reviewOwnerRoles" defaultValue={demoCompanyProfile.reviewOwnerRoles.join("\n")} rows={5} />
+              <textarea
+                name="reviewOwnerRoles"
+                placeholder={demoCompanyProfile.reviewOwnerRoles.join("\n")}
+                rows={4}
+              />
             </label>
             <label>
               Document families
-              <textarea name="documentFamilies" defaultValue={demoCompanyProfile.documentFamilies.join("\n")} rows={5} />
+              <textarea
+                name="documentFamilies"
+                placeholder={demoCompanyProfile.documentFamilies.join("\n")}
+                rows={4}
+              />
             </label>
           </div>
 
           <div className="onboarding-actions">
             <button className="button-primary" type="submit">
-              Create organization and profile
+              Create workspace
             </button>
           </div>
         </form>
