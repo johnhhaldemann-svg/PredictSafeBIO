@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "PredictSafeBIO",
-  description: "Biotech AI Engine MVP foundation with deterministic risk scoring."
+  description: "AI-powered biosafety intelligence platform for biotech EHS, compliance, and audit readiness."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
