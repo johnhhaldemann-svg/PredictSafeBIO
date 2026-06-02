@@ -21,13 +21,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </span>
           <div>
             <strong>PredictSafeBIO</strong>
-            <span>AI Engine MVP</span>
+            <span>Biosafety Intelligence</span>
           </div>
         </div>
         <div>
-          <p className="section-label">Secure access</p>
+          <p className="section-label">Workspace access</p>
           <h1 id="login-title">Sign in</h1>
-          <p className="auth-copy">Run the deterministic engine publicly, then sign in to save assessments and audit events.</p>
+          <p className="auth-copy">Sign in to access your organization&apos;s safety management workspace.</p>
         </div>
         {auth.signedIn ? <p className="form-message">You are already signed in as {auth.userEmail}.</p> : null}
         {params.message ? <p className="form-message">{params.message}</p> : null}
@@ -37,7 +37,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </Link>
         ) : (
           <>
-            <p className="auth-note">If you just created an account, confirm your email first, then return here to sign in.</p>
+            <p className="auth-note">Check your inbox to confirm your email address before signing in for the first time.</p>
             <form action={signInAction} className="auth-form">
               <input type="hidden" name="next" value={next} />
               <label>
