@@ -49,10 +49,13 @@ describe("user-visible message customer copy", () => {
     expect(accountPage).toContain("same secure path as reset links");
     expect(accountPage).toContain("managed by your workspace owner");
     expect(accountPage).not.toContain("Supabase recovery-safe path");
-    expect(teamPage).toContain("invitation email with a link to join your workspace");
+    expect(teamPage).toContain("invitation email");
+    expect(teamPage).toContain("link to join your workspace");
     expect(teamPage).toContain("authentication settings");
+    expect(teamPage).toContain("Connect your workspace to manage real invitations");
     expect(teamPage).not.toContain("Supabase Auth invite email");
     expect(teamPage).not.toContain("Supabase Auth settings");
+    expect(teamPage).not.toContain("Connect Supabase to manage");
   });
 
   it("audit log filter uses human-readable labels not raw snake_case event names", () => {
