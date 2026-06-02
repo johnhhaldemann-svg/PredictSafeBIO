@@ -43,7 +43,6 @@ import {
   isUuid,
   normalizeBioTypeKeys,
   normalizeFoundationDueDate,
-  normalizeFoundationEvidenceStatus,
   normalizeFoundationTaskPriority,
   normalizeFoundationTaskStatus
 } from "@/lib/foundation/action-inputs";
@@ -101,6 +100,11 @@ import {
 import { createSupabaseServerClient } from "./server";
 import { isSupabaseConfigured } from "./env";
 import { getAuthSummary, getCompanyProfile } from "./account-service";
+import {
+  updateFoundationBioTypeSelection,
+  updateFoundationEvidenceReadiness,
+  updateFoundationIntakeResponse
+} from "./foundation-write-service";
 
 export {
   getAccountSummary,
@@ -109,6 +113,11 @@ export {
   updateAccountProfile,
   updateCompanyProfile
 } from "./account-service";
+export {
+  updateFoundationBioTypeSelection,
+  updateFoundationEvidenceReadiness,
+  updateFoundationIntakeResponse
+} from "./foundation-write-service";
 export type { AccountSummary, AuthSummary } from "./account-service";
 export type { FoundationEvidenceStatus } from "@/lib/foundation/action-inputs";
 
@@ -2075,135 +2084,6 @@ export async function updateChangePlanItem(input: ChangePlanItemInput): Promise<
 
   if (error || !data) return { ok: false, message: error?.message ?? "Change Plan item could not be updated." };
   return { ok: true, message: "Change Plan item updated." };
-}
-
-export async function updateFoundationBioTypeSelection(input: {
-  primaryBioType: string;
-  secondaryBioTypes: string[];
-}): Promise<FoundationActionResult> {
-  const context = await getProfileContext();
-  if (!context) return { ok: false, message: "Sign in and finish onboarding before updating BioType selection." };
-  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can update Foundation BioType selections." };
-
-  const primaryBioType = normalizeBioTypeKey(input.primaryBioType);
-  if (!primaryBioType) return { ok: false, message: "Choose a valid primary BioType." };
-
-  const secondaryBioTypes = normalizeBioTypeKeys(input.secondaryBioTypes).filter((key) => key !== primaryBioType);
-  const supabase = await createSupabaseServerClient();
-  const companyProfile = await getCompanyProfile();
-  const latestSelection = (await latestRow(
-    supabase,
-    "organization_biotype_selections",
-    context.organizationId,
-    "id"
-  )) as Record<string, any> | null;
-
-  const payload = {
-    organization_id: context.organizationId,
-    company_profile_id: companyProfile.id ?? null,
-    primary_biotype_key: primaryBioType,
-    secondary_biotype_keys: secondaryBioTypes,
-    selection_status: "draft_human_review_required",
-    selection_reason: "Updated from PredictSafeBIO Intelligence Foundation MVP edit workflow.",
-    human_review_required: true,
-    created_by: context.userId
-  };
-
-  const query = latestSelection?.id
-    ? supabase
-        .from("organization_biotype_selections")
-        .update(payload)
-        .eq("organization_id", context.organizationId)
-        .eq("id", latestSelection.id)
-        .select("id")
-        .single()
-    : supabase.from("organization_biotype_selections").insert(payload).select("id").single();
-
-  const { data, error } = await query;
-  if (error || !data) return { ok: false, message: error?.message ?? "BioType selection could not be updated." };
-
-  await writeFoundationAuditEvent(supabase, context, {
-    eventType: "foundation_biotype_selection_updated",
-    summary: "Foundation BioType selection updated; human review required.",
-    sourceModule: "biotype_selection",
-    sourceRecordId: data.id,
-    targetModule: "foundation",
-    targetRecordId: data.id,
-    payload: { primaryBioType, secondaryBioTypes }
-  });
-
-  return { ok: true, message: "BioType selection updated as draft - human review required." };
-}
-
-export async function updateFoundationIntakeResponse(input: {
-  responseId: string;
-  answer: boolean;
-}): Promise<FoundationActionResult> {
-  const context = await getProfileContext();
-  if (!context) return { ok: false, message: "Sign in and finish onboarding before updating intake responses." };
-  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can update Foundation intake responses." };
-
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("company_intake_responses")
-    .update({ answer_value: { value: input.answer }, updated_at: new Date().toISOString() })
-    .eq("organization_id", context.organizationId)
-    .eq("id", input.responseId)
-    .select("id,question_key")
-    .single();
-
-  if (error || !data) return { ok: false, message: error?.message ?? "Intake response could not be updated." };
-
-  await writeFoundationAuditEvent(supabase, context, {
-    eventType: "foundation_intake_response_updated",
-    summary: `Foundation intake response updated for ${data.question_key}.`,
-    sourceModule: "foundation",
-    sourceRecordId: data.id,
-    targetModule: "foundation",
-    targetRecordId: data.id,
-    payload: { responseId: data.id, questionKey: data.question_key, answer: input.answer }
-  });
-
-  return { ok: true, message: "Intake answer updated as draft - human review required." };
-}
-
-export async function updateFoundationEvidenceReadiness(input: {
-  evidenceId: string;
-  status: string;
-  auditReady: boolean;
-}): Promise<FoundationActionResult> {
-  const context = await getProfileContext();
-  if (!context) return { ok: false, message: "Sign in and finish onboarding before updating evidence readiness." };
-  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can update Foundation evidence readiness." };
-
-  const status = normalizeFoundationEvidenceStatus(input.status);
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("compliance_evidence_map")
-    .update({
-      evidence_status: status,
-      audit_ready: input.auditReady,
-      human_review_required: true,
-      updated_at: new Date().toISOString()
-    })
-    .eq("organization_id", context.organizationId)
-    .eq("id", input.evidenceId)
-    .select("id,requirement_name")
-    .single();
-
-  if (error || !data) return { ok: false, message: error?.message ?? "Evidence readiness could not be updated." };
-
-  await writeFoundationAuditEvent(supabase, context, {
-    eventType: "foundation_evidence_readiness_updated",
-    summary: `Foundation evidence readiness updated for ${data.requirement_name}.`,
-    sourceModule: "evidence_map",
-    sourceRecordId: data.id,
-    targetModule: "audit_readiness",
-    targetRecordId: data.id,
-    payload: { evidenceId: data.id, requirementName: data.requirement_name, status, auditReady: input.auditReady }
-  });
-
-  return { ok: true, message: "Evidence readiness updated as draft - human review required." };
 }
 
 export async function createFoundationStarterRecords(): Promise<FoundationActionResult> {
