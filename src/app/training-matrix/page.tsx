@@ -193,8 +193,8 @@ export default async function TrainingMatrixPage({ searchParams }: { searchParam
               </label>
               <div className="form-grid">
                 <label>
-                  Role / owner key
-                  <input name="roleKey" type="text" placeholder="biosafety_officer" />
+                  Assigned role
+                  <input name="roleKey" type="text" placeholder="e.g. Biosafety Officer" />
                 </label>
                 <label>
                   Frequency (months)

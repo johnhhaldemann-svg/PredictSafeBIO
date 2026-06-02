@@ -63,18 +63,18 @@ export default async function AssessmentsPage({ searchParams }: { searchParams: 
               Risk level
               <select name="level" defaultValue={filters.level ?? "all"}>
                 <option value="all">All BioRisk levels</option>
-                <option value="critical">critical</option>
-                <option value="high">high</option>
-                <option value="moderate">moderate</option>
-                <option value="low">low</option>
+                <option value="critical">Critical</option>
+                <option value="high">High</option>
+                <option value="moderate">Moderate</option>
+                <option value="low">Low</option>
               </select>
             </label>
             <label>
               Reviewer state
               <select name="reviewer" defaultValue={filters.reviewer ?? "all"}>
                 <option value="all">All reviewer states</option>
-                <option value="reviewed">Reviewed timestamp present</option>
-                <option value="not_reviewed">No reviewed timestamp</option>
+                <option value="reviewed">Has been reviewed</option>
+                <option value="not_reviewed">Not yet reviewed</option>
               </select>
             </label>
             <button className="button-primary" type="submit">
