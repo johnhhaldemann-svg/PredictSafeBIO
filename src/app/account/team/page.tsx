@@ -48,9 +48,9 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
               <UserPlus size={22} />
             </div>
             <p className="muted">
-              Enter an email address and role. The recipient will receive a Supabase Auth invite
-              email with a link to complete onboarding. Invites expire after 7 days.
-              Requires custom SMTP to be configured in Supabase Auth settings.
+              Enter an email address and role. The recipient will receive an invitation email
+              with a link to join your workspace. Invites expire after 7 days.
+              Requires custom SMTP to be configured in your authentication settings.
             </p>
             <form action={createInviteAction} className="stacked-form">
               <label>
@@ -111,8 +111,8 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         {!adminAccess.configured && (
           <section className="panel">
             <p className="muted">
-              Connect Supabase to manage real invitations. In demo mode, the invitation list
-              above shows demo data.
+              Connect your workspace to manage real invitations. In demo mode, the invitation list
+              above shows sample data.
             </p>
           </section>
         )}

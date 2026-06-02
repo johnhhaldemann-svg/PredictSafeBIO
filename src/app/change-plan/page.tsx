@@ -84,7 +84,7 @@ export default async function ChangePlanPage({ searchParams }: ChangePlanPagePro
               <form action={seedDefaultChangePlanItemsAction} className="change-plan-seed">
                 <div>
                   <strong>Seed curated starter rows</strong>
-                  <span>Creates the five screenshot-aligned rows in Supabase for this organization.</span>
+                  <span>Creates five starter change plan items for your organization.</span>
                 </div>
                 <button className="button-primary" type="submit">
                   Seed rows

@@ -25,7 +25,7 @@ async function createClientOrRedirect(path: string) {
   try {
     return await createSupabaseServerClient();
   } catch {
-    redirect(authMessage(path, "Supabase is not configured yet. Add the project URL and publishable key first."));
+    redirect(authMessage(path, "Workspace is not connected. Contact your administrator to configure the platform."));
   }
 }
 
@@ -81,7 +81,7 @@ export async function signUpAction(formData: FormData) {
   revalidatePath("/", "layout");
 
   if (!data.session) {
-    redirect(authMessage("/login", "Account created. Check your email for the Supabase confirmation link, then finish onboarding."));
+    redirect(authMessage("/login", "Account created. Check your email for a confirmation link to activate your account, then sign in."));
   }
 
   redirect("/onboarding");

@@ -74,7 +74,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
               <KeyRound size={22} />
             </div>
             <p className="muted">
-              Password changes use the same Supabase recovery-safe path as reset links. Role and organization assignment are read-only here.
+              Password changes use the same secure path as reset links. Role and organization assignment are managed by your workspace owner.
             </p>
             <Link className="button-secondary" href="/account/password">
               Update password
