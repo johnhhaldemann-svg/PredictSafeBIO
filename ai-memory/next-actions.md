@@ -4,15 +4,17 @@ Last updated: 2026-06-01
 
 ## Immediate
 
-- Treat Supabase Auth hardening as deferred for now and keep the current demo/testing path on already-confirmed or existing signed-in users.
+- Password recovery is implemented as the first Auth hardening slice: `/forgot-password` requests a Supabase recovery email and `/account/password` updates the signed-in or recovered session password.
+- Auth/account foundation slice is implemented: `/account` shows signed-in email, full name, role, organization ID, password-update link, full-name editing, and company-profile basics editing; `/company-profile` also exposes editable company basics for signed-in workspaces.
+- Remaining Supabase Auth hardening is still deferred beyond this slice: configure custom SMTP, re-enable/verify email confirmation, enable leaked-password protection, and run real inbox signup/recovery smoke.
 - PR #31 completed the owner/member dashboard polish slice: visible saved-view state, task sorting, and a clearer signed-in smoke runbook.
 - PR #33 completed owner-only task priority editing for Foundation/My Work task lanes.
 - PR #35 completed selected-task bulk status updates for Foundation/My Work task lanes.
 - PR #37 completed selected-task bulk activity notes for Foundation/My Work task lanes.
 - PR #39 completed explicit selected-task bulk closeout controls for Foundation/My Work task lanes.
 - Priority-change notifications remain a later decision; the current task priority slice records activity history only.
-- Next product decision can move to richer owner/member dashboard polish, audit timeline polish, or another focused workflow increment.
-- Keep SMTP/Auth hardening, LLM draft assist, and priority-change notifications deferred until intentionally reopened.
+- Next product decision can move to role-permission locking, service-layer cleanup, richer owner/member dashboard polish, or audit timeline polish.
+- Keep SMTP setup, leaked-password protection, LLM draft assist, and priority-change notifications deferred until intentionally reopened.
 
 ## Blockers And Watch Items
 

@@ -6,6 +6,7 @@ import { AlertTriangle, Beaker, CheckCircle2, ClipboardList, Gauge, Save, Shield
 import { assessBioRisk } from "@/lib/bio-ai/engine";
 import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import type { BioAiInput, BioSignalType } from "@/lib/bio-ai/types";
+import { getFieldReportDueState } from "@/lib/foundation/timing";
 import { getFoundationDueBucket, getFoundationWorkKpis, isFoundationReadyForClosure } from "@/lib/foundation/work-kpis";
 import { commonUtilities, gapModuleCards, platformCategories } from "@/lib/platform-outline";
 import type {
@@ -1066,13 +1067,10 @@ function ProductionVerificationEvidenceGrid({ productionPanel }: { productionPan
 function getWorkbenchTaskAgingClass(action: FoundationReviewActionSummary) {
   if (action.status === "complete") return "task-aging-completed";
   if (action.status === "blocked") return "task-aging-blocked";
-  if (!action.dueDate) return "task-aging-no-due-date";
-  const due = new Date(`${action.dueDate}T00:00:00`);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
-  if (days < 0) return "task-aging-overdue";
-  if (days <= 3) return "task-aging-due-soon";
+  const dueState = getFieldReportDueState(action.dueDate);
+  if (dueState === "unscheduled") return "task-aging-no-due-date";
+  if (dueState === "overdue") return "task-aging-overdue";
+  if (dueState === "due_soon") return "task-aging-due-soon";
   return "task-aging-on-track";
 }
 

@@ -327,6 +327,7 @@ export type AuditEvent = {
   eventType:
     | "assessment_run"
     | "assessment_saved"
+    | "account_profile_updated"
     | "company_profile_updated"
     | "document_metadata_created"
     | "document_metadata_updated"

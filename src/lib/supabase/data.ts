@@ -14,6 +14,11 @@ import { demoAuditEvents, demoCompanyProfile, demoDocuments } from "@/lib/demo-d
 import { generateDocumentGapRecommendations, generateDocumentUpdateRecommendations } from "@/lib/documents/recommendations";
 import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import {
+  changedCompanyProfileFields,
+  type AccountProfileUpdateInput,
+  type CompanyProfileUpdateInput
+} from "@/lib/account-profile";
+import {
   buildErgonomicRiskSignal,
   ergonomicLabel,
   safePredictErgoAiInsight,
@@ -48,6 +53,13 @@ import {
   type FoundationIntakeAnswers
 } from "@/lib/foundation/engine";
 import {
+  FIELD_REPORT_DUE_SOON_DAYS,
+  formatDateOnly,
+  getDaysUntilDate,
+  getFieldReportDueDate,
+  getFieldReportDueState
+} from "@/lib/foundation/timing";
+import {
   changePlanPriorities,
   changePlanRows,
   changePlanStatuses,
@@ -55,6 +67,13 @@ import {
   type ChangePlanRow,
   type ChangePlanStatus
 } from "@/lib/platform-outline";
+import {
+  canEditWorkspaceTaskGovernance,
+  canManageWorkspace,
+  canUpdateAssignedWorkspaceTask,
+  getWorkspaceTaskActorRole,
+  normalizeWorkspaceRole
+} from "@/lib/role-permissions";
 import { createSupabaseServerClient } from "./server";
 import { isSupabaseConfigured } from "./env";
 
@@ -123,10 +142,16 @@ type ProfileContext = {
 export type AuthSummary = {
   configured: boolean;
   signedIn: boolean;
+  userId?: string;
   userEmail?: string;
+  fullName?: string | null;
   organizationId?: string;
   role?: string;
   needsOnboarding: boolean;
+};
+
+export type AccountSummary = AuthSummary & {
+  companyProfile: CompanyProfile | null;
 };
 
 export type MapOperationsBundleInput = {
@@ -552,11 +577,13 @@ export async function getAuthSummary(): Promise<AuthSummary> {
       return { configured: true, signedIn: false, needsOnboarding: false };
     }
 
-    const { data } = await supabase.from("profiles").select("organization_id,role").eq("id", user.id).maybeSingle();
+    const { data } = await supabase.from("profiles").select("organization_id,role,full_name").eq("id", user.id).maybeSingle();
     return {
       configured: true,
       signedIn: true,
+      userId: user.id,
       userEmail: user.email ?? undefined,
+      fullName: data?.full_name ?? null,
       organizationId: data?.organization_id ?? undefined,
       role: data?.role ?? undefined,
       needsOnboarding: !data?.organization_id
@@ -564,6 +591,12 @@ export async function getAuthSummary(): Promise<AuthSummary> {
   } catch {
     return { configured: false, signedIn: false, needsOnboarding: false };
   }
+}
+
+export async function getAccountSummary(): Promise<AccountSummary> {
+  const auth = await getAuthSummary();
+  if (!auth.signedIn || !auth.organizationId) return { ...auth, companyProfile: null };
+  return { ...auth, companyProfile: await getCompanyProfile() };
 }
 
 export async function getCompanyProfile(): Promise<CompanyProfile> {
@@ -595,6 +628,90 @@ export async function getCompanyProfile(): Promise<CompanyProfile> {
     createdAt: data.created_at,
     updatedAt: data.updated_at
   };
+}
+
+export async function updateAccountProfile(input: AccountProfileUpdateInput): Promise<FoundationActionResult> {
+  if (!isSupabaseConfigured()) return { ok: false, message: "Supabase is not configured." };
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if (!user) return { ok: false, message: "Sign in before updating your account profile." };
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({ full_name: input.fullName, updated_at: new Date().toISOString() })
+      .eq("id", user.id)
+      .select("organization_id,full_name")
+      .maybeSingle();
+
+    if (error) return { ok: false, message: error.message };
+    if (!data) return { ok: false, message: "Account profile was not found. Finish onboarding first." };
+
+    if (data.organization_id) {
+      await supabase.from("audit_events").insert({
+        organization_id: data.organization_id,
+        actor_id: user.id,
+        event_type: "account_profile_updated",
+        summary: "Account profile name updated.",
+        payload: withAuditTrace({ updatedFields: ["fullName"] }, { sourceModule: "company_profile", targetModule: "company_profile" })
+      });
+    }
+
+    return { ok: true, message: "Account profile updated." };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Account profile update failed." };
+  }
+}
+
+export async function updateCompanyProfile(input: CompanyProfileUpdateInput): Promise<FoundationActionResult> {
+  const context = await getProfileContext();
+  if (!context) return { ok: false, message: "Finish onboarding before updating company profile details." };
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const previous = await getCompanyProfile();
+    const now = new Date().toISOString();
+    const values = {
+      organization_id: context.organizationId,
+      company_name: input.companyName,
+      primary_site: input.primarySite,
+      operating_areas: input.operatingAreas,
+      programs: input.programs,
+      quality_system_scope: input.qualitySystemScope,
+      biosafety_levels: input.biosafetyLevels,
+      review_owner_roles: input.reviewOwnerRoles,
+      document_families: input.documentFamilies,
+      updated_at: now
+    };
+
+    const result = previous.id
+      ? await supabase.from("company_profiles").update(values).eq("id", previous.id)
+      : await supabase.from("company_profiles").insert({ ...values, created_by: context.userId, created_at: now });
+
+    if (result.error) return { ok: false, message: result.error.message };
+
+    await supabase.from("audit_events").insert({
+      organization_id: context.organizationId,
+      actor_id: context.userId,
+      event_type: "company_profile_updated",
+      summary: `Company profile updated for ${input.companyName}.`,
+      payload: withAuditTrace(
+        {
+          companyName: input.companyName,
+          changedFields: previous.id ? changedCompanyProfileFields(previous, input) : ["created"]
+        },
+        { sourceModule: "company_profile", targetModule: "company_profile" }
+      )
+    });
+
+    return { ok: true, message: "Company profile updated." };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Company profile update failed." };
+  }
 }
 
 export async function listAssessments(): Promise<SavedAssessmentSummary[]> {
@@ -1306,7 +1423,7 @@ export async function getTrainingMatrixSummary(): Promise<TrainingMatrixSummary>
 
 export async function getFoundationAdminAccessSummary(): Promise<FoundationAdminAccessSummary> {
   const auth = await getAuthSummary();
-  const isOwner = auth.signedIn && !auth.needsOnboarding && auth.role === "owner";
+  const isOwner = canManageWorkspace(auth);
 
   return {
     configured: auth.configured,
@@ -1401,7 +1518,7 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
         priority: row.priority ?? "medium",
         status: row.status ?? "open",
         operatingState: getFoundationActionOperatingState(row.status ?? "open", row.due_date),
-        canUpdate: context.role === "owner" || row.assigned_to === context.userId,
+        canUpdate: canUpdateAssignedWorkspaceTask(context, row.assigned_to),
         assignedTo: row.assigned_to ?? null,
         assigneeName: profiles.get(row.assigned_to)?.full_name ?? null,
         sourceModule,
@@ -1435,7 +1552,7 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
         priority: "medium",
         status: row.label ?? "Draft - Human Review Required",
         operatingState: "Draft recommendation",
-        canUpdate: context.role === "owner",
+        canUpdate: canManageWorkspace(context),
         sourceModule,
         sourceRecordId,
         sourceLabel: source.label,
@@ -1995,7 +2112,7 @@ export async function listChangePlanItems(): Promise<ChangePlanItemsSummary> {
     if (error) {
       return {
         items: fallbackItems,
-        canManage: context.role === "owner",
+        canManage: canManageWorkspace(context),
         signedIn: true,
         isFallback: true,
         message: "Live Change Plan rows are unavailable; showing curated starter rows."
@@ -2005,7 +2122,7 @@ export async function listChangePlanItems(): Promise<ChangePlanItemsSummary> {
     if (!data || data.length === 0) {
       return {
         items: fallbackItems,
-        canManage: context.role === "owner",
+        canManage: canManageWorkspace(context),
         signedIn: true,
         isFallback: true,
         message: "This workspace has not seeded its Change Plan yet."
@@ -2014,15 +2131,15 @@ export async function listChangePlanItems(): Promise<ChangePlanItemsSummary> {
 
     return {
       items: data.map((row) => mapChangePlanItem(row as Record<string, any>)),
-      canManage: context.role === "owner",
+      canManage: canManageWorkspace(context),
       signedIn: true,
       isFallback: false,
-      message: context.role === "owner" ? "Owner roadmap controls enabled." : "Roadmap editing is owner-only for this workspace."
+      message: canManageWorkspace(context) ? "Owner roadmap controls enabled." : "Roadmap editing is owner-only for this workspace."
     };
   } catch {
     return {
       items: fallbackItems,
-      canManage: context.role === "owner",
+      canManage: canManageWorkspace(context),
       signedIn: true,
       isFallback: true,
       message: "Live Change Plan rows are unavailable; showing curated starter rows."
@@ -2033,7 +2150,7 @@ export async function listChangePlanItems(): Promise<ChangePlanItemsSummary> {
 export async function seedDefaultChangePlanItems(): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before seeding Change Plan rows." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can manage Change Plan rows." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can manage Change Plan rows." };
 
   const supabase = await createSupabaseServerClient();
   const { count, error: countError } = await supabase
@@ -2066,7 +2183,7 @@ export async function seedDefaultChangePlanItems(): Promise<FoundationActionResu
 export async function createChangePlanItem(input: ChangePlanItemInput): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before creating Change Plan rows." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can manage Change Plan rows." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can manage Change Plan rows." };
 
   const category = normalizeChangePlanText(input.category, "System Reliance");
   const feature = normalizeChangePlanText(input.feature, "");
@@ -2097,7 +2214,7 @@ export async function createChangePlanItem(input: ChangePlanItemInput): Promise<
 export async function updateChangePlanItem(input: ChangePlanItemInput): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before updating Change Plan rows." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can manage Change Plan rows." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can manage Change Plan rows." };
   if (!input.id) return { ok: false, message: "Choose a persisted Change Plan row to update." };
 
   const category = normalizeChangePlanText(input.category, "System Reliance");
@@ -2137,7 +2254,7 @@ export async function updateFoundationBioTypeSelection(input: {
 }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before updating BioType selection." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can update Foundation BioType selections." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can update Foundation BioType selections." };
 
   const primaryBioType = normalizeBioTypeKey(input.primaryBioType);
   if (!primaryBioType) return { ok: false, message: "Choose a valid primary BioType." };
@@ -2195,7 +2312,7 @@ export async function updateFoundationIntakeResponse(input: {
 }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before updating intake responses." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can update Foundation intake responses." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can update Foundation intake responses." };
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -2228,7 +2345,7 @@ export async function updateFoundationEvidenceReadiness(input: {
 }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before updating evidence readiness." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can update Foundation evidence readiness." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can update Foundation evidence readiness." };
 
   const status = normalizeFoundationEvidenceStatus(input.status);
   const supabase = await createSupabaseServerClient();
@@ -2263,7 +2380,7 @@ export async function updateFoundationEvidenceReadiness(input: {
 export async function createFoundationStarterRecords(): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before creating Foundation starter records." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can create Foundation starter records." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can create Foundation starter records." };
 
   const supabase = await createSupabaseServerClient();
   const companyProfile = await getCompanyProfile();
@@ -2385,7 +2502,7 @@ export async function addAuditReadinessNote(input: {
 }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before adding audit readiness notes." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can add Foundation audit readiness notes." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can add Foundation audit readiness notes." };
 
   const note = input.note.trim();
   if (note.length < 3) return { ok: false, message: "Add a short audit readiness note before saving." };
@@ -2441,7 +2558,7 @@ export async function seedNorthStarWithConfirmation(confirmation: string): Promi
 
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before seeding NorthStar." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can seed NorthStar demo data." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can seed NorthStar demo data." };
 
   const result = await seedIntelligenceFoundation();
   if (!result.ok) return result;
@@ -2454,7 +2571,7 @@ export async function seedNorthStarWithConfirmation(confirmation: string): Promi
 export async function generateFoundationReviewActions(): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before generating review actions." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can generate Foundation review actions." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can generate Foundation review actions." };
 
   const supabase = await createSupabaseServerClient();
   const runId = randomUUID();
@@ -2539,7 +2656,7 @@ export async function generateFoundationReviewActions(): Promise<FoundationActio
       continue;
     }
 
-    const dueDate = new Date(Date.now() + (candidate.priority === "high" ? 7 : 14) * 86400000).toISOString().slice(0, 10);
+    const dueDate = formatDateOnly(getFieldReportDueDate(candidate.priority));
     const { data: task } = await supabase
       .from("tasks")
       .insert({
@@ -2616,7 +2733,7 @@ export async function createFoundationReviewActionFromSource(input: {
 }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before creating Foundation review actions." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can create Foundation review actions." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can create Foundation review actions." };
 
   const sourceModule = normalizeFoundationReviewSourceModule(input.sourceModule);
   if (!sourceModule) return { ok: false, message: "Choose a valid Foundation source module." };
@@ -2643,7 +2760,7 @@ export async function createFoundationReviewActionFromSource(input: {
   }
 
   const runId = randomUUID();
-  const dueDate = new Date(Date.now() + (candidate.priority === "high" ? 7 : 14) * 86400000).toISOString().slice(0, 10);
+  const dueDate = formatDateOnly(getFieldReportDueDate(candidate.priority));
   const { data: task, error: taskError } = await supabase
     .from("tasks")
     .insert({
@@ -2735,9 +2852,9 @@ export async function updateFoundationReviewTaskStatus(input: {
   if (!foundationReviewSourceModules.includes(String(task.source_module))) {
     return { ok: false, message: "Only generated Foundation review tasks can be updated from this panel." };
   }
-  const actorRole = context.role === "owner" ? "owner" : "assigned_member";
-  const isOwner = context.role === "owner";
-  if (!isOwner && task.assigned_to !== context.userId) {
+  const actorRole = getWorkspaceTaskActorRole(context);
+  const isOwner = canEditWorkspaceTaskGovernance(context);
+  if (!canUpdateAssignedWorkspaceTask(context, task.assigned_to)) {
     return { ok: false, message: "Members can update only Foundation review tasks assigned to them." };
   }
   if (!isOwner && (hasAssignedToInput || hasDueDateInput || hasPriorityInput)) {
@@ -2831,8 +2948,8 @@ export async function updateFoundationReviewTasksStatus(input: { taskIds: string
     return { ok: false, message: "Only generated Foundation review tasks can be bulk updated from this panel." };
   }
 
-  const isOwner = context.role === "owner";
-  if (!isOwner && tasks.some((task) => task.assigned_to !== context.userId)) {
+  const isOwner = canEditWorkspaceTaskGovernance(context);
+  if (!isOwner && tasks.some((task) => !canUpdateAssignedWorkspaceTask(context, task.assigned_to))) {
     return { ok: false, message: "Members can bulk update only Foundation review tasks assigned to them." };
   }
 
@@ -2844,7 +2961,7 @@ export async function updateFoundationReviewTasksStatus(input: { taskIds: string
 
   if (error) return { ok: false, message: error.message };
 
-  const actorRole = isOwner ? "owner" : "assigned_member";
+  const actorRole = getWorkspaceTaskActorRole(context);
   for (const task of tasks) {
     await writeFoundationAuditEvent(supabase, context, {
       eventType: "foundation_review_task_status_updated",
@@ -2899,7 +3016,7 @@ export async function addFoundationReviewTaskNote(input: { taskId: string; note:
   if (!foundationReviewSourceModules.includes(String(task.source_module))) {
     return { ok: false, message: "Only generated Foundation review tasks can receive notes from this panel." };
   }
-  if (context.role !== "owner" && task.assigned_to !== context.userId) {
+  if (!canUpdateAssignedWorkspaceTask(context, task.assigned_to)) {
     return { ok: false, message: "Members can add notes only to Foundation review tasks assigned to them." };
   }
 
@@ -2914,7 +3031,7 @@ export async function addFoundationReviewTaskNote(input: { taskId: string; note:
       taskId: task.id,
       title: task.title,
       note,
-      actorRole: context.role === "owner" ? "owner" : "assigned_member",
+      actorRole: getWorkspaceTaskActorRole(context),
       draftOnly: true
     }
   });
@@ -2944,7 +3061,7 @@ export async function addFoundationReviewTasksNote(input: { taskIds: string[]; n
   if (tasks.some((task) => !foundationReviewSourceModules.includes(String(task.source_module)))) {
     return { ok: false, message: "Only generated Foundation review tasks can receive bulk notes from this panel." };
   }
-  if (context.role !== "owner" && tasks.some((task) => task.assigned_to !== context.userId)) {
+  if (tasks.some((task) => !canUpdateAssignedWorkspaceTask(context, task.assigned_to))) {
     return { ok: false, message: "Members can bulk note only Foundation review tasks assigned to them." };
   }
 
@@ -2960,7 +3077,7 @@ export async function addFoundationReviewTasksNote(input: { taskIds: string[]; n
         taskId: task.id,
         title: task.title,
         note,
-        actorRole: context.role === "owner" ? "owner" : "assigned_member",
+        actorRole: getWorkspaceTaskActorRole(context),
         bulkNote: true,
         draftOnly: true
       }
@@ -2986,7 +3103,7 @@ export async function refreshFoundationSourceResolution(input: { taskId: string 
   if (!foundationReviewSourceModules.includes(String(task.source_module))) {
     return { ok: false, message: "Only generated Foundation review tasks can refresh source resolution." };
   }
-  if (context.role !== "owner" && task.assigned_to !== context.userId) {
+  if (!canUpdateAssignedWorkspaceTask(context, task.assigned_to)) {
     return { ok: false, message: "Members can refresh only Foundation review tasks assigned to them." };
   }
 
@@ -3011,7 +3128,7 @@ export async function refreshFoundationSourceResolution(input: { taskId: string 
       resolutionState: resolution.state,
       resolutionDetail: resolution.detail,
       readyForClosureReview: readyForClosure,
-      actorRole: context.role === "owner" ? "owner" : "assigned_member",
+      actorRole: getWorkspaceTaskActorRole(context),
       draftOnly: true
     }
   });
@@ -3399,6 +3516,7 @@ export async function requestAdvancedErgonomicEvaluation(
       return { ok: false, message: requestError?.message ?? "Could not create Level 2 ergonomic evaluation request." };
     }
 
+    const priority = assessment.risk_level === "severe" ? "urgent" : "high";
     const { data: task } = await supabase
       .from("tasks")
       .insert({
@@ -3408,8 +3526,8 @@ export async function requestAdvancedErgonomicEvaluation(
         assigned_to: context.userId,
         title: `Level 2 ergonomic evaluation - ${ergonomicLabel("task", assessment.task_type)}`,
         status: "open",
-        due_date: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
-        priority: assessment.risk_level === "severe" ? "urgent" : "high",
+        due_date: formatDateOnly(getFieldReportDueDate(priority)),
+        priority,
         created_by: context.userId
       })
       .select("id")
@@ -3610,7 +3728,7 @@ export async function saveErgonomicLevel2Inspection(
           assigned_to: context.userId,
           title: `Level 2 ergonomic corrective action - ${ergonomicLabel("task", input.taskType)}`,
           status: "open",
-          due_date: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
+          due_date: formatDateOnly(getFieldReportDueDate("high")),
           priority: "high",
           created_by: context.userId
         })
@@ -4708,7 +4826,7 @@ export async function seedDemoWorkspace(): Promise<
   if (!context) {
     return { ok: false, message: "Sign in and finish onboarding before seeding demo records." };
   }
-  if (context.role !== "owner") {
+  if (!canManageWorkspace(context)) {
     return { ok: false, message: "Only organization owners can seed demo records." };
   }
 
@@ -4897,7 +5015,7 @@ async function getProfileContext(): Promise<ProfileContext | null> {
     const { data } = await supabase.from("profiles").select("organization_id,role").eq("id", user.id).maybeSingle();
     if (!data?.organization_id) return null;
 
-    return { userId: user.id, organizationId: data.organization_id, role: data.role ?? "member" };
+    return { userId: user.id, organizationId: data.organization_id, role: normalizeWorkspaceRole(data.role) };
   } catch {
     return null;
   }
@@ -4958,7 +5076,7 @@ async function createErgonomicCorrectiveActionRecommendation(
   const title = repeatedModerateFlag
     ? `Review repeated moderate ergonomic reports - ${ergonomicLabel("task", input.taskType)}`
     : `Corrective action review - ${ergonomicLabel("task", input.taskType)} ergonomic task`;
-  const dueDate = new Date(Date.now() + (priority === "urgent" ? 2 : 7) * 86400000).toISOString().slice(0, 10);
+  const dueDate = formatDateOnly(getFieldReportDueDate(priority));
 
   const { data: capa } = await supabase
     .from("capa_records")
@@ -5078,11 +5196,9 @@ function getFoundationActionOperatingState(status: string, dueDate?: string | nu
   if (status === "complete") return "Closed with human review";
   if (status === "blocked") return "Blocked - owner decision needed";
   if (status === "in_progress") return "Active review underway";
-  if (!dueDate) return "Open - needs schedule";
-  const due = new Date(`${dueDate}T00:00:00`);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return due.getTime() < today.getTime() ? "Open - overdue" : "Open - queued";
+  const dueState = getFieldReportDueState(dueDate);
+  if (dueState === "unscheduled") return "Open - needs schedule";
+  return dueState === "overdue" ? "Open - overdue" : "Open - queued";
 }
 
 function getFoundationActionNextStep(status: string, assignedTo?: string | null, dueDate?: string | null) {
@@ -5712,8 +5828,8 @@ async function createFoundationDueNotifications(
   const since = new Date(today).toISOString();
   for (const task of tasks) {
     if (!task.assigned_to || !task.due_date || task.status === "complete") continue;
-    const due = new Date(`${task.due_date}T00:00:00`);
-    const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
+    const days = getDaysUntilDate(task.due_date, today);
+    if (days === null) continue;
     if (days < 0) {
       await createFoundationTaskNotificationIfMissing(
         supabase,
@@ -5727,7 +5843,7 @@ async function createFoundationDueNotifications(
         },
         since
       );
-    } else if (days <= 3) {
+    } else if (days <= FIELD_REPORT_DUE_SOON_DAYS) {
       await createFoundationTaskNotificationIfMissing(
         supabase,
         organizationId,

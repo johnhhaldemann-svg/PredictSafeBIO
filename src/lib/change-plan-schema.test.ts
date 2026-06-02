@@ -43,7 +43,7 @@ describe("change plan schema and owner enforcement", () => {
     expect(dataLayer).toContain("seedDefaultChangePlanItems");
     expect(dataLayer).toContain("createChangePlanItem");
     expect(dataLayer).toContain("updateChangePlanItem");
-    expect(dataLayer).toContain('context.role !== "owner"');
+    expect(dataLayer).toContain("canManageWorkspace(context)");
     expect(actions).toContain("revalidatePath(\"/workbench\")");
     expect(actions).toContain("redirect(`/change-plan?");
   });

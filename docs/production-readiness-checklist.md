@@ -23,6 +23,8 @@ This checklist is for MVP/demo readiness only. It is not a validation plan for F
 - Email confirmation should be re-enabled when the deferred Auth hardening pass resumes.
 - Custom SMTP is required before heavier signup testing because built-in Supabase auth email is rate-limited.
 - Leaked-password protection should be enabled when dashboard/API Auth settings access is available.
+- Password recovery is exposed through `/forgot-password` and `/account/password`; verify the reset email redirect after any Auth URL or SMTP change.
+- Auth hardening checklist and real-inbox smoke steps live in `docs/auth-hardening-runbook.md`.
 - Organization-scoped reads/writes are enforced through profiles.
 - The private `biotech-documents` bucket and storage policies are applied before testing file uploads.
 - Signed-in upload smoke has confirmed `storage_bucket` and `storage_path` persist on document metadata; repeat before any storage-policy or upload-flow change.

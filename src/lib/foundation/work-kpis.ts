@@ -1,4 +1,5 @@
 import type { FoundationNotificationSummary, FoundationReviewActionSummary } from "@/lib/supabase/data";
+import { getFieldReportDueState, type FieldReportDueState } from "./timing";
 
 export type FoundationWorkKpis = {
   overdue: number;
@@ -10,7 +11,7 @@ export type FoundationWorkKpis = {
   unreadNotifications: number;
 };
 
-export type FoundationDueBucket = "overdue" | "due_soon" | "scheduled" | "unscheduled";
+export type FoundationDueBucket = FieldReportDueState;
 
 export function getFoundationWorkKpis(
   actions: FoundationReviewActionSummary[],
@@ -36,14 +37,7 @@ export function getFoundationWorkKpis(
 }
 
 export function getFoundationDueBucket(action: FoundationReviewActionSummary, now = new Date()): FoundationDueBucket {
-  if (!action.dueDate) return "unscheduled";
-  const due = new Date(`${action.dueDate}T00:00:00`);
-  const today = new Date(now);
-  today.setHours(0, 0, 0, 0);
-  const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
-  if (days < 0) return "overdue";
-  if (days <= 3) return "due_soon";
-  return "scheduled";
+  return getFieldReportDueState(action.dueDate, now);
 }
 
 export function isFoundationReadyForClosure(action: FoundationReviewActionSummary) {

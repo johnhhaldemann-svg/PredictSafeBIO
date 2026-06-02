@@ -180,6 +180,13 @@ button {
   padding: 0 10px;
   font-size: 12px;
   font-weight: 800;
+  text-decoration: none;
+}
+
+.auth-pill:hover,
+.auth-pill:focus-visible {
+  background: #dff0ff;
+  outline: none;
 }
 
 .icon-button {

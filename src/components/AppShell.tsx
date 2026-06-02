@@ -80,10 +80,10 @@ export async function AppShell({ children }: { children: ReactNode }) {
                     Finish onboarding
                   </Link>
                 ) : (
-                  <span className="auth-pill">
+                  <Link className="auth-pill" href="/account">
                     <UserCircle size={15} />
                     Org workspace
-                  </span>
+                  </Link>
                 )}
                 <form action={signOutAction}>
                   <button className="icon-button" type="submit" aria-label="Sign out" title="Sign out">
