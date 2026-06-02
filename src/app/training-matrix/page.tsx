@@ -1,10 +1,24 @@
 import Link from "next/link";
-import { ClipboardCheck, FileText, ShieldCheck, TrendingUp } from "lucide-react";
+import { CheckCircle, ClipboardCheck, FileText, Plus, ShieldCheck, Trash2, TrendingUp } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { getTrainingMatrixSummary } from "@/lib/supabase/data";
+import { getFoundationAdminAccessSummary, getTrainingMatrixSummary } from "@/lib/supabase/data";
+import {
+  createTrainingRequirementAction,
+  deleteTrainingRequirementAction,
+  markTrainingCompleteAction
+} from "./actions";
 
-export default async function TrainingMatrixPage() {
-  const summary = await getTrainingMatrixSummary();
+export default async function TrainingMatrixPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
+  const params = await searchParams;
+  const [summary, adminAccess] = await Promise.all([
+    getTrainingMatrixSummary().catch(() => ({
+      counts: [], readinessScore: 0, rows: [], changeImpacts: [],
+      biotypeRequirements: [], guardrailText: "Draft - Human Review Required"
+    })),
+    getFoundationAdminAccessSummary().catch(() => ({
+      configured: false, signedIn: false, isOwner: false, message: ""
+    }))
+  ]);
 
   return (
     <AppShell>
@@ -58,9 +72,17 @@ export default async function TrainingMatrixPage() {
                 <th>Status</th>
                 <th>Evidence</th>
                 <th>Readiness</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
+              {summary.rows.length === 0 && (
+                <tr>
+                  <td colSpan={8} style={{ textAlign: "center", color: "var(--muted)", padding: "20px" }}>
+                    No training requirements yet. Add one below.
+                  </td>
+                </tr>
+              )}
               {summary.rows.map((row) => (
                 <tr key={row.id}>
                   <td>{row.requirement}</td>
@@ -70,11 +92,39 @@ export default async function TrainingMatrixPage() {
                     <Link href={row.documentHref}>{row.documentTitle}</Link>
                   </td>
                   <td>
-                    {row.assignmentStatus}
-                    {row.dueDate ? ` / due ${row.dueDate}` : ""}
+                    <span className={row.readiness === "Expired" ? "text-danger" : row.readiness === "Current" ? "text-success" : ""}>
+                      {row.assignmentStatus}
+                    </span>
+                    {row.dueDate ? ` / due ${new Date(row.dueDate).toLocaleDateString()}` : ""}
                   </td>
                   <td>{row.evidenceLabel}</td>
-                  <td>{row.readiness}</td>
+                  <td>
+                    <span className={
+                      row.readiness === "Current" ? "status-current" :
+                      row.readiness === "Expired" ? "status-expired" :
+                      row.readiness === "Needs review" ? "status-needs-review" : "status-missing"
+                    }>
+                      {row.readiness}
+                    </span>
+                  </td>
+                  <td>
+                    {adminAccess.signedIn && row.assignmentStatus !== "completed" && (
+                      <form action={markTrainingCompleteAction} style={{ display: "inline" }}>
+                        <input type="hidden" name="assignmentId" value={row.id} />
+                        <button className="icon-button" type="submit" title="Mark complete" aria-label="Mark complete">
+                          <CheckCircle size={15} />
+                        </button>
+                      </form>
+                    )}
+                    {adminAccess.isOwner && (
+                      <form action={deleteTrainingRequirementAction} style={{ display: "inline" }}>
+                        <input type="hidden" name="requirementId" value={row.id} />
+                        <button className="icon-button" type="submit" title="Delete requirement" aria-label="Delete">
+                          <Trash2 size={14} />
+                        </button>
+                      </form>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -124,6 +174,39 @@ export default async function TrainingMatrixPage() {
             </div>
           </div>
         </section>
+
+        {params.message ? <p className="form-message">{params.message}</p> : null}
+
+        {adminAccess.isOwner && (
+          <section className="panel">
+            <div className="panel-heading">
+              <div>
+                <p className="section-label">Add training requirement</p>
+                <h2>Create a new requirement</h2>
+              </div>
+              <Plus size={22} />
+            </div>
+            <form action={createTrainingRequirementAction} className="stacked-form">
+              <label>
+                Title
+                <input name="title" type="text" placeholder="Annual Biosafety Training" required />
+              </label>
+              <div className="form-grid">
+                <label>
+                  Role / owner key
+                  <input name="roleKey" type="text" placeholder="biosafety_officer" />
+                </label>
+                <label>
+                  Frequency (months)
+                  <input name="frequencyMonths" type="number" min={1} max={60} placeholder="12" />
+                </label>
+              </div>
+              <button className="button-primary" type="submit">
+                Add requirement
+              </button>
+            </form>
+          </section>
+        )}
 
         <section className="panel inline-action-panel">
           <div>

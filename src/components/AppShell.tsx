@@ -13,7 +13,8 @@ import {
   LogOut,
   Settings,
   ShieldCheck,
-  UserCircle
+  UserCircle,
+  Users
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { signOutAction } from "@/app/auth/actions";
@@ -33,7 +34,8 @@ const navItems = [
   { href: "/company-profile", label: "Company Profile", icon: LayoutDashboard, section: "Common Utilities" },
   { href: "/change-plan", label: "Change Plan", icon: GitBranch, section: "Common Utilities" },
   { href: "/admin/audit", label: "Immutable Audit Log", icon: Activity, section: "System Reliance" },
-  { href: "/admin/demo", label: "Admin Utilities", icon: Settings, section: "System Reliance" }
+  { href: "/admin/demo", label: "Admin Utilities", icon: Settings, section: "System Reliance" },
+  { href: "/account/team", label: "Team & Invites", icon: Users, section: "System Reliance" }
 ];
 
 export async function AppShell({ children }: { children: ReactNode }) {
@@ -103,6 +105,19 @@ export async function AppShell({ children }: { children: ReactNode }) {
             )}
           </div>
         </header>
+        {!auth.configured && (
+          <div className="demo-mode-banner" role="status" aria-live="polite">
+            <ShieldCheck size={15} />
+            <strong>Demo mode</strong>
+            {" — Supabase environment variables are not configured. All data shown is local demo fallback and is not persisted. Configure "}
+            <code>NEXT_PUBLIC_SUPABASE_URL</code>
+            {" and "}
+            <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>
+            {" in "}
+            <code>.env.local</code>
+            {" to connect a live workspace."}
+          </div>
+        )}
         {children}
       </main>
     </div>
