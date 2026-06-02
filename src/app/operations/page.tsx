@@ -10,20 +10,24 @@ import {
   getFoundationAssigneeOptions,
   getFoundationOperationsDashboardSummary,
   getFoundationReviewActionsSummary,
+  getAuthSummary,
   getMapOperationsSummary
 } from "@/lib/supabase/data";
+import { canCreateWorkspaceRecord } from "@/lib/role-permissions";
 
 export default async function OperationsPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const params = await searchParams;
-  const [summary, foundationActions, adminAccess, assignees, foundationOps] = await Promise.all([
+  const [summary, foundationActions, adminAccess, assignees, foundationOps, auth] = await Promise.all([
     getMapOperationsSummary(),
     getFoundationReviewActionsSummary(),
     getFoundationAdminAccessSummary(),
     getFoundationAssigneeOptions(),
-    getFoundationOperationsDashboardSummary()
+    getFoundationOperationsDashboardSummary(),
+    getAuthSummary()
   ]);
   const assessment = assessBioRisk(summary.latestAssessmentInput);
   const blockedFoundationActions = foundationActions.filter((action) => action.status === "blocked");
+  const canCreateOperationsBundle = canCreateWorkspaceRecord(auth);
 
   return (
     <AppShell>
@@ -42,50 +46,57 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
             <DatabaseZap size={22} />
           </div>
           {params.message ? <p className="form-message">{params.message}</p> : null}
-          <form action={createMapOperationsBundleAction} className="document-form">
-            <div className="form-grid">
-              <label>
-                Site
-                <input name="siteName" defaultValue="PredictSafeBIO Pilot Site" />
-              </label>
-              <label>
-                Lab
-                <input name="labName" defaultValue="QC Microbiology Lab" />
-              </label>
-              <label>
-                Workflow
-                <input name="workflow" defaultValue="Biosafety readiness review" />
-              </label>
-              <label>
-                Reference
-                <input name="referenceTitle" defaultValue="Pilot biosafety reference" />
-              </label>
-              <label>
-                Document
-                <input name="documentTitle" defaultValue="Biosafety and BBP SOP" />
-              </label>
-              <label>
-                Training
-                <input name="trainingTitle" defaultValue="Annual biosafety and BBP training" />
-              </label>
-              <label>
-                Incident
-                <input name="incidentTitle" defaultValue="Biosafety deviation readiness review" />
-              </label>
-              <label>
-                Equipment tag
-                <input name="equipmentTag" defaultValue="BSC-001" />
-              </label>
-              <label>
-                Sample ID
-                <input name="sampleIdentifier" defaultValue="SAMPLE-001" />
-              </label>
-            </div>
-            <button className="button-primary" type="submit">
-              <Boxes size={16} />
-              Create HSE operations bundle
-            </button>
-          </form>
+          {canCreateOperationsBundle ? (
+            <form action={createMapOperationsBundleAction} className="document-form">
+              <div className="form-grid">
+                <label>
+                  Site
+                  <input name="siteName" defaultValue="PredictSafeBIO Pilot Site" />
+                </label>
+                <label>
+                  Lab
+                  <input name="labName" defaultValue="QC Microbiology Lab" />
+                </label>
+                <label>
+                  Workflow
+                  <input name="workflow" defaultValue="Biosafety readiness review" />
+                </label>
+                <label>
+                  Reference
+                  <input name="referenceTitle" defaultValue="Pilot biosafety reference" />
+                </label>
+                <label>
+                  Document
+                  <input name="documentTitle" defaultValue="Biosafety and BBP SOP" />
+                </label>
+                <label>
+                  Training
+                  <input name="trainingTitle" defaultValue="Annual biosafety and BBP training" />
+                </label>
+                <label>
+                  Incident
+                  <input name="incidentTitle" defaultValue="Biosafety deviation readiness review" />
+                </label>
+                <label>
+                  Equipment tag
+                  <input name="equipmentTag" defaultValue="BSC-001" />
+                </label>
+                <label>
+                  Sample ID
+                  <input name="sampleIdentifier" defaultValue="SAMPLE-001" />
+                </label>
+              </div>
+              <button className="button-primary" type="submit">
+                <Boxes size={16} />
+                Create HSE operations bundle
+              </button>
+            </form>
+          ) : (
+            <p className="form-message">
+              Sign in and finish onboarding before creating HSE operations records.{" "}
+              <Link href="/login?next=/operations">Go to sign in</Link>
+            </p>
+          )}
         </section>
 
         <section className="summary-strip" aria-label="Operations counts">

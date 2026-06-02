@@ -60,6 +60,13 @@ import {
   type ChangePlanRow,
   type ChangePlanStatus
 } from "@/lib/platform-outline";
+import {
+  canEditWorkspaceTaskGovernance,
+  canManageWorkspace,
+  canUpdateAssignedWorkspaceTask,
+  getWorkspaceTaskActorRole,
+  normalizeWorkspaceRole
+} from "@/lib/role-permissions";
 import { createSupabaseServerClient } from "./server";
 import { isSupabaseConfigured } from "./env";
 
@@ -1407,7 +1414,7 @@ export async function getTrainingMatrixSummary(): Promise<TrainingMatrixSummary>
 
 export async function getFoundationAdminAccessSummary(): Promise<FoundationAdminAccessSummary> {
   const auth = await getAuthSummary();
-  const isOwner = auth.signedIn && !auth.needsOnboarding && auth.role === "owner";
+  const isOwner = canManageWorkspace(auth);
 
   return {
     configured: auth.configured,
@@ -1502,7 +1509,7 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
         priority: row.priority ?? "medium",
         status: row.status ?? "open",
         operatingState: getFoundationActionOperatingState(row.status ?? "open", row.due_date),
-        canUpdate: context.role === "owner" || row.assigned_to === context.userId,
+        canUpdate: canUpdateAssignedWorkspaceTask(context, row.assigned_to),
         assignedTo: row.assigned_to ?? null,
         assigneeName: profiles.get(row.assigned_to)?.full_name ?? null,
         sourceModule,
@@ -1536,7 +1543,7 @@ export async function getFoundationReviewActionsSummary(): Promise<FoundationRev
         priority: "medium",
         status: row.label ?? "Draft - Human Review Required",
         operatingState: "Draft recommendation",
-        canUpdate: context.role === "owner",
+        canUpdate: canManageWorkspace(context),
         sourceModule,
         sourceRecordId,
         sourceLabel: source.label,
@@ -2096,7 +2103,7 @@ export async function listChangePlanItems(): Promise<ChangePlanItemsSummary> {
     if (error) {
       return {
         items: fallbackItems,
-        canManage: context.role === "owner",
+        canManage: canManageWorkspace(context),
         signedIn: true,
         isFallback: true,
         message: "Live Change Plan rows are unavailable; showing curated starter rows."
@@ -2106,7 +2113,7 @@ export async function listChangePlanItems(): Promise<ChangePlanItemsSummary> {
     if (!data || data.length === 0) {
       return {
         items: fallbackItems,
-        canManage: context.role === "owner",
+        canManage: canManageWorkspace(context),
         signedIn: true,
         isFallback: true,
         message: "This workspace has not seeded its Change Plan yet."
@@ -2115,15 +2122,15 @@ export async function listChangePlanItems(): Promise<ChangePlanItemsSummary> {
 
     return {
       items: data.map((row) => mapChangePlanItem(row as Record<string, any>)),
-      canManage: context.role === "owner",
+      canManage: canManageWorkspace(context),
       signedIn: true,
       isFallback: false,
-      message: context.role === "owner" ? "Owner roadmap controls enabled." : "Roadmap editing is owner-only for this workspace."
+      message: canManageWorkspace(context) ? "Owner roadmap controls enabled." : "Roadmap editing is owner-only for this workspace."
     };
   } catch {
     return {
       items: fallbackItems,
-      canManage: context.role === "owner",
+      canManage: canManageWorkspace(context),
       signedIn: true,
       isFallback: true,
       message: "Live Change Plan rows are unavailable; showing curated starter rows."
@@ -2134,7 +2141,7 @@ export async function listChangePlanItems(): Promise<ChangePlanItemsSummary> {
 export async function seedDefaultChangePlanItems(): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before seeding Change Plan rows." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can manage Change Plan rows." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can manage Change Plan rows." };
 
   const supabase = await createSupabaseServerClient();
   const { count, error: countError } = await supabase
@@ -2167,7 +2174,7 @@ export async function seedDefaultChangePlanItems(): Promise<FoundationActionResu
 export async function createChangePlanItem(input: ChangePlanItemInput): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before creating Change Plan rows." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can manage Change Plan rows." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can manage Change Plan rows." };
 
   const category = normalizeChangePlanText(input.category, "System Reliance");
   const feature = normalizeChangePlanText(input.feature, "");
@@ -2198,7 +2205,7 @@ export async function createChangePlanItem(input: ChangePlanItemInput): Promise<
 export async function updateChangePlanItem(input: ChangePlanItemInput): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before updating Change Plan rows." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can manage Change Plan rows." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can manage Change Plan rows." };
   if (!input.id) return { ok: false, message: "Choose a persisted Change Plan row to update." };
 
   const category = normalizeChangePlanText(input.category, "System Reliance");
@@ -2238,7 +2245,7 @@ export async function updateFoundationBioTypeSelection(input: {
 }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before updating BioType selection." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can update Foundation BioType selections." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can update Foundation BioType selections." };
 
   const primaryBioType = normalizeBioTypeKey(input.primaryBioType);
   if (!primaryBioType) return { ok: false, message: "Choose a valid primary BioType." };
@@ -2296,7 +2303,7 @@ export async function updateFoundationIntakeResponse(input: {
 }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before updating intake responses." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can update Foundation intake responses." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can update Foundation intake responses." };
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -2329,7 +2336,7 @@ export async function updateFoundationEvidenceReadiness(input: {
 }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before updating evidence readiness." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can update Foundation evidence readiness." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can update Foundation evidence readiness." };
 
   const status = normalizeFoundationEvidenceStatus(input.status);
   const supabase = await createSupabaseServerClient();
@@ -2364,7 +2371,7 @@ export async function updateFoundationEvidenceReadiness(input: {
 export async function createFoundationStarterRecords(): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before creating Foundation starter records." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can create Foundation starter records." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can create Foundation starter records." };
 
   const supabase = await createSupabaseServerClient();
   const companyProfile = await getCompanyProfile();
@@ -2486,7 +2493,7 @@ export async function addAuditReadinessNote(input: {
 }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before adding audit readiness notes." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can add Foundation audit readiness notes." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can add Foundation audit readiness notes." };
 
   const note = input.note.trim();
   if (note.length < 3) return { ok: false, message: "Add a short audit readiness note before saving." };
@@ -2542,7 +2549,7 @@ export async function seedNorthStarWithConfirmation(confirmation: string): Promi
 
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before seeding NorthStar." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can seed NorthStar demo data." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can seed NorthStar demo data." };
 
   const result = await seedIntelligenceFoundation();
   if (!result.ok) return result;
@@ -2555,7 +2562,7 @@ export async function seedNorthStarWithConfirmation(confirmation: string): Promi
 export async function generateFoundationReviewActions(): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before generating review actions." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can generate Foundation review actions." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can generate Foundation review actions." };
 
   const supabase = await createSupabaseServerClient();
   const runId = randomUUID();
@@ -2717,7 +2724,7 @@ export async function createFoundationReviewActionFromSource(input: {
 }): Promise<FoundationActionResult> {
   const context = await getProfileContext();
   if (!context) return { ok: false, message: "Sign in and finish onboarding before creating Foundation review actions." };
-  if (context.role !== "owner") return { ok: false, message: "Only organization owners can create Foundation review actions." };
+  if (!canManageWorkspace(context)) return { ok: false, message: "Only organization owners can create Foundation review actions." };
 
   const sourceModule = normalizeFoundationReviewSourceModule(input.sourceModule);
   if (!sourceModule) return { ok: false, message: "Choose a valid Foundation source module." };
@@ -2836,9 +2843,9 @@ export async function updateFoundationReviewTaskStatus(input: {
   if (!foundationReviewSourceModules.includes(String(task.source_module))) {
     return { ok: false, message: "Only generated Foundation review tasks can be updated from this panel." };
   }
-  const actorRole = context.role === "owner" ? "owner" : "assigned_member";
-  const isOwner = context.role === "owner";
-  if (!isOwner && task.assigned_to !== context.userId) {
+  const actorRole = getWorkspaceTaskActorRole(context);
+  const isOwner = canEditWorkspaceTaskGovernance(context);
+  if (!canUpdateAssignedWorkspaceTask(context, task.assigned_to)) {
     return { ok: false, message: "Members can update only Foundation review tasks assigned to them." };
   }
   if (!isOwner && (hasAssignedToInput || hasDueDateInput || hasPriorityInput)) {
@@ -2932,8 +2939,8 @@ export async function updateFoundationReviewTasksStatus(input: { taskIds: string
     return { ok: false, message: "Only generated Foundation review tasks can be bulk updated from this panel." };
   }
 
-  const isOwner = context.role === "owner";
-  if (!isOwner && tasks.some((task) => task.assigned_to !== context.userId)) {
+  const isOwner = canEditWorkspaceTaskGovernance(context);
+  if (!isOwner && tasks.some((task) => !canUpdateAssignedWorkspaceTask(context, task.assigned_to))) {
     return { ok: false, message: "Members can bulk update only Foundation review tasks assigned to them." };
   }
 
@@ -2945,7 +2952,7 @@ export async function updateFoundationReviewTasksStatus(input: { taskIds: string
 
   if (error) return { ok: false, message: error.message };
 
-  const actorRole = isOwner ? "owner" : "assigned_member";
+  const actorRole = getWorkspaceTaskActorRole(context);
   for (const task of tasks) {
     await writeFoundationAuditEvent(supabase, context, {
       eventType: "foundation_review_task_status_updated",
@@ -3000,7 +3007,7 @@ export async function addFoundationReviewTaskNote(input: { taskId: string; note:
   if (!foundationReviewSourceModules.includes(String(task.source_module))) {
     return { ok: false, message: "Only generated Foundation review tasks can receive notes from this panel." };
   }
-  if (context.role !== "owner" && task.assigned_to !== context.userId) {
+  if (!canUpdateAssignedWorkspaceTask(context, task.assigned_to)) {
     return { ok: false, message: "Members can add notes only to Foundation review tasks assigned to them." };
   }
 
@@ -3015,7 +3022,7 @@ export async function addFoundationReviewTaskNote(input: { taskId: string; note:
       taskId: task.id,
       title: task.title,
       note,
-      actorRole: context.role === "owner" ? "owner" : "assigned_member",
+      actorRole: getWorkspaceTaskActorRole(context),
       draftOnly: true
     }
   });
@@ -3045,7 +3052,7 @@ export async function addFoundationReviewTasksNote(input: { taskIds: string[]; n
   if (tasks.some((task) => !foundationReviewSourceModules.includes(String(task.source_module)))) {
     return { ok: false, message: "Only generated Foundation review tasks can receive bulk notes from this panel." };
   }
-  if (context.role !== "owner" && tasks.some((task) => task.assigned_to !== context.userId)) {
+  if (tasks.some((task) => !canUpdateAssignedWorkspaceTask(context, task.assigned_to))) {
     return { ok: false, message: "Members can bulk note only Foundation review tasks assigned to them." };
   }
 
@@ -3061,7 +3068,7 @@ export async function addFoundationReviewTasksNote(input: { taskIds: string[]; n
         taskId: task.id,
         title: task.title,
         note,
-        actorRole: context.role === "owner" ? "owner" : "assigned_member",
+        actorRole: getWorkspaceTaskActorRole(context),
         bulkNote: true,
         draftOnly: true
       }
@@ -3087,7 +3094,7 @@ export async function refreshFoundationSourceResolution(input: { taskId: string 
   if (!foundationReviewSourceModules.includes(String(task.source_module))) {
     return { ok: false, message: "Only generated Foundation review tasks can refresh source resolution." };
   }
-  if (context.role !== "owner" && task.assigned_to !== context.userId) {
+  if (!canUpdateAssignedWorkspaceTask(context, task.assigned_to)) {
     return { ok: false, message: "Members can refresh only Foundation review tasks assigned to them." };
   }
 
@@ -3112,7 +3119,7 @@ export async function refreshFoundationSourceResolution(input: { taskId: string 
       resolutionState: resolution.state,
       resolutionDetail: resolution.detail,
       readyForClosureReview: readyForClosure,
-      actorRole: context.role === "owner" ? "owner" : "assigned_member",
+      actorRole: getWorkspaceTaskActorRole(context),
       draftOnly: true
     }
   });
@@ -4809,7 +4816,7 @@ export async function seedDemoWorkspace(): Promise<
   if (!context) {
     return { ok: false, message: "Sign in and finish onboarding before seeding demo records." };
   }
-  if (context.role !== "owner") {
+  if (!canManageWorkspace(context)) {
     return { ok: false, message: "Only organization owners can seed demo records." };
   }
 
@@ -4998,7 +5005,7 @@ async function getProfileContext(): Promise<ProfileContext | null> {
     const { data } = await supabase.from("profiles").select("organization_id,role").eq("id", user.id).maybeSingle();
     if (!data?.organization_id) return null;
 
-    return { userId: user.id, organizationId: data.organization_id, role: data.role ?? "member" };
+    return { userId: user.id, organizationId: data.organization_id, role: normalizeWorkspaceRole(data.role) };
   } catch {
     return null;
   }

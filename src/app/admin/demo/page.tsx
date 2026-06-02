@@ -2,10 +2,12 @@ import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { seedDemoWorkspaceAction } from "@/app/admin/demo/actions";
 import { getAuthSummary } from "@/lib/supabase/data";
+import { canManageWorkspace } from "@/lib/role-permissions";
 
 export default async function AdminDemoPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const params = await searchParams;
   const auth = await getAuthSummary();
+  const canSeedDemo = canManageWorkspace(auth);
 
   return (
     <AppShell>
@@ -24,7 +26,7 @@ export default async function AdminDemoPage({ searchParams }: { searchParams: Pr
           <p className="muted">
             Each run receives a short demo seed label so records can be traced across assessments, documents, and audit events.
           </p>
-          {auth.signedIn && !auth.needsOnboarding && auth.role === "owner" ? (
+          {canSeedDemo ? (
             <form action={seedDemoWorkspaceAction} className="save-actions">
               <button className="button-primary" type="submit">
                 Seed demo records
