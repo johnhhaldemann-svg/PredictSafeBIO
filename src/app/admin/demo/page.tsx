@@ -42,7 +42,7 @@ export default async function AdminDemoPage({ searchParams }: { searchParams: Pr
         <section className="panel">
           <h2>Boundary</h2>
           <p className="muted">
-            Seeded records are for MVP demo walkthroughs only. They do not establish validation, approval, release, or regulatory acceptance.
+            Seeded records are for demonstration purposes only. They do not establish validation, approval, release, or regulatory acceptance.
           </p>
         </section>
       </div>
