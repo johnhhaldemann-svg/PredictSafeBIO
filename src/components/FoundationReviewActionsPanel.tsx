@@ -10,6 +10,7 @@ import {
   updateFoundationReviewTaskStatusAction,
   updateFoundationReviewTasksStatusAction
 } from "@/app/foundation/actions";
+import { getFieldReportDueState } from "@/lib/foundation/timing";
 import type { FoundationAssigneeOption, FoundationReviewActionSummary } from "@/lib/supabase/data";
 
 const savedTaskViews = [
@@ -610,13 +611,10 @@ function CloseoutNoteCallout({ action }: { action: FoundationReviewActionSummary
 function getTaskAgingLabel(action: FoundationReviewActionSummary) {
   if (action.status === "complete") return "Completed";
   if (action.status === "blocked") return "Blocked";
-  if (!action.dueDate) return "No due date";
-  const due = new Date(`${action.dueDate}T00:00:00`);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
-  if (days < 0) return "Overdue";
-  if (days <= 3) return "Due soon";
+  const dueState = getFieldReportDueState(action.dueDate);
+  if (dueState === "unscheduled") return "No due date";
+  if (dueState === "overdue") return "Overdue";
+  if (dueState === "due_soon") return "Due soon";
   return "On track";
 }
 
@@ -694,21 +692,12 @@ function getSavedViewMatch(savedView: string, action: FoundationReviewActionSumm
 
 function isDueSoon(action: FoundationReviewActionSummary) {
   if (action.status === "complete") return false;
-  if (!action.dueDate) return false;
-  const due = new Date(`${action.dueDate}T00:00:00`);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
-  return days >= 0 && days <= 3;
+  return getFieldReportDueState(action.dueDate) === "due_soon";
 }
 
 function isOverdue(action: FoundationReviewActionSummary) {
   if (action.status === "complete") return false;
-  if (!action.dueDate) return false;
-  const due = new Date(`${action.dueDate}T00:00:00`);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return due.getTime() < today.getTime();
+  return getFieldReportDueState(action.dueDate) === "overdue";
 }
 
 function getTaskRoleLabel(action: FoundationReviewActionSummary, canManage: boolean, canEditAssignment: boolean) {

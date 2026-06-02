@@ -53,6 +53,13 @@ import {
   type FoundationIntakeAnswers
 } from "@/lib/foundation/engine";
 import {
+  FIELD_REPORT_DUE_SOON_DAYS,
+  formatDateOnly,
+  getDaysUntilDate,
+  getFieldReportDueDate,
+  getFieldReportDueState
+} from "@/lib/foundation/timing";
+import {
   changePlanPriorities,
   changePlanRows,
   changePlanStatuses,
@@ -591,6 +598,7 @@ export async function getAccountSummary(): Promise<AccountSummary> {
   if (!auth.signedIn || !auth.organizationId) return { ...auth, companyProfile: null };
   return { ...auth, companyProfile: await getCompanyProfile() };
 }
+
 export async function getCompanyProfile(): Promise<CompanyProfile> {
   const context = await getProfileContext();
   if (!context) return demoCompanyProfile;
@@ -705,6 +713,7 @@ export async function updateCompanyProfile(input: CompanyProfileUpdateInput): Pr
     return { ok: false, message: error instanceof Error ? error.message : "Company profile update failed." };
   }
 }
+
 export async function listAssessments(): Promise<SavedAssessmentSummary[]> {
   const context = await getProfileContext();
   if (!context) {
@@ -2647,7 +2656,7 @@ export async function generateFoundationReviewActions(): Promise<FoundationActio
       continue;
     }
 
-    const dueDate = new Date(Date.now() + (candidate.priority === "high" ? 7 : 14) * 86400000).toISOString().slice(0, 10);
+    const dueDate = formatDateOnly(getFieldReportDueDate(candidate.priority));
     const { data: task } = await supabase
       .from("tasks")
       .insert({
@@ -2751,7 +2760,7 @@ export async function createFoundationReviewActionFromSource(input: {
   }
 
   const runId = randomUUID();
-  const dueDate = new Date(Date.now() + (candidate.priority === "high" ? 7 : 14) * 86400000).toISOString().slice(0, 10);
+  const dueDate = formatDateOnly(getFieldReportDueDate(candidate.priority));
   const { data: task, error: taskError } = await supabase
     .from("tasks")
     .insert({
@@ -3507,6 +3516,7 @@ export async function requestAdvancedErgonomicEvaluation(
       return { ok: false, message: requestError?.message ?? "Could not create Level 2 ergonomic evaluation request." };
     }
 
+    const priority = assessment.risk_level === "severe" ? "urgent" : "high";
     const { data: task } = await supabase
       .from("tasks")
       .insert({
@@ -3516,8 +3526,8 @@ export async function requestAdvancedErgonomicEvaluation(
         assigned_to: context.userId,
         title: `Level 2 ergonomic evaluation - ${ergonomicLabel("task", assessment.task_type)}`,
         status: "open",
-        due_date: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
-        priority: assessment.risk_level === "severe" ? "urgent" : "high",
+        due_date: formatDateOnly(getFieldReportDueDate(priority)),
+        priority,
         created_by: context.userId
       })
       .select("id")
@@ -3718,7 +3728,7 @@ export async function saveErgonomicLevel2Inspection(
           assigned_to: context.userId,
           title: `Level 2 ergonomic corrective action - ${ergonomicLabel("task", input.taskType)}`,
           status: "open",
-          due_date: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
+          due_date: formatDateOnly(getFieldReportDueDate("high")),
           priority: "high",
           created_by: context.userId
         })
@@ -5066,7 +5076,7 @@ async function createErgonomicCorrectiveActionRecommendation(
   const title = repeatedModerateFlag
     ? `Review repeated moderate ergonomic reports - ${ergonomicLabel("task", input.taskType)}`
     : `Corrective action review - ${ergonomicLabel("task", input.taskType)} ergonomic task`;
-  const dueDate = new Date(Date.now() + (priority === "urgent" ? 2 : 7) * 86400000).toISOString().slice(0, 10);
+  const dueDate = formatDateOnly(getFieldReportDueDate(priority));
 
   const { data: capa } = await supabase
     .from("capa_records")
@@ -5186,11 +5196,9 @@ function getFoundationActionOperatingState(status: string, dueDate?: string | nu
   if (status === "complete") return "Closed with human review";
   if (status === "blocked") return "Blocked - owner decision needed";
   if (status === "in_progress") return "Active review underway";
-  if (!dueDate) return "Open - needs schedule";
-  const due = new Date(`${dueDate}T00:00:00`);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return due.getTime() < today.getTime() ? "Open - overdue" : "Open - queued";
+  const dueState = getFieldReportDueState(dueDate);
+  if (dueState === "unscheduled") return "Open - needs schedule";
+  return dueState === "overdue" ? "Open - overdue" : "Open - queued";
 }
 
 function getFoundationActionNextStep(status: string, assignedTo?: string | null, dueDate?: string | null) {
@@ -5820,8 +5828,8 @@ async function createFoundationDueNotifications(
   const since = new Date(today).toISOString();
   for (const task of tasks) {
     if (!task.assigned_to || !task.due_date || task.status === "complete") continue;
-    const due = new Date(`${task.due_date}T00:00:00`);
-    const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
+    const days = getDaysUntilDate(task.due_date, today);
+    if (days === null) continue;
     if (days < 0) {
       await createFoundationTaskNotificationIfMissing(
         supabase,
@@ -5835,7 +5843,7 @@ async function createFoundationDueNotifications(
         },
         since
       );
-    } else if (days <= 3) {
+    } else if (days <= FIELD_REPORT_DUE_SOON_DAYS) {
       await createFoundationTaskNotificationIfMissing(
         supabase,
         organizationId,
