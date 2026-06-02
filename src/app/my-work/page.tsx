@@ -142,6 +142,35 @@ export default async function MyWorkPage({
           </section>
         ) : (
           <div id="my-work-actions">
+            {allActions.length === 0 && adminAccess.signedIn && (
+              <section className="panel">
+                <div className="panel-heading">
+                  <div>
+                    <p className="section-label">Getting started</p>
+                    <h2>Your workspace is ready — here is what to do first</h2>
+                  </div>
+                  <ShieldCheck size={22} />
+                </div>
+                <div className="action-list">
+                  <article className="action-row">
+                    <div><strong>1. Run a BioRisk assessment</strong></div>
+                    <p>Go to the <Link href="/workbench" className="text-link">Workbench</Link>, enter your site details and signals, then save the result to your risk register.</p>
+                  </article>
+                  <article className="action-row">
+                    <div><strong>2. Open the Compliance Map</strong></div>
+                    <p>The <Link href="/foundation" className="text-link">Compliance Map</Link> reads your assessment and generates source-traced review tasks. Assign them to your team here in My Work.</p>
+                  </article>
+                  <article className="action-row">
+                    <div><strong>3. Add controlled documents</strong></div>
+                    <p>Go to <Link href="/documents" className="text-link">SOPs &amp; Templates</Link> to register your controlled documents. The system will surface gaps and draft update recommendations.</p>
+                  </article>
+                  <article className="action-row">
+                    <div><strong>4. Invite your team</strong></div>
+                    <p>Go to <Link href="/account/team" className="text-link">Team &amp; Invites</Link> to send invite links so team members can see assigned work in their own My Work view.</p>
+                  </article>
+                </div>
+              </section>
+            )}
             <FoundationReviewActionsPanel
               actions={visibleActions}
               assignees={assignees}
@@ -151,8 +180,8 @@ export default async function MyWorkPage({
               canEditPriority={adminAccess.isOwner}
               emptyMessage={
                 adminAccess.isOwner
-                  ? "No generated Foundation review tasks are available yet."
-                  : "No Foundation review tasks are assigned to you yet."
+                  ? "No review tasks yet. Run a BioRisk assessment on the Workbench, then open the Compliance Map to generate source-traced tasks."
+                  : "No tasks assigned to you yet. Your owner will assign Foundation review tasks when they are generated from the compliance map."
               }
               initialSavedView={requestedView ?? (adminAccess.isOwner ? "all" : "my_open")}
               returnTo="/my-work"
