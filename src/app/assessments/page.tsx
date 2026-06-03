@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { listAssessments } from "@/lib/supabase/data";
 import { getHumanReviewStatusLabel } from "@/lib/review-workflow";
+import { Sparkles, TrendingUp } from "lucide-react";
 
 type AssessmentFilters = {
   review?: string;
@@ -32,9 +33,39 @@ export default async function AssessmentsPage({ searchParams }: { searchParams: 
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Risk Intelligence</p>
-          <h1>Risk Register</h1>
+          <div className="page-header-left">
+            <p className="section-label">Risk Intelligence</p>
+            <h1>Risk Register</h1>
+          </div>
+          <Link className="button-primary" href="/workbench">
+            New assessment
+          </Link>
         </header>
+
+        {pendingReviewCount > 0 ? (
+          <div className="ai-context-bar">
+            <Sparkles size={15} />
+            <span>
+              <strong>AI flagged {pendingReviewCount} pending review{pendingReviewCount !== 1 ? "s" : ""}.</strong>{" "}
+              Human approval required before these risks are considered resolved.
+            </span>
+            <Link className="ai-fill-btn" href="/assessments?review=draft_human_review_required">
+              Review now
+            </Link>
+          </div>
+        ) : null}
+        {needsActionCount > 0 ? (
+          <div className="ai-context-bar" style={{ background: "linear-gradient(135deg,#fffbeb,#fefce8)", borderColor: "#fde68a", color: "#78350f" }}>
+            <TrendingUp size={15} />
+            <span>
+              <strong>{needsActionCount} assessment{needsActionCount !== 1 ? "s" : ""} need corrective action.</strong>{" "}
+              Outstanding steps are blocking closure.
+            </span>
+            <Link className="ai-fill-btn" style={{ borderColor: "#fbbf24", color: "#92400e" }} href="/assessments?review=reviewed_needs_action">
+              View
+            </Link>
+          </div>
+        ) : null}
         <section className="panel">
           <div className="panel-heading">
             <div>

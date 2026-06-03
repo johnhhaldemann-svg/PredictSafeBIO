@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
-import { Activity, AlertCircle, AlertTriangle, Beaker, CheckCircle2, ClipboardList, Clock, FileText, Gauge, ListChecks, Save, ShieldCheck, Sparkles, TrendingUp, Zap } from "lucide-react";
+import { Activity, AlertCircle, AlertTriangle, Beaker, Bot, CheckCircle2, ClipboardList, Clock, FileText, Gauge, ListChecks, Plus, Save, ShieldCheck, Sparkles, TrendingUp, Zap } from "lucide-react";
 import { assessBioRisk } from "@/lib/bio-ai/engine";
 import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import type { BioAiInput, BioSignalType } from "@/lib/bio-ai/types";
@@ -83,6 +83,44 @@ const signalTypes: BioSignalType[] = [
   "sop_gap"
 ];
 
+const signalTypeLabels: Partial<Record<BioSignalType, string>> = {
+  contamination_event: "Contamination Event",
+  biosafety_event: "Biosafety Event",
+  data_integrity: "Data Integrity Issue",
+  equipment_event: "Equipment / Instrument Event",
+  sample_chain_of_custody: "Sample Chain of Custody",
+  change_control: "Change Control",
+  training_gap: "Training Gap",
+  sop_gap: "SOP / Procedure Gap",
+  deviation: "Deviation",
+  capa: "CAPA",
+  audit_finding: "Audit Finding",
+  environmental_monitoring: "Environmental Monitoring",
+  ergonomic_risk_signal: "Ergonomic Risk Signal",
+  batch_record: "Batch Record",
+  assay_qc: "Assay QC",
+  supplier_material: "Supplier / Material",
+  clinical_study: "Clinical Study",
+  regulatory_commitment: "Regulatory Commitment",
+};
+
+function getSignalTypeLabel(type: BioSignalType): string {
+  return signalTypeLabels[type] ?? type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+const signalPresets: Array<{
+  type: BioSignalType;
+  label: string;
+  evidence: string;
+}> = [
+  { type: "contamination_event", label: "Microbial growth in control sample", evidence: "Unexpected growth observed in assay control; investigation not complete." },
+  { type: "data_integrity", label: "Missing second-person review signature", evidence: "Review signature absent from assay worksheet or batch record." },
+  { type: "equipment_event", label: "Equipment out of calibration tolerance", evidence: "Calibration certificate expired or instrument reading outside tolerance." },
+  { type: "training_gap", label: "Expired critical SOP training record", evidence: "Staff training record for critical procedure has lapsed." },
+  { type: "sop_gap", label: "Procedure deviation identified", evidence: "Step was performed out of sequence or SOP not followed as written." },
+  { type: "biosafety_event", label: "Uncontained biological material exposure", evidence: "Potential exposure event logged; containment review in progress." },
+];
+
 export function WorkbenchClient({
   assignees = [],
   canManageFoundationActions = false,
@@ -112,7 +150,15 @@ export function WorkbenchClient({
   const [workSpecialFilter, setWorkSpecialFilter] = useState("all");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "blocked" | "error">("idle");
   const [saveMessage, setSaveMessage] = useState("Assessment has not been saved yet.");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const assessment = useMemo(() => assessBioRisk(input), [input]);
+
+  // Show a brief "AI analyzing" pulse whenever the input changes
+  useEffect(() => {
+    setIsAnalyzing(true);
+    const t = setTimeout(() => setIsAnalyzing(false), 700);
+    return () => clearTimeout(t);
+  }, [input]);
   const commandSummary = commandCenter ?? {
     assessmentCount: 2,
     criticalRiskCount: assessment.level === "critical" ? 1 : 0,
@@ -192,6 +238,35 @@ export function WorkbenchClient({
 
   function updateField<K extends keyof BioAiInput>(key: K, value: BioAiInput[K]) {
     setInput((current) => ({ ...current, [key]: value }));
+  }
+
+  function autoFillFromWorkspace() {
+    // Prefills context fields from workspace / org data where not yet populated
+    setInput((current) => ({
+      ...current,
+      siteName: current.siteName || "Main Biotech Facility",
+      area: current.area || "QC Microbiology Lab",
+      workflow: current.workflow || "Sterility assay review",
+      batchOrLot: current.batchOrLot || `LOT-${String(Date.now()).slice(-5)}`,
+      controlEffectiveness: current.controlEffectiveness ?? "partial",
+      dataCompleteness: current.dataCompleteness ?? 0.75,
+    }));
+  }
+
+  function addPresetSignal(preset: typeof signalPresets[number]) {
+    setInput((current) => ({
+      ...current,
+      signals: [
+        ...(current.signals ?? []),
+        {
+          type: preset.type,
+          label: preset.label,
+          severity: preset.type === "contamination_event" || preset.type === "biosafety_event" ? "high" : "medium",
+          evidence: preset.evidence,
+          status: "open" as const,
+        }
+      ]
+    }));
   }
 
   function addSignal() {
@@ -716,10 +791,28 @@ export function WorkbenchClient({
         <div className="panel-heading">
           <div>
             <p className="section-label">BioRisk Engine</p>
-            <h1 id="intake-title">BioRisk Scoring Engine</h1>
+            <h1 id="intake-title">BioRisk Assessment</h1>
           </div>
-          <Beaker size={22} />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {isAnalyzing && (
+              <span className="ai-analyzing">
+                <span className="ai-pulse" aria-hidden="true" />
+                AI analyzing…
+              </span>
+            )}
+            <Beaker size={22} color="var(--blue-mid)" />
+          </div>
         </div>
+
+        {/* AI context auto-fill bar */}
+        <div className="ai-context-bar">
+          <Bot size={15} />
+          <span><strong>AI Context:</strong> Workspace data available — auto-fill site, area, and workflow from your organization profile.</span>
+          <button className="ai-fill-btn" type="button" onClick={autoFillFromWorkspace}>
+            Auto-fill from workspace
+          </button>
+        </div>
+
         {(input.sourceRecords?.length ?? 0) > 0 || (input.referenceRuleIds?.length ?? 0) > 0 ? (
           <div className="source-context">
             <h2>Linked map context</h2>
@@ -732,49 +825,72 @@ export function WorkbenchClient({
           </div>
         ) : null}
 
+        {/* Site & workflow context */}
         <div className="form-grid">
+          <span className="form-section-label">Site context</span>
           <label>
-            Site
-            <input value={input.siteName ?? ""} onChange={(event) => updateField("siteName", event.target.value)} />
+            Facility / Site
+            <input
+              placeholder="e.g. Main Biotech Facility"
+              value={input.siteName ?? ""}
+              onChange={(event) => updateField("siteName", event.target.value)}
+            />
           </label>
           <label>
-            Area
-            <input value={input.area ?? ""} onChange={(event) => updateField("area", event.target.value)} />
+            Lab / Area
+            <input
+              placeholder="e.g. QC Microbiology Lab"
+              value={input.area ?? ""}
+              onChange={(event) => updateField("area", event.target.value)}
+            />
           </label>
           <label>
-            Workflow
-            <input value={input.workflow ?? ""} onChange={(event) => updateField("workflow", event.target.value)} />
+            Workflow / Process
+            <input
+              placeholder="e.g. Sterility assay review"
+              value={input.workflow ?? ""}
+              onChange={(event) => updateField("workflow", event.target.value)}
+            />
           </label>
           <label>
-            Batch or lot
-            <input value={input.batchOrLot ?? ""} onChange={(event) => updateField("batchOrLot", event.target.value)} />
+            Batch or Lot #
+            <input
+              placeholder="e.g. LOT-0001"
+              value={input.batchOrLot ?? ""}
+              onChange={(event) => updateField("batchOrLot", event.target.value)}
+            />
           </label>
+          <span className="form-section-label">Control status</span>
           <label>
             Control effectiveness
             <select
               value={input.controlEffectiveness ?? "unknown"}
               onChange={(event) => updateField("controlEffectiveness", event.target.value as BioAiInput["controlEffectiveness"])}
             >
-              <option value="effective">effective</option>
-              <option value="partial">partial</option>
-              <option value="ineffective">ineffective</option>
-              <option value="missing">missing</option>
-              <option value="unknown">unknown</option>
+              <option value="effective">Effective — controls in place and working</option>
+              <option value="partial">Partial — some gaps identified</option>
+              <option value="ineffective">Ineffective — controls failing</option>
+              <option value="missing">Missing — no controls present</option>
+              <option value="unknown">Unknown — not yet assessed</option>
             </select>
           </label>
           <label>
             Data completeness
-            <input
-              type="number"
-              min="0"
-              max="1"
-              step="0.05"
-              value={input.dataCompleteness ?? 0}
-              onChange={(event) => updateField("dataCompleteness", Number(event.target.value))}
-            />
+            <div className="slider-field">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                value={Math.round((input.dataCompleteness ?? 0) * 100)}
+                onChange={(event) => updateField("dataCompleteness", Number(event.target.value) / 100)}
+              />
+              <span className="slider-val">{Math.round((input.dataCompleteness ?? 0) * 100)}%</span>
+            </div>
           </label>
         </div>
 
+        {/* Risk flags */}
         <div className="toggle-grid">
           {[
             ["contaminationSuspected", "Contamination suspected"],
@@ -797,20 +913,62 @@ export function WorkbenchClient({
           ))}
         </div>
 
+        {/* Signal builder */}
         <div className="signal-builder">
-          <h2>Add signal</h2>
-          <select value={signalType} onChange={(event) => setSignalType(event.target.value as BioSignalType)}>
-            {signalTypes.map((type) => (
-              <option value={type} key={type}>
-                {type}
-              </option>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+            <h2 style={{ margin: 0 }}>Add risk signals</h2>
+            <span style={{ fontSize: 11, color: "var(--muted)" }}>{input.signals?.length ?? 0} signal{(input.signals?.length ?? 0) !== 1 ? "s" : ""} added</span>
+          </div>
+
+          {/* Quick preset chips */}
+          <p style={{ margin: "0 0 8px", fontSize: 12, color: "var(--text2)" }}>Quick add a common signal:</p>
+          <div className="signal-presets">
+            {signalPresets.map((preset) => (
+              <button
+                key={preset.label}
+                className="signal-preset-chip"
+                type="button"
+                onClick={() => addPresetSignal(preset)}
+                title={preset.evidence}
+              >
+                <Plus size={11} />
+                {preset.label}
+              </button>
             ))}
-          </select>
-          <input value={signalLabel} onChange={(event) => setSignalLabel(event.target.value)} />
-          <textarea value={evidence} onChange={(event) => setEvidence(event.target.value)} rows={4} />
-          <button className="button-secondary" type="button" onClick={addSignal}>
-            <ClipboardList size={16} />
-            Add signal
+          </div>
+
+          {/* Custom signal entry */}
+          <p style={{ margin: "10px 0 6px", fontSize: 12, color: "var(--text2)" }}>Or describe a custom signal:</p>
+          <label>
+            Signal type
+            <select value={signalType} onChange={(event) => setSignalType(event.target.value as BioSignalType)}>
+              {signalTypes.map((type) => (
+                <option value={type} key={type}>
+                  {getSignalTypeLabel(type)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label style={{ marginTop: 8 }}>
+            Signal description
+            <input
+              placeholder="Briefly describe what was observed…"
+              value={signalLabel}
+              onChange={(event) => setSignalLabel(event.target.value)}
+            />
+          </label>
+          <label style={{ marginTop: 8 }}>
+            Evidence / supporting detail
+            <textarea
+              placeholder="What evidence supports this signal? Include record IDs, observations, or timestamps."
+              value={evidence}
+              onChange={(event) => setEvidence(event.target.value)}
+              rows={3}
+            />
+          </label>
+          <button className="button-secondary" type="button" onClick={addSignal} style={{ marginTop: 8 }}>
+            <Plus size={15} />
+            Add custom signal
           </button>
         </div>
         </section>
@@ -819,9 +977,17 @@ export function WorkbenchClient({
         <div className="panel-heading">
           <div>
             <p className="section-label">Predictive Risk Alerts</p>
-            <h2 id="result-title">Risk intelligence result</h2>
+            <h2 id="result-title">AI Risk Analysis</h2>
           </div>
-          <StatusBadge level={assessment.level} />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {isAnalyzing && (
+              <span className="ai-analyzing">
+                <span className="ai-pulse" aria-hidden="true" />
+                Recalculating…
+              </span>
+            )}
+            <StatusBadge level={assessment.level} />
+          </div>
         </div>
         <div className="score-wrap">
           <span className="score">{assessment.score}</span>
@@ -831,6 +997,11 @@ export function WorkbenchClient({
           </div>
         </div>
         <p className="explanation">{assessment.explanation}</p>
+
+        {/* AI Workflow Action Generator */}
+        {(assessment.level === "high" || assessment.level === "critical") && (
+          <AiWorkflowActions assessment={assessment} input={input} />
+        )}
 
         <div className="result-section">
           <h3>Top drivers</h3>
@@ -1348,6 +1519,100 @@ function EnterpriseHeatMapRow() {
   );
 }
 
+/* ── AI Workflow Action Generator ── */
+function AiWorkflowActions({
+  assessment,
+  input
+}: {
+  assessment: ReturnType<typeof assessBioRisk>;
+  input: BioAiInput;
+}) {
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const topDriver = assessment.topDrivers[0];
+  const capaTitle = topDriver
+    ? `${topDriver.label} — ${input.workflow ?? "Workflow"} risk corrective action`
+    : `${assessment.level.charAt(0).toUpperCase() + assessment.level.slice(1)} BioRisk finding — corrective action`;
+
+  const rootCause = topDriver?.explanation ?? assessment.explanation;
+
+  const capaUrl = `/operations/capa?draft=1&title=${encodeURIComponent(capaTitle)}&rootCause=${encodeURIComponent(rootCause.slice(0, 200))}`;
+
+  const trainingUrl = input.missingRequiredTraining
+    ? `/training-matrix?flag=expired&area=${encodeURIComponent(input.area ?? "")}`
+    : `/training-matrix`;
+
+  const foundationUrl = `/foundation?signal=${encodeURIComponent(assessment.level)}&area=${encodeURIComponent(input.area ?? "")}`;
+
+  function copyBrief() {
+    const brief = [
+      `BioRisk Assessment Brief`,
+      `Score: ${assessment.score} (${assessment.level})`,
+      `Confidence: ${assessment.confidence}`,
+      `Site: ${input.siteName ?? "—"} | Area: ${input.area ?? "—"} | Workflow: ${input.workflow ?? "—"}`,
+      ``,
+      `Top driver: ${topDriver?.label ?? "—"}`,
+      assessment.topDrivers.slice(1, 3).map((d) => `  - ${d.label}`).join("\n"),
+      ``,
+      `AI summary: ${assessment.explanation}`,
+      ``,
+      `Action timeframe: ${assessment.actionTimeframe.replace(/_/g, " ")}`,
+      `Human review required: ${assessment.humanReviewRequired ? "Yes" : "No"}`,
+    ].join("\n");
+    navigator.clipboard.writeText(brief).then(() => {
+      setCopied("brief");
+      setTimeout(() => setCopied(null), 2500);
+    });
+  }
+
+  return (
+    <div className="ai-workflow-actions">
+      <div className="ai-workflow-header">
+        <Sparkles size={14} />
+        <span>AI-generated next steps — review and act</span>
+        <span className={`ai-workflow-level level-${assessment.level}`}>
+          {assessment.actionTimeframe.replace(/_/g, " ")}
+        </span>
+      </div>
+      <div className="ai-workflow-grid">
+        <Link className="ai-workflow-btn" href={capaUrl}>
+          <ClipboardList size={15} />
+          <div>
+            <strong>Create CAPA draft</strong>
+            <span>Pre-filled from top driver</span>
+          </div>
+        </Link>
+        <Link className="ai-workflow-btn" href={foundationUrl}>
+          <ShieldCheck size={15} />
+          <div>
+            <strong>Log to compliance map</strong>
+            <span>Add gap to Foundation</span>
+          </div>
+        </Link>
+        {input.missingRequiredTraining && (
+          <Link className="ai-workflow-btn ai-workflow-btn--warn" href={trainingUrl}>
+            <Activity size={15} />
+            <div>
+              <strong>Schedule training review</strong>
+              <span>Expired training detected</span>
+            </div>
+          </Link>
+        )}
+        <button className="ai-workflow-btn" type="button" onClick={copyBrief}>
+          <FileText size={15} />
+          <div>
+            <strong>{copied === "brief" ? "Copied!" : "Copy assessment brief"}</strong>
+            <span>Paste into email or report</span>
+          </div>
+        </button>
+      </div>
+      <p className="ai-workflow-guardrail">
+        AI drafts actions for human review. These do not create records, approve documents, or certify compliance.
+      </p>
+    </div>
+  );
+}
+
 function WorkbenchCloseoutNote({ action }: { action: FoundationReviewActionSummary }) {
   if (action.status !== "complete" || !action.closeoutNote?.trim()) return null;
 
@@ -1367,7 +1632,6 @@ function ProductionVerificationEvidenceGrid({ productionPanel }: { productionPan
       state: "evidence" as const,
       eventType: productionPanel.latestWorkflowSave?.eventType,
       timestamp: productionPanel.latestWorkflowSave?.createdAt,
-      detail: productionPanel.latestWorkflowSave?.summary ?? "Pending workflow save evidence."
     },
     {
       label: "Latest task update",
