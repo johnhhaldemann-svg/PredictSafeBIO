@@ -96,30 +96,17 @@ export type FlagExportRow = {
 export async function getSignupGrowth(): Promise<SignupGrowth> {
   const admin = getSupabaseAdminClient();
 
-  // Daily — last 30 days
-  const { data: dailyRaw } = await admin.rpc("analytics_signups_by_period" as never, {
-    p_trunc: "day",
-    p_days: 30,
-  } as never).catch(() => ({ data: null }));
+  // The RPC function doesn't exist yet (it would require a DB-side function).
+  // We always fall through to the direct-query fallback below.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dailyRaw: any = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const weeklyRaw: any = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const monthlyRaw: any = null;
 
-  // Weekly — last 12 weeks
-  const { data: weeklyRaw } = await admin.rpc("analytics_signups_by_period" as never, {
-    p_trunc: "week",
-    p_days: 84,
-  } as never).catch(() => ({ data: null }));
-
-  // Monthly — last 12 months
-  const { data: monthlyRaw } = await admin.rpc("analytics_signups_by_period" as never, {
-    p_trunc: "month",
-    p_days: 365,
-  } as never).catch(() => ({ data: null }));
-
-  // Fallback: direct queries if RPC not available
+  // Direct query fallback (always used — RPC function not deployed)
   const buildFallback = async (truncUnit: string, days: number): Promise<SignupDataPoint[]> => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (admin as any).rpc("query_raw", {}).catch(() => ({ data: null }));
-    if (data) return data;
-
     // Direct query fallback
     const { data: rows } = await admin
       .from("profiles")
