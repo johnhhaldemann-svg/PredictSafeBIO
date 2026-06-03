@@ -2,7 +2,7 @@
  * AI Compliance Assistant — client-side service.
  * Invokes the ai-compliance-assistant Supabase Edge Function.
  */
-import { createClient } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export type ContextType =
   | "capa"
@@ -32,7 +32,7 @@ export async function askComplianceAssistant(
   orgId: string,
   contextType: ContextType = "general"
 ): Promise<string> {
-  const supabase = createClient();
+  const supabase = createSupabaseBrowserClient();
   const { data, error } = await supabase.functions.invoke("ai-compliance-assistant", {
     body: { question, org_id: orgId, context_type: contextType }
   });
