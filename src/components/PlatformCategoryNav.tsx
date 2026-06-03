@@ -116,8 +116,11 @@ export function PlatformCategoryNav() {
   const activeCategory = getActiveCategoryTitle(pathname);
   const [expanded, setExpanded] = useState<string | null>(activeCategory);
 
-  const toggle = (title: string) =>
+  const toggle = (e: React.MouseEvent, title: string) => {
+    e.preventDefault();
+    e.stopPropagation();
     setExpanded((prev) => (prev === title ? null : title));
+  };
 
   return (
     <nav className="sidebar-nav" aria-label="Platform navigation">
@@ -128,24 +131,31 @@ export function PlatformCategoryNav() {
 
         return (
           <div key={cat.title} className="snav-group">
-            {/* Category header row */}
-            <div
-              className={`snav-cat${isCatActive ? " snav-cat--active" : ""}`}
-              onClick={() => toggle(cat.title)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === "Enter" && toggle(cat.title)}
-              aria-expanded={isOpen}
-            >
-              <span className="snav-icon">
-                <CatIcon size={15} aria-hidden="true" />
-              </span>
-              <span className="snav-cat-label">{cat.title}</span>
-              <ChevronDown
-                size={13}
-                className={`snav-chevron${isOpen ? " snav-chevron--open" : ""}`}
-                aria-hidden="true"
-              />
+            {/* Category header: icon+label navigates, chevron toggles */}
+            <div className={`snav-cat${isCatActive ? " snav-cat--active" : ""}`}>
+              <Link
+                href={cat.href}
+                className="snav-cat-link"
+                onClick={() => setExpanded(cat.title)}
+              >
+                <span className="snav-icon">
+                  <CatIcon size={15} aria-hidden="true" />
+                </span>
+                <span className="snav-cat-label">{cat.title}</span>
+              </Link>
+              <button
+                className="snav-chevron-btn"
+                onClick={(e) => toggle(e, cat.title)}
+                aria-expanded={isOpen}
+                aria-label={`Toggle ${cat.title}`}
+                type="button"
+              >
+                <ChevronDown
+                  size={13}
+                  className={`snav-chevron${isOpen ? " snav-chevron--open" : ""}`}
+                  aria-hidden="true"
+                />
+              </button>
             </div>
 
             {/* Sub-items */}
