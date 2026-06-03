@@ -1,35 +1,90 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = { title: "Risk Intelligence – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { listAssessments } from "@/lib/supabase/data";
+import { getProfileContext } from "@/lib/supabase/data-helpers";
 import { getHumanReviewStatusLabel } from "@/lib/review-workflow";
-import { Sparkles, TrendingUp } from "lucide-react";
+import { Sparkles, TrendingUp, Clock, UserCheck } from "lucide-react";
 
 type AssessmentFilters = {
   review?: string;
   level?: string;
   reviewer?: string;
+  assigned?: string;
+  due?: string;
 };
 
-export default async function AssessmentsPage({ searchParams }: { searchParams: Promise<AssessmentFilters> }) {
+function isDueOverdue(dueDate: string | null | undefined): boolean {
+  if (!dueDate) return false;
+  return new Date(dueDate) < new Date(new Date().toDateString());
+}
+
+function isDueThisWeek(dueDate: string | null | undefined): boolean {
+  if (!dueDate) return false;
+  const due = new Date(dueDate);
+  const today = new Date(new Date().toDateString());
+  const weekEnd = new Date(today);
+  weekEnd.setDate(today.getDate() + 7);
+  return due >= today && due <= weekEnd;
+}
+
+function formatDueDate(dueDate: string | null | undefined): string {
+  if (!dueDate) return "—";
+  const due = new Date(dueDate);
+  const today = new Date(new Date().toDateString());
+  const diff = Math.round((due.getTime() - today.getTime()) / 86400000);
+  if (diff < 0) return "Overdue " + Math.abs(diff) + "d";
+  if (diff === 0) return "Due today";
+  if (diff === 1) return "Due tomorrow";
+  if (diff <= 7) return "Due in " + diff + "d";
+  return due.toLocaleDateString();
+}
+
+export default async function AssessmentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<AssessmentFilters>;
+}) {
   const filters = await searchParams;
-  const assessments = await listAssessments();
+  const [assessments, context] = await Promise.all([
+    listAssessments(),
+    getProfileContext(),
+  ]);
+  const currentUserId = context?.userId ?? null;
+
   const filteredAssessments = assessments.filter((assessment) => {
-    const matchesReview = !filters.review || filters.review === "all" || assessment.humanReviewStatus === filters.review;
-    const matchesLevel = !filters.level || filters.level === "all" || assessment.level === filters.level;
+    const matchesReview =
+      !filters.review || filters.review === "all" ||
+      assessment.humanReviewStatus === filters.review;
+    const matchesLevel =
+      !filters.level || filters.level === "all" ||
+      assessment.level === filters.level;
     const matchesReviewer =
-      !filters.reviewer ||
-      filters.reviewer === "all" ||
+      !filters.reviewer || filters.reviewer === "all" ||
       (filters.reviewer === "reviewed" && Boolean(assessment.reviewedAt)) ||
       (filters.reviewer === "not_reviewed" && !assessment.reviewedAt);
-
-    return matchesReview && matchesLevel && matchesReviewer;
+    const matchesAssigned =
+      !filters.assigned || filters.assigned === "all" ||
+      (filters.assigned === "mine" && assessment.assignedReviewerId === currentUserId) ||
+      (filters.assigned === "unassigned" && !assessment.assignedReviewerId);
+    const matchesDue =
+      !filters.due || filters.due === "all" ||
+      (filters.due === "overdue" && isDueOverdue(assessment.reviewDueDate)) ||
+      (filters.due === "this_week" && isDueThisWeek(assessment.reviewDueDate)) ||
+      (filters.due === "no_due_date" && !assessment.reviewDueDate);
+    return matchesReview && matchesLevel && matchesReviewer && matchesAssigned && matchesDue;
   });
-  const needsActionCount = assessments.filter((assessment) => assessment.humanReviewStatus === "reviewed_needs_action").length;
-  const monitoringCount = assessments.filter((assessment) => assessment.humanReviewStatus === "reviewed_monitoring").length;
-  const pendingReviewCount = assessments.filter((assessment) => assessment.humanReviewStatus === "draft_human_review_required").length;
+
+  const needsActionCount = assessments.filter((a) => a.humanReviewStatus === "reviewed_needs_action").length;
+  const monitoringCount = assessments.filter((a) => a.humanReviewStatus === "reviewed_monitoring").length;
+  const pendingReviewCount = assessments.filter((a) => a.humanReviewStatus === "draft_human_review_required").length;
+  const overdueCount = assessments.filter((a) => isDueOverdue(a.reviewDueDate)).length;
+  const assignedToMeCount = assessments.filter((a) => a.assignedReviewerId === currentUserId).length;
 
   return (
     <AppShell>
@@ -39,51 +94,54 @@ export default async function AssessmentsPage({ searchParams }: { searchParams: 
             <p className="section-label">Risk Intelligence</p>
             <h1>Risk Register</h1>
           </div>
-          <Link className="button-primary" href="/workbench">
-            New assessment
-          </Link>
+          <Link className="button-primary" href="/workbench">New assessment</Link>
         </header>
 
         {pendingReviewCount > 0 ? (
           <div className="ai-context-bar">
             <Sparkles size={15} />
-            <span>
-              <strong>AI flagged {pendingReviewCount} pending review{pendingReviewCount !== 1 ? "s" : ""}.</strong>{" "}
-              Human approval required before these risks are considered resolved.
-            </span>
-            <Link className="ai-fill-btn" href="/assessments?review=draft_human_review_required">
-              Review now
-            </Link>
+            <span><strong>AI flagged {pendingReviewCount} pending review{pendingReviewCount !== 1 ? "s" : ""}.</strong> Human approval required before these risks are considered resolved.</span>
+            <Link className="ai-fill-btn" href="/assessments?review=draft_human_review_required">Review now</Link>
           </div>
         ) : null}
         {needsActionCount > 0 ? (
           <div className="ai-context-bar" style={{ background: "linear-gradient(135deg,#fffbeb,#fefce8)", borderColor: "#fde68a", color: "#78350f" }}>
             <TrendingUp size={15} />
-            <span>
-              <strong>{needsActionCount} assessment{needsActionCount !== 1 ? "s" : ""} need corrective action.</strong>{" "}
-              Outstanding steps are blocking closure.
-            </span>
-            <Link className="ai-fill-btn" style={{ borderColor: "#fbbf24", color: "#92400e" }} href="/assessments?review=reviewed_needs_action">
-              View
-            </Link>
+            <span><strong>{needsActionCount} assessment{needsActionCount !== 1 ? "s" : ""} need corrective action.</strong> Outstanding steps are blocking closure.</span>
+            <Link className="ai-fill-btn" style={{ borderColor: "#fbbf24", color: "#92400e" }} href="/assessments?review=reviewed_needs_action">View</Link>
           </div>
         ) : null}
+        {overdueCount > 0 ? (
+          <div className="ai-context-bar" style={{ background: "linear-gradient(135deg,#fef2f2,#fff5f5)", borderColor: "#fecaca", color: "#991b1b" }}>
+            <Clock size={15} />
+            <span><strong>{overdueCount} assessment{overdueCount !== 1 ? "s" : ""} past review due date.</strong> Overdue reviews may block audit readiness.</span>
+            <Link className="ai-fill-btn" style={{ borderColor: "#fca5a5", color: "#991b1b" }} href="/assessments?due=overdue">View overdue</Link>
+          </div>
+        ) : null}
+        {assignedToMeCount > 0 && currentUserId ? (
+          <div className="ai-context-bar" style={{ background: "linear-gradient(135deg,#f0fdf4,#f7fffe)", borderColor: "#bbf7d0", color: "#14532d" }}>
+            <UserCheck size={15} />
+            <span><strong>{assignedToMeCount} assessment{assignedToMeCount !== 1 ? "s" : ""} assigned to you for review.</strong></span>
+            <Link className="ai-fill-btn" style={{ borderColor: "#86efac", color: "#14532d" }} href="/assessments?assigned=mine">My assignments</Link>
+          </div>
+        ) : null}
+
         <section className="panel">
           <div className="panel-heading">
             <div>
               <p className="section-label">Risk Register / Risk Factors</p>
               <h2>Traceability filters</h2>
-              <p className="muted">Filter saved BioRisk records by review status, risk level, and reviewer activity. These views do not approve or release records.</p>
+              <p className="muted">Filter by review status, risk level, reviewer assignment, and due date. Does not approve or release records.</p>
             </div>
           </div>
           <div className="summary-strip">
             <span>{pendingReviewCount} draft review required</span>
             <span>{needsActionCount} needs action</span>
             <span>{monitoringCount} monitoring</span>
+            {overdueCount > 0 && <span style={{ color: "#dc2626" }}>{overdueCount} overdue</span>}
           </div>
           <form className="filter-grid">
-            <label>
-              Review status
+            <label>Review status
               <select name="review" defaultValue={filters.review ?? "all"}>
                 <option value="all">All review statuses</option>
                 <option value="draft_human_review_required">{getHumanReviewStatusLabel("draft_human_review_required")}</option>
@@ -92,8 +150,7 @@ export default async function AssessmentsPage({ searchParams }: { searchParams: 
                 <option value="reviewed_monitoring">{getHumanReviewStatusLabel("reviewed_monitoring")}</option>
               </select>
             </label>
-            <label>
-              Risk level
+            <label>Risk level
               <select name="level" defaultValue={filters.level ?? "all"}>
                 <option value="all">All BioRisk levels</option>
                 <option value="critical">Critical</option>
@@ -102,22 +159,33 @@ export default async function AssessmentsPage({ searchParams }: { searchParams: 
                 <option value="low">Low</option>
               </select>
             </label>
-            <label>
-              Reviewer state
+            <label>Reviewer state
               <select name="reviewer" defaultValue={filters.reviewer ?? "all"}>
                 <option value="all">All reviewer states</option>
                 <option value="reviewed">Has been reviewed</option>
                 <option value="not_reviewed">Not yet reviewed</option>
               </select>
             </label>
-            <button className="button-primary" type="submit">
-              Apply filters
-            </button>
-            <Link className="button-secondary" href="/assessments">
-              Clear
-            </Link>
+            <label>Assignment
+              <select name="assigned" defaultValue={filters.assigned ?? "all"}>
+                <option value="all">All assignments</option>
+                <option value="mine">Assigned to me</option>
+                <option value="unassigned">Unassigned</option>
+              </select>
+            </label>
+            <label>Due date
+              <select name="due" defaultValue={filters.due ?? "all"}>
+                <option value="all">All due dates</option>
+                <option value="overdue">Overdue</option>
+                <option value="this_week">Due this week</option>
+                <option value="no_due_date">No due date set</option>
+              </select>
+            </label>
+            <button className="button-primary" type="submit">Apply filters</button>
+            <Link className="button-secondary" href="/assessments">Clear</Link>
           </form>
         </section>
+
         <section className="table-panel">
           <table>
             <thead>
@@ -128,35 +196,34 @@ export default async function AssessmentsPage({ searchParams }: { searchParams: 
                 <th>Level</th>
                 <th>Score</th>
                 <th>Human review</th>
+                <th>Assigned reviewer</th>
+                <th>Due date</th>
                 <th>Last reviewed</th>
               </tr>
             </thead>
             <tbody>
-              {filteredAssessments.map((assessment) => (
-                <tr key={assessment.id}>
-                  <td>
-                    <Link href={`/assessments/${assessment.id}`}>{assessment.id}</Link>
-                  </td>
-                  <td>{assessment.workflow}</td>
-                  <td>{assessment.area}</td>
-                  <td>
-                    <StatusBadge level={assessment.level} />
-                  </td>
-                  <td>{assessment.score}</td>
-                  <td>{getHumanReviewStatusLabel(assessment.humanReviewStatus)}</td>
-                  <td>{assessment.reviewedAt ?? "Not reviewed"}</td>
-                </tr>
-              ))}
+              {filteredAssessments.map((assessment) => {
+                const overdue = isDueOverdue(assessment.reviewDueDate);
+                return (
+                  <tr key={assessment.id}>
+                    <td><Link href={"/assessments/" + assessment.id}>{assessment.id.slice(0, 8)}{"…"}</Link></td>
+                    <td>{assessment.workflow}</td>
+                    <td>{assessment.area}</td>
+                    <td><StatusBadge level={assessment.level} /></td>
+                    <td>{assessment.score}</td>
+                    <td>{getHumanReviewStatusLabel(assessment.humanReviewStatus)}</td>
+                    <td>{assessment.assignedReviewerName ?? <span className="muted">Unassigned</span>}</td>
+                    <td style={overdue ? { color: "#dc2626", fontWeight: 600 } : undefined}>{formatDueDate(assessment.reviewDueDate)}</td>
+                    <td>{assessment.reviewedAt ? new Date(assessment.reviewedAt).toLocaleDateString() : "Not reviewed"}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           {filteredAssessments.length === 0 && assessments.length === 0 ? (
             <div className="empty-action-state">
               <strong>No risk assessments saved yet.</strong>
-              <p>
-                Run a BioRisk assessment on the{" "}
-                <Link href="/workbench">Workbench</Link> and save it to start building your risk register.
-                Assessments track risk level, score, reviewer activity, and source evidence over time.
-              </p>
+              <p>Run a BioRisk assessment on the <Link href="/workbench">Workbench</Link> and save it to start building your risk register. Assessments track risk level, score, reviewer activity, and source evidence over time.</p>
             </div>
           ) : filteredAssessments.length === 0 ? (
             <p className="empty-table-note">No BioRisk records match the selected filters. <Link href="/assessments">Clear filters</Link></p>

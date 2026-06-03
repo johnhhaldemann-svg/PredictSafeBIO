@@ -7,6 +7,7 @@ import { withAuditTrace } from "@/lib/audit-trace";
 import { createSupabaseServerClient } from "./server";
 import { getProfileContext } from "./data-helpers";
 import { isSupabaseConfigured } from "./env";
+import { scoreInspectionFinding, resolveRiskCell } from "./continuous-scoring-service";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -802,6 +803,42 @@ export async function addInspectionFinding(input: {
     .single();
 
   if (error || !data) return { ok: false, message: error?.message ?? "Could not add finding." };
+
+  // Score via bio-ai — fetch parent inspection for its type, then write to risk_cells.
+  // Fire-and-forget: never blocks the HTTP response.
+  const findingId = data.id;
+  const orgId = context.organizationId;
+  const userId = context.userId;
+  void (async () => {
+    try {
+      const sb = await createSupabaseServerClient();
+      const { data: insp } = await sb
+        .from("audits")
+        .select("id, audit_type, title")
+        .eq("id", input.inspectionId)
+        .eq("organization_id", orgId)
+        .maybeSingle();
+
+      await scoreInspectionFinding({
+        finding: {
+          id: findingId,
+          findingLevel: input.findingLevel,
+          title: input.title.trim(),
+          auditId: input.inspectionId,
+        },
+        inspection: {
+          id: insp?.id ?? input.inspectionId,
+          auditType: (insp?.audit_type as string) ?? "internal",
+          title: (insp?.title as string) ?? input.title.trim(),
+        },
+        organizationId: orgId,
+        userId,
+      });
+    } catch {
+      // Best-effort — never surface scoring errors to the user
+    }
+  })();
+
   return { ok: true, message: "Finding recorded.", id: data.id };
 }
 
@@ -824,5 +861,13 @@ export async function closeInspectionFinding(input: {
     .eq("organization_id", context.organizationId);
 
   if (error) return { ok: false, message: error.message };
+
+  // Resolve the risk cell so it leaves the active Risk Command Center queue
+  void resolveRiskCell({
+    organizationId: context.organizationId,
+    linkedRecordType: "audit_findings",
+    linkedRecordId: input.findingId,
+  });
+
   return { ok: true, message: "Finding closed." };
 }

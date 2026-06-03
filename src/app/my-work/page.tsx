@@ -1,6 +1,9 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = { title: "My Work – PredictSafeBIO" };
 import { ClipboardList, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { FoundationNotificationCenter } from "@/components/FoundationNotificationCenter";

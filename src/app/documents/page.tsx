@@ -1,6 +1,9 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = { title: "Document Control – PredictSafeBIO" };
 import { Bot, FileText } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { createDocumentMetadataAction } from "@/app/documents/actions";

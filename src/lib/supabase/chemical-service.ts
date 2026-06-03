@@ -6,6 +6,7 @@
 import { createSupabaseServerClient } from "./server";
 import { getProfileContext } from "./data-helpers";
 import { isSupabaseConfigured } from "./env";
+import { scoreChemicalRecord, resolveRiskCell } from "./continuous-scoring-service";
 
 // ---------------------------------------------------------------------------
 // Types

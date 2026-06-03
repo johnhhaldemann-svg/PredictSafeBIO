@@ -1,18 +1,21 @@
-﻿"use client";
+"use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useId, useEffect } from "react";
 
 type Side = "above" | "below" | "right" | "left";
 
 export function HelpTip({
   tip,
-  side = "above"
+  side = "above",
 }: {
   tip: string;
   side?: Side;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
+  const uid = useId();
+  const tooltipId = "help-tip-" + uid.replace(/:/g, "");
+  const openAttr = open ? "true" : "false";
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -25,27 +28,31 @@ export function HelpTip({
   return (
     <span
       ref={ref}
-      className={`help-tip help-tip-${side}`}
+      className={"help-tip help-tip-" + side}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
-      onFocus={() => setOpen(true)}
-      onBlur={() => setOpen(false)}
     >
       <button
         type="button"
         className="help-tip-btn"
-        aria-label={`Help: ${tip}`}
-        tabIndex={0}
+        aria-label="Help"
+        aria-describedby={tooltipId}
+        aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
       >
         ?
       </button>
-      {open && (
-        <span className="help-tip-panel" role="tooltip">
-          {tip}
-          <span className="help-tip-arrow" aria-hidden="true" />
-        </span>
-      )}
+      <span
+        id={tooltipId}
+        role="tooltip"
+        className="help-tip-panel"
+        data-open={openAttr}
+      >
+        {tip}
+        <span className="help-tip-arrow" aria-hidden="true" />
+      </span>
     </span>
   );
 }

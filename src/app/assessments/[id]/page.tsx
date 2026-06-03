@@ -3,6 +3,9 @@ import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { updateAssessmentReviewAction } from "@/app/assessments/actions";
 import { getAssessmentDetail, getCompanyProfile } from "@/lib/supabase/data";
+import { listTeamMembers } from "@/lib/supabase/team-service";
+import { getProfileContext } from "@/lib/supabase/data-helpers";
+import { isAdminOrAbove } from "@/lib/role-permissions";
 import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import {
   buildAssessmentReportMarkdown,
@@ -40,12 +43,9 @@ export default async function AssessmentDetailPage({
     );
   }
 
+  const [context, teamMembers] = await Promise.all([getProfileContext(), listTeamMembers()]);
+  const canAssign = isAdminOrAbove(context ? { role: context.role } : null);
   const latestReviewEvent = getLatestReviewEvent(assessment.auditEvents);
-  const reportText = buildAssessmentReportMarkdown({
-    assessment,
-    companyName: company.companyName,
-    generatedAt: new Date().toISOString()
-  });
 
   return (
     <AppShell>
@@ -71,6 +71,14 @@ export default async function AssessmentDetailPage({
           <article className="profile-row">
             <span>Human review status</span>
             <strong>{getHumanReviewStatusLabel(assessment.humanReviewStatus)}</strong>
+          </article>
+          <article className="profile-row">
+            <span>Assigned reviewer</span>
+            <strong>{assessment.assignedReviewerName ?? <span className="muted">Unassigned</span>}</strong>
+          </article>
+          <article className="profile-row">
+            <span>Review due date</span>
+            <strong>{assessment.reviewDueDate ? new Date(assessment.reviewDueDate).toLocaleDateString() : <span className="muted">Not set</span>}</strong>
           </article>
         </section>
         <section className="panel">
@@ -113,6 +121,29 @@ export default async function AssessmentDetailPage({
               Reviewed at
               <input value={assessment.reviewedAt ?? "Not reviewed"} readOnly />
             </label>
+            {canAssign && (
+              <label>
+                Assign reviewer
+                <select name="assignedReviewerId" defaultValue={assessment.assignedReviewerId ?? ""}>
+                  <option value="">Unassigned</option>
+                  {teamMembers.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.fullName ?? member.id.slice(0, 8)} ({member.role})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {canAssign && (
+              <label>
+                Review due date
+                <input
+                  type="date"
+                  name="reviewDueDate"
+                  defaultValue={assessment.reviewDueDate ?? ""}
+                />
+              </label>
+            )}
           </div>
           <label className="wide-fields">
             Reviewer notes
@@ -126,17 +157,26 @@ export default async function AssessmentDetailPage({
         </section>
         <section className="panel inline-action-panel">
           <div>
-            <p className="section-label">Demo export</p>
+            <p className="section-label">Export report</p>
             <h2>Shareable BioRisk report</h2>
-            <p className="muted">Downloads a draft-only text report for demo review. It is not a release or approval record.</p>
+            <p className="muted">Draft only — for human review. Not a regulatory release or approval record.</p>
           </div>
-          <a
-            className="button-secondary"
-            download={`${assessment.workflow.replace(/[^a-zA-Z0-9._-]/g, "-")}-demo-report.txt`}
-            href={`data:text/markdown;charset=utf-8,${encodeURIComponent(reportText)}`}
-          >
-            Download report
-          </a>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <a
+              className="button-primary"
+              href={`/api/reports/assessment/${assessment.id}?format=pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Download PDF
+            </a>
+            <a
+              className="button-secondary"
+              href={`/api/reports/assessment/${assessment.id}?format=docx`}
+            >
+              Download DOCX
+            </a>
+          </div>
         </section>
         <section className="split-list wide">
           <div className="panel">
@@ -171,51 +211,46 @@ export default async function AssessmentDetailPage({
           <div className="panel">
             <h2>Signals</h2>
             <ul>
-              {assessment.signals.map((signal, index) => (
-                <li key={`${signal.type}-${index}`}>
-                  <strong>{signal.label}</strong>
-                  <span>{signal.type}</span>
+              {assessment.signals.map((signal, i) => (
+                <li key={i}>
+                  <strong>{signal.label ?? signal.type}</strong>
+                  {signal.evidence ? <span>{signal.evidence}</span> : null}
                 </li>
               ))}
             </ul>
           </div>
         </section>
         <section className="panel">
-          <h2>Snapshots</h2>
-          <div className="snapshot-grid">
-            <div>
-              <h3>Input</h3>
-              <pre>{JSON.stringify(assessment.input, null, 2)}</pre>
-            </div>
-            <div>
-              <h3>Output</h3>
-              <pre>{JSON.stringify(assessment.output, null, 2)}</pre>
-            </div>
+          <h2>Recommended actions</h2>
+          <div className="action-list">
+            {assessment.output.recommendedActions.map((action) => (
+              <article className="action-row" key={action.title}>
+                <div>
+                  <strong>{action.title}</strong>
+                  <span>{action.priority}</span>
+                </div>
+                <p>{action.reason}</p>
+              </article>
+            ))}
           </div>
         </section>
-        <section className="timeline">
-          {assessment.auditEvents.length === 0 ? (
-            <article className="timeline-row">
-              <span>No linked audit events found</span>
-              <p>Newly saved assessments write an audit event with the assessment ID in the payload.</p>
-            </article>
-          ) : null}
-          {assessment.auditEvents.map((event) => {
-            const target = getAuditEventTarget(event);
-            return (
-              <article className="timeline-row" key={event.id ?? event.summary}>
-                <span>{event.createdAt ?? "Pending timestamp"}</span>
-                <strong>{event.eventType}</strong>
-                <p>{event.summary}</p>
-                {target ? (
-                  <Link className="text-link" href={target.href}>
-                    {target.label}
-                  </Link>
-                ) : null}
-              </article>
-            );
-          })}
-        </section>
+        {assessment.auditEvents.length > 0 ? (
+          <section className="panel">
+            <h2>Audit trail</h2>
+            <div className="timeline">
+              {assessment.auditEvents.map((event, i) => (
+                <article className="timeline-row" key={i}>
+                  <span>{event.createdAt}</span>
+                  <strong>{event.eventType.replace(/_/g, " ")}</strong>
+                  <p>{event.summary}</p>
+                  {getAuditEventTarget(event) ? (
+                    <Link className="text-link" href={getAuditEventTarget(event)!}>View record</Link>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </div>
     </AppShell>
   );

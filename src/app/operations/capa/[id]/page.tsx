@@ -113,7 +113,7 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
                 {capa.sourceAssessmentId ? (
                   <Link href={`/assessments/${capa.sourceAssessmentId}`}>Linked assessment</Link>
                 ) : capa.sourceIncidentId ? (
-                  "Linked incident"
+                  <span>Linked incident</span>
                 ) : (
                   "Manual creation"
                 )}
@@ -282,6 +282,56 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
         {ctx?.organizationId && (
           <ComplianceAssistant orgId={ctx.organizationId} defaultContext="capa" />
         )}
+
+        {/* Report downloads */}
+        <section className="panel inline-action-panel">
+          <div>
+            <p className="section-label">Export report</p>
+            <h2>CAPA investigation report</h2>
+            <p className="muted">
+              {capa.sourceIncidentId
+                ? "Download a draft incident investigation report including this CAPA and its actions."
+                : capa.sourceAssessmentId
+                  ? "Download a draft risk assessment report linked to this CAPA."
+                  : "No linked source record available for export."}
+            </p>
+          </div>
+          {capa.sourceIncidentId ? (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <a
+                className="button-primary"
+                href={`/api/reports/incident/${capa.sourceIncidentId}?format=pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Download PDF
+              </a>
+              <a
+                className="button-secondary"
+                href={`/api/reports/incident/${capa.sourceIncidentId}?format=docx`}
+              >
+                Download DOCX
+              </a>
+            </div>
+          ) : capa.sourceAssessmentId ? (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <a
+                className="button-primary"
+                href={`/api/reports/assessment/${capa.sourceAssessmentId}?format=pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Download PDF
+              </a>
+              <a
+                className="button-secondary"
+                href={`/api/reports/assessment/${capa.sourceAssessmentId}?format=docx`}
+              >
+                Download DOCX
+              </a>
+            </div>
+          ) : null}
+        </section>
 
         <section className="panel inline-action-panel">
           <div>

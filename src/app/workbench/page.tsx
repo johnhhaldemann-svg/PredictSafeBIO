@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import { AppShell } from "@/components/AppShell";
 import { WorkbenchClient } from "@/components/WorkbenchClient";
+
+export const metadata: Metadata = { title: "Workbench – PredictSafeBIO" };
 import {
   getAuditReadinessConsoleSummary,
   getFoundationAdminAccessSummary,

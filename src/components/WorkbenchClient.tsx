@@ -317,6 +317,8 @@ export function WorkbenchClient({
 
   return (
     <div className="page-stack">
+      {/* Single page-level H1 for screen readers — visually hidden (WCAG 1.3.1) */}
+      <h1 className="sr-only">Workbench</h1>
       <EnterpriseKPIStrip commandSummary={commandSummary} assessment={assessment} />
       <EnterpriseWidgetRow commandSummary={commandSummary} assessment={assessment} foundationActions={foundationActions} />
       <EnterpriseHeatMapRow />
@@ -343,7 +345,7 @@ export function WorkbenchClient({
         <div className="command-hero">
           <div>
             <p className="section-label">PredictSafeBIO Command Center</p>
-            <h1 id="command-center-title">One platform for biotech safety, compliance, and biosafety operations</h1>
+            <h2 id="command-center-title">One platform for biotech safety, compliance, and biosafety operations</h2>
             <p>
               Category status, risk intelligence, action planning, audit readiness, and AI guardrails are gathered here before users move into
               deeper workflows.
@@ -743,7 +745,7 @@ export function WorkbenchClient({
         <div className="platform-map-heading">
           <div>
             <p className="section-label">PredictSafeBIO Intelligence Platform Architecture</p>
-            <h1 id="platform-map-title">AI-powered biotech safety, compliance, and biosafety operations platform</h1>
+            <h2 id="platform-map-title">AI-powered biotech safety, compliance, and biosafety operations platform</h2>
           </div>
           <span className="platform-promise">Connected. Intelligent. Compliant. Audit Ready.</span>
         </div>
@@ -791,7 +793,7 @@ export function WorkbenchClient({
         <div className="panel-heading">
           <div>
             <p className="section-label">BioRisk Engine</p>
-            <h1 id="intake-title">BioRisk Assessment</h1>
+            <h2 id="intake-title">BioRisk Assessment</h2>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {isAnalyzing && (

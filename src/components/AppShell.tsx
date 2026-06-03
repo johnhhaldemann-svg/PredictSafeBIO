@@ -32,6 +32,8 @@ export async function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="app-shell">
+      {/* ── Skip navigation ── */}
+      <a href="#main-content" className="skip-nav">Skip to main content</a>
       {/* ── Top bar ── */}
       <header className="top-nav" aria-label="Primary navigation">
         <Link href="/workbench" className="logo-area" aria-label="PredictSafeBIO platform">
