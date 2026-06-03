@@ -19,7 +19,8 @@ import {
   Wrench,
   Gauge,
   Settings,
-  Brain
+  Brain,
+  FlaskConical
 } from "lucide-react";
 
 type SubItem = { href: string; label: string; icon: React.ElementType; description: string };
@@ -74,11 +75,16 @@ const categories: Category[] = [
     href: "/operations",
     accent: "navy",
     subItems: [
+      { href: "/risk-command-center",          label: "Risk Command",     icon: Gauge,          description: "Live risk cell feed across all 10 EHS tools" },
       { href: "/operations",                  label: "Operations",       icon: Activity,       description: "Incidents, CAPA, and change impact" },
       { href: "/operations/capa",             label: "CAPA",             icon: AlertCircle,    description: "Corrective and preventive action workflow" },
       { href: "/inspections",                 label: "Inspections",      icon: Stethoscope,    description: "Audit and inspection management" },
       { href: "/training-matrix",             label: "Training Matrix",  icon: GraduationCap,  description: "Competency and training assignments" },
       { href: "/ergonomics/self-assessment",  label: "Ergonomics",       icon: Activity,       description: "Level 1 hazard and exposure screening" },
+      { href: "/chemical-inventory",          label: "Chemical & SDS",   icon: FlaskConical,   description: "Inventory, GHS data, expiry tracking, and SDS library" },
+      { href: "/waste-management",            label: "Waste Management", icon: Wrench,         description: "Container tracking, fill levels, and disposal coordination" },
+      { href: "/permits",                     label: "Work Permits",     icon: Lock,           description: "LOTO, hot work, confined space, and contractor permit control" },
+      { href: "/pesticide",                   label: "Pest & Disinfect", icon: ShieldCheck,    description: "Pesticide and disinfectant application log with deviation tracking" },
       { href: "/change-plan",                 label: "Change Plan",      icon: ClipboardList,  description: "Additions and capability gap roadmap" },
     ]
   },
@@ -91,7 +97,9 @@ const categories: Category[] = [
     subItems: [
       { href: "/admin/audit",        label: "Reports & Audit",  icon: BarChart3,   description: "Immutable audit log and exports" },
       { href: "/admin/ai-knowledge", label: "AI Knowledge",     icon: Brain,       description: "Guardrails and knowledge review" },
-      { href: "/admin/platform",     label: "Platform Admin",   icon: Settings,    description: "Roles, permissions, and integrations" },
+      { href: "/admin/billing",      label: "Billing",          icon: Wrench,      description: "Plans, subscriptions, and revenue overview" },
+      { href: "/admin/config",       label: "Platform Config",  icon: Settings,    description: "Feature flags, branding, and email templates" },
+      { href: "/admin/platform",     label: "Platform Admin",   icon: Lock,        description: "Roles, permissions, and integrations" },
     ]
   }
 ];

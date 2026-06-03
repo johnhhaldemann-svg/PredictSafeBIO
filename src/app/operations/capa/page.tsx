@@ -192,6 +192,37 @@ export default async function CapaListPage({ searchParams }: Props) {
                 </label>
               </div>
               <label>
+                Root cause (if known)
+                <textarea
+                  name="rootCause"
+                  rows={2}
+                  placeholder="e.g. Procedural gap — SOP did not specify hold time limits"
+                />
+              </label>
+              <div className="form-grid">
+                <label>
+                  Linked record type
+                  <select name="linkedRecordType" defaultValue="">
+                    <option value="">— None —</option>
+                    <option value="audit_findings">Audit Finding</option>
+                    <option value="waste_records">Waste Record</option>
+                    <option value="biosafety_risk_assessments">Biosafety Assessment</option>
+                    <option value="assessment_signals">Observation / Signal</option>
+                    <option value="chemical_inventory">Chemical Inventory</option>
+                    <option value="controlled_work_permits">Work Permit</option>
+                    <option value="pesticide_disinfectant_records">Pesticide Record</option>
+                  </select>
+                </label>
+                <label>
+                  Linked record ID
+                  <input
+                    name="linkedRecordId"
+                    type="text"
+                    placeholder="UUID of the source record (optional)"
+                  />
+                </label>
+              </div>
+              <label>
                 Initial corrective action (optional)
                 <input
                   name="initialAction"

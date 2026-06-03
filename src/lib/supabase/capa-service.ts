@@ -33,9 +33,18 @@ export type CapaRecord = {
   effectivenessCheckDue?: string | null;
   sourceIncidentId?: string | null;
   sourceAssessmentId?: string | null;
+  linkedRecordType?: string | null;
+  linkedRecordId?: string | null;
+  rootCause?: string | null;
+  capaFlag?: boolean;
+  recurrenceCount?: number;
+  verificationNote?: string | null;
+  archivedAt?: string | null;
   createdBy?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  // derived
+  isOverdue?: boolean;
   // joined fields
   actionCount?: number;
   openActionCount?: number;
@@ -323,6 +332,9 @@ export async function createCapaRecord(input: {
   effectivenessCheckDue?: string | null;
   sourceAssessmentId?: string | null;
   sourceIncidentId?: string | null;
+  linkedRecordType?: string | null;
+  linkedRecordId?: string | null;
+  rootCause?: string | null;
   initialAction?: string | null;
 }): Promise<CapaResult> {
   const context = await getProfileContext();
@@ -342,6 +354,9 @@ export async function createCapaRecord(input: {
       effectiveness_check_due: input.effectivenessCheckDue || null,
       source_assessment_id: input.sourceAssessmentId || null,
       source_incident_id: input.sourceIncidentId || null,
+      linked_record_type: input.linkedRecordType || null,
+      linked_record_id: input.linkedRecordId || null,
+      root_cause: input.rootCause || null,
       created_by: context.userId
     })
     .select("id")
@@ -350,6 +365,24 @@ export async function createCapaRecord(input: {
   if (error || !data) {
     return { ok: false, message: error?.message ?? "Could not create CAPA record." };
   }
+
+  // Write failure_cell to risk dashboard
+  await supabase.from("risk_cells").upsert({
+    organization_id: context.organizationId,
+    cell_type: "failure_cell",
+    label: `CAPA: ${input.title}`,
+    severity: "medium",
+    linked_record_type: "capa_records",
+    linked_record_id: data.id,
+    payload: {
+      root_cause: input.rootCause,
+      linked_record_type: input.linkedRecordType,
+      linked_record_id: input.linkedRecordId,
+      due_date: input.dueDate
+    },
+    status: "active",
+    created_by: context.userId
+  }, { onConflict: "linked_record_type,linked_record_id" });
 
   // Auto-create initial corrective action if provided
   if (input.initialAction?.trim()) {
@@ -411,6 +444,35 @@ export async function updateCapaStatus(input: {
     .eq("organization_id", context.organizationId);
 
   if (error) return { ok: false, message: error.message };
+
+  // Update risk cell based on new status
+  if (input.status === "closed") {
+    // Closed CAPA becomes an improvement_cell (resolved)
+    await supabase.from("risk_cells").update({
+      cell_type: "improvement_cell",
+      status: "resolved",
+      label: `CAPA closed: ${input.note ?? "Verified and closed"}`
+    })
+    .eq("linked_record_type", "capa_records")
+    .eq("linked_record_id", input.capaId);
+  } else if (input.status === "void") {
+    await supabase.from("risk_cells").update({ status: "resolved" })
+      .eq("linked_record_type", "capa_records")
+      .eq("linked_record_id", input.capaId);
+  } else {
+    // Escalate to high if overdue
+    const { data: rec } = await supabase
+      .from("capa_records")
+      .select("due_date")
+      .eq("id", input.capaId)
+      .single();
+    const overdue = rec?.due_date && new Date(rec.due_date) < new Date();
+    if (overdue) {
+      await supabase.from("risk_cells").update({ severity: "high" })
+        .eq("linked_record_type", "capa_records")
+        .eq("linked_record_id", input.capaId);
+    }
+  }
 
   await supabase.from("audit_events").insert({
     organization_id: context.organizationId,

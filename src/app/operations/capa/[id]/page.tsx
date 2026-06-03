@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
+import { getProfileContext } from "@/lib/supabase/data-helpers";
+import { ComplianceAssistant } from "@/components/ComplianceAssistant";
 import {
   capaStatusLabels,
   capaStatusOptions,
@@ -27,11 +29,12 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
   const sp = await searchParams;
 
-  const [capa, adminAccess] = await Promise.all([
+  const [capa, adminAccess, ctx] = await Promise.all([
     getCapaDetail(id).catch(() => null),
     getFoundationAdminAccessSummary().catch(() => ({
       configured: false, signedIn: false, isOwner: false, message: ""
-    }))
+    })),
+    getProfileContext().catch(() => null)
   ]);
 
   if (!capa) {
@@ -273,6 +276,11 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
               ))}
             </div>
           </section>
+        )}
+
+        {/* AI Compliance Assistant — CAPA context */}
+        {ctx?.organizationId && (
+          <ComplianceAssistant orgId={ctx.organizationId} defaultContext="capa" />
         )}
 
         <section className="panel inline-action-panel">
