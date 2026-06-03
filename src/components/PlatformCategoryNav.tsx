@@ -128,6 +128,7 @@ export function PlatformCategoryNav() {
 
   // Close on route change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOpenCategory(null);
   }, [pathname]);
 
