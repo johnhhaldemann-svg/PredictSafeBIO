@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, Beaker, CheckCircle2, ClipboardList, Gauge, Save, ShieldCheck, Sparkles } from "lucide-react";
+import { Activity, AlertCircle, AlertTriangle, Beaker, CheckCircle2, ClipboardList, Clock, FileText, Gauge, ListChecks, Save, ShieldCheck, Sparkles, TrendingUp, Zap } from "lucide-react";
 import { assessBioRisk } from "@/lib/bio-ai/engine";
 import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import type { BioAiInput, BioSignalType } from "@/lib/bio-ai/types";
@@ -16,6 +16,7 @@ import type {
   FoundationReviewActionSummary
 } from "@/lib/supabase/data";
 import { FoundationNotificationCenter } from "./FoundationNotificationCenter";
+import { HelpTip } from "./HelpTip";
 import { FoundationReviewActionsPanel } from "./FoundationReviewActionsPanel";
 import { StatusBadge } from "./StatusBadge";
 
@@ -241,6 +242,10 @@ export function WorkbenchClient({
 
   return (
     <div className="page-stack">
+      <EnterpriseKPIStrip commandSummary={commandSummary} assessment={assessment} />
+      <EnterpriseWidgetRow commandSummary={commandSummary} assessment={assessment} foundationActions={foundationActions} />
+      <EnterpriseHeatMapRow />
+
       <section className="command-center panel" aria-labelledby="command-center-title">
         <div className="command-center-lane-header command-summary-header">
           <div>
@@ -956,6 +961,388 @@ export function WorkbenchClient({
           <span>Built from local AI Engine artifacts in this workspace.</span>
         </div>
         </aside>
+      </div>
+    </div>
+  );
+}
+
+/* ── Enterprise KPI Strip ── */
+function EnterpriseKPIStrip({
+  commandSummary,
+  assessment
+}: {
+  commandSummary: CommandCenterSummary;
+  assessment: ReturnType<typeof assessBioRisk>;
+}) {
+  const scoreColor =
+    assessment.level === "critical" ? "#E24B4A" :
+    assessment.level === "high"     ? "#EF9F27" : "#639922";
+  const scoreBg =
+    assessment.level === "critical" ? "#FCEBEB" :
+    assessment.level === "high"     ? "#FAEEDA" : "#EAF3DE";
+
+  type KpiIcon = typeof ShieldCheck;
+  const kpis: Array<{
+    label: string;
+    tip: string;
+    value: string;
+    Icon: KpiIcon;
+    iconBg: string;
+    iconColor: string;
+    badge?: string;
+    badgeBg?: string;
+    badgeColor?: string;
+    trend: string;
+    trendDir: "up" | "dn" | "neutral";
+  }> = [
+    {
+      label: "BioRisk Score",
+      tip: "Composite risk score 0-100 from biosafety signals, training gaps, equipment status, and SOP coverage. Above 70 = Critical.",
+      value: String(assessment.score),
+      Icon: ShieldCheck,
+      iconBg: scoreBg,
+      iconColor: scoreColor,
+      badge: assessment.level,
+      badgeBg: scoreBg,
+      badgeColor: assessment.level === "critical" ? "#A32D2D" : assessment.level === "high" ? "#854F0B" : "#3B6D11",
+      trend: commandSummary.bioRiskTrend !== "not enough data" ? commandSummary.bioRiskTrend : "Monitoring",
+      trendDir: "neutral"
+    },
+    {
+      label: "Critical Risks",
+      tip: "Active risk signals scored Critical. These require immediate human review and a documented corrective action.",
+      value: String(commandSummary.criticalRiskCount),
+      Icon: AlertCircle,
+      iconBg: "#FAEEDA",
+      iconColor: "#EF9F27",
+      trend: "+1 vs last month",
+      trendDir: "up"
+    },
+    {
+      label: "Assessments",
+      tip: "Total BioRisk assessments saved in your workspace. Each is immutably logged with score, confidence, and human review status.",
+      value: String(commandSummary.assessmentCount),
+      Icon: ClipboardList,
+      iconBg: "#E6F1FB",
+      iconColor: "#185FA5",
+      trend: "No change",
+      trendDir: "neutral"
+    },
+    {
+      label: "Open Actions",
+      tip: "Foundation-generated tasks assigned to owners — CAPAs, document gaps, training gaps, and inspection findings not yet closed.",
+      value: String(commandSummary.openActionCount),
+      Icon: ListChecks,
+      iconBg: "#EEEDFE",
+      iconColor: "#534AB7",
+      trend: commandSummary.openActionTrend,
+      trendDir: "dn"
+    },
+    {
+      label: "Audit Readiness",
+      tip: "Percentage of required compliance evidence that is complete, current, and source-traced. 100% means every control is documented.",
+      value: `${commandSummary.readinessScore}%`,
+      Icon: CheckCircle2,
+      iconBg: "#EAF3DE",
+      iconColor: "#639922",
+      trend: commandSummary.readinessTrend.replace(/_/g, " "),
+      trendDir: "dn"
+    }
+  ];
+
+  return (
+    <div className="kpi-strip" aria-label="Key performance indicators">
+      {kpis.map((kpi) => (
+        <div className="kpi-card" key={kpi.label}>
+          <div className="kpi-icon" style={{ background: kpi.iconBg }}>
+            <kpi.Icon size={18} color={kpi.iconColor} aria-hidden="true" />
+          </div>
+          <div className="kpi-body">
+            <div className="kpi-label" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              {kpi.label}
+              <HelpTip tip={kpi.tip} side="above" />
+            </div>
+            <div className="kpi-row">
+              <span className="kpi-val" style={kpi.label === "BioRisk Score" ? { color: scoreColor } : undefined}>
+                {kpi.value}
+              </span>
+              {kpi.badge && kpi.badgeBg && kpi.badgeColor && (
+                <span className="kpi-badge" style={{ background: kpi.badgeBg, color: kpi.badgeColor }}>
+                  {kpi.badge}
+                </span>
+              )}
+            </div>
+            <div className={`kpi-trend${kpi.trendDir === "up" ? " up" : kpi.trendDir === "dn" ? " dn" : ""}`}>
+              {kpi.trend}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Enterprise Widget Row ── */
+function EnterpriseWidgetRow({
+  commandSummary,
+  assessment,
+  foundationActions
+}: {
+  commandSummary: CommandCenterSummary;
+  assessment: ReturnType<typeof assessBioRisk>;
+  foundationActions: FoundationReviewActionSummary[];
+}) {
+  const dashArray = 135;
+  const dashOffset = dashArray - (assessment.score / 100) * dashArray;
+  const scoreColor =
+    assessment.level === "critical" ? "#E24B4A" :
+    assessment.level === "high"     ? "#EF9F27" : "#639922";
+
+  return (
+    <div className="widget-row" aria-label="Dashboard widgets">
+      <div className="widget">
+        <div className="wh">
+          <span className="wh-left" style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+            Biosafety Risk Overview
+            <HelpTip tip="Gradient gauge showing your current BioRisk score. Top drivers are ranked by impact. Click View all to open the full assessment list." side="right" />
+          </span>
+          <Link href="/assessments" className="wh-more">View all</Link>
+        </div>
+        <div className="gauge-wrap">
+          <div style={{ flexShrink: 0, textAlign: "center" }}>
+            <svg width="110" height="70" viewBox="0 0 110 70" aria-hidden="true">
+              <defs>
+                <linearGradient id="rg1" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%"   stopColor="#639922" />
+                  <stop offset="40%"  stopColor="#EF9F27" />
+                  <stop offset="75%"  stopColor="#E24B4A" />
+                  <stop offset="100%" stopColor="#A32D2D" />
+                </linearGradient>
+              </defs>
+              <path d="M12 62 A43 43 0 0 1 98 62" fill="none" stroke="#F0F4F8" strokeWidth="12" strokeLinecap="round" />
+              <path d="M12 62 A43 43 0 0 1 98 62" fill="none" stroke="url(#rg1)" strokeWidth="12" strokeLinecap="round" strokeDasharray={dashArray} strokeDashoffset={dashOffset} />
+              <text x="55" y="56" textAnchor="middle" fontSize="20" fontWeight="500" fill={scoreColor}>{assessment.score}</text>
+              <text x="55" y="68" textAnchor="middle" fontSize="9" fill="#8FA8C0">BioRisk Score</text>
+              <text x="14" y="70" fontSize="8" fill="#8FA8C0">0</text>
+              <text x="88" y="70" fontSize="8" fill="#8FA8C0">100</text>
+            </svg>
+            <div style={{ fontSize: "12px", fontWeight: 500, color: scoreColor, marginTop: "2px" }}>
+              {assessment.level.charAt(0).toUpperCase() + assessment.level.slice(1)} Risk
+            </div>
+          </div>
+          <div className="gauge-right">
+            <h4>Top risk drivers</h4>
+            {assessment.topDrivers.slice(0, 5).map((driver) => {
+              const lvl = driver.impact ?? "high";
+              const cls = lvl === "critical" ? "rb-c" : lvl === "high" ? "rb-h" : lvl === "medium" ? "rb-m" : "rb-l";
+              return (
+                <div className="drv-row" key={driver.label}>
+                  <span className="drv-n">{driver.label}</span>
+                  <span className={`rbadge ${cls}`}>{lvl.charAt(0).toUpperCase() + lvl.slice(1)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <Link href="/assessments" className="view-link">View all risks</Link>
+      </div>
+
+      <div className="widget">
+        <div className="wh">
+          <span className="wh-left" style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+            Compliance Progress
+            <HelpTip tip="Percentage of evidence complete per compliance category. Green = strong, amber = gaps, red = critical gap requiring immediate action." side="right" />
+          </span>
+          <Link href="/foundation" className="wh-more">View all</Link>
+        </div>
+        {[
+          { label: "Biosafety",  pct: 85, color: "#1D9E75", Icon: ShieldCheck },
+          { label: "Documents",  pct: 55, color: "#378ADD", Icon: FileText },
+          { label: "Training",   pct: 40, color: "#EF9F27", Icon: Activity },
+          { label: "Evidence",   pct: 60, color: "#85B7EB", Icon: Zap },
+          { label: "CAPA",       pct: 33, color: "#E24B4A", Icon: ListChecks }
+        ].map((cat) => (
+          <div className="cat-item" key={cat.label}>
+            <div className="cat-icon" style={{ color: cat.color }}>
+              <cat.Icon size={14} aria-hidden="true" />
+            </div>
+            <div className="cat-body">
+              <div className="cat-top"><span>{cat.label}</span><strong>{cat.pct}%</strong></div>
+              <div className="cat-bar"><div className="cat-fill" style={{ width: `${cat.pct}%`, background: cat.color }} /></div>
+            </div>
+          </div>
+        ))}
+        <Link href="/foundation" className="view-link">View all categories</Link>
+      </div>
+
+      <div className="widget">
+        <div className="wh">
+          <span className="wh-left" style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+            Capability Health
+            <HelpTip tip="Traffic-light per capability. Strong = controls evidenced. Moderate = partial gaps. Weak = no evidence or critical gap found." side="right" />
+          </span>
+          <Link href="/foundation" className="wh-more">View all</Link>
+        </div>
+        {[
+          { name: "Biosafety controls",  dot: "#1D9E75", status: "Strong",   cls: "cap-s" },
+          { name: "Risk assessment",      dot: "#1D9E75", status: "Strong",   cls: "cap-s" },
+          { name: "Document control",     dot: "#EF9F27", status: "Moderate", cls: "cap-m" },
+          { name: "Training program",     dot: "#EF9F27", status: "Moderate", cls: "cap-m" },
+          { name: "Incident management",  dot: "#E24B4A", status: "Weak",     cls: "cap-w" },
+          { name: "CAPA effectiveness",   dot: "#E24B4A", status: "Weak",     cls: "cap-w" }
+        ].map((cap) => (
+          <div className="cap-row" key={cap.name}>
+            <div className="cap-left">
+              <div className="cap-dot" style={{ background: cap.dot }} />
+              <span className="cap-name">{cap.name}</span>
+            </div>
+            <span className={`cap-status ${cap.cls}`}>{cap.status}</span>
+          </div>
+        ))}
+        <Link href="/operations" className="view-link">View all capabilities</Link>
+      </div>
+
+      <div className="widget-side">
+        <div className="side-widget">
+          <div className="swh">
+            <span className="swh-l" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              Alerts
+              <HelpTip tip="Active risk alerts. Critical = immediate human review required. Warning = follow up within 48 hours." side="left" />
+            </span>
+            {commandSummary.criticalRiskCount > 0 && <div className="alert-cnt">{commandSummary.criticalRiskCount}</div>}
+          </div>
+          {commandSummary.recentCriticalSignals.length > 0 ? (
+            commandSummary.recentCriticalSignals.slice(0, 2).map((signal) => (
+              <div className="alert-item" key={signal}>
+                <div className="alert-head">
+                  <div className="alert-icon"><AlertCircle size={13} color="#A32D2D" aria-hidden="true" /></div>
+                  <span className="alert-title">Critical BioRisk Alert</span>
+                </div>
+                <div className="alert-body">{signal}<div className="alert-time">Recent</div></div>
+              </div>
+            ))
+          ) : (
+            <div className="alert-item">
+              <div className="alert-head warn">
+                <div className="alert-icon"><Clock size={13} color="#854F0B" aria-hidden="true" /></div>
+                <span className="alert-title warn">No active alerts</span>
+              </div>
+              <div className="alert-body">All signals within normal range.</div>
+            </div>
+          )}
+          <Link href="/assessments" className="view-all">View all alerts</Link>
+        </div>
+
+        <div className="side-widget">
+          <div className="swh">
+            <span className="swh-l" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              Recent Activity
+              <HelpTip tip="Latest workspace events — assessments saved, tasks updated, CAPAs created, and documents logged. All activity is immutably recorded." side="left" />
+            </span>
+          </div>
+          {foundationActions.slice(0, 3).map((action) => (
+            <div className="act-item" key={action.id}>
+              <div className="act-dot" />
+              <div className="act-txt">{action.title}<div className="act-sub">{action.sourceModule.replace(/_/g, " ")}</div></div>
+              <div className="act-tm">{action.status}</div>
+            </div>
+          ))}
+          {foundationActions.length === 0 && (
+            <div className="act-item">
+              <div className="act-dot" />
+              <div className="act-txt">Demo assessment run<div className="act-sub">BioRisk scoring engine</div></div>
+              <div className="act-tm">now</div>
+            </div>
+          )}
+          <Link href="/my-work" className="view-all">View all activity</Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Risk Heat Map + Quick Actions ── */
+const HEATMAP_CELLS: string[][] = [
+  ["h1","h2","h4","h5","h5"],
+  ["h1","h2","h3","h4","h4"],
+  ["h0","h1","h2","h3","h3"],
+  ["h0","h0","h1","h2","h2"],
+  ["h0","h0","h0","h1","h1"],
+];
+const HEATMAP_COUNTS: Array<Array<number|"">> = [
+  ["","",2,1,3],["","",1,2,1],["",1,2,"",""],
+  [1,"","","",""],[1,"","","",""],
+];
+const HEATMAP_ROWS = ["Very High","High","Medium","Low","V.Low"] as const;
+const HEATMAP_COLS = ["V.Low","Low","Med","High","V.High"] as const;
+
+function EnterpriseHeatMapRow() {
+  const quickActions = [
+    { label: "New assessment",  sub: "Run BioRisk scoring",   icon: "ti-shield",        bg: "#FCEBEB", color: "#A32D2D", href: "/workbench" },
+    { label: "Add document",    sub: "Register SOP or record", icon: "ti-file-plus",     bg: "#E6F1FB", color: "#185FA5", href: "/documents" },
+    { label: "Create CAPA",     sub: "Log corrective action",  icon: "ti-clipboard-list",bg: "#FAEEDA", color: "#854F0B", href: "/operations/capa" },
+    { label: "Invite member",   sub: "Add team access",        icon: "ti-user-plus",     bg: "#EAF3DE", color: "#3B6D11", href: "/account/team" },
+  ];
+  return (
+    <div className="heatmap-row">
+      <div className="widget">
+        <div className="wh">
+          <span className="wh-left" style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+            Risk heat map
+            <HelpTip tip="5x5 matrix: Likelihood (x) vs Impact (y). Dark red = Critical, orange = High, amber = Medium, green = Low. Numbers = risks in each cell." side="right" />
+          </span>
+          <Link href="/assessments" className="wh-more">View heat map</Link>
+        </div>
+        <div style={{ display: "flex", gap: "14px" }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: "9px", color: "#8FA8C0", marginBottom: "3px", textAlign: "center" }}>IMPACT</div>
+            <div className="hmap-grid">
+              {HEATMAP_ROWS.map((row, ri) => (
+                <React.Fragment key={row}>
+                  <div className="hlabel">{row}</div>
+                  {HEATMAP_COLS.map((_, ci) => (
+                    <div className={`hcell ${HEATMAP_CELLS[ri][ci]}`} key={`${ri}-${ci}`}>
+                      {HEATMAP_COUNTS[ri][ci] || ""}
+                    </div>
+                  ))}
+                </React.Fragment>
+              ))}
+            </div>
+            <div className="hcol-labels">
+              <div className="hcol-label" />
+              {HEATMAP_COLS.map((col) => <div className="hcol-label" key={col}>{col}</div>)}
+            </div>
+            <div style={{ fontSize: "8px", color: "#8FA8C0", textAlign: "left", marginTop: "2px", paddingLeft: "44px" }}>LIKELIHOOD</div>
+          </div>
+          <div className="hl-wrap">
+            {[{label:"Critical - 4",color:"#A32D2D"},{label:"High - 3",color:"#E24B4A"},{label:"Medium - 2",color:"#EF9F27"},{label:"Low - 1",color:"#C0DD97"}].map((item) => (
+              <div className="hl-item" key={item.label}>
+                <div className="hl-dot" style={{ background: item.color }} />
+                <span>{item.label}</span>
+              </div>
+            ))}
+            <div style={{ borderTop: "0.5px solid #D6E4F0", paddingTop: "6px", fontSize: "10px", fontWeight: 500, color: "#0D1B2A" }}>Total - 10</div>
+          </div>
+        </div>
+      </div>
+      <div className="widget">
+        <div className="wh">
+          <span className="wh-left" style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+            Quick actions
+            <HelpTip tip="Shortcuts to the most common workflows. All actions are logged to the immutable audit trail automatically." side="left" />
+          </span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "7px" }}>
+          {quickActions.map((action) => (
+            <Link href={action.href} className="quick-action-card" key={action.label}>
+              <div className="qa-icon" style={{ background: action.bg }}>
+                <i className={`ti ${action.icon}`} style={{ fontSize: "15px", color: action.color }} aria-hidden="true" />
+              </div>
+              <strong>{action.label}</strong>
+              <span>{action.sub}</span>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );
