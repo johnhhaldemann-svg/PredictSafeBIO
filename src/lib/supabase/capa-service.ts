@@ -382,7 +382,7 @@ export async function createCapaRecord(input: {
     },
     status: "active",
     created_by: context.userId
-  }, { onConflict: "linked_record_type,linked_record_id" });
+  }, { onConflict: "organization_id,linked_record_type,linked_record_id" });
 
   // Auto-create initial corrective action if provided
   if (input.initialAction?.trim()) {

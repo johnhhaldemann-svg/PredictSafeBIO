@@ -5902,3 +5902,48 @@ pre {
   background: rgba(255,255,255,0.5);
   line-height: 1.45;
 }
+
+/* ── Draft Assist Button ────────────────────────────────────────────────────── */
+.draft-assist-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.draft-assist-loading {
+  opacity: 0.75;
+  cursor: default;
+  animation: draft-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes draft-pulse {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 0.45; }
+}
+
+.draft-assist-done {
+  border-color: var(--green) !important;
+  color: var(--green-dk) !important;
+  background: var(--green-bg) !important;
+}
+
+.draft-assist-error-msg {
+  font-size: 11px;
+  color: var(--red-dk);
+  background: var(--red-bg);
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
+.draft-assist-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.draft-assist-label > label {
+  margin-bottom: 0;
+}

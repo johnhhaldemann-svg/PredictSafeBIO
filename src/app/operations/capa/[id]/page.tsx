@@ -1,24 +1,12 @@
 import Link from "next/link";
-import {
-  CheckCircle2,
-  ClipboardList,
-  Plus,
-  ShieldCheck
-} from "lucide-react";
+import { CheckCircle2, ClipboardList, Plus, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
 import { getProfileContext } from "@/lib/supabase/data-helpers";
 import { ComplianceAssistant } from "@/components/ComplianceAssistant";
-import {
-  capaStatusLabels,
-  capaStatusOptions,
-  getCapaDetail
-} from "@/lib/supabase/capa-service";
-import {
-  addCapaActionAction,
-  updateCapaActionStatusAction,
-  updateCapaStatusAction
-} from "../actions";
+import { DraftAssistButton } from "@/components/DraftAssistButton";
+import { capaStatusLabels, capaStatusOptions, getCapaDetail } from "@/lib/supabase/capa-service";
+import { addCapaActionAction, updateCapaActionStatusAction, updateCapaStatusAction } from "../actions";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -31,10 +19,8 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
 
   const [capa, adminAccess, ctx] = await Promise.all([
     getCapaDetail(id).catch(() => null),
-    getFoundationAdminAccessSummary().catch(() => ({
-      configured: false, signedIn: false, isOwner: false, message: ""
-    })),
-    getProfileContext().catch(() => null)
+    getFoundationAdminAccessSummary().catch(() => ({ configured: false, signedIn: false, isOwner: false, message: "" })),
+    getProfileContext().catch(() => null),
   ]);
 
   if (!capa) {
@@ -51,21 +37,23 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
     );
   }
 
-  const overdue =
-    capa.dueDate &&
-    new Date(capa.dueDate) < new Date() &&
-    capa.status !== "closed" &&
-    capa.status !== "void";
-
+  const overdue = capa.dueDate && new Date(capa.dueDate) < new Date() && capa.status !== "closed" && capa.status !== "void";
   const isActive = capa.status !== "closed" && capa.status !== "void";
+
+  const draftContext = {
+    capaTitle: capa.title,
+    capaStatus: capa.status,
+    sourceType: capa.sourceIncidentId ? "incident" : capa.sourceAssessmentId ? "assessment" : "manual",
+    sourceTitle: capa.title,
+    riskLevel: "see linked record",
+    criticalGaps: "",
+  };
 
   return (
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">
-            <Link href="/operations/capa">CAPA Register</Link> / Detail
-          </p>
+          <p className="section-label"><Link href="/operations/capa">CAPA Register</Link> / Detail</p>
           <h1>{capa.title}</h1>
         </header>
 
@@ -91,22 +79,13 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
             <ClipboardList size={22} />
           </div>
           <div className="verification-status-grid">
-            <article>
-              <span>Status</span>
-              <strong>{capaStatusLabels[capa.status]}</strong>
-            </article>
-            <article>
-              <span>Owner role</span>
-              <strong>{capa.ownerRole ?? "Not assigned"}</strong>
-            </article>
+            <article><span>Status</span><strong>{capaStatusLabels[capa.status]}</strong></article>
+            <article><span>Owner role</span><strong>{capa.ownerRole ?? "Not assigned"}</strong></article>
             <article>
               <span>Due date</span>
               <strong className={overdue ? "text-danger" : ""}>{capa.dueDate ? new Date(capa.dueDate).toLocaleDateString() : "Not set"}</strong>
             </article>
-            <article>
-              <span>Effectiveness check</span>
-              <strong>{capa.effectivenessCheckDue ? new Date(capa.effectivenessCheckDue).toLocaleDateString() : "Not set"}</strong>
-            </article>
+            <article><span>Effectiveness check</span><strong>{capa.effectivenessCheckDue ? new Date(capa.effectivenessCheckDue).toLocaleDateString() : "Not set"}</strong></article>
             <article>
               <span>Source</span>
               <strong>
@@ -119,10 +98,7 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
                 )}
               </strong>
             </article>
-            <article>
-              <span>Created</span>
-              <strong>{capa.createdAt ? new Date(capa.createdAt).toLocaleDateString() : "—"}</strong>
-            </article>
+            <article><span>Created</span><strong>{capa.createdAt ? new Date(capa.createdAt).toLocaleDateString() : "—"}</strong></article>
           </div>
         </section>
 
@@ -148,8 +124,11 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
                   </select>
                 </label>
                 <label>
-                  Note (optional)
-                  <input name="note" type="text" placeholder="e.g. Root cause confirmed, moving to in-progress" />
+                  <span className="draft-assist-label">
+                    <span>Note (optional)</span>
+                    <DraftAssistButton type="capa_action" targetId="capa-status-note" label="Draft with AI" context={draftContext} />
+                  </span>
+                  <input id="capa-status-note" name="note" type="text" placeholder="e.g. Root cause confirmed, moving to in-progress" />
                 </label>
               </div>
               <button className="button-primary" type="submit">Update status</button>
@@ -215,8 +194,11 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
                 <input type="hidden" name="capaId" value={capa.id} />
                 <div className="form-grid">
                   <label>
-                    Action title
-                    <input name="title" type="text" placeholder="e.g. Retrain staff on aseptic technique" required />
+                    <span className="draft-assist-label">
+                      <span>Action title</span>
+                      <DraftAssistButton type="capa_action" targetId="capa-action-title" label="Draft with AI" context={draftContext} />
+                    </span>
+                    <input id="capa-action-title" name="title" type="text" placeholder="e.g. Retrain staff on aseptic technique" required />
                   </label>
                   <label>
                     Type
@@ -278,7 +260,7 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
           </section>
         )}
 
-        {/* AI Compliance Assistant — CAPA context */}
+        {/* AI Compliance Assistant */}
         {ctx?.organizationId && (
           <ComplianceAssistant orgId={ctx.organizationId} defaultContext="capa" />
         )}
@@ -298,41 +280,18 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
           </div>
           {capa.sourceIncidentId ? (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <a
-                className="button-primary"
-                href={`/api/reports/incident/${capa.sourceIncidentId}?format=pdf`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Download PDF
-              </a>
-              <a
-                className="button-secondary"
-                href={`/api/reports/incident/${capa.sourceIncidentId}?format=docx`}
-              >
-                Download DOCX
-              </a>
+              <a className="button-primary" href={`/api/reports/incident/${capa.sourceIncidentId}?format=pdf`} target="_blank" rel="noopener noreferrer">Download PDF</a>
+              <a className="button-secondary" href={`/api/reports/incident/${capa.sourceIncidentId}?format=docx`}>Download DOCX</a>
             </div>
           ) : capa.sourceAssessmentId ? (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <a
-                className="button-primary"
-                href={`/api/reports/assessment/${capa.sourceAssessmentId}?format=pdf`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Download PDF
-              </a>
-              <a
-                className="button-secondary"
-                href={`/api/reports/assessment/${capa.sourceAssessmentId}?format=docx`}
-              >
-                Download DOCX
-              </a>
+              <a className="button-primary" href={`/api/reports/assessment/${capa.sourceAssessmentId}?format=pdf`} target="_blank" rel="noopener noreferrer">Download PDF</a>
+              <a className="button-secondary" href={`/api/reports/assessment/${capa.sourceAssessmentId}?format=docx`}>Download DOCX</a>
             </div>
           ) : null}
         </section>
 
+        {/* Guardrail */}
         <section className="panel inline-action-panel">
           <div>
             <p className="section-label">AI Guardrail</p>

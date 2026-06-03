@@ -308,25 +308,25 @@ export async function createChemical(input: CreateChemicalInput): Promise<Chemic
 
     if (error) return { ok: false, message: error.message };
 
-    // Write risk cell — SDS missing on create is a failure_cell
-    const severity = !input.hazardClass ? "low" :
-      ["toxic", "explosive", "corrosive"].includes(input.hazardClass) ? "high" : "medium";
-
-    await supabase.from("risk_cells").upsert({
-      organization_id: ctx.organizationId,
-      cell_type: "failure_cell",
-      label: `Chemical: ${input.chemicalName} — SDS not yet uploaded`,
-      severity,
-      linked_record_type: "chemical_inventory",
-      linked_record_id: data.id,
-      payload: {
-        chemical_name: input.chemicalName,
-        hazard_class: input.hazardClass,
-        storage_location: input.storageLocation
+    // Score via bio-ai engine — replaces hardcoded severity with AI-assessed risk level.
+    // Covers SDS missing, expiration, hazard class, restricted status, PPE gaps.
+    void scoreChemicalRecord({
+      chemical: {
+        id: data.id,
+        chemicalName: input.chemicalName,
+        hazardClass: input.hazardClass ?? null,
+        storageLocation: input.storageLocation ?? null,
+        ppeRequired: input.ppeRequired ?? null,
+        spillResponseNotes: input.spillResponseNotes ?? null,
+        restricted: input.restricted ?? false,
+        // New chemicals always have no SDS yet — that's the primary control gap
+        sdsPresent: false,
+        expired: false,
+        expiringSoon: false,
       },
-      status: "active",
-      created_by: ctx.userId
-    }, { onConflict: "linked_record_type,linked_record_id" });
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+    });
 
     return { ok: true, message: "Chemical added. Upload SDS to resolve the open risk cell.", id: data.id };
   } catch (e) {

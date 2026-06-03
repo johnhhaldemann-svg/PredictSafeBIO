@@ -8,12 +8,12 @@ import { getProfileContext } from "@/lib/supabase/data-helpers";
 import { isAdminOrAbove } from "@/lib/role-permissions";
 import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import {
-  buildAssessmentReportMarkdown,
   getAuditEventTarget,
   getHumanReviewStatusLabel,
   getLatestReviewEvent,
   humanReviewStatusOptions
 } from "@/lib/review-workflow";
+import { DraftAssistButton } from "@/components/DraftAssistButton";
 
 export default async function AssessmentDetailPage({
   params,
@@ -84,9 +84,7 @@ export default async function AssessmentDetailPage({
         <section className="panel">
           <h2>Latest review event</h2>
           {latestReviewEvent ? (
-            <p>
-              {latestReviewEvent.createdAt ?? "Pending timestamp"} - {latestReviewEvent.summary}
-            </p>
+            <p>{latestReviewEvent.createdAt ?? "Pending timestamp"} - {latestReviewEvent.summary}</p>
           ) : (
             <p className="muted">No review-status audit event has been recorded yet.</p>
           )}
@@ -99,9 +97,7 @@ export default async function AssessmentDetailPage({
               <h2>Review status and notes</h2>
               <p className="muted">Records reviewer traceability only. This does not approve, release, validate, or make regulatory claims.</p>
             </div>
-            <button className="button-primary" type="submit">
-              Save review
-            </button>
+            <button className="button-primary" type="submit">Save review</button>
           </div>
           <div className="form-grid">
             <label>
@@ -111,9 +107,7 @@ export default async function AssessmentDetailPage({
                 defaultValue={assessment.humanReviewStatus === "routine_monitoring" ? "reviewed_monitoring" : assessment.humanReviewStatus}
               >
                 {humanReviewStatusOptions.map((status) => (
-                  <option value={status} key={status}>
-                    {getHumanReviewStatusLabel(status)}
-                  </option>
+                  <option value={status} key={status}>{getHumanReviewStatusLabel(status)}</option>
                 ))}
               </select>
             </label>
@@ -137,17 +131,30 @@ export default async function AssessmentDetailPage({
             {canAssign && (
               <label>
                 Review due date
-                <input
-                  type="date"
-                  name="reviewDueDate"
-                  defaultValue={assessment.reviewDueDate ?? ""}
-                />
+                <input type="date" name="reviewDueDate" defaultValue={assessment.reviewDueDate ?? ""} />
               </label>
             )}
           </div>
           <label className="wide-fields">
-            Reviewer notes
-            <textarea name="reviewerNotes" defaultValue={assessment.reviewerNotes ?? ""} rows={4} />
+            <span className="draft-assist-label">
+              <span>Reviewer notes</span>
+              <DraftAssistButton
+                type="reviewer_notes"
+                targetId="reviewer-notes"
+                label="Draft with AI"
+                context={{
+                  workflow: assessment.workflow,
+                  area: assessment.area,
+                  riskLevel: assessment.level,
+                  score: String(assessment.score),
+                  confidence: assessment.confidence,
+                  topDrivers: assessment.output.topDrivers.map((d: any) => d.label).join(", "),
+                  criticalGaps: assessment.output.criticalControlGaps.join("; "),
+                  missingInformation: assessment.output.missingInformation.join("; "),
+                }}
+              />
+            </span>
+            <textarea id="reviewer-notes" name="reviewerNotes" defaultValue={assessment.reviewerNotes ?? ""} rows={4} />
           </label>
         </form>
         <section className="panel">
@@ -162,18 +169,10 @@ export default async function AssessmentDetailPage({
             <p className="muted">Draft only — for human review. Not a regulatory release or approval record.</p>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <a
-              className="button-primary"
-              href={`/api/reports/assessment/${assessment.id}?format=pdf`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a className="button-primary" href={`/api/reports/assessment/${assessment.id}?format=pdf`} target="_blank" rel="noopener noreferrer">
               Download PDF
             </a>
-            <a
-              className="button-secondary"
-              href={`/api/reports/assessment/${assessment.id}?format=docx`}
-            >
+            <a className="button-secondary" href={`/api/reports/assessment/${assessment.id}?format=docx`}>
               Download DOCX
             </a>
           </div>
@@ -182,7 +181,7 @@ export default async function AssessmentDetailPage({
           <div className="panel">
             <h2>Top drivers</h2>
             <ul>
-              {assessment.output.topDrivers.map((driver) => (
+              {assessment.output.topDrivers.map((driver: any) => (
                 <li key={driver.label}>
                   <strong>{driver.label}</strong>
                   <span>{driver.explanation}</span>
@@ -193,7 +192,7 @@ export default async function AssessmentDetailPage({
           <div className="panel">
             <h2>Critical gaps</h2>
             <ul>
-              {assessment.output.criticalControlGaps.map((gap) => (
+              {assessment.output.criticalControlGaps.map((gap: string) => (
                 <li key={gap}>{gap}</li>
               ))}
             </ul>
@@ -203,7 +202,7 @@ export default async function AssessmentDetailPage({
           <div className="panel">
             <h2>Missing information</h2>
             <ul>
-              {assessment.output.missingInformation.map((item) => (
+              {assessment.output.missingInformation.map((item: string) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
@@ -211,7 +210,7 @@ export default async function AssessmentDetailPage({
           <div className="panel">
             <h2>Signals</h2>
             <ul>
-              {assessment.signals.map((signal, i) => (
+              {assessment.signals.map((signal: any, i: number) => (
                 <li key={i}>
                   <strong>{signal.label ?? signal.type}</strong>
                   {signal.evidence ? <span>{signal.evidence}</span> : null}
@@ -223,7 +222,7 @@ export default async function AssessmentDetailPage({
         <section className="panel">
           <h2>Recommended actions</h2>
           <div className="action-list">
-            {assessment.output.recommendedActions.map((action) => (
+            {assessment.output.recommendedActions.map((action: any) => (
               <article className="action-row" key={action.title}>
                 <div>
                   <strong>{action.title}</strong>
@@ -238,7 +237,7 @@ export default async function AssessmentDetailPage({
           <section className="panel">
             <h2>Audit trail</h2>
             <div className="timeline">
-              {assessment.auditEvents.map((event, i) => (
+              {assessment.auditEvents.map((event: any, i: number) => (
                 <article className="timeline-row" key={i}>
                   <span>{event.createdAt}</span>
                   <strong>{event.eventType.replace(/_/g, " ")}</strong>
