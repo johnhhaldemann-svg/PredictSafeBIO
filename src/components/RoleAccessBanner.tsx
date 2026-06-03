@@ -15,10 +15,14 @@ type Props = {
   allowedMessage?: string;
 };
 
-const roleOrder: WorkspaceRole[] = ["member", "owner", "superadmin"];
+const roleOrder: WorkspaceRole[] = ["patient", "provider", "admin", "superadmin"];
 
 function meetsRequirement(current: string | null | undefined, required: WorkspaceRole): boolean {
-  const cur = (current === "superadmin" ? "superadmin" : current === "owner" ? "owner" : "member") as WorkspaceRole;
+  let cur: WorkspaceRole;
+  if (current === "superadmin") cur = "superadmin";
+  else if (current === "admin" || current === "owner" || current === "company_admin") cur = "admin";
+  else if (current === "provider" || current === "project_admin" || current === "safety_manager") cur = "provider";
+  else cur = "patient";
   return roleOrder.indexOf(cur) >= roleOrder.indexOf(required);
 }
 
@@ -50,7 +54,7 @@ export function RoleAccessBanner({ currentRole, requiredRole, blockedMessage, al
         {" — "}
         {blockedMessage ?? `This action requires ${requiredLabel} access.`}
         <span className="muted" style={{ marginLeft: "0.5rem", fontSize: "0.85em" }}>
-          Contact your workspace owner to have your role upgraded.
+          Contact your workspace admin to have your role upgraded.
         </span>
       </div>
     </div>
