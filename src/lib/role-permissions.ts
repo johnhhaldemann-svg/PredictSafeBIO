@@ -1,16 +1,29 @@
 // ---------------------------------------------------------------------------
 // Role-based access control for PredictSafeBIO
 //
-// Three tiers:
-//   superadmin  – Platform operator (PredictSafeBIO staff). Cross-org access,
-//                 platform management. DB role value: "superadmin"
-//   owner       – Organization owner. Full access within their org, team mgmt,
-//                 approvals, reports, AI knowledge review. DB value: "owner"
-//   member      – Standard team member. Screenings, view programs, submit
-//                 inspections, view their own work. DB value: "member"
+// Phase 1 healthcare role tiers (tier number):
+//   3 — superadmin  Platform operator (PredictSafeBIO staff). Cross-org access,
+//                   platform management, MFA required. DB value: "superadmin"
+//   2 — admin       Org admin. Manages users, roles, settings, billing.
+//                   Maps to: "admin" | "owner" | "company_admin"
+//   1 — provider    Healthcare provider. Creates/reviews patient records,
+//                   runs assessments. DB value: "provider"
+//   0 — patient     Patient / study participant. View own records only.
+//                   Maps to: "patient" | "member" | "worker"
+//
+// Legacy roles (kept for backward compatibility):
+//   owner, company_admin, developer, project_admin, safety_manager, foreman,
+//   worker, client_reviewer, auditor, read_only_viewer, member
 // ---------------------------------------------------------------------------
 
-export type WorkspaceRole = "superadmin" | "owner" | "member";
+export type WorkspaceRole = "superadmin" | "owner" | "admin" | "provider" | "patient" | "member";
+
+/** All role strings accepted in the DB profiles.role column. */
+export type DbRole =
+  | "superadmin"
+  | "admin" | "owner" | "company_admin" | "developer"
+  | "provider" | "project_admin" | "safety_manager" | "auditor"
+  | "patient" | "foreman" | "worker" | "client_reviewer" | "read_only_viewer" | "member";
 
 export type WorkspaceAccessInput = {
   signedIn?: boolean;
@@ -22,31 +35,71 @@ export type WorkspaceAccessInput = {
 
 // ── Role normalization ────────────────────────────────────────────────────────
 
+/** Map any DB role string to the canonical 4-tier WorkspaceRole. */
 export function normalizeWorkspaceRole(role: string | null | undefined): WorkspaceRole {
   if (role === "superadmin") return "superadmin";
+  // owner tier (workspace owner — manages org settings, billing, users)
   if (role === "owner") return "owner";
+  // admin tier (org-level admin access)
+  if (role === "admin" || role === "company_admin" || role === "developer") return "admin";
+  // provider tier
+  if (
+    role === "provider" ||
+    role === "project_admin" ||
+    role === "safety_manager" ||
+    role === "auditor" ||
+    role === "foreman"
+  ) return "provider";
+  // member / base tier
+  if (role === "member" || role === "patient" || role === "worker" || role === "client_reviewer" || role === "read_only_viewer") return "member";
   return "member";
 }
 
-export function getRoleTier(role: string | null | undefined): 0 | 1 | 2 {
+/** 0 = member, 1 = provider, 2 = admin/owner, 3 = superadmin */
+export function getRoleTier(role: string | null | undefined): 0 | 1 | 2 | 3 {
   const r = normalizeWorkspaceRole(role);
-  if (r === "superadmin") return 2;
-  if (r === "owner") return 1;
+  if (r === "superadmin") return 3;
+  if (r === "admin" || r === "owner") return 2;
+  if (r === "provider") return 1;
   return 0;
 }
 
 export function getRoleLabel(role: string | null | undefined): string {
   const r = normalizeWorkspaceRole(role);
-  if (r === "superadmin") return "Platform Admin";
-  if (r === "owner") return "Owner";
-  return "Team Member";
+  if (r === "superadmin") return "Superadmin";
+  if (r === "admin") return "Admin";
+  if (r === "provider") return "Provider";
+  return "Patient";
+}
+
+/** Human-readable label for a raw DB role string (preserves specificity). */
+export function getDbRoleLabel(role: string | null | undefined): string {
+  const map: Record<string, string> = {
+    superadmin: "Superadmin",
+    admin: "Admin",
+    owner: "Admin (Owner)",
+    company_admin: "Admin (Company)",
+    developer: "Developer",
+    provider: "Provider",
+    project_admin: "Project Admin",
+    safety_manager: "Safety Manager",
+    auditor: "Auditor",
+    foreman: "Foreman",
+    patient: "Patient",
+    worker: "Worker",
+    client_reviewer: "Client Reviewer",
+    read_only_viewer: "Read-only Viewer",
+    member: "Member",
+  };
+  return map[role ?? ""] ?? "Member";
 }
 
 export function getRoleBadgeClass(role: string | null | undefined): string {
   const r = normalizeWorkspaceRole(role);
   if (r === "superadmin") return "status-critical";
-  if (r === "owner") return "status-current";
-  return "status-needs-review";
+  if (r === "admin") return "status-current";
+  if (r === "provider") return "status-needs-review";
+  return "status-unknown";
 }
 
 // ── Base access checks ────────────────────────────────────────────────────────
@@ -61,13 +114,32 @@ export function isSuperAdmin(access: WorkspaceAccessInput | null | undefined): b
   return hasWorkspaceAccess(access) && normalizeWorkspaceRole(access?.role) === "superadmin";
 }
 
-export function isOwnerOrAbove(access: WorkspaceAccessInput | null | undefined): boolean {
+export function isAdminOrAbove(access: WorkspaceAccessInput | null | undefined): boolean {
+  return hasWorkspaceAccess(access) && getRoleTier(access?.role) >= 2;
+}
+
+export function isProviderOrAbove(access: WorkspaceAccessInput | null | undefined): boolean {
   return hasWorkspaceAccess(access) && getRoleTier(access?.role) >= 1;
 }
 
-/** @deprecated use isOwnerOrAbove */
+/** @deprecated use isAdminOrAbove */
+export function isOwnerOrAbove(access: WorkspaceAccessInput | null | undefined): boolean {
+  return isAdminOrAbove(access);
+}
+
+/** @deprecated use isAdminOrAbove */
 export function canManageWorkspace(access: WorkspaceAccessInput | null | undefined): boolean {
-  return isOwnerOrAbove(access);
+  return isAdminOrAbove(access);
+}
+
+/** User management — superadmin sees all; admin sees their org. */
+export function canManageUsers(access: WorkspaceAccessInput | null | undefined): boolean {
+  return hasWorkspaceAccess(access) && getRoleTier(access?.role) >= 2;
+}
+
+/** Patient record access — provider tier and above. */
+export function canAccessPatientRecords(access: WorkspaceAccessInput | null | undefined): boolean {
+  return isProviderOrAbove(access);
 }
 
 // ── Feature-level permission functions ───────────────────────────────────────
@@ -141,36 +213,45 @@ export function canUpdateAssignedWorkspaceTask(
   assignedTo: string | null | undefined
 ): boolean {
   if (!hasWorkspaceAccess(access)) return false;
-  if (isOwnerOrAbove(access)) return true;
+  if (isAdminOrAbove(access)) return true;
   return Boolean(access?.userId && assignedTo && access.userId === assignedTo);
 }
 
 export function canEditWorkspaceTaskGovernance(access: WorkspaceAccessInput | null | undefined): boolean {
-  return isOwnerOrAbove(access);
+  return isAdminOrAbove(access);
 }
 
-export function getWorkspaceTaskActorRole(access: WorkspaceAccessInput | null | undefined): "owner" | "assigned_member" {
-  return isOwnerOrAbove(access) ? "owner" : "assigned_member";
+export function getWorkspaceTaskActorRole(access: WorkspaceAccessInput | null | undefined): 'owner' | 'assigned_member' {
+  return isAdminOrAbove(access) ? 'owner' : 'assigned_member';
 }
 
-// ── Platform-level checks (for admin pages) ───────────────────────────────────
+// -- Platform-level checks (for admin pages) -----------------------------------
 
 export function isAdminRole(role: string | null | undefined): boolean {
-  return getRoleTier(role) >= 1;
+  return getRoleTier(role) >= 2;
 }
 
-// ── Nav tier ─────────────────────────────────────────────────────────────────
+// -- Nav tier ------------------------------------------------------------------
 
-export type NavTier = "member" | "owner" | "superadmin";
+export type NavTier = 'patient' | 'provider' | 'admin' | 'superadmin';
 
 export function getNavTier(role: string | null | undefined): NavTier {
   const r = normalizeWorkspaceRole(role);
-  if (r === "superadmin") return "superadmin";
-  if (r === "owner") return "owner";
-  return "member";
+  if (r === 'superadmin') return 'superadmin';
+  if (r === 'admin') return 'admin';
+  if (r === 'provider') return 'provider';
+  return 'patient';
 }
 
-// ── Access summary for UI display ─────────────────────────────────────────────
+/** Selectable roles for admin user-management dropdowns. */
+export const ASSIGNABLE_ROLES: Array<{ value: string; label: string }> = [
+  { value: 'patient',    label: 'Patient' },
+  { value: 'provider',  label: 'Provider' },
+  { value: 'admin',     label: 'Admin' },
+  { value: 'superadmin', label: 'Superadmin' },
+];
+
+// -- Access summary for UI display ---------------------------------------------
 
 export type RoleCapabilities = {
   role: WorkspaceRole;
@@ -186,6 +267,8 @@ export type RoleCapabilities = {
   canConductLevel2: boolean;
   canReviewAiKnowledge: boolean;
   canViewPlatform: boolean;
+  canManageUsers: boolean;
+  canAccessPatientRecords: boolean;
 };
 
 export function getRoleCapabilities(access: WorkspaceAccessInput | null | undefined): RoleCapabilities {
@@ -203,5 +286,7 @@ export function getRoleCapabilities(access: WorkspaceAccessInput | null | undefi
     canConductLevel2: canConductLevel2(access),
     canReviewAiKnowledge: canReviewAiKnowledge(access),
     canViewPlatform: canViewPlatform(access),
+    canManageUsers: canManageUsers(access),
+    canAccessPatientRecords: canAccessPatientRecords(access),
   };
 }

@@ -66,7 +66,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
         <p className="auth-copy">
           {isJoiningAsInvitee
             ? "You were invited to join an existing workspace. Complete your profile to get started."
-            : "You are setting up PredictSafeBIO for your organization. As the owner you will have full access and can invite team members."}
+            : "You are setting up PredictSafeBIO for your organization. Run biosafety assessments, manage compliance, and track HSE operations. As the owner you will have full access and can invite team members."}
         </p>
 
         {/* Role capabilities overview */}

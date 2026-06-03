@@ -74,10 +74,12 @@ const categories: Category[] = [
     href: "/operations",
     accent: "navy",
     subItems: [
-      { href: "/operations",        label: "Operations",       icon: Activity,       description: "Incidents, CAPA, and change impact" },
-      { href: "/operations/capa",   label: "CAPA",             icon: AlertCircle,    description: "Corrective and preventive action workflow" },
-      { href: "/inspections",       label: "Inspections",      icon: Stethoscope,    description: "Audit and inspection management" },
-      { href: "/training-matrix",   label: "Training Matrix",  icon: GraduationCap,  description: "Competency and training assignments" },
+      { href: "/operations",                  label: "Operations",       icon: Activity,       description: "Incidents, CAPA, and change impact" },
+      { href: "/operations/capa",             label: "CAPA",             icon: AlertCircle,    description: "Corrective and preventive action workflow" },
+      { href: "/inspections",                 label: "Inspections",      icon: Stethoscope,    description: "Audit and inspection management" },
+      { href: "/training-matrix",             label: "Training Matrix",  icon: GraduationCap,  description: "Competency and training assignments" },
+      { href: "/ergonomics/self-assessment",  label: "Ergonomics",       icon: Activity,       description: "Level 1 hazard and exposure screening" },
+      { href: "/change-plan",                 label: "Change Plan",      icon: ClipboardList,  description: "Additions and capability gap roadmap" },
     ]
   },
   {

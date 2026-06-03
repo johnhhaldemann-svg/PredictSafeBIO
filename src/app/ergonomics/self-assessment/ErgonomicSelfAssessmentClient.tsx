@@ -305,6 +305,7 @@ export function ErgonomicSelfAssessmentClient() {
           </div>
           <p>
             If symptoms continue or the task feels worse, request an advanced ergonomic evaluation with measurements and photos.
+            Level 2 is separate from this Level 1 screening and requires a qualified evaluator to complete.
           </p>
           {assessmentState.level2AutoAssigned && assessmentState.level2RequestId ? (
             <div className="advanced-request-form">

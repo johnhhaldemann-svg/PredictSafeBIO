@@ -208,6 +208,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
           <section className="panel">
             <p className="muted">
               Connect your workspace to manage real invitations. In demo mode the invitation list shows sample data.
+              To enable invitations, configure authentication settings in your workspace admin panel.
             </p>
           </section>
         )}

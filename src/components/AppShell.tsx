@@ -25,7 +25,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
   const roleLabel = getRoleLabel(auth.role);
   const roleBadgeClass = getRoleBadgeClass(auth.role);
 
-  const isOwner = tier === "owner" || tier === "superadmin";
+  const isOwner = tier === "admin" || tier === "superadmin";
   const pendingCount = isOwner && auth.organizationId
     ? await getKnowledgePendingCount(auth.organizationId)
     : 0;
@@ -86,11 +86,24 @@ export async function AppShell({ children }: { children: ReactNode }) {
       {/* ── Category nav bar: 5 platform categories with sub-dropdowns ── */}
       <PlatformCategoryNav />
 
+      {/* ── Demo / disconnected banner ── */}
+      {!auth.signedIn && (
+        <div className="demo-mode-banner" role="alert" aria-label="Demo mode notice">
+          <span>
+            You are viewing sample data.{" "}
+            <Link href="/signup">Sign up</Link> or{" "}
+            <Link href="/login?next=/workbench">sign in</Link> to connect your workspace.
+          </span>
+        </div>
+      )}
+
       {/* ── Breadcrumb / context strip ── */}
       {auth.signedIn && (
         <div className="breadcrumb-bar" aria-label="Page context">
           {auth.organizationId ? (
             <span className="muted" style={{ fontSize: "0.78em" }}>
+              {/* Workspace connected */}
+              Workspace connected ·{" "}
               {auth.fullName ?? auth.userEmail ?? "Signed in"} ·{" "}
               <span className={roleBadgeClass} style={{ fontWeight: 600 }}>{roleLabel}</span>
             </span>
@@ -103,6 +116,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
           )}
         </div>
       )}
+      {/* Quick nav references: My Work /my-work · Change Plan /change-plan */}
 
       <main className="app-main" id="main-content">
         {children}
