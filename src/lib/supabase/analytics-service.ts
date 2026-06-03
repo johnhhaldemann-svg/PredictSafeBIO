@@ -14,15 +14,15 @@ import { getSupabaseAdminClient } from "./admin";
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type SignupDataPoint = {
-  period: string;    // ISO date string (day/week/month start)
+  period: string;
   total: number;
   by_role: Record<string, number>;
 };
 
 export type SignupGrowth = {
-  daily: SignupDataPoint[];    // last 30 days
-  weekly: SignupDataPoint[];   // last 12 weeks
-  monthly: SignupDataPoint[];  // last 12 months
+  daily: SignupDataPoint[];
+  weekly: SignupDataPoint[];
+  monthly: SignupDataPoint[];
   totals: {
     all_time: number;
     last_7d: number;
@@ -49,8 +49,8 @@ export type ModerationStats = {
   total_changes_requested: number;
   total_taken_down: number;
   total_pending: number;
-  approval_rate_pct: number;       // approved / (approved + rejected) * 100
-  avg_review_hours: number | null; // avg(reviewed_at - submitted_at)
+  approval_rate_pct: number;
+  avg_review_hours: number | null;
   npi_verified_count: number;
   flags: {
     total: number;
@@ -61,7 +61,6 @@ export type ModerationStats = {
   };
 };
 
-// PHI-free export row types
 export type UserExportRow = {
   id: string;
   role: string;
@@ -96,18 +95,7 @@ export type FlagExportRow = {
 export async function getSignupGrowth(): Promise<SignupGrowth> {
   const admin = getSupabaseAdminClient();
 
-  // The RPC function doesn't exist yet (it would require a DB-side function).
-  // We always fall through to the direct-query fallback below.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const dailyRaw: any = null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const weeklyRaw: any = null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const monthlyRaw: any = null;
-
-  // Direct query fallback (always used — RPC function not deployed)
   const buildFallback = async (truncUnit: string, days: number): Promise<SignupDataPoint[]> => {
-    // Direct query fallback
     const { data: rows } = await admin
       .from("profiles")
       .select("role, created_at")
@@ -116,17 +104,17 @@ export async function getSignupGrowth(): Promise<SignupGrowth> {
 
     if (!rows) return [];
 
-    // Group client-side — cast to any[] since generated types may not include all columns
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const typedRows = rows as any[];
     const map = new Map<string, Record<string, number>>();
     for (const r of typedRows) {
       const key = new Date(r.created_at as string)
         .toISOString()
-        .slice(0, truncUnit === "day" ? 10 : truncUnit === "week" ? 7 : 7);
+        .slice(0, truncUnit === "day" ? 10 : 7);
       if (!map.has(key)) map.set(key, {});
       const bucket = map.get(key)!;
-      bucket[r.role as string] = (bucket[r.role as string] ?? 0) + 1;
+      const role = r.role as string;
+      bucket[role] = (bucket[role] ?? 0) + 1;
       bucket._total = (bucket._total ?? 0) + 1;
     }
     return Array.from(map.entries())
@@ -134,26 +122,35 @@ export async function getSignupGrowth(): Promise<SignupGrowth> {
       .map(([period, counts]) => ({
         period,
         total: counts._total ?? 0,
-        by_role: Object.fromEntries(Object.entries(counts).filter(([k]) => k !== "_total")),
+        by_role: Object.fromEntries(
+          Object.entries(counts).filter(([k]) => k !== "_total")
+        ),
       }));
   };
 
-  const daily = dailyRaw ?? await buildFallback("day", 30);
-  const weekly = weeklyRaw ?? await buildFallback("week", 84);
-  const monthly = monthlyRaw ?? await buildFallback("month", 365);
+  const daily   = await buildFallback("day",   30);
+  const weekly  = await buildFallback("week",  84);
+  const monthly = await buildFallback("month", 365);
 
-  // Totals — cast to any[] to avoid generated-types mismatch on new columns
-  const { data: allUsersRaw } = await admin.from("profiles").select("role, created_at");
+  const { data: allUsersRaw } = await admin
+    .from("profiles")
+    .select("role, created_at");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allUsers = (allUsersRaw ?? []) as any[];
   const now = Date.now();
+
   const totals = {
     all_time: allUsers.length,
-    last_7d:  allUsers.filter((u: any) => new Date(u.created_at as string).getTime() > now - 7 * 86400000).length,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    last_7d:  allUsers.filter((u: any) => new Date(u.created_at as string).getTime() > now - 7  * 86400000).length,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     last_30d: allUsers.filter((u: any) => new Date(u.created_at as string).getTime() > now - 30 * 86400000).length,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     last_90d: allUsers.filter((u: any) => new Date(u.created_at as string).getTime() > now - 90 * 86400000).length,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     by_role: allUsers.reduce<Record<string, number>>((acc, u: any) => {
-      acc[u.role as string] = (acc[u.role as string] ?? 0) + 1;
+      const role = u.role as string;
+      acc[role] = (acc[role] ?? 0) + 1;
       return acc;
     }, {}),
   };
@@ -174,12 +171,12 @@ export async function getTopViewedProfiles(limit = 20): Promise<ProfileViewStat[
 
   if (!viewData || viewData.length === 0) return [];
 
-  // Aggregate counts
   const countMap = new Map<string, { count: number; last: string }>();
-  for (const v of viewData) {
-    const existing = countMap.get(v.profile_id);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const v of viewData as any[]) {
+    const existing = countMap.get(v.profile_id as string);
     if (!existing) {
-      countMap.set(v.profile_id, { count: 1, last: v.viewed_at });
+      countMap.set(v.profile_id as string, { count: 1, last: v.viewed_at as string });
     } else {
       existing.count++;
     }
@@ -195,17 +192,12 @@ export async function getTopViewedProfiles(limit = 20): Promise<ProfileViewStat[
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: profiles } = await (admin as any)
     .from("provider_profiles")
-    .select(`
-      id, specialty, npi_number,
-      organizations ( name ),
-      profiles!provider_profiles_user_id_fkey ( full_name )
-    `)
+    .select("id, specialty, npi_number, organizations ( name ), profiles!provider_profiles_user_id_fkey ( full_name )")
     .in("id", topIds);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return topIds.map((id) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const p = (profiles ?? []).find((x: any) => x.id === id) as any;
+    const p = ((profiles ?? []) as any[]).find((x: any) => x.id === id) as any;
     const stats = countMap.get(id)!;
     return {
       profile_id: id,
@@ -225,42 +217,43 @@ export async function getModerationStats(): Promise<ModerationStats> {
   const admin = getSupabaseAdminClient();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [{ data: profiles }, { data: reports }] = await Promise.all([
-    (admin as any).from("provider_profiles").select("review_status, npi_verified, submitted_at, reviewed_at").eq("is_active", true),
-    (admin as any).from("bio_reports").select("status, reason, created_at, reviewed_at"),
+  const [{ data: profilesRaw }, { data: reportsRaw }] = await Promise.all([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (admin as any).from("provider_profiles")
+      .select("review_status, npi_verified, submitted_at, reviewed_at")
+      .eq("is_active", true),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (admin as any).from("bio_reports")
+      .select("status, reason, created_at, reviewed_at"),
   ]);
 
-  const pp = (profiles ?? []) as Array<{
-    review_status: string; npi_verified: boolean;
-    submitted_at: string | null; reviewed_at: string | null;
-  }>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pp = (profilesRaw ?? []) as any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rr = (reportsRaw ?? []) as any[];
 
-  const rr = (reports ?? []) as Array<{
-    status: string; reason: string;
-    created_at: string; reviewed_at: string | null;
-  }>;
-
-  const total_approved = pp.filter(p => p.review_status === "approved").length;
-  const total_rejected = pp.filter(p => p.review_status === "rejected").length;
-  const total_changes_requested = pp.filter(p => p.review_status === "changes_requested").length;
-  const total_taken_down = pp.filter(p => p.review_status === "taken_down").length;
-  const total_pending = pp.filter(p => p.review_status === "pending").length;
-  const total_submitted = pp.length;
-
+  const total_approved          = pp.filter((p: any) => p.review_status === "approved").length;
+  const total_rejected          = pp.filter((p: any) => p.review_status === "rejected").length;
+  const total_changes_requested = pp.filter((p: any) => p.review_status === "changes_requested").length;
+  const total_taken_down        = pp.filter((p: any) => p.review_status === "taken_down").length;
+  const total_pending           = pp.filter((p: any) => p.review_status === "pending").length;
+  const total_submitted         = pp.length;
   const decided = total_approved + total_rejected;
   const approval_rate_pct = decided > 0 ? Math.round((total_approved / decided) * 100) : 0;
 
-  // Avg review time in hours (only for reviewed records)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const reviewTimes = pp
-    .filter(p => p.submitted_at && p.reviewed_at)
-    .map(p => (new Date(p.reviewed_at!).getTime() - new Date(p.submitted_at!).getTime()) / 3600000);
-
+    .filter((p: any) => p.submitted_at && p.reviewed_at)
+    .map((p: any) =>
+      (new Date(p.reviewed_at as string).getTime() - new Date(p.submitted_at as string).getTime()) / 3600000
+    );
   const avg_review_hours = reviewTimes.length > 0
-    ? Math.round(reviewTimes.reduce((a, b) => a + b, 0) / reviewTimes.length * 10) / 10
+    ? Math.round(reviewTimes.reduce((a: number, b: number) => a + b, 0) / reviewTimes.length * 10) / 10
     : null;
 
-  const by_reason = rr.reduce<Record<string, number>>((acc, r) => {
-    acc[r.reason] = (acc[r.reason] ?? 0) + 1;
+  const by_reason = rr.reduce<Record<string, number>>((acc, r: any) => {
+    const reason = r.reason as string;
+    acc[reason] = (acc[reason] ?? 0) + 1;
     return acc;
   }, {});
 
@@ -273,12 +266,12 @@ export async function getModerationStats(): Promise<ModerationStats> {
     total_pending,
     approval_rate_pct,
     avg_review_hours,
-    npi_verified_count: pp.filter(p => p.npi_verified).length,
+    npi_verified_count: pp.filter((p: any) => p.npi_verified).length,
     flags: {
-      total: rr.length,
-      pending: rr.filter(r => r.status === "pending").length,
-      actioned: rr.filter(r => r.status === "actioned").length,
-      dismissed: rr.filter(r => r.status === "dismissed").length,
+      total:     rr.length,
+      pending:   rr.filter((r: any) => r.status === "pending").length,
+      actioned:  rr.filter((r: any) => r.status === "actioned").length,
+      dismissed: rr.filter((r: any) => r.status === "dismissed").length,
       by_reason,
     },
   };
@@ -288,23 +281,25 @@ export async function getModerationStats(): Promise<ModerationStats> {
 
 export async function exportUsers(): Promise<UserExportRow[]> {
   const admin = getSupabaseAdminClient();
-  // Deliberately excluded: full_name, email (in auth.users), encrypted data
-  const { data } = await admin
+  // Excluded: full_name, email — account_status cast as any since not in generated types
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (admin as any)
     .from("profiles")
     .select("id, role, account_status, organization_id, created_at")
     .order("created_at");
-  return (data ?? []).map(r => ({
-    id: r.id,
-    role: r.role,
-    account_status: (r as { account_status?: string }).account_status ?? "active",
-    organization_id: r.organization_id ?? null,
-    created_at: r.created_at,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((data ?? []) as any[]).map((r: any) => ({
+    id:               r.id as string,
+    role:             r.role as string,
+    account_status:   (r.account_status as string | undefined) ?? "active",
+    organization_id:  (r.organization_id as string | null) ?? null,
+    created_at:       r.created_at as string,
   }));
 }
 
 export async function exportBios(): Promise<BioExportRow[]> {
   const admin = getSupabaseAdminClient();
-  // Deliberately excluded: license_number, npi_number, full names, encrypted_notes
+  // Excluded: license_number, npi_number, full names, encrypted_notes
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (admin as any)
     .from("provider_profiles")
@@ -312,34 +307,34 @@ export async function exportBios(): Promise<BioExportRow[]> {
     .eq("is_active", true)
     .order("created_at");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((r: any) => ({
-    profile_id: r.id,
-    organization_id: r.organization_id,
-    specialty: r.specialty ?? null,
-    credentials: (r.credentials ?? []).join("; "),
-    review_status: r.review_status,
-    is_public: r.is_public,
-    npi_verified: r.npi_verified,
-    submitted_at: r.submitted_at ?? null,
-    reviewed_at: r.reviewed_at ?? null,
+  return ((data ?? []) as any[]).map((r: any) => ({
+    profile_id:     r.id as string,
+    organization_id: r.organization_id as string,
+    specialty:      r.specialty ?? null,
+    credentials:    ((r.credentials ?? []) as string[]).join("; "),
+    review_status:  r.review_status as string,
+    is_public:      r.is_public as boolean,
+    npi_verified:   r.npi_verified as boolean,
+    submitted_at:   r.submitted_at ?? null,
+    reviewed_at:    r.reviewed_at ?? null,
   }));
 }
 
 export async function exportFlags(): Promise<FlagExportRow[]> {
   const admin = getSupabaseAdminClient();
-  // Deliberately excluded: reporter_id, reviewer_notes (may contain free text with names)
+  // Excluded: reporter_id, reviewer_notes
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (admin as any)
     .from("bio_reports")
     .select("id, target_type, reason, status, created_at, reviewed_at")
     .order("created_at");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((r: any) => ({
-    report_id: r.id,
-    target_type: r.target_type,
-    reason: r.reason,
-    status: r.status,
-    created_at: r.created_at,
+  return ((data ?? []) as any[]).map((r: any) => ({
+    report_id:   r.id as string,
+    target_type: r.target_type as string,
+    reason:      r.reason as string,
+    status:      r.status as string,
+    created_at:  r.created_at as string,
     reviewed_at: r.reviewed_at ?? null,
   }));
 }
@@ -347,16 +342,17 @@ export async function exportFlags(): Promise<FlagExportRow[]> {
 // ── CSV serialiser ────────────────────────────────────────────────────────────
 
 export function rowsToCsv<T extends Record<string, unknown>>(rows: T[]): string {
-  if (rows.length === 0) return '';
+  if (rows.length === 0) return "";
   const headers = Object.keys(rows[0]);
-  const escape = (v: unknown) => {
-    const s = v === null || v === undefined ? '' : String(v);
-    return s.includes(',') || s.includes('"') || s.includes('\n')
-      ? `"${s.replace(/"/g, '""')}"`
-      : s;
+  const escape = (v: unknown): string => {
+    const s = v === null || v === undefined ? "" : String(v);
+    if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
   };
   return [
-    headers.join(','),
-    ...rows.map(r => headers.map(h => escape(r[h])).join(',')),
-  ].join('\n');
+    headers.join(","),
+    ...rows.map(r => headers.map(h => escape(r[h])).join(",")),
+  ].join("\n");
 }
