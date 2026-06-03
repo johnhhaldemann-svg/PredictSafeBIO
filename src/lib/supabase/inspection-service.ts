@@ -130,6 +130,14 @@ export const inspectionTypeLabels: Record<InspectionType, string> = {
   incident_followup: "Post-Incident Follow-up Inspection",
 };
 
+export const findingLevelLabels: Record<FindingLevel, string> = {
+  observation: "Observation",
+  minor: "Minor",
+  major: "Major",
+  critical: "Critical"
+};
+
+
 // ---------------------------------------------------------------------------
 // AI Scheduling Rules
 // ---------------------------------------------------------------------------
