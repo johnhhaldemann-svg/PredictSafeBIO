@@ -116,15 +116,17 @@ export async function getSignupGrowth(): Promise<SignupGrowth> {
 
     if (!rows) return [];
 
-    // Group client-side
+    // Group client-side — cast to any[] since generated types may not include all columns
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const typedRows = rows as any[];
     const map = new Map<string, Record<string, number>>();
-    for (const r of rows) {
-      const key = new Date(r.created_at)
+    for (const r of typedRows) {
+      const key = new Date(r.created_at as string)
         .toISOString()
         .slice(0, truncUnit === "day" ? 10 : truncUnit === "week" ? 7 : 7);
       if (!map.has(key)) map.set(key, {});
       const bucket = map.get(key)!;
-      bucket[r.role] = (bucket[r.role] ?? 0) + 1;
+      bucket[r.role as string] = (bucket[r.role as string] ?? 0) + 1;
       bucket._total = (bucket._total ?? 0) + 1;
     }
     return Array.from(map.entries())
@@ -140,16 +142,18 @@ export async function getSignupGrowth(): Promise<SignupGrowth> {
   const weekly = weeklyRaw ?? await buildFallback("week", 84);
   const monthly = monthlyRaw ?? await buildFallback("month", 365);
 
-  // Totals
-  const { data: allUsers } = await admin.from("profiles").select("role, created_at");
+  // Totals — cast to any[] to avoid generated-types mismatch on new columns
+  const { data: allUsersRaw } = await admin.from("profiles").select("role, created_at");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const allUsers = (allUsersRaw ?? []) as any[];
   const now = Date.now();
   const totals = {
-    all_time: allUsers?.length ?? 0,
-    last_7d:  allUsers?.filter(u => new Date(u.created_at).getTime() > now - 7 * 86400000).length ?? 0,
-    last_30d: allUsers?.filter(u => new Date(u.created_at).getTime() > now - 30 * 86400000).length ?? 0,
-    last_90d: allUsers?.filter(u => new Date(u.created_at).getTime() > now - 90 * 86400000).length ?? 0,
-    by_role: (allUsers ?? []).reduce<Record<string, number>>((acc, u) => {
-      acc[u.role] = (acc[u.role] ?? 0) + 1;
+    all_time: allUsers.length,
+    last_7d:  allUsers.filter((u: any) => new Date(u.created_at as string).getTime() > now - 7 * 86400000).length,
+    last_30d: allUsers.filter((u: any) => new Date(u.created_at as string).getTime() > now - 30 * 86400000).length,
+    last_90d: allUsers.filter((u: any) => new Date(u.created_at as string).getTime() > now - 90 * 86400000).length,
+    by_role: allUsers.reduce<Record<string, number>>((acc, u: any) => {
+      acc[u.role as string] = (acc[u.role as string] ?? 0) + 1;
       return acc;
     }, {}),
   };
@@ -343,15 +347,16 @@ export async function exportFlags(): Promise<FlagExportRow[]> {
 // ── CSV serialiser ────────────────────────────────────────────────────────────
 
 export function rowsToCsv<T extends Record<string, unknown>>(rows: T[]): string {
-  if (rows.length === 0) return "";
+  if (rows.length === 0) return '';
   const headers = Object.keys(rows[0]);
   const escape = (v: unknown) => {
-    const s = v === null || v === undefined ? "" : String(v);
-    return s.includes(",") || s.includes('"') || s.includes("\n")
-      ? `"${s.replace(/"/g, '""')}"` : s;
+    const s = v === null || v === undefined ? '' : String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? `"${s.replace(/"/g, '""')}"`
+      : s;
   };
   return [
-    headers.join(","),
-    ...rows.map(r => headers.map(h => escape(r[h])).join(",")),
-  ].join("\n");
+    headers.join(','),
+    ...rows.map(r => headers.map(h => escape(r[h])).join(',')),
+  ].join('\n');
 }
