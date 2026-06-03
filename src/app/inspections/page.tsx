@@ -150,6 +150,51 @@ export default async function InspectionsPage({ searchParams }: Props) {
                   </select>
                 </label>
                 <label>
+                  Safety program area
+                  <select name="programArea" defaultValue="">
+                    <option value="">— General / Not program-specific —</option>
+                    <optgroup label="Admin &amp; Communication">
+                      <option value="communication">Safety Communication</option>
+                      <option value="ehs-management">EHS Management System</option>
+                      <option value="iipp">IIPP — Injury &amp; Illness Prevention</option>
+                      <option value="osha-log">OSHA 300 Log &amp; Year-End Reports</option>
+                    </optgroup>
+                    <optgroup label="Laboratory &amp; Chemical">
+                      <option value="biosafety">BioSafety — BSL-1/2/3/4</option>
+                      <option value="bloodborne-pathogens">Bloodborne Pathogens</option>
+                      <option value="chemical-hygiene">Chemical Hygiene / CHO</option>
+                      <option value="chemical-management">Chemical Management</option>
+                      <option value="vivarium">Vivarium</option>
+                    </optgroup>
+                    <optgroup label="Emergency Response">
+                      <option value="emergency-response">Emergency Response</option>
+                      <option value="spill-response">Spill Response</option>
+                      <option value="er-equipment">ER Equipment Inspection</option>
+                    </optgroup>
+                    <optgroup label="Physical Safety">
+                      <option value="ergonomics">Ergonomics</option>
+                      <option value="loto">LOTO — Lockout / Tagout</option>
+                      <option value="machine-guarding">Machine Guarding</option>
+                      <option value="fall-protection">Fall Protection</option>
+                      <option value="ppe">PPE — Personal Protective Equipment</option>
+                      <option value="workplace-violence">Workplace Violence Prevention</option>
+                    </optgroup>
+                    <optgroup label="Warehouse &amp; Material Handling">
+                      <option value="warehouse-safety">Warehouse Safety</option>
+                      <option value="forklift">Forklift / PIT Program</option>
+                      <option value="rack-inspections">Rack Inspections</option>
+                    </optgroup>
+                    <optgroup label="Environmental &amp; Regulatory">
+                      <option value="waste-management">Waste Management</option>
+                      <option value="stormwater">Stormwater / SWPPP</option>
+                      <option value="air-quality">Air Quality</option>
+                      <option value="regulatory-permits">Regulatory Permits</option>
+                      <option value="work-permits">Work Permits</option>
+                      <option value="injury-investigation">Injury Investigation</option>
+                    </optgroup>
+                  </select>
+                </label>
+                <label>
                   Scheduled date
                   <input name="scheduledFor" type="date" />
                 </label>

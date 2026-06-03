@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   AiKnowledgeEntry,
   AiKnowledgeQuality,
   AiKnowledgeReviewDecision,
@@ -266,13 +266,13 @@ function demoEntries(): AiKnowledgeEntry[] {
   const now = new Date().toISOString();
   const base = { submittedAt: now, createdAt: now, updatedAt: now, organizationId: "demo-org" };
   return [
-    { ...base, id: "demo-ke-001", knowledgeType: "assessment_input", label: "BSL-2 Cell Culture — human-derived sample processing", contentSummary: "Workflow: Human-derived sample processing. Area: BSL-2 Cell Culture Lab. Risk level: critical. Human review required.", aiRiskLevel: "critical", aiConfidence: "high", aiHumanReviewRequired: true, reviewStatus: "pending" },
-    { ...base, id: "demo-ke-002", knowledgeType: "foundation_context", label: "Applicability rule: Biosafety — BSL-2 biological materials", contentSummary: "Required programs: Biosafety, Waste Management, Document Control. Risk level if missing: high.", aiRiskLevel: "high", aiConfidence: "medium", aiHumanReviewRequired: true, reviewStatus: "pending" },
-    { ...base, id: "demo-ke-003", knowledgeType: "risk_signal", label: "Equipment event — BSC-001 certification overdue", contentSummary: "Signal type: equipment_event. Severity: high. Repeat finding. Control gap: BSC not current.", aiRiskLevel: "high", aiConfidence: "high", aiHumanReviewRequired: false, reviewStatus: "approved", qualityClassification: "validated_knowledge", reviewedAt: now },
-    { ...base, id: "demo-ke-004", knowledgeType: "assessment_input", label: "Ergonomic self-assessment — repetitive pipetting", contentSummary: "Discomfort: moderate wrist pain. Frequency: daily. Risk level: moderate.", aiRiskLevel: "moderate", aiConfidence: "medium", aiHumanReviewRequired: false, reviewStatus: "approved", qualityClassification: "reasonable_knowledge", reviewedAt: now },
-    { ...base, id: "demo-ke-005", knowledgeType: "risk_signal", label: "Test submission — placeholder only", contentSummary: "No real signals. Area: test. Workflow: test.", aiRiskLevel: "low", aiConfidence: "low", aiHumanReviewRequired: false, reviewStatus: "flagged", qualityClassification: "junk", reviewNotes: "Test submission — no real safety data.", reviewedAt: now },
-    { ...base, id: "demo-ke-006", knowledgeType: "foundation_context", label: "Chemical hygiene — hazardous chemical operations", contentSummary: "Rule: CHEM-001. Required programs: Chemical Hygiene, Waste Management. Risk level: high.", aiRiskLevel: "high", aiConfidence: "medium", aiHumanReviewRequired: false, reviewStatus: "pending" },
-    { ...base, id: "demo-ke-007", knowledgeType: "ergonomic_assessment", label: "Level-2 ergonomic inspection — sample prep station", contentSummary: "Inspection: RULA. Score: 6. Immediate corrective action recommended.", aiRiskLevel: "high", aiConfidence: "high", aiHumanReviewRequired: true, reviewStatus: "pending" }
+    { ...base, id: "demo-ke-001", knowledgeType: "assessment_input", label: "BSL-2 Cell Culture ΓÇö human-derived sample processing", contentSummary: "Workflow: Human-derived sample processing. Area: BSL-2 Cell Culture Lab. Risk level: critical. Human review required.", aiRiskLevel: "critical", aiConfidence: "high", aiHumanReviewRequired: true, reviewStatus: "pending" },
+    { ...base, id: "demo-ke-002", knowledgeType: "foundation_context", label: "Applicability rule: Biosafety ΓÇö BSL-2 biological materials", contentSummary: "Required programs: Biosafety, Waste Management, Document Control. Risk level if missing: high.", aiRiskLevel: "high", aiConfidence: "medium", aiHumanReviewRequired: true, reviewStatus: "pending" },
+    { ...base, id: "demo-ke-003", knowledgeType: "risk_signal", label: "Equipment event ΓÇö BSC-001 certification overdue", contentSummary: "Signal type: equipment_event. Severity: high. Repeat finding. Control gap: BSC not current.", aiRiskLevel: "high", aiConfidence: "high", aiHumanReviewRequired: false, reviewStatus: "approved", qualityClassification: "validated_knowledge", reviewedAt: now },
+    { ...base, id: "demo-ke-004", knowledgeType: "assessment_input", label: "Ergonomic self-assessment ΓÇö repetitive pipetting", contentSummary: "Discomfort: moderate wrist pain. Frequency: daily. Risk level: moderate.", aiRiskLevel: "moderate", aiConfidence: "medium", aiHumanReviewRequired: false, reviewStatus: "approved", qualityClassification: "reasonable_knowledge", reviewedAt: now },
+    { ...base, id: "demo-ke-005", knowledgeType: "risk_signal", label: "Test submission ΓÇö placeholder only", contentSummary: "No real signals. Area: test. Workflow: test.", aiRiskLevel: "low", aiConfidence: "low", aiHumanReviewRequired: false, reviewStatus: "flagged", qualityClassification: "junk", reviewNotes: "Test submission ΓÇö no real safety data.", reviewedAt: now },
+    { ...base, id: "demo-ke-006", knowledgeType: "foundation_context", label: "Chemical hygiene ΓÇö hazardous chemical operations", contentSummary: "Rule: CHEM-001. Required programs: Chemical Hygiene, Waste Management. Risk level: high.", aiRiskLevel: "high", aiConfidence: "medium", aiHumanReviewRequired: false, reviewStatus: "pending" },
+    { ...base, id: "demo-ke-007", knowledgeType: "ergonomic_assessment", label: "Level-2 ergonomic inspection ΓÇö sample prep station", contentSummary: "Inspection: RULA. Score: 6. Immediate corrective action recommended.", aiRiskLevel: "high", aiConfidence: "high", aiHumanReviewRequired: true, reviewStatus: "pending" }
   ];
 }
 
@@ -344,7 +344,7 @@ export async function notifyKnowledgeOwners(opts: {
 }
 
 // ---------------------------------------------------------------------------
-// Lightweight pending count — used by AppShell nav badge (owners only)
+// Lightweight pending count ΓÇö used by AppShell nav badge (owners only)
 // ---------------------------------------------------------------------------
 
 export async function getKnowledgePendingCount(organizationId: string): Promise<number> {

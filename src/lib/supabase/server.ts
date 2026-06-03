@@ -21,3 +21,6 @@ export async function createSupabaseServerClient() {
     }
   });
 }
+
+// Alias for callers using the shorter name
+export { createSupabaseServerClient as createServerClient };

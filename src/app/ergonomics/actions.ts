@@ -28,6 +28,8 @@ export type ErgonomicAssessmentActionState = {
   riskLevel?: string;
   repeatedModerateFlag?: boolean;
   correctiveActionRecommended?: boolean;
+  level2AutoAssigned?: boolean;
+  level2RequestId?: string | null;
 };
 
 export type AdvancedEvaluationActionState = {
@@ -90,7 +92,9 @@ export async function submitErgonomicSelfAssessmentAction(
     riskScore: result.riskScore,
     riskLevel: result.riskLevel,
     repeatedModerateFlag: result.repeatedModerateFlag,
-    correctiveActionRecommended: result.correctiveActionRecommended
+    correctiveActionRecommended: result.correctiveActionRecommended,
+    level2AutoAssigned: result.level2AutoAssigned,
+    level2RequestId: result.level2RequestId
   };
 }
 

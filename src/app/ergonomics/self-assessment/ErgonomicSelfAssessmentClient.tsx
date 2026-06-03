@@ -250,6 +250,23 @@ export function ErgonomicSelfAssessmentClient() {
             Corrective-action review was recommended from this Level 1 screening.
           </div>
         ) : null}
+
+        {assessmentState.level2AutoAssigned ? (
+          <div className="draft-banner draft-banner-level2">
+            <AlertTriangle size={18} />
+            <span>
+              <strong>Level 2 auto-assigned.</strong> Risk score exceeded threshold — a qualified evaluator (workspace owner) must complete the Level 2 measurement inspection.
+              {assessmentState.level2RequestId ? (
+                <>
+                  {" "}
+                  <Link href={`/ergonomics/advanced-evaluation?requestId=${assessmentState.level2RequestId}`}>
+                    Open Level 2 →
+                  </Link>
+                </>
+              ) : null}
+            </span>
+          </div>
+        ) : null}
       </aside>
 
       <aside className="ergonomic-side-rail" aria-label="SafePredict ergonomic insight and advanced evaluation">
@@ -289,7 +306,16 @@ export function ErgonomicSelfAssessmentClient() {
           <p>
             If symptoms continue or the task feels worse, request an advanced ergonomic evaluation with measurements and photos.
           </p>
-          {assessmentState.assessmentId ? (
+          {assessmentState.level2AutoAssigned && assessmentState.level2RequestId ? (
+            <div className="advanced-request-form">
+              <p className="save-message save-saved">
+                Level 2 already auto-assigned for this screening.
+              </p>
+              <Link className="button-primary large-action" href={`/ergonomics/advanced-evaluation?requestId=${assessmentState.level2RequestId}`}>
+                Open Level 2 Measurement Inspection
+              </Link>
+            </div>
+          ) : assessmentState.assessmentId ? (
             <form action={requestAction} className="advanced-request-form">
               <input name="assessmentId" type="hidden" value={assessmentState.assessmentId} />
               <input
@@ -312,7 +338,7 @@ export function ErgonomicSelfAssessmentClient() {
           )}
           <div className="level-two-note">
             <ShieldCheck size={16} />
-            Level 2 is separate and may include measurements, photos, industrial ergonomic equation data points, specialist review, formal recommendations, and corrective actions.
+            Level 2 requires a qualified evaluator account (workspace owner). It may include measurements, photos, industrial ergonomic equation data points, specialist review, formal recommendations, and corrective actions.
           </div>
         </section>
       </aside>

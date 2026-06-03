@@ -16,6 +16,7 @@ import { demoAuditEvents } from "@/lib/demo-data";
 import { isSupabaseConfigured } from "./env";
 import { createSupabaseServerClient } from "./server";
 import { getProfileContext, mapAuditEvent } from "./data-helpers";
+import { logAssessmentKnowledgeEntry } from "./knowledge-service";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -354,6 +355,9 @@ export async function saveAssessment(input: BioAiInput) {
       }
     )
   });
+
+  // Log to AI knowledge review queue (non-blocking — never breaks save).
+  void logAssessmentKnowledgeEntry(input, assessment, context.organizationId).catch(() => {});
 
   return { ok: true, status: 201, id: data.id, assessment };
 }

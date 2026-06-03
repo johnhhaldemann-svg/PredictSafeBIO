@@ -222,7 +222,15 @@ export function getFoundationNotificationLabel(notificationType: string) {
   if (notificationType === "foundation_task_due_soon") return "Due soon";
   if (notificationType === "foundation_task_overdue") return "Overdue";
   if (notificationType === "foundation_task_ready_for_closure") return "Ready for closure";
+  // AI Knowledge review notifications
+  if (notificationType === "ai_knowledge_high_risk") return "High risk — review now";
+  if (notificationType === "ai_knowledge_pending_review") return "Pending review";
   return "Task";
+}
+
+/** Returns true if a notification type routes to the AI Knowledge review page. */
+export function isKnowledgeNotificationType(notificationType: string) {
+  return notificationType === "ai_knowledge_high_risk" || notificationType === "ai_knowledge_pending_review";
 }
 
 export function normalizeFoundationReviewSourceModule(sourceModule: string) {
