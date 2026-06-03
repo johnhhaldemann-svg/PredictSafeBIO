@@ -359,8 +359,8 @@ label.check-row {
 .snav-cat {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 9px 14px;
+  gap: 0;
+  padding: 0;
   cursor: pointer;
   user-select: none;
   transition: background 0.12s, color 0.12s;
@@ -405,6 +405,29 @@ label.check-row {
 
 .snav-cat--active .snav-cat-label {
   color: var(--navy);
+}
+
+/* Category nav link (icon + label) fills remaining space */
+.snav-cat-link {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  padding: 9px 0 9px 14px;
+}
+
+/* Chevron toggle button */
+.snav-chevron-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 9px 12px;
+  flex-shrink: 0;
 }
 
 .snav-chevron {
