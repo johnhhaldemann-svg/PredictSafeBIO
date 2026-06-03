@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PredictSafe BIO — Vendors</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1d2e; font-size: 13px; }
+.shell { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+/* Top Bar */
+.topbar { background: #1a1d2e; color: white; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 48px; flex-shrink: 0; }
+.topbar-brand { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.topbar-brand span { background: #4f7ef8; color: white; border-radius: 5px; padding: 2px 7px; font-size: 11px; }
+.topbar-nav { display: flex; gap: 2px; }
+.topbar-nav a { color: #8a8fa8; font-size: 12px; padding: 6px 11px; border-radius: 5px; cursor: pointer; text-decoration: none; }
+.topbar-nav a.active { background: rgba(255,255,255,0.1); color: white; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.btn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+.btn-primary { background: #7c3aed; color: white; }
+.btn-primary:hover { background: #6d28d9; }
+.btn-ghost { background: transparent; color: #8a8fa8; border: 1px solid #2e3349; }
+.btn-ghost:hover { color: white; border-color: #4a4f6a; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; background: #4f7ef8; color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+
+/* KPI Bar */
+.kpi-bar { background: white; border-bottom: 1px solid #e8eaf0; padding: 10px 20px; display: flex; align-items: center; gap: 0; flex-shrink: 0; }
+.kpi-card { flex: 1; padding: 0 18px; border-right: 1px solid #e8eaf0; }
+.kpi-card:first-child { padding-left: 0; }
+.kpi-card:last-child { border-right: none; }
+.kpi-num { font-size: 22px; font-weight: 800; line-height: 1; }
+.kpi-label { font-size: 11px; color: #6b7280; margin-top: 2px; }
+.kpi-delta { font-size: 10px; font-weight: 600; margin-top: 3px; }
+.up { color: #10b981; } .dn { color: #ef4444; } .neu { color: #9ca3af; }
+.c-red { color: #ef4444; } .c-amber { color: #f59e0b; } .c-green { color: #10b981; }
+.c-blue { color: #4f7ef8; } .c-purple { color: #7c3aed; } .c-grey { color: #9ca3af; }
+
+/* Body */
+.body { display: flex; flex: 1; overflow: hidden; }
+
+/* Sidebar */
+.sidebar { width: 196px; background: white; border-right: 1px solid #e8eaf0; flex-shrink: 0; padding: 14px 0; overflow-y: auto; }
+.sidebar-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; padding: 6px 16px 4px; }
+.sidebar-item { display: flex; align-items: center; justify-content: space-between; padding: 7px 16px; cursor: pointer; font-size: 12px; color: #374151; transition: all 0.1s; }
+.sidebar-item:hover { background: #f4f6f9; }
+.sidebar-item.active { background: #f5f3ff; color: #7c3aed; font-weight: 600; border-right: 2px solid #7c3aed; }
+.badge { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+.b-red { background: #fee2e2; color: #dc2626; }
+.b-amber { background: #fef3c7; color: #d97706; }
+.b-green { background: #d1fae5; color: #059669; }
+.b-grey { background: #f3f4f6; color: #6b7280; }
+.b-purple { background: #f5f3ff; color: #7c3aed; }
+
+/* Main */
+.main { flex: 1; overflow-y: auto; padding: 18px 20px; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.page-title { font-size: 16px; font-weight: 800; }
+.page-subtitle { font-size: 11px; color: #6b7280; margin-top: 2px; }
+
+/* Tabs */
+.tabs { display: flex; border-bottom: 2px solid #e8eaf0; margin-bottom: 16px; }
+.tab { padding: 8px 15px; font-size: 12px; font-weight: 600; color: #6b7280; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; display: flex; align-items: center; gap: 6px; transition: all 0.1s; }
+.tab:hover { color: #374151; }
+.tab.active { color: #7c3aed; border-bottom-color: #7c3aed; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Filter bar */
+.filter-bar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; }
+.search-box { display: flex; align-items: center; background: white; border: 1px solid #e8eaf0; border-radius: 7px; padding: 0 10px; gap: 6px; width: 240px; }
+.search-box input { border: none; outline: none; font-size: 12px; padding: 7px 0; flex: 1; background: transparent; color: #1a1d2e; }
+.chip { font-size: 11px; padding: 5px 10px; border-radius: 6px; background: white; border: 1px solid #e8eaf0; color: #374151; cursor: pointer; font-weight: 500; transition: all 0.1s; }
+.chip:hover { border-color: #7c3aed; color: #7c3aed; }
+.chip.on { background: #f5f3ff; border-color: #ddd6fe; color: #7c3aed; font-weight: 700; }
+select.chip { appearance: none; padding-right: 16px; cursor: pointer; }
+
+/* Notice */
+.notice { display: flex; align-items: center; gap: 8px; font-size: 11px; padding: 8px 12px; border-radius: 7px; margin-bottom: 12px; font-weight: 500; background: #f5f3ff; color: #5b21b6; border: 1px solid #ddd6fe; }
+
+/* Vendor Cards */
+.vendor-list { display: flex; flex-direction: column; gap: 7px; }
+.vendor-card { background: white; border: 1px solid #e8eaf0; border-radius: 10px; cursor: pointer; transition: all 0.15s; overflow: hidden; }
+.vendor-card:hover { border-color: #ddd6fe; box-shadow: 0 2px 8px rgba(124,58,237,0.07); }
+.vendor-card.open { border-color: #7c3aed; }
+.vendor-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+.vendor-logo { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; font-weight: 800; color: white; }
+.vendor-info { flex: 1; }
+.vendor-name { font-weight: 700; font-size: 13px; }
+.vendor-meta { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+.vendor-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.tier-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+.tier-1 { background: #fee2e2; color: #dc2626; }
+.tier-2 { background: #fef3c7; color: #d97706; }
+.tier-3 { background: #d1fae5; color: #059669; }
+.cert-pill { font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 4px; display: flex; align-items: center; gap: 3px; }
+.cert-ok { background: #d1fae5; color: #059669; }
+.cert-exp { background: #fee2e2; color: #dc2626; }
+.cert-miss { background: #f3f4f6; color: #9ca3af; }
+.cert-pend { background: #fef3c7; color: #d97706; }
+
+/* Vendor expand */
+.vendor-expand { display: none; padding: 14px 16px; border-top: 1px solid #e8eaf0; background: #fdfcff; }
+.vendor-card.open .vendor-expand { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.exp-field label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; display: block; margin-bottom: 5px; }
+.exp-field p { font-size: 12px; color: #374151; line-height: 1.5; }
+.exp-actions { grid-column: 1/-1; display: flex; gap: 7px; padding-top: 10px; border-top: 1px solid #f3f4f6; flex-wrap: wrap; }
+.btn-s { padding: 5px 10px; font-size: 11px; font-weight: 600; border-radius: 5px; border: none; cursor: pointer; }
+.btn-sp { background: #7c3aed; color: white; }
+.btn-sg { background: #f4f6f9; color: #374151; }
+.btn-sd { background: #fee2e2; color: #dc2626; margin-left: auto; }
+.data-row { display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; border-bottom: 1px solid #f3f4f6; }
+.data-row:last-child { border-bottom: none; }
+.data-label { color: #6b7280; }
+.data-val { font-weight: 600; color: #1a1d2e; }
+
+/* Certs tab */
+.cert-table { background: white; border: 1px solid #e8eaf0; border-radius: 10px; overflow: hidden; }
+.cert-table-header { display: grid; grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr 1fr; gap: 0; background: #f9fafb; border-bottom: 1px solid #e8eaf0; }
+.cert-th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; padding: 10px 14px; }
+.cert-row { display: grid; grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr 1fr; gap: 0; border-bottom: 1px solid #f3f4f6; transition: background 0.1s; }
+.cert-row:last-child { border-bottom: none; }
+.cert-row:hover { background: #fdfcff; }
+.cert-td { padding: 11px 14px; font-size: 12px; color: #374151; display: flex; align-items: center; }
+.cert-td.name { font-weight: 600; }
+.expiry-ok { color: #059669; font-weight: 600; }
+.expiry-warn { color: #d97706; font-weight: 600; }
+.expiry-exp { color: #dc2626; font-weight: 600; }
+.expiry-na { color: #9ca3af; }
+
+/* Questionnaire tab */
+.q-list { display: flex; flex-direction: column; gap: 7px; }
+.q-card { background: white; border: 1px solid #e8eaf0; border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; transition: all 0.15s; }
+.q-card:hover { border-color: #ddd6fe; }
+.q-info { flex: 1; }
+.q-name { font-weight: 600; font-size: 13px; }
+.q-meta { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+.q-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+.q-status { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+.qs-sent { background: #eff3fe; color: #4f7ef8; }
+.qs-review { background: #fef3c7; color: #d97706; }
+.qs-complete { background: #d1fae5; color: #059669; }
+.qs-overdue { background: #fee2e2; color: #dc2626; }
+.qs-pending { background: #f3f4f6; color: #6b7280; }
+.q-score { font-size: 18px; font-weight: 800; }
+.q-prog-bar { height: 4px; background: #e8eaf0; border-radius: 2px; overflow: hidden; width: 100px; }
+.q-prog-fill { height: 100%; border-radius: 2px; }
+.icon-btn { background: #f4f6f9; border: none; border-radius: 5px; padding: 4px 8px; font-size: 11px; cursor: pointer; color: #374151; }
+.icon-btn:hover { background: #ede9fe; color: #7c3aed; }
+
+/* Fourth-party tab */
+.fp-card { background: white; border: 1px solid #e8eaf0; border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; }
+.fp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.fp-title { font-weight: 700; font-size: 13px; }
+.fp-chain { display: flex; align-items: center; gap: 6px; font-size: 11px; flex-wrap: wrap; }
+.fp-node { padding: 4px 10px; border-radius: 6px; font-weight: 600; }
+.fp-node.you { background: #7c3aed; color: white; }
+.fp-node.vendor { background: #eff3fe; color: #3730a3; }
+.fp-node.sub { background: #f3f4f6; color: #374151; }
+.fp-arrow { color: #9ca3af; font-size: 14px; }
+.fp-risk { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+
+/* Two col layout */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.stat-card { background: white; border: 1px solid #e8eaf0; border-radius: 10px; padding: 14px 16px; }
+.stat-card-title { font-size: 11px; font-weight: 700; color: #6b7280; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:22px;">
+      <div class="topbar-brand">PredictSafe <span>BIO</span></div>
+      <nav class="topbar-nav">
+        <a href="compliance_map_redesign.html">Compliance</a>
+        <a href="risk_page_redesign.html">Risk</a>
+        <a class="active">Vendors</a>
+        <a>Reports</a>
+        <a>Settings</a>
+      </nav>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost">🔔</button>
+      <button class="btn btn-ghost" style="font-size:12px;">↑ Export</button>
+      <button class="btn btn-primary">+ Add Vendor</button>
+      <div class="avatar">JH</div>
+    </div>
+  </div>
+
+  <!-- KPI Bar — vendor-specific only -->
+  <div class="kpi-bar">
+    <div class="kpi-card">
+      <div class="kpi-num c-purple">22</div>
+      <div class="kpi-label">Total Vendors</div>
+      <div class="kpi-delta neu">2 added this quarter</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num c-red">6</div>
+      <div class="kpi-label">Tier 1 (Critical)</div>
+      <div class="kpi-delta dn">1 cert expiring</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num c-amber">5</div>
+      <div class="kpi-label">Certs Expiring &lt;90d</div>
+      <div class="kpi-delta dn">Action needed</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num c-red">3</div>
+      <div class="kpi-label">Questionnaires Overdue</div>
+      <div class="kpi-delta dn">↑ 1 this week</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num c-amber">8</div>
+      <div class="kpi-label">Contracts Expiring &lt;180d</div>
+      <div class="kpi-delta neu">Review required</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num c-green">14</div>
+      <div class="kpi-label">4th-Party Subprocessors</div>
+      <div class="kpi-delta neu">Mapped &amp; reviewed</div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-label">Risk Tier</div>
+      <div class="sidebar-item active">All Vendors <span class="badge b-purple">22</span></div>
+      <div class="sidebar-item">Tier 1 — Critical <span class="badge b-red">6</span></div>
+      <div class="sidebar-item">Tier 2 — Important <span class="badge b-amber">10</span></div>
+      <div class="sidebar-item">Tier 3 — Low Risk <span class="badge b-green">6</span></div>
+      <div style="height:10px;"></div>
+      <div class="sidebar-label">Category</div>
+      <div class="sidebar-item">Cloud / Infra <span class="badge b-red">4</span></div>
+      <div class="sidebar-item">CRO / Research <span class="badge b-red">3</span></div>
+      <div class="sidebar-item">SaaS / Software <span class="badge b-amber">7</span></div>
+      <div class="sidebar-item">Identity &amp; Auth <span class="badge b-amber">2</span></div>
+      <div class="sidebar-item">Legal / Compliance <span class="badge b-green">3</span></div>
+      <div class="sidebar-item">HR / Finance <span class="badge b-green">3</span></div>
+      <div style="height:10px;"></div>
+      <div class="sidebar-label">Status</div>
+      <div class="sidebar-item">🔴 Action Required <span class="badge b-red">5</span></div>
+      <div class="sidebar-item">🟡 Under Review <span class="badge b-amber">4</span></div>
+      <div class="sidebar-item">🟢 Approved <span class="badge b-green">13</span></div>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Vendor Management</div>
+          <div class="page-subtitle">22 vendors tracked · Last reviewed: Jun 1, 2026 · Annual review due: Sep 1, 2026</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost" style="font-size:12px;">📧 Send Questionnaires</button>
+          <button class="btn btn-primary">+ Add Vendor</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('vendors',this)">🏢 Vendors <span class="badge b-purple" style="font-size:10px;">22</span></div>
+        <div class="tab" onclick="switchTab('certs',this)">📜 Certifications <span class="badge b-amber" style="font-size:10px;">5 expiring</span></div>
+        <div class="tab" onclick="switchTab('questionnaires',this)">📋 Questionnaires <span class="badge b-red" style="font-size:10px;">3 overdue</span></div>
+        <div class="tab" onclick="switchTab('fourthparty',this)">🔗 4th-Party Map</div>
+      </div>
+
+      <!-- VENDORS TAB -->
+      <div class="tab-panel active" id="panel-vendors">
+        <div class="notice">🏢 <strong>Vendors tab:</strong> Vendor details, risk tier, contract status, and certification summary. Internal compliance controls and risk scores live in their own pages.</div>
+        <div class="filter-bar">
+          <div class="search-box"><span style="color:#9ca3af;">🔍</span><input placeholder="Search vendors…" oninput="filterVendors(this.value)"></div>
+          <div class="chip on" onclick="chipV(this,'all')">All</div>
+          <div class="chip" onclick="chipV(this,'tier-1')">🔴 Tier 1</div>
+          <div class="chip" onclick="chipV(this,'tier-2')">🟡 Tier 2</div>
+          <div class="chip" onclick="chipV(this,'tier-3')">🟢 Tier 3</div>
+          <select class="chip" style="margin-left:auto;">
+            <option>Sort: Risk Tier</option>
+            <option>Sort: Name A–Z</option>
+            <option>Sort: Contract Expiry</option>
+            <option>Sort: Last Review</option>
+          </select>
+        </div>
+        <div class="vendor-list" id="vendorList">
+
+          <!-- Tier 1 -->
+          <div class="vendor-card" data-tier="tier-1" data-n="aws amazon web services" onclick="toggleVendor(this)">
+            <div class="vendor-row">
+              <div class="vendor-logo" style="background:#f59e0b;font-size:13px;">AWS</div>
+              <div class="vendor-info">
+                <div class="vendor-name">Amazon Web Services</div>
+                <div class="vendor-meta">Cloud / Infra · Owner: IT · Contract expires: Dec 31, 2026</div>
+              </div>
+              <div class="vendor-right">
+                <div class="cert-pill cert-ok">✓ SOC 2</div>
+                <div class="cert-pill cert-ok">✓ ISO 27001</div>
+                <div class="cert-pill cert-ok">✓ HIPAA BAA</div>
+                <div class="tier-badge tier-1">Tier 1</div>
+                <span style="color:#9ca3af;font-size:12px;">▾</span>
+              </div>
+            </div>
+            <div class="vendor-expand">
+              <div class="exp-field">
+                <label>Services Used</label>
+                <p>EC2, S3, RDS, CloudTrail, KMS. Hosts all production clinical data and trial management systems.</p>
+              </div>
+              <div class="exp-field">
+                <label>Contract &amp; DPA</label>
+                <div class="data-row"><span class="data-label">Contract value</span><span class="data-val">$420K/yr</span></div>
+                <div class="data-row"><span class="data-label">Contract expiry</span><span class="data-val">Dec 31, 2026</span></div>
+                <div class="data-row"><span class="data-label">DPA / GDPR</span><span class="data-val" style="color:#059669;">✓ Signed May 2025</span></div>
+                <div class="data-row"><span class="data-label">BAA</span><span class="data-val" style="color:#059669;">✓ Active</span></div>
+              </div>
+              <div class="exp-field">
+                <label>Certifications</label>
+                <div class="data-row"><span class="data-label">SOC 2 Type II</span><span class="data-val" style="color:#059669;">✓ Valid to Jan 2027</span></div>
+                <div class="data-row"><span class="data-label">ISO 27001</span><span class="data-val" style="color:#059669;">✓ Valid to Mar 2027</span></div>
+                <div class="data-row"><span class="data-label">HIPAA BAA</span><span class="data-val" style="color:#059669;">✓ Active</span></div>
+                <div class="data-row"><span class="data-label">Last assessment</span><span class="data-val">Feb 10, 2026</span></div>
+              </div>
+              <div class="exp-actions">
+                <button class="btn-s btn-sp" onclick="event.stopPropagation();switchTab('questionnaires',null)">📋 View Questionnaire</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">📜 View Certs</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">✏️ Edit Vendor</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">💬 Comment</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="vendor-card" data-tier="tier-1" data-n="okta identity access management" onclick="toggleVendor(this)">
+            <div class="vendor-row">
+              <div class="vendor-logo" style="background:#00297a;font-size:13px;">OKT</div>
+              <div class="vendor-info">
+                <div class="vendor-name">Okta</div>
+                <div class="vendor-meta">Identity &amp; Auth · Owner: IT · Contract expires: Mar 15, 2027</div>
+              </div>
+              <div class="vendor-right">
+                <div class="cert-pill cert-ok">✓ SOC 2</div>
+                <div class="cert-pill cert-ok">✓ ISO 27001</div>
+                <div class="cert-pill cert-pend">⏳ HIPAA BAA</div>
+                <div class="tier-badge tier-1">Tier 1</div>
+                <span style="color:#9ca3af;font-size:12px;">▾</span>
+              </div>
+            </div>
+            <div class="vendor-expand">
+              <div class="exp-field">
+                <label>Services Used</label>
+                <p>SSO, MFA, lifecycle management for all staff. Critical dependency for access control compliance.</p>
+              </div>
+              <div class="exp-field">
+                <label>Contract &amp; DPA</label>
+                <div class="data-row"><span class="data-label">Contract value</span><span class="data-val">$68K/yr</span></div>
+                <div class="data-row"><span class="data-label">Contract expiry</span><span class="data-val">Mar 15, 2027</span></div>
+                <div class="data-row"><span class="data-label">DPA / GDPR</span><span class="data-val" style="color:#059669;">✓ Signed Jan 2026</span></div>
+                <div class="data-row"><span class="data-label">BAA</span><span class="data-val" style="color:#d97706;">⏳ Pending signature</span></div>
+              </div>
+              <div class="exp-field">
+                <label>Certifications</label>
+                <div class="data-row"><span class="data-label">SOC 2 Type II</span><span class="data-val" style="color:#059669;">✓ Valid to Aug 2026</span></div>
+                <div class="data-row"><span class="data-label">ISO 27001</span><span class="data-val" style="color:#059669;">✓ Valid to Nov 2026</span></div>
+                <div class="data-row"><span class="data-label">HIPAA BAA</span><span class="data-val" style="color:#d97706;">⚠ Pending</span></div>
+                <div class="data-row"><span class="data-label">Last assessment</span><span class="data-val">Apr 2, 2026</span></div>
+              </div>
+              <div class="exp-actions">
+                <button class="btn-s btn-sp" onclick="event.stopPropagation()">⚠ Resolve BAA</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation();switchTab('questionnaires',null)">📋 View Questionnaire</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">✏️ Edit Vendor</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="vendor-card" data-tier="tier-1" data-n="medidata rave clinical cro research" onclick="toggleVendor(this)">
+            <div class="vendor-row">
+              <div class="vendor-logo" style="background:#0ea5e9;font-size:11px;">MDT</div>
+              <div class="vendor-info">
+                <div class="vendor-name">Medidata Rave</div>
+                <div class="vendor-meta">CRO / Research · Owner: Operations · Contract expires: Jun 30, 2027</div>
+              </div>
+              <div class="vendor-right">
+                <div class="cert-pill cert-ok">✓ SOC 2</div>
+                <div class="cert-pill cert-exp">✗ ISO 27001</div>
+                <div class="cert-pill cert-ok">✓ 21 CFR Pt 11</div>
+                <div class="tier-badge tier-1">Tier 1</div>
+                <span style="color:#9ca3af;font-size:12px;">▾</span>
+              </div>
+            </div>
+            <div class="vendor-expand">
+              <div class="exp-field">
+                <label>Services Used</label>
+                <p>EDC platform for all Phase II/III clinical trial data capture. Hosts primary trial data for 3 active studies.</p>
+              </div>
+              <div class="exp-field">
+                <label>Contract &amp; DPA</label>
+                <div class="data-row"><span class="data-label">Contract value</span><span class="data-val">$280K/yr</span></div>
+                <div class="data-row"><span class="data-label">Contract expiry</span><span class="data-val">Jun 30, 2027</span></div>
+                <div class="data-row"><span class="data-label">DPA / GDPR</span><span class="data-val" style="color:#059669;">✓ Signed Feb 2026</span></div>
+                <div class="data-row"><span class="data-label">BAA</span><span class="data-val" style="color:#059669;">✓ Active</span></div>
+              </div>
+              <div class="exp-field">
+                <label>Certifications</label>
+                <div class="data-row"><span class="data-label">SOC 2 Type II</span><span class="data-val" style="color:#059669;">✓ Valid to Oct 2026</span></div>
+                <div class="data-row"><span class="data-label">ISO 27001</span><span class="data-val" style="color:#dc2626;">✗ Expired Mar 2026</span></div>
+                <div class="data-row"><span class="data-label">21 CFR Part 11</span><span class="data-val" style="color:#059669;">✓ Validated</span></div>
+                <div class="data-row"><span class="data-label">Last assessment</span><span class="data-val">Jan 20, 2026</span></div>
+              </div>
+              <div class="exp-actions">
+                <button class="btn-s btn-sp" onclick="event.stopPropagation()">⚠ Request ISO Renewal</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">📋 View Questionnaire</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">✏️ Edit Vendor</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tier 2 -->
+          <div class="vendor-card" data-tier="tier-2" data-n="slack salesforce communication" onclick="toggleVendor(this)">
+            <div class="vendor-row">
+              <div class="vendor-logo" style="background:#4a154b;font-size:13px;">SLK</div>
+              <div class="vendor-info">
+                <div class="vendor-name">Slack (Salesforce)</div>
+                <div class="vendor-meta">SaaS / Software · Owner: IT · Contract expires: Jan 31, 2027</div>
+              </div>
+              <div class="vendor-right">
+                <div class="cert-pill cert-ok">✓ SOC 2</div>
+                <div class="cert-pill cert-miss">— ISO 27001</div>
+                <div class="cert-pill cert-ok">✓ GDPR DPA</div>
+                <div class="tier-badge tier-2">Tier 2</div>
+                <span style="color:#9ca3af;font-size:12px;">▾</span>
+              </div>
+            </div>
+            <div class="vendor-expand">
+              <div class="exp-field">
+                <label>Services Used</label>
+                <p>Internal team communication. No PHI or trial data permitted. DLP policy enforced via integration.</p>
+              </div>
+              <div class="exp-field">
+                <label>Contract &amp; DPA</label>
+                <div class="data-row"><span class="data-label">Contract value</span><span class="data-val">$24K/yr</span></div>
+                <div class="data-row"><span class="data-label">Contract expiry</span><span class="data-val">Jan 31, 2027</span></div>
+                <div class="data-row"><span class="data-label">DPA / GDPR</span><span class="data-val" style="color:#059669;">✓ Signed</span></div>
+                <div class="data-row"><span class="data-label">BAA</span><span class="data-val" style="color:#9ca3af;">N/A — no PHI</span></div>
+              </div>
+              <div class="exp-field">
+                <label>Certifications</label>
+                <div class="data-row"><span class="data-label">SOC 2 Type II</span><span class="data-val" style="color:#059669;">✓ Valid to Sep 2026</span></div>
+                <div class="data-row"><span class="data-label">ISO 27001</span><span class="data-val" style="color:#9ca3af;">Not required (Tier 2)</span></div>
+                <div class="data-row"><span class="data-label">Last assessment</span><span class="data-val">Mar 1, 2026</span></div>
+              </div>
+              <div class="exp-actions">
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">📋 View Questionnaire</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">✏️ Edit Vendor</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tier 3 -->
+          <div class="vendor-card" data-tier="tier-3" data-n="zoom video conferencing meetings" onclick="toggleVendor(this)">
+            <div class="vendor-row">
+              <div class="vendor-logo" style="background:#2d8cff;font-size:13px;">ZM</div>
+              <div class="vendor-info">
+                <div class="vendor-name">Zoom</div>
+                <div class="vendor-meta">SaaS / Software · Owner: IT · Contract expires: Aug 15, 2026</div>
+              </div>
+              <div class="vendor-right">
+                <div class="cert-pill cert-ok">✓ SOC 2</div>
+                <div class="cert-pill cert-miss">— ISO 27001</div>
+                <div class="cert-pill cert-ok">✓ GDPR DPA</div>
+                <div class="tier-badge tier-3">Tier 3</div>
+                <span style="color:#9ca3af;font-size:12px;">▾</span>
+              </div>
+            </div>
+            <div class="vendor-expand">
+              <div class="exp-field">
+                <label>Services Used</label>
+                <p>External meetings and webinars only. No internal data storage. No PHI shared on platform.</p>
+              </div>
+              <div class="exp-field">
+                <label>Contract &amp; DPA</label>
+                <div class="data-row"><span class="data-label">Contract value</span><span class="data-val">$6K/yr</span></div>
+                <div class="data-row"><span class="data-label">Contract expiry</span><span class="data-val" style="color:#d97706;">Aug 15, 2026 ⚠ 73 days</span></div>
+                <div class="data-row"><span class="data-label">DPA / GDPR</span><span class="data-val" style="color:#059669;">✓ Signed</span></div>
+                <div class="data-row"><span class="data-label">BAA</span><span class="data-val" style="color:#9ca3af;">N/A</span></div>
+              </div>
+              <div class="exp-field">
+                <label>Certifications</label>
+                <div class="data-row"><span class="data-label">SOC 2 Type II</span><span class="data-val" style="color:#059669;">✓ Valid to Nov 2026</span></div>
+                <div class="data-row"><span class="data-label">Last assessment</span><span class="data-val">Self-attested Jan 2026</span></div>
+              </div>
+              <div class="exp-actions">
+                <button class="btn-s btn-sp" onclick="event.stopPropagation()">🔄 Renew Contract</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">✏️ Edit Vendor</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- CERTIFICATIONS TAB -->
+      <div class="tab-panel" id="panel-certs">
+        <div class="notice">📜 <strong>Certifications:</strong> Vendor cert validity and expiry tracking only. No internal compliance control data here.</div>
+        <div class="filter-bar">
+          <div class="search-box"><span style="color:#9ca3af;">🔍</span><input placeholder="Search vendors…"></div>
+          <div class="chip on">All</div>
+          <div class="chip" style="background:#fef2f2;border-color:#fecaca;color:#dc2626;font-weight:700;">🔴 Expired</div>
+          <div class="chip" style="background:#fffbeb;border-color:#fde68a;color:#d97706;font-weight:700;">🟡 Expiring &lt;90d</div>
+          <div class="chip">🟢 Valid</div>
+          <div class="chip">— Not Required</div>
+        </div>
+        <div class="cert-table">
+          <div class="cert-table-header">
+            <div class="cert-th">Vendor</div>
+            <div class="cert-th">Tier</div>
+            <div class="cert-th">SOC 2 Type II</div>
+            <div class="cert-th">ISO 27001</div>
+            <div class="cert-th">HIPAA BAA</div>
+            <div class="cert-th">21 CFR Pt 11</div>
+          </div>
+          <div class="cert-row">
+            <div class="cert-td name">Amazon Web Services</div>
+            <div class="cert-td"><span class="tier-badge tier-1" style="font-size:10px;padding:2px 7px;">Tier 1</span></div>
+            <div class="cert-td expiry-ok">✓ Jan 2027</div>
+            <div class="cert-td expiry-ok">✓ Mar 2027</div>
+            <div class="cert-td expiry-ok">✓ Active</div>
+            <div class="cert-td expiry-na">N/A</div>
+          </div>
+          <div class="cert-row">
+            <div class="cert-td name">Okta</div>
+            <div class="cert-td"><span class="tier-badge tier-1" style="font-size:10px;padding:2px 7px;">Tier 1</span></div>
+            <div class="cert-td expiry-warn">⚠ Aug 2026</div>
+            <div class="cert-td expiry-warn">⚠ Nov 2026</div>
+            <div class="cert-td expiry-warn">⏳ Pending</div>
+            <div class="cert-td expiry-na">N/A</div>
+          </div>
+          <div class="cert-row">
+            <div class="cert-td name">Medidata Rave</div>
+            <div class="cert-td"><span class="tier-badge tier-1" style="font-size:10px;padding:2px 7px;">Tier 1</span></div>
+            <div class="cert-td expiry-ok">✓ Oct 2026</div>
+            <div class="cert-td expiry-exp">✗ Expired Mar 2026</div>
+            <div class="cert-td expiry-ok">✓ Active</div>
+            <div class="cert-td expiry-ok">✓ Validated</div>
+          </div>
+          <div class="cert-row">
+            <div class="cert-td name">Veeva Vault</div>
+            <div class="cert-td"><span class="tier-badge tier-1" style="font-size:10px;padding:2px 7px;">Tier 1</span></div>
+            <div class="cert-td expiry-ok">✓ Feb 2027</div>
+            <div class="cert-td expiry-ok">✓ Jun 2027</div>
+            <div class="cert-td expiry-ok">✓ Active</div>
+            <div class="cert-td expiry-ok">✓ Validated</div>
+          </div>
+          <div class="cert-row">
+            <div class="cert-td name">Slack (Salesforce)</div>
+            <div class="cert-td"><span class="tier-badge tier-2" style="font-size:10px;padding:2px 7px;">Tier 2</span></div>
+            <div class="cert-td expiry-warn">⚠ Sep 2026</div>
+            <div class="cert-td expiry-na">Not required</div>
+            <div class="cert-td expiry-na">N/A — no PHI</div>
+            <div class="cert-td expiry-na">N/A</div>
+          </div>
+          <div class="cert-row">
+            <div class="cert-td name">Zoom</div>
+            <div class="cert-td"><span class="tier-badge tier-3" style="font-size:10px;padding:2px 7px;">Tier 3</span></div>
+            <div class="cert-td expiry-ok">✓ Nov 2026</div>
+            <div class="cert-td expiry-na">Not required</div>
+            <div class="cert-td expiry-na">N/A</div>
+            <div class="cert-td expiry-na">N/A</div>
+          </div>
+          <div class="cert-row">
+            <div class="cert-td name">DocuSign</div>
+            <div class="cert-td"><span class="tier-badge tier-2" style="font-size:10px;padding:2px 7px;">Tier 2</span></div>
+            <div class="cert-td expiry-warn">⚠ Jul 2026</div>
+            <div class="cert-td expiry-ok">✓ Dec 2026</div>
+            <div class="cert-td expiry-na">N/A</div>
+            <div class="cert-td expiry-ok">✓ Validated</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUESTIONNAIRES TAB -->
+      <div class="tab-panel" id="panel-questionnaires">
+        <div class="notice">📋 <strong>Questionnaires:</strong> Security assessment status and scores only. Not linked to internal compliance controls — those live in the Compliance page.</div>
+        <div class="filter-bar">
+          <div class="search-box"><span style="color:#9ca3af;">🔍</span><input placeholder="Search vendors…"></div>
+          <div class="chip on">All</div>
+          <div class="chip">🔴 Overdue</div>
+          <div class="chip">📤 Sent</div>
+          <div class="chip">🔍 Under Review</div>
+          <div class="chip">✓ Complete</div>
+          <div style="margin-left:auto;"><button class="btn btn-primary" style="font-size:12px;padding:6px 12px;">📧 Send Batch</button></div>
+        </div>
+        <div class="q-list">
+
+          <div class="q-card">
+            <div style="width:36px;height:36px;border-radius:8px;background:#fee2e2;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">⏰</div>
+            <div class="q-info">
+              <div class="q-name">Medidata Rave — Annual Security Assessment</div>
+              <div class="q-meta">Sent: Apr 1, 2026 · Due: May 1, 2026 · Tier 1 · Owner: Operations</div>
+            </div>
+            <div class="q-right">
+              <div class="q-status qs-overdue">Overdue by 32 days</div>
+              <div style="font-size:11px;color:#9ca3af;">Last chased: May 28</div>
+              <div style="display:flex;gap:5px;">
+                <button class="icon-btn">📧 Chase</button>
+                <button class="icon-btn">✏️ Edit</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="q-card">
+            <div style="width:36px;height:36px;border-radius:8px;background:#fee2e2;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">⏰</div>
+            <div class="q-info">
+              <div class="q-name">BioNTech CRO — Vendor Due Diligence Questionnaire</div>
+              <div class="q-meta">Sent: Apr 15, 2026 · Due: May 15, 2026 · Tier 1 · Owner: Legal</div>
+            </div>
+            <div class="q-right">
+              <div class="q-status qs-overdue">Overdue by 18 days</div>
+              <div style="font-size:11px;color:#9ca3af;">No response received</div>
+              <div style="display:flex;gap:5px;">
+                <button class="icon-btn">📧 Chase</button>
+                <button class="icon-btn">✏️ Edit</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="q-card">
+            <div style="width:36px;height:36px;border-radius:8px;background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🔍</div>
+            <div class="q-info">
+              <div class="q-name">Okta — Annual Security Assessment</div>
+              <div class="q-meta">Received: May 20, 2026 · Tier 1 · Owner: IT · Reviewer: R. Chen</div>
+            </div>
+            <div class="q-right">
+              <div class="q-status qs-review">Under Review</div>
+              <div class="q-prog-bar"><div class="q-prog-fill" style="width:60%;background:#f59e0b;"></div></div>
+              <div style="display:flex;gap:5px;">
+                <button class="icon-btn">👁 Review</button>
+                <button class="icon-btn">✓ Approve</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="q-card">
+            <div style="width:36px;height:36px;border-radius:8px;background:#eff3fe;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📤</div>
+            <div class="q-info">
+              <div class="q-name">DocuSign — Security Questionnaire 2026</div>
+              <div class="q-meta">Sent: May 28, 2026 · Due: Jun 28, 2026 · Tier 2 · Owner: Legal</div>
+            </div>
+            <div class="q-right">
+              <div class="q-status qs-sent">Sent — Awaiting Response</div>
+              <div style="font-size:11px;color:#9ca3af;">27 days remaining</div>
+              <div style="display:flex;gap:5px;">
+                <button class="icon-btn">📧 Chase</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="q-card">
+            <div style="width:36px;height:36px;border-radius:8px;background:#d1fae5;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">✅</div>
+            <div class="q-info">
+              <div class="q-name">Amazon Web Services — Annual Security Assessment</div>
+              <div class="q-meta">Completed: Feb 10, 2026 · Tier 1 · Owner: IT · Next due: Feb 2027</div>
+            </div>
+            <div class="q-right">
+              <div class="q-status qs-complete">Complete</div>
+              <div class="q-score c-green">94<span style="font-size:11px;color:#9ca3af;">/100</span></div>
+              <div style="display:flex;gap:5px;">
+                <button class="icon-btn">👁 View Report</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="q-card">
+            <div style="width:36px;height:36px;border-radius:8px;background:#d1fae5;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">✅</div>
+            <div class="q-info">
+              <div class="q-name">Veeva Vault — Annual Security Assessment</div>
+              <div class="q-meta">Completed: Mar 5, 2026 · Tier 1 · Owner: Operations · Next due: Mar 2027</div>
+            </div>
+            <div class="q-right">
+              <div class="q-status qs-complete">Complete</div>
+              <div class="q-score c-green">88<span style="font-size:11px;color:#9ca3af;">/100</span></div>
+              <div style="display:flex;gap:5px;">
+                <button class="icon-btn">👁 View Report</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 4TH-PARTY TAB -->
+      <div class="tab-panel" id="panel-fourthparty">
+        <div class="notice">🔗 <strong>4th-Party Map:</strong> Your vendors' key subprocessors and their exposure. Distinct from your internal risk register — these are risks you inherit, not own.</div>
+        <div class="two-col" style="margin-bottom:14px;">
+          <div class="stat-card">
+            <div class="stat-card-title">Subprocessor Summary</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div class="data-row"><span class="data-label">Total subprocessors mapped</span><span class="data-val">14</span></div>
+              <div class="data-row"><span class="data-label">High-concentration risk</span><span class="data-val c-red">3 (AWS appears 8×)</span></div>
+              <div class="data-row"><span class="data-label">EU data residency confirmed</span><span class="data-val c-green">9 / 14</span></div>
+              <div class="data-row"><span class="data-label">SCCs in place</span><span class="data-val c-green">12 / 14</span></div>
+              <div class="data-row"><span class="data-label">Last full mapping</span><span class="data-val">Apr 30, 2026</span></div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-title">Concentration Risk</div>
+            <div style="font-size:12px;color:#374151;margin-bottom:10px;">AWS is a subprocessor for 8 of your 22 vendors — a single point of failure risk.</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span>AWS (Amazon)</span><span class="c-red" style="font-weight:700;">8 vendors</span></div><div style="height:6px;background:#e8eaf0;border-radius:3px;"><div style="width:80%;height:100%;background:#ef4444;border-radius:3px;"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span>Google Cloud</span><span class="c-amber" style="font-weight:700;">5 vendors</span></div><div style="height:6px;background:#e8eaf0;border-radius:3px;"><div style="width:50%;height:100%;background:#f59e0b;border-radius:3px;"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span>Twilio (comms)</span><span style="font-weight:700;color:#6b7280;">3 vendors</span></div><div style="height:6px;background:#e8eaf0;border-radius:3px;"><div style="width:30%;height:100%;background:#9ca3af;border-radius:3px;"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span>Stripe (payments)</span><span class="c-green" style="font-weight:700;">1 vendor</span></div><div style="height:6px;background:#e8eaf0;border-radius:3px;"><div style="width:10%;height:100%;background:#10b981;border-radius:3px;"></div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#374151;">Supply Chain Maps — Tier 1 Vendors</div>
+
+        <div class="fp-card">
+          <div class="fp-header">
+            <div class="fp-title">Amazon Web Services</div>
+            <span class="fp-risk b-green" style="background:#d1fae5;color:#059669;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:700;">Low 4th-party risk</span>
+          </div>
+          <div class="fp-chain">
+            <div class="fp-node you">PredictSafe BIO</div>
+            <div class="fp-arrow">→</div>
+            <div class="fp-node vendor">AWS</div>
+            <div class="fp-arrow">→</div>
+            <div class="fp-node sub">Equinix (Data Centers)</div>
+            <div class="fp-arrow">·</div>
+            <div class="fp-node sub">NTT (Fiber)</div>
+            <div class="fp-arrow">·</div>
+            <div class="fp-node sub">Lumen (Network)</div>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:#6b7280;">Subprocessors handle physical infrastructure only. All data processing and encryption occurs within AWS boundary. EU region (eu-west-1) confirmed for EU patient data.</div>
+        </div>
+
+        <div class="fp-card">
+          <div class="fp-header">
+            <div class="fp-title">Medidata Rave</div>
+            <span class="fp-risk" style="background:#fef3c7;color:#d97706;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:700;">Medium 4th-party risk</span>
+          </div>
+          <div class="fp-chain">
+            <div class="fp-node you">PredictSafe BIO</div>
+            <div class="fp-arrow">→</div>
+            <div class="fp-node vendor">Medidata Rave</div>
+            <div class="fp-arrow">→</div>
+            <div class="fp-node sub">AWS (hosting)</div>
+            <div class="fp-arrow">·</div>
+            <div class="fp-node sub">Veeva (integrations)</div>
+            <div class="fp-arrow">·</div>
+            <div class="fp-node sub" style="border:1px solid #fca5a5;background:#fee2e2;color:#dc2626;">Unverified Analytics Co.</div>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:#dc2626;font-weight:600;">⚠ One subprocessor unverified — analytics vendor added Q1 2026, DPA not yet confirmed. Action required.</div>
+        </div>
+
+        <div class="fp-card">
+          <div class="fp-header">
+            <div class="fp-title">Okta</div>
+            <span class="fp-risk" style="background:#d1fae5;color:#059669;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:700;">Low 4th-party risk</span>
+          </div>
+          <div class="fp-chain">
+            <div class="fp-node you">PredictSafe BIO</div>
+            <div class="fp-arrow">→</div>
+            <div class="fp-node vendor">Okta</div>
+            <div class="fp-arrow">→</div>
+            <div class="fp-node sub">AWS (hosting)</div>
+            <div class="fp-arrow">·</div>
+            <div class="fp-node sub">Twilio (SMS MFA)</div>
+            <div class="fp-arrow">·</div>
+            <div class="fp-node sub">Salesforce (CRM)</div>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:#6b7280;">All subprocessors verified with SOC 2 reports on file. Twilio used for SMS OTP — no PHI transmitted. All subprocessors under EU adequacy decisions.</div>
+        </div>
+
+      </div>
+
+    </div><!-- /main -->
+  </div><!-- /body -->
+</div><!-- /shell -->
+
+<script>
+function switchTab(id, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  if (el) el.classList.add('active');
+  else {
+    const map = { vendors:0, certs:1, questionnaires:2, fourthparty:3 };
+    const tabs = document.querySelectorAll('.tab');
+    if (map[id] !== undefined) tabs[map[id]].classList.add('active');
+  }
+  const panel = document.getElementById('panel-' + id);
+  if (panel) panel.classList.add('active');
+}
+function toggleVendor(card) {
+  const was = card.classList.contains('open');
+  document.querySelectorAll('.vendor-card').forEach(c => c.classList.remove('open'));
+  if (!was) card.classList.add('open');
+}
+function chipV(chip, tier) {
+  document.querySelectorAll('#panel-vendors .chip').forEach(c => c.classList.remove('on'));
+  chip.classList.add('on');
+  document.querySelectorAll('.vendor-card').forEach(c => {
+    c.style.display = (tier === 'all' || c.dataset.tier === tier) ? '' : 'none';
+  });
+}
+function filterVendors(q) {
+  const lq = q.toLowerCase();
+  document.querySelectorAll('.vendor-card').forEach(c => {
+    c.style.display = c.dataset.n.includes(lq) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>
