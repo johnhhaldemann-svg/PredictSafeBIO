@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { AlertTriangle, Plus, ShieldCheck, Trash2, Truck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import {

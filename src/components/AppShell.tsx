@@ -32,7 +32,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="app-shell">
-      {/* ── Top bar: logo + quick links + user ── */}
+      {/* ── Top bar ── */}
       <header className="top-nav" aria-label="Primary navigation">
         <Link href="/workbench" className="logo-area" aria-label="PredictSafeBIO platform">
           <div className="logo-box">
@@ -83,44 +83,40 @@ export async function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      {/* ── Category nav bar: 5 platform categories with sub-dropdowns ── */}
-      <PlatformCategoryNav />
+      {/* ── Body: sidebar + content ── */}
+      <div className="app-body">
+        <aside className="app-sidebar">
+          <PlatformCategoryNav />
+        </aside>
 
-      {/* ── Demo / disconnected banner ── */}
-      {!auth.signedIn && (
-        <div className="demo-mode-banner" role="alert" aria-label="Demo mode notice">
-          <span>
-            You are viewing sample data.{" "}
-            <Link href="/signup">Sign up</Link> or{" "}
-            <Link href="/login?next=/workbench">sign in</Link> to connect your workspace.
-          </span>
-        </div>
-      )}
-
-      {/* ── Breadcrumb / context strip ── */}
-      {auth.signedIn && (
-        <div className="breadcrumb-bar" aria-label="Page context">
-          {auth.organizationId ? (
-            <span className="muted" style={{ fontSize: "0.78em" }}>
-              {/* Workspace connected */}
-              Workspace connected ·{" "}
-              {auth.fullName ?? auth.userEmail ?? "Signed in"} ·{" "}
-              <span className={roleBadgeClass} style={{ fontWeight: 600 }}>{roleLabel}</span>
-            </span>
-          ) : (
-            <span className="muted" style={{ fontSize: "0.78em" }}>
-              Not signed in ·{" "}
-              <a href="/signup" className="text-link">Sign up</a> to get started ·{" "}
-              <Link href="/onboarding" className="button-primary compact">Complete setup</Link>
-            </span>
+        <div className="app-content">
+          {/* Demo / disconnected banner */}
+          {!auth.signedIn && (
+            <div className="demo-mode-banner" role="alert" aria-label="Demo mode notice">
+              <span>
+                You are viewing sample data.{" "}
+                <Link href="/signup">Sign up</Link> or{" "}
+                <Link href="/login?next=/workbench">sign in</Link> to connect your workspace.
+              </span>
+            </div>
           )}
-        </div>
-      )}
-      {/* Quick nav references: My Work /my-work · Change Plan /change-plan */}
 
-      <main className="app-main" id="main-content">
-        {children}
-      </main>
+          {/* Workspace context strip */}
+          {auth.signedIn && auth.organizationId && (
+            <div className="workspace-bar" aria-label="Workspace context">
+              <span className="muted">
+                Workspace connected · {auth.fullName ?? auth.userEmail ?? "Signed in"} ·{" "}
+                <span className={roleBadgeClass} style={{ fontWeight: 600 }}>{roleLabel}</span>
+              </span>
+            </div>
+          )}
+
+
+          <main className="app-main" id="main-content">
+            {children}
+          </main>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { ClipboardList, LockKeyhole, PencilLine, PlusCircle } from "lucide-react";
 import { AppShell } from "@/components/AppShell";

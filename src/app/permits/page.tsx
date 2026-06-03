@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { AlertTriangle, ClipboardCheck, Lock, Plus, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import {

@@ -1,4 +1,14 @@
 {
   "version": 2,
-  "name": "predictsafe-bio"
+  "name": "predictsafe-bio",
+  "crons": [
+    {
+      "path": "/api/cron/revalidate-pages",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/trial-expiry",
+      "schedule": "0 9 * * *"
+    }
+  ]
 }

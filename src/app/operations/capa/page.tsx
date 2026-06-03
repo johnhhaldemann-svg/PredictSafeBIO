@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, CircleDot, Clock, Plus, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";

@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PredictSafeBIO — Biosafety Intelligence Platform</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+:root{
+  --navy:#0D2B4E;--blue:#378ADD;--blue2:#185FA5;
+  --bg:#F0F4F8;--white:#fff;--border:#D6E4F0;
+  --text:#0D1B2A;--text2:#4A6080;--text3:#8FA8C0;
+  --green:#3B6D11;--green-bg:#EAF3DE;
+  --yellow:#7A4F00;--yellow-bg:#FEF9EC;
+  --red:#B71C1C;--red-bg:#FDECEA;
+  --orange:#7C3D12;--orange-bg:#FFF3E0;
+  --sidebar:216px;--header:50px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:13px;background:var(--bg);color:var(--text);}
+
+/* ── HEADER ── */
+.header{display:flex;align-items:center;height:var(--header);padding:0 16px;background:var(--navy);position:fixed;top:0;left:0;right:0;z-index:200;gap:10px;border-bottom:1px solid rgba(255,255,255,0.07);}
+.logo-wrap{display:flex;align-items:center;gap:9px;padding-right:16px;border-right:1px solid rgba(255,255,255,0.12);margin-right:6px;}
+.logo-box{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#378ADD,#185FA5);display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.18);}
+.logo-box i{color:#fff;font-size:16px;}
+.logo-name strong{display:block;color:#fff;font-size:12px;line-height:1.2;font-weight:700;}
+.logo-name small{display:block;color:#85B7EB;font-size:10px;}
+.sp{flex:1;}
+.h-badge{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(55,138,221,0.18);color:#85B7EB;border:1px solid rgba(55,138,221,0.3);}
+.h-score{display:flex;align-items:center;gap:6px;color:#85B7EB;font-size:11.5px;}
+.h-score strong{color:#fff;font-size:14px;font-weight:700;}
+.av{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:2px solid rgba(255,255,255,0.2);cursor:pointer;}
+.h-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);color:#fff;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:background .15s;}
+.h-btn:hover{background:rgba(255,255,255,0.18);}
+.h-btn.primary{background:var(--blue);border-color:var(--blue);}
+.h-btn.primary:hover{background:var(--blue2);}
+
+/* ── LAYOUT ── */
+.app{display:flex;margin-top:var(--header);height:calc(100vh - var(--header));}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar);flex-shrink:0;background:var(--white);border-right:1px solid var(--border);overflow-y:auto;position:fixed;top:var(--header);bottom:0;left:0;z-index:100;}
+.snav-top{padding:12px 14px 4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);}
+.snav-grp{border-bottom:1px solid var(--border);}
+.snav-grp:last-child{border-bottom:none;}
+.snav-cat{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;}
+.snav-cat:hover{background:#F4F8FD;}
+.snav-cat.active{background:#F4F8FD;border-left-color:var(--blue);}
+.snav-num{width:22px;height:22px;border-radius:6px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nb{background:#E6F1FB;color:var(--blue2);}
+.nb.on{background:var(--blue2);color:#fff;}
+.ng{background:var(--green-bg);color:var(--green);}
+.nn{background:#E6F1FB;color:var(--navy);}
+.np{background:#F3E8FF;color:#6B21A8;}
+.cat-lbl{flex:1;font-size:12.5px;font-weight:600;color:var(--text2);}
+.snav-cat.active .cat-lbl{color:var(--navy);}
+.chev{color:var(--text3);font-size:12px;transition:transform .15s;}
+.chev.open{transform:rotate(180deg);}
+.snav-subs{list-style:none;background:#F4F8FD;}
+.snav-subs.hidden{display:none;}
+.snav-sub{display:flex;align-items:center;gap:8px;padding:7px 12px 7px 40px;font-size:11.5px;color:var(--text2);cursor:pointer;border-left:3px solid transparent;transition:all .15s;}
+.snav-sub:hover{background:#E6F1FB;color:var(--blue2);border-left-color:#B5D4F4;}
+.snav-sub.active{background:#E6F1FB;color:var(--blue2);font-weight:600;border-left-color:var(--blue2);}
+.snav-sub i{font-size:13px;opacity:.6;}
+.snav-sub.active i{opacity:1;}
+
+/* ── CONTENT ── */
+.content{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;overflow-y:auto;height:100%;}
+.demo-bar{padding:9px 20px;background:var(--yellow-bg);border-bottom:1px solid #FAC775;font-size:11.5px;color:var(--yellow);display:flex;align-items:center;gap:6px;}
+.demo-bar a{color:var(--blue2);font-weight:600;text-decoration:none;}
+.demo-bar a:hover{text-decoration:underline;}
+.demo-bar.connected{background:#EAF3DE;border-color:#A3D077;color:var(--green);}
+.main{padding:24px 28px;flex:1;}
+
+/* ── PAGE HEADER ── */
+.page-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;padding-bottom:18px;border-bottom:1.5px solid var(--border);}
+.sec-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--blue2);margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.sec-lbl::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;}
+.page-h1{font-size:20px;font-weight:700;color:var(--navy);letter-spacing:-0.01em;}
+.page-sub{font-size:12px;color:var(--text3);margin-top:3px;}
+.hd-actions{display:flex;gap:8px;align-items:center;}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s;text-decoration:none;}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+.btn-primary:hover{background:var(--blue2);}
+.btn-outline{background:#fff;color:var(--text2);border-color:var(--border);}
+.btn-outline:hover{background:#F4F8FD;color:var(--navy);}
+.btn-ghost{background:none;border:none;color:var(--text2);padding:6px 10px;}
+.btn-ghost:hover{color:var(--blue2);}
+.btn-sm{padding:5px 10px;font-size:11px;}
+.btn-danger{background:var(--red-bg);color:var(--red);border-color:#F5A3A3;}
+.btn-danger:hover{background:#FDECEA;}
+
+/* ── STAT CARDS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
+.stat-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.stat-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.stat-icon.blue{background:#E6F1FB;color:var(--blue2);}
+.stat-icon.green{background:var(--green-bg);color:var(--green);}
+.stat-icon.red{background:var(--red-bg);color:var(--red);}
+.stat-icon.orange{background:var(--orange-bg);color:var(--orange);}
+.stat-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);}
+.stat-val{font-size:26px;font-weight:800;color:var(--navy);line-height:1;}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:4px;}
+.stat-sub.up{color:var(--green);}
+.stat-sub.down{color:var(--red);}
+
+/* ── PANELS ── */
+.panel{background:var(--white);border:1px solid var(--border);border-radius:10px;margin-bottom:16px;overflow:hidden;}
+.panel-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);}
+.panel-title{font-size:13.5px;font-weight:700;color:var(--navy);}
+.panel-sub{font-size:11.5px;color:var(--text3);margin-top:2px;}
+.panel-body{padding:18px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:700;}
+.badge::before{content:"";width:6px;height:6px;border-radius:50%;}
+.b-green{background:var(--green-bg);color:var(--green);}
+.b-green::before{background:var(--green);}
+.b-blue{background:#E6F1FB;color:var(--blue2);}
+.b-blue::before{background:var(--blue2);}
+.b-yellow{background:var(--yellow-bg);color:var(--yellow);}
+.b-yellow::before{background:#F59E0B;}
+.b-red{background:var(--red-bg);color:var(--red);}
+.b-red::before{background:var(--red);}
+.b-gray{background:#F1F5F9;color:#64748B;}
+.b-gray::before{background:#94A3B8;}
+.b-purple{background:#F3E8FF;color:#6B21A8;}
+.b-purple::before{background:#9333EA;}
+
+/* ── TABLES ── */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;padding:9px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:#FAFCFE;}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:12.5px;color:var(--text2);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#FAFCFE;}
+td.td-main{color:var(--navy);font-weight:600;}
+.td-tag{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--blue2);}
+
+/* ── PROGRESS ── */
+.prog-row{margin-bottom:13px;}
+.prog-lbl{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}
+.prog-lbl span:first-child{color:var(--text2);font-weight:500;}
+.prog-lbl span:last-child{color:var(--text3);}
+.prog-bar{height:7px;background:var(--border);border-radius:99px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:99px;}
+.pf-blue{background:var(--blue);}
+.pf-green{background:#22C55E;}
+.pf-yellow{background:#F59E0B;}
+.pf-red{background:#EF4444;}
+
+/* ── RISK MATRIX ── */
+.risk-matrix{display:grid;grid-template-columns:auto repeat(5,1fr);gap:3px;font-size:10px;}
+.rm-axis{display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--text3);font-size:9px;text-transform:uppercase;letter-spacing:.05em;}
+.rm-cell{height:44px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;cursor:pointer;transition:opacity .15s;}
+.rm-cell:hover{opacity:.85;}
+.rm-low{background:#22C55E;}
+.rm-med{background:#F59E0B;}
+.rm-high{background:#EF4444;}
+.rm-crit{background:#7F1D1D;}
+.rm-count{background:rgba(255,255,255,0.25);border-radius:4px;padding:1px 5px;}
+
+/* ── FORMS ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.form-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;}
+.form-grp{margin-bottom:14px;}
+.form-lbl{display:block;font-size:11.5px;font-weight:700;color:var(--text2);margin-bottom:5px;}
+.form-lbl .req{color:#EF4444;}
+.form-ctrl{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;color:var(--text);background:#fff;outline:none;font-family:inherit;transition:border-color .15s,box-shadow .15s;}
+.form-ctrl:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,138,221,.12);}
+.form-ctrl::placeholder{color:var(--text3);}
+select.form-ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238FA8C0' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;}
+textarea.form-ctrl{resize:vertical;}
+.hint{font-size:11px;color:var(--text3);margin-top:4px;}
+
+/* ── CHECKLIST ── */
+.ck-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.ck-item:last-child{border-bottom:none;}
+.ck-box{width:18px;height:18px;border-radius:4px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;margin-top:1px;transition:all .15s;}
+.ck-box.done{background:#22C55E;border-color:#22C55E;}
+.ck-box.done::after{content:'✓';color:#fff;font-size:10px;font-weight:800;}
+.ck-box.part{background:#F59E0B;border-color:#F59E0B;}
+.ck-box.part::after{content:'–';color:#fff;font-size:11px;font-weight:800;}
+.ck-info{flex:1;}
+.ck-title{font-size:13px;font-weight:600;color:var(--navy);}
+.ck-sub{font-size:11.5px;color:var(--text3);margin-top:2px;}
+.ck-pill{font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;white-space:nowrap;}
+.pill-due{background:var(--yellow-bg);color:var(--yellow);}
+.pill-over{background:var(--red-bg);color:var(--red);}
+
+/* ── TIMELINE ── */
+.tl{padding:0;}
+.tl-item{display:flex;gap:12px;padding-bottom:18px;}
+.tl-item:last-child{padding-bottom:0;}
+.tl-side{display:flex;flex-direction:column;align-items:center;width:16px;flex-shrink:0;}
+.tl-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+.tl-dot.done{background:#22C55E;}
+.tl-dot.warn{background:#F59E0B;}
+.tl-dot.bad{background:#EF4444;}
+.tl-dot.pend{background:var(--border);}
+.tl-dot.now{background:var(--blue);}
+.tl-line{flex:1;width:2px;background:var(--border);margin-top:3px;}
+.tl-body{flex:1;padding-top:0;}
+.tl-title{font-size:13px;font-weight:600;color:var(--navy);}
+.tl-meta{font-size:11.5px;color:var(--text3);margin-top:2px;}
+
+/* ── ALERT ── */
+.alert{display:flex;gap:10px;padding:12px 16px;border-radius:8px;border:1px solid;margin-bottom:16px;}
+.alert-body .al-title{font-size:13px;font-weight:700;}
+.alert-body .al-msg{font-size:12px;margin-top:2px;}
+.al-warn{background:var(--yellow-bg);border-color:#FCD34D;}
+.al-warn .al-title{color:#92400E;}
+.al-warn .al-msg{color:#B45309;}
+.al-danger{background:var(--red-bg);border-color:#FCA5A5;}
+.al-danger .al-title{color:#991B1B;}
+.al-danger .al-msg{color:#B91C1C;}
+.al-success{background:var(--green-bg);border-color:#86EFAC;}
+.al-success .al-title{color:#14532D;}
+.al-success .al-msg{color:#15803D;}
+.al-info{background:#E6F1FB;border-color:#93C5FD;}
+.al-info .al-title{color:var(--navy);}
+.al-info .al-msg{color:var(--blue2);}
+
+/* ── DOC CARDS ── */
+.doc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.doc-card{background:var(--white);border:1px solid var(--border);border-left:3px solid #B5D4F4;border-radius:8px;padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+.doc-card:hover{border-left-color:var(--blue);box-shadow:0 3px 12px rgba(13,43,78,0.09);}
+.doc-card.sop{border-left-color:var(--blue);}
+.doc-card.form{border-left-color:#22C55E;}
+.doc-card.tmpl{border-left-color:#9333EA;}
+.doc-card.policy{border-left-color:#F59E0B;}
+.doc-type{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--blue2);margin-bottom:5px;}
+.doc-title{font-size:13px;font-weight:700;color:var(--navy);line-height:1.35;margin-bottom:5px;}
+.doc-meta{font-size:11.5px;color:var(--text3);}
+.doc-meta span{margin-right:10px;}
+.doc-gap{font-size:11px;color:var(--orange);font-weight:600;margin-top:4px;}
+
+/* ── MODAL ── */
+.modal-ov{position:fixed;inset:0;background:rgba(13,27,42,.45);z-index:500;display:none;place-items:center;}
+.modal-ov.open{display:grid;}
+.modal{background:#fff;border-radius:12px;padding:26px;width:540px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:fadeUp .2s ease;}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.modal-title{font-size:15px;font-weight:700;color:var(--navy);}
+.modal-x{background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;}
+.modal-x:hover{color:var(--text);}
+.modal-foot{display:flex;gap:8px;margin-top:20px;}
+
+/* ── CONNECTION PANEL ── */
+.connect-panel{background:var(--navy);color:#fff;border-radius:10px;padding:20px;margin-bottom:20px;}
+.cp-title{font-size:14px;font-weight:700;margin-bottom:4px;}
+.cp-sub{font-size:12px;color:#85B7EB;margin-bottom:16px;}
+.cp-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.cp-lbl{display:block;font-size:11px;font-weight:700;color:#85B7EB;margin-bottom:5px;}
+.cp-inp{width:100%;padding:8px 11px;border:1px solid rgba(255,255,255,0.15);border-radius:7px;font-size:12px;color:#fff;background:rgba(255,255,255,0.08);outline:none;font-family:inherit;}
+.cp-inp:focus{border-color:var(--blue);background:rgba(55,138,221,0.1);}
+.cp-inp::placeholder{color:rgba(133,183,235,0.6);}
+
+/* ── AIRTABLE STATUS ── */
+#at-status{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#85B7EB;}
+#at-dot{width:8px;height:8px;border-radius:50%;background:#64748B;flex-shrink:0;}
+#at-dot.live{background:#22C55E;}
+#at-dot.error{background:#EF4444;}
+
+/* ── PAGES ── */
+.page{display:none;}
+.page.active{display:block;animation:fadeUp .2s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+/* ── MISC ── */
+.sep{height:1px;background:var(--border);margin:16px 0;}
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;background:#E6F1FB;color:var(--blue2);margin-right:4px;}
+.empty{text-align:center;padding:36px 20px;color:var(--text3);}
+.empty i{font-size:32px;margin-bottom:8px;display:block;}
+.empty p{font-size:12.5px;}
+.loading-row td{text-align:center;color:var(--text3);font-style:italic;padding:20px;}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo-wrap">
+    <div class="logo-box"><i class="ti ti-shield-check"></i></div>
+    <div class="logo-name"><strong>PredictSafeBIO</strong><small>Biosafety Intelligence</small></div>
+  </div>
+  <div class="h-score">
+    Platform Score <strong id="h-score-val">--</strong>
+  </div>
+  <div class="sp"></div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#85B7EB;">
+      <div style="width:8px;height:8px;border-radius:50%;background:#22C55E;flex-shrink:0;"></div>
+      All systems operational
+    </div>
+    <button class="h-btn" onclick="showPage('settings')"><i class="ti ti-settings"></i> Settings</button>
+    <button class="h-btn primary" onclick="openModal('doc-modal')">+ Add Item</button>
+    <div class="av" title="J. Haldemann" onclick="showPage('settings')">JH</div>
+  </div>
+</header>
+
+<div class="app">
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="snav-top">Platform Modules</div>
+
+  <div class="snav-grp">
+    <div class="snav-cat active" onclick="toggleCat(this,'sub-overview')">
+      <span class="snav-num nb on"><i class="ti ti-layout-dashboard" style="font-size:11px"></i></span>
+      <span class="cat-lbl">Overview</span>
+      <i class="ti ti-chevron-down chev open"></i>
+    </div>
+    <ul class="snav-subs" id="sub-overview">
+      <li><div class="snav-sub active" onclick="showPage('dashboard')"><i class="ti ti-home"></i>Dashboard</div></li>
+      <li><div class="snav-sub" onclick="showPage('settings')"><i class="ti ti-settings"></i>Settings</div></li>
+    </ul>
+  </div>
+
+  <div class="snav-grp">
+    <div class="snav-cat" onclick="toggleCat(this,'sub-docs')">
+      <span class="snav-num nb">1</span>
+      <span class="cat-lbl">Document Control</span>
+      <i class="ti ti-chevron-down chev"></i>
+    </div>
+    <ul class="snav-subs hidden" id="sub-docs">
+      <li><div class="snav-sub" onclick="showPage('doc-all')"><i class="ti ti-files"></i>All Documents</div></li>
+      <li><div class="snav-sub" onclick="showPage('doc-sops')"><i class="ti ti-file-text"></i>SOPs</div></li>
+      <li><div class="snav-sub" onclick="showPage('doc-forms')"><i class="ti ti-clipboard-list"></i>Forms &amp; Templates</div></li>
+      <li><div class="snav-sub" onclick="showPage('doc-versions')"><i class="ti ti-git-branch"></i>Version Control</div></li>
+    </ul>
+  </div>
+
+  <div class="snav-grp">
+    <div class="snav-cat" onclick="toggleCat(this,'sub-risk')">
+      <span class="snav-num nb">2</span>
+      <span class="cat-lbl">Risk Intelligence</span>
+      <i class="ti ti-chevron-down chev"></i>
+    </div>
+    <ul class="snav-subs hidden" id="sub-risk">
+      <li><div class="snav-sub" onclick="showPage('risk-register')"><i class="ti ti-alert-triangle"></i>Risk Register</div></li>
+      <li><div class="snav-sub" onclick="showPage('risk-matrix')"><i class="ti ti-grid-dots"></i>Risk Matrix</div></li>
+      <li><div class="snav-sub" onclick="showPage('risk-fmea')"><i class="ti ti-table"></i>FMEA</div></li>
+    </ul>
+  </div>
+
+  <div class="snav-grp">
+    <div class="snav-cat" onclick="toggleCat(this,'sub-comp')">
+      <span class="snav-num ng">3</span>
+      <span class="cat-lbl">Compliance</span>
+      <i class="ti ti-chevron-down chev"></i>
+    </div>
+    <ul class="snav-subs hidden" id="sub-comp">
+      <li><div class="snav-sub" onclick="showPage('comp-submissions')"><i class="ti ti-send"></i>Submissions</div></li>
+      <li><div class="snav-sub" onclick="showPage('comp-audits')"><i class="ti ti-checklist"></i>Audits &amp; CAPA</div></li>
+      <li><div class="snav-sub" onclick="showPage('comp-training')"><i class="ti ti-school"></i>Training Records</div></li>
+    </ul>
+  </div>
+
+  <div class="snav-grp">
+    <div class="snav-cat" onclick="toggleCat(this,'sub-hse')">
+      <span class="snav-num np">4</span>
+      <span class="cat-lbl">HSE Management</span>
+      <i class="ti ti-chevron-down chev"></i>
+    </div>
+    <ul class="snav-subs hidden" id="sub-hse">
+      <li><div class="snav-sub" onclick="showPage('hse-incidents')"><i class="ti ti-ambulance"></i>Incidents</div></li>
+      <li><div class="snav-sub" onclick="showPage('hse-chemicals')"><i class="ti ti-flask"></i>Chemical Inventory</div></li>
+      <li><div class="snav-sub" onclick="showPage('hse-inspections')"><i class="ti ti-eye"></i>Inspections</div></li>
+    </ul>
+  </div>
+
+  <div class="snav-grp">
+    <div class="snav-cat" onclick="toggleCat(this,'sub-sys')">
+      <span class="snav-num ng">5</span>
+      <span class="cat-lbl">System Reliance</span>
+      <i class="ti ti-chevron-down chev"></i>
+    </div>
+    <ul class="snav-subs hidden" id="sub-sys">
+      <li><div class="snav-sub" onclick="showPage('sys-validation')"><i class="ti ti-certificate"></i>IQ/OQ/PQ Validation</div></li>
+      <li><div class="snav-sub" onclick="showPage('sys-equipment')"><i class="ti ti-tool"></i>Equipment</div></li>
+      <li><div class="snav-sub" onclick="showPage('sys-change')"><i class="ti ti-git-merge"></i>Change Control</div></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- CONTENT -->
+<div class="content">
+  <div id="demo-bar" style="display:none;"></div>
+
+  <div class="main">
+
+  <!-- ═══════════ DASHBOARD ═══════════ -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-hd">
+      <div>
+        <p class="sec-lbl">Overview</p>
+        <h1 class="page-h1">Platform Dashboard</h1>
+        <p class="page-sub">Real-time view of your biosafety &amp; compliance posture</p>
+      </div>
+      <div class="hd-actions">
+        <button class="btn btn-outline btn-sm" onclick="refreshAll()"><i class="ti ti-refresh"></i> Refresh</button>
+        <button class="btn btn-primary btn-sm" onclick="showPage('settings')"><i class="ti ti-plug"></i> Connect Airtable</button>
+      </div>
+    </div>
+
+    <div class="alert al-warn" id="dash-alert" style="display:none">
+      <div style="font-size:18px">⚠️</div>
+      <div class="alert-body"><div class="al-title" id="dash-alert-title"></div><div class="al-msg" id="dash-alert-msg"></div></div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-top">
+          <span class="stat-lbl">Platform Score</span>
+          <div class="stat-icon blue"><i class="ti ti-shield-check"></i></div>
+        </div>
+        <div class="stat-val" id="ds-score">74%</div>
+        <div class="stat-sub up">↑ 6 pts from last month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <span class="stat-lbl">Open Risks</span>
+          <div class="stat-icon red"><i class="ti ti-alert-triangle"></i></div>
+        </div>
+        <div class="stat-val" id="ds-risks">12</div>
+        <div class="stat-sub down">3 critical priority</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <span class="stat-lbl">Compliance Items</span>
+          <div class="stat-icon orange"><i class="ti ti-clipboard-check"></i></div>
+        </div>
+        <div class="stat-val" id="ds-comp">18</div>
+        <div class="stat-sub down">5 overdue</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <span class="stat-lbl">Documents</span>
+          <div class="stat-icon green"><i class="ti ti-files"></i></div>
+        </div>
+        <div class="stat-val" id="ds-docs">84</div>
+        <div class="stat-sub">7 pending review</div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-hd">
+          <div><div class="panel-title">Module Health</div></div>
+        </div>
+        <div class="panel-body">
+          <div class="prog-row"><div class="prog-lbl"><span>Document Control</span><span>88%</span></div><div class="prog-bar"><div class="prog-fill pf-green" style="width:88%"></div></div></div>
+          <div class="prog-row"><div class="prog-lbl"><span>Risk Intelligence</span><span>62%</span></div><div class="prog-bar"><div class="prog-fill pf-yellow" style="width:62%"></div></div></div>
+          <div class="prog-row"><div class="prog-lbl"><span>Compliance</span><span>58%</span></div><div class="prog-bar"><div class="prog-fill pf-yellow" style="width:58%"></div></div></div>
+          <div class="prog-row"><div class="prog-lbl"><span>HSE Management</span><span>79%</span></div><div class="prog-bar"><div class="prog-fill pf-green" style="width:79%"></div></div></div>
+          <div class="prog-row"><div class="prog-lbl"><span>System Reliance</span><span>83%</span></div><div class="prog-bar"><div class="prog-fill pf-green" style="width:83%"></div></div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-hd"><div class="panel-title">Action Required</div><button class="btn btn-ghost btn-sm" onclick="showPage('comp-submissions')">View all →</button></div>
+        <div class="panel-body" style="padding:12px 18px;">
+          <div class="ck-item">
+            <div class="ck-box part"></div>
+            <div class="ck-info"><div class="ck-title">IND Annual Report</div><div class="ck-sub">FDA submission · Regulatory Affairs</div></div>
+            <span class="ck-pill pill-over">Overdue</span>
+          </div>
+          <div class="ck-item">
+            <div class="ck-box part"></div>
+            <div class="ck-info"><div class="ck-title">CAPA-019 Response</div><div class="ck-sub">Form 483 · Quality Team</div></div>
+            <span class="ck-pill pill-over">Overdue</span>
+          </div>
+          <div class="ck-item">
+            <div class="ck-box"></div>
+            <div class="ck-info"><div class="ck-title">Sterility Assay SOP — Gap Review</div><div class="ck-sub">2 AI recommendations pending</div></div>
+            <span class="ck-pill pill-due">Jun 15</span>
+          </div>
+          <div class="ck-item">
+            <div class="ck-box"></div>
+            <div class="ck-info"><div class="ck-title">Lab Safety Inspection</div><div class="ck-sub">HSE · Site B</div></div>
+            <span class="ck-pill pill-due">Jun 19</span>
+          </div>
+          <div class="ck-item">
+            <div class="ck-box done"></div>
+            <div class="ck-info"><div class="ck-title">Training Records Updated</div><div class="ck-sub">All staff — complete</div></div>
+            <span class="badge b-green">Done</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ DOC CONTROL — ALL DOCS ═══════════ -->
+  <div class="page" id="page-doc-all">
+    <div class="page-hd">
+      <div>
+        <p class="sec-lbl">Document Control</p>
+        <h1 class="page-h1">All Documents</h1>
+        <p class="page-sub">SOPs, Forms, Templates &amp; Policies — version-controlled</p>
+      </div>
+      <div class="hd-actions">
+        <select class="form-ctrl" style="width:auto;" onchange="filterDocs(this.value)">
+          <option value="">All Types</option>
+          <option value="SOP">SOP</option>
+          <option value="Form">Form</option>
+          <option value="Template">Template</option>
+          <option value="Policy">Policy</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="openModal('doc-modal')"><i class="ti ti-plus"></i> New Document</button>
+      </div>
+    </div>
+
+    <div class="alert al-info">
+      <div style="font-size:16px">🤖</div>
+      <div class="alert-body"><div class="al-title">AI Gap Analysis Active</div><div class="al-msg">PredictSafeBIO has detected 5 document gaps based on your current SOP coverage. Recommendations shown on each card.</div></div>
+    </div>
+
+    <div class="doc-grid" id="docs-grid">
+      <div class="doc-card sop" onclick="">
+        <span class="doc-type">SOP</span>
+        <span class="doc-title">Sterility Assay Review Procedure</span>
+        <div class="doc-meta"><span>v2.1</span><span>In Review</span><span>Updated May 28</span></div>
+        <div class="doc-gap">⚠ 2 gap recommendations</div>
+      </div>
+      <div class="doc-card sop">
+        <span class="doc-type">SOP</span>
+        <span class="doc-title">Critical Sample Chain of Custody</span>
+        <div class="doc-meta"><span>v1.3</span><span>Unknown</span><span>Updated Apr 12</span></div>
+        <div class="doc-gap">⚠ 3 gap recommendations</div>
+      </div>
+      <div class="doc-card sop">
+        <span class="doc-type">SOP</span>
+        <span class="doc-title">Biosafety Cabinet Decontamination</span>
+        <div class="doc-meta"><span>v3.0</span><span class="badge b-green" style="padding:1px 6px;font-size:10px;">Approved</span><span>Updated Mar 5</span></div>
+      </div>
+      <div class="doc-card form">
+        <span class="doc-type" style="color:#22C55E">Form</span>
+        <span class="doc-title">Incident Reporting Form — Biohazard</span>
+        <div class="doc-meta"><span>v1.0</span><span class="badge b-green" style="padding:1px 6px;font-size:10px;">Approved</span><span>Updated Feb 20</span></div>
+      </div>
+      <div class="doc-card tmpl">
+        <span class="doc-type" style="color:#9333EA">Template</span>
+        <span class="doc-title">Risk Assessment Template (BSL-2)</span>
+        <div class="doc-meta"><span>v2.2</span><span class="badge b-purple" style="padding:1px 6px;font-size:10px;">In Review</span><span>Updated Jun 1</span></div>
+        <div class="doc-gap">⚠ 1 gap recommendation</div>
+      </div>
+      <div class="doc-card policy">
+        <span class="doc-type" style="color:#D97706">Policy</span>
+        <span class="doc-title">Personal Protective Equipment Policy</span>
+        <div class="doc-meta"><span>v1.4</span><span class="badge b-green" style="padding:1px 6px;font-size:10px;">Approved</span><span>Updated Jan 10</span></div>
+      </div>
+      <div class="doc-card sop">
+        <span class="doc-type">SOP</span>
+        <span class="doc-title">Biological Waste Disposal Procedure</span>
+        <div class="doc-meta"><span>v2.0</span><span class="badge b-yellow" style="padding:1px 6px;font-size:10px;">Expiring</span><span>Expires Jul 1</span></div>
+      </div>
+      <div class="doc-card form">
+        <span class="doc-type" style="color:#22C55E">Form</span>
+        <span class="doc-title">Lab Access Authorization Form</span>
+        <div class="doc-meta"><span>v1.1</span><span class="badge b-green" style="padding:1px 6px;font-size:10px;">Approved</span><span>Updated Mar 18</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ RISK REGISTER ═══════════ -->
+  <div class="page" id="page-risk-register">
+    <div class="page-hd">
+      <div>
+        <p class="sec-lbl">Risk Intelligence</p>
+        <h1 class="page-h1">Risk Register</h1>
+        <p class="page-sub">Identified hazards, scoring, controls &amp; owners</p>
+      </div>
+      <div class="hd-actions">
+        <button class="btn btn-outline btn-sm" onclick="showPage('risk-matrix')"><i class="ti ti-grid-dots"></i> View Matrix</button>
+        <button class="btn btn-primary btn-sm" onclick="openModal('risk-modal')"><i class="ti ti-plus"></i> Add Risk</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-hd">
+        <div class="panel-title">All Risks</div>
+        <div style="display:flex;gap:8px;">
+          <select class="form-ctrl" style="width:auto;font-size:11px;padding:5px 24px 5px 8px;">
+            <option>All Severity</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+          </select>
+          <select class="form-ctrl" style="width:auto;font-size:11px;padding:5px 24px 5px 8px;">
+            <option>All Status</option><option>Open</option><option>Mitigated</option><option>Accepted</option>
+          </select>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table id="risk-table">
+          <thead><tr><th>Risk ID</th><th>Title</th><th>Category</th><th>Likelihood</th><th>Impact</th><th>Score</th><th>Owner</th><th>Status</th><th>Controls</th></tr></thead>
+          <tbody id="risk-tbody">
+            <tr><td class="td-tag">RSK-001</td><td class="td-main">Pathogen release — BSL-2 lab</td><td>Biosafety</td><td>Low (2)</td><td>Critical (5)</td><td><span class="badge b-yellow">10</span></td><td>Lab Director</td><td><span class="badge b-red">Open</span></td><td><button class="btn btn-ghost btn-sm">View</button></td></tr>
+            <tr><td class="td-tag">RSK-002</td><td class="td-main">Sample misidentification</td><td>Data Integrity</td><td>Medium (3)</td><td>High (4)</td><td><span class="badge b-red">12</span></td><td>QA Lead</td><td><span class="badge b-red">Open</span></td><td><button class="btn btn-ghost btn-sm">View</button></td></tr>
+            <tr><td class="td-tag">RSK-003</td><td class="td-main">Cold chain failure</td><td>Operational</td><td>Medium (3)</td><td>High (4)</td><td><span class="badge b-red">12</span></td><td>Operations</td><td><span class="badge b-yellow">Mitigating</span></td><td><button class="btn btn-ghost btn-sm">View</button></td></tr>
+            <tr><td class="td-tag">RSK-004</td><td class="td-main">Unqualified personnel handling biologics</td><td>Compliance</td><td>Low (2)</td><td>High (4)</td><td><span class="badge b-yellow">8</span></td><td>HR / Training</td><td><span class="badge b-green">Mitigated</span></td><td><button class="btn btn-ghost btn-sm">View</button></td></tr>
+            <tr><td class="td-tag">RSK-005</td><td class="td-main">Regulatory submission delay</td><td>Regulatory</td><td>High (4)</td><td>Critical (5)</td><td><span class="badge b-red">20</span></td><td>Reg Affairs</td><td><span class="badge b-red">Open</span></td><td><button class="btn btn-ghost btn-sm">View</button></td></tr>
+            <tr><td class="td-tag">RSK-006</td><td class="td-main">LIMS system downtime</td><td>IT / Systems</td><td>Low (2)</td><td>Medium (3)</td><td><span class="badge b-gray">6</span></td><td>IT</td><td><span class="badge b-green">Accepted</span></td><td><button class="btn btn-ghost btn-sm">View</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ RISK MATRIX ═══════════ -->
+  <div class="page" id="page-risk-matrix">
+    <div class="page-hd">
+      <div><p class="sec-lbl">Risk Intelligence</p><h1 class="page-h1">Risk Heat Map</h1></div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-hd"><div class="panel-title">5×5 Risk Matrix</div></div>
+        <div class="panel-body">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:10px;text-align:center;">Impact →</div>
+          <div class="risk-matrix" style="margin-bottom:10px;">
+            <div class="rm-axis" style="writing-mode:vertical-rl;transform:rotate(180deg);font-size:9px;padding:4px 0;">Likelihood ↑</div>
+            <div class="rm-axis">Negligible</div><div class="rm-axis">Minor</div><div class="rm-axis">Moderate</div><div class="rm-axis">Major</div><div class="rm-axis">Critical</div>
+            <div class="rm-axis">5</div><div class="rm-cell rm-med">5</div><div class="rm-cell rm-high">10</div><div class="rm-cell rm-high">15</div><div class="rm-cell rm-crit">20</div><div class="rm-cell rm-crit">25</div>
+            <div class="rm-axis">4</div><div class="rm-cell rm-low">4</div><div class="rm-cell rm-med">8</div><div class="rm-cell rm-high">12<span class="rm-count">2</span></div><div class="rm-cell rm-high">16</div><div class="rm-cell rm-crit">20<span class="rm-count">1</span></div>
+            <div class="rm-axis">3</div><div class="rm-cell rm-low">3</div><div class="rm-cell rm-med">6</div><div class="rm-cell rm-med">9</div><div class="rm-cell rm-high">12<span class="rm-count">2</span></div><div class="rm-cell rm-high">15</div>
+            <div class="rm-axis">2</div><div class="rm-cell rm-low">2</div><div class="rm-cell rm-low">4</div><div class="rm-cell rm-med">6<span class="rm-count">1</span></div><div class="rm-cell rm-med">8<span class="rm-count">1</span></div><div class="rm-cell rm-high">10<span class="rm-count">1</span></div>
+            <div class="rm-axis">1</div><div class="rm-cell rm-low">1</div><div class="rm-cell rm-low">2</div><div class="rm-cell rm-low">3</div><div class="rm-cell rm-low">4</div><div class="rm-cell rm-med">5</div>
+          </div>
+          <div style="display:flex;gap:10px;font-size:11px;justify-content:center;">
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:3px;background:#22C55E;display:inline-block;"></span>Low</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:3px;background:#F59E0B;display:inline-block;"></span>Medium</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:3px;background:#EF4444;display:inline-block;"></span>High</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:3px;background:#7F1D1D;display:inline-block;"></span>Critical</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-hd"><div class="panel-title">Risk Summary by Category</div></div>
+        <div class="panel-body">
+          <div class="prog-row"><div class="prog-lbl"><span>Biosafety</span><span>3 risks</span></div><div class="prog-bar"><div class="prog-fill pf-red" style="width:60%"></div></div></div>
+          <div class="prog-row"><div class="prog-lbl"><span>Data Integrity</span><span>2 risks</span></div><div class="prog-bar"><div class="prog-fill pf-yellow" style="width:40%"></div></div></div>
+          <div class="prog-row"><div class="prog-lbl"><span>Regulatory</span><span>3 risks</span></div><div class="prog-bar"><div class="prog-fill pf-red" style="width:60%"></div></div></div>
+          <div class="prog-row"><div class="prog-lbl"><span>Operational</span><span>2 risks</span></div><div class="prog-bar"><div class="prog-fill pf-yellow" style="width:40%"></div></div></div>
+          <div class="prog-row"><div class="prog-lbl"><span>IT / Systems</span><span>1 risk</span></div><div class="prog-bar"><div class="prog-fill pf-green" style="width:20%"></div></div></div>
+          <div class="prog-row"><div class="prog-lbl"><span>Compliance</span><span>1 risk</span></div><div class="prog-bar"><div class="prog-fill pf-green" style="width:20%"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ COMPLIANCE — SUBMISSIONS ═══════════ -->
+  <div class="page" id="page-comp-submissions">
+    <div class="page-hd">
+      <div><p class="sec-lbl">Compliance</p><h1 class="page-h1">Regulatory Submissions</h1></div>
+      <div class="hd-actions">
+        <button class="btn btn-primary btn-sm" onclick="openModal('comp-modal')"><i class="ti ti-plus"></i> New Submission</button>
+      </div>
+    </div>
+    <div class="alert al-danger">
+      <div style="font-size:16px">🚨</div>
+      <div class="alert-body"><div class="al-title">3 submissions are overdue</div><div class="al-msg">IND Annual Report, Form 483 Response, CMC Amendment are past deadline. Immediate action required.</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-hd"><div class="panel-title">Submission Tracker</div></div>
+      <div class="tbl-wrap">
+        <table id="comp-table">
+          <thead><tr><th>Submission</th><th>Agency</th><th>Type</th><th>Assigned To</th><th>Due Date</th><th>Status</th><th></th></tr></thead>
+          <tbody id="comp-tbody">
+            <tr><td class="td-main">IND Annual Report 2026</td><td>FDA</td><td>IND</td><td>Reg Affairs</td><td style="color:var(--red);font-weight:700;">May 31 ↑</td><td><span class="badge b-red">Overdue</span></td><td><button class="btn btn-danger btn-sm">Resolve</button></td></tr>
+            <tr><td class="td-main">Form 483 Response</td><td>FDA/CDER</td><td>Inspection</td><td>Quality Team</td><td style="color:var(--red);font-weight:700;">May 28 ↑</td><td><span class="badge b-red">Overdue</span></td><td><button class="btn btn-danger btn-sm">Resolve</button></td></tr>
+            <tr><td class="td-main">CMC Amendment v2.1</td><td>FDA</td><td>IND</td><td>R&amp;D</td><td style="color:var(--red);font-weight:700;">Jun 1 ↑</td><td><span class="badge b-red">Overdue</span></td><td><button class="btn btn-danger btn-sm">Resolve</button></td></tr>
+            <tr><td class="td-main">SAE Narrative Update</td><td>FDA</td><td>Safety</td><td>Medical Affairs</td><td>Jun 10</td><td><span class="badge b-yellow">In Progress</span></td><td><button class="btn btn-ghost btn-sm">View</button></td></tr>
+            <tr><td class="td-main">Protocol Amendment v3.2</td><td>IRB</td><td>Protocol</td><td>Clinical Ops</td><td>Jun 30</td><td><span class="badge b-blue">Pending</span></td><td><button class="btn btn-ghost btn-sm">View</button></td></tr>
+            <tr><td class="td-main">Q1 Manufacturing Report</td><td>FDA/GMP</td><td>GMP</td><td>Quality Team</td><td>Mar 31</td><td><span class="badge b-green">Submitted</span></td><td><button class="btn btn-ghost btn-sm">View</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ COMPLIANCE — AUDITS & CAPA ═══════════ -->
+  <div class="page" id="page-comp-audits">
+    <div class="page-hd">
+      <div><p class="sec-lbl">Compliance</p><h1 class="page-h1">Audits &amp; CAPA</h1></div>
+      <div class="hd-actions"><button class="btn btn-primary btn-sm" onclick="openModal('capa-modal')"><i class="ti ti-plus"></i> Open CAPA</button></div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-hd"><div class="panel-title">CAPA Tracker</div><span class="badge b-red">1 overdue</span></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Source</th><th>Due</th><th>Owner</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td class="td-tag">CAPA-019</td><td>Form 483</td><td style="color:var(--red);font-weight:700">Jun 5 ↑</td><td>Quality</td><td><span class="badge b-red">Overdue</span></td></tr>
+              <tr><td class="td-tag">CAPA-018</td><td>Internal Audit</td><td>Jun 20</td><td>QA Lead</td><td><span class="badge b-yellow">In Progress</span></td></tr>
+              <tr><td class="td-tag">CAPA-017</td><td>Deviation</td><td>May 15</td><td>Lab Dir.</td><td><span class="badge b-green">Closed</span></td></tr>
+              <tr><td class="td-tag">CAPA-016</td><td>Customer</td><td>Apr 30</td><td>QA Lead</td><td><span class="badge b-green">Closed</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-hd"><div class="panel-title">Audit Schedule</div></div>
+        <div style="padding:16px 18px;">
+          <div class="tl">
+            <div class="tl-item"><div class="tl-side"><div class="tl-dot done"></div><div class="tl-line"></div></div><div class="tl-body"><div class="tl-title">Q1 Internal Audit — Closed</div><div class="tl-meta">May 25, 2026</div></div></div>
+            <div class="tl-item"><div class="tl-side"><div class="tl-dot warn"></div><div class="tl-line"></div></div><div class="tl-body"><div class="tl-title">GMP Site Audit Prep Due</div><div class="tl-meta">Jun 15, 2026</div></div></div>
+            <div class="tl-item"><div class="tl-side"><div class="tl-dot now"></div><div class="tl-line"></div></div><div class="tl-body"><div class="tl-title">GMP Site Audit — FDA</div><div class="tl-meta">Jun 19, 2026</div></div></div>
+            <div class="tl-item"><div class="tl-side"><div class="tl-dot pend"></div></div><div class="tl-body"><div class="tl-title">Q2 Internal Audit</div><div class="tl-meta">Aug 10, 2026</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ COMPLIANCE — TRAINING ═══════════ -->
+  <div class="page" id="page-comp-training">
+    <div class="page-hd">
+      <div><p class="sec-lbl">Compliance</p><h1 class="page-h1">Training Records</h1></div>
+      <div class="hd-actions"><button class="btn btn-primary btn-sm"><i class="ti ti-plus"></i> Add Training</button></div>
+    </div>
+    <div class="panel">
+      <div class="panel-hd"><div class="panel-title">Staff Training Status</div><span class="badge b-green">All current</span></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Staff Member</th><th>Role</th><th>BSL-2 Cert</th><th>GCP Training</th><th>SOP Signoff</th><th>Expiry</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td class="td-main">J. Haldemann</td><td>Principal Investigator</td><td><span class="badge b-green">✓</span></td><td><span class="badge b-green">✓</span></td><td><span class="badge b-green">✓</span></td><td>Dec 2026</td><td><span class="badge b-green">Current</span></td></tr>
+            <tr><td class="td-main">A. Torres</td><td>Lab Scientist</td><td><span class="badge b-green">✓</span></td><td><span class="badge b-green">✓</span></td><td><span class="badge b-green">✓</span></td><td>Nov 2026</td><td><span class="badge b-green">Current</span></td></tr>
+            <tr><td class="td-main">R. Kim</td><td>QA Specialist</td><td><span class="badge b-gray">N/A</span></td><td><span class="badge b-green">✓</span></td><td><span class="badge b-yellow">Pending</span></td><td>Oct 2026</td><td><span class="badge b-yellow">Action Needed</span></td></tr>
+            <tr><td class="td-main">M. Patel</td><td>Research Associate</td><td><span class="badge b-green">✓</span></td><td><span class="badge b-gray">N/A</span></td><td><span class="badge b-green">✓</span></td><td>Sep 2026</td><td><span class="badge b-green">Current</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ HSE — INCIDENTS ═══════════ -->
+  <div class="page" id="page-hse-incidents">
+    <div class="page-hd">
+      <div><p class="sec-lbl">HSE Management</p><h1 class="page-h1">Incident Reports</h1></div>
+      <div class="hd-actions"><button class="btn btn-primary btn-sm" onclick="openModal('incident-modal')"><i class="ti ti-plus"></i> Report Incident</button></div>
+    </div>
+    <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
+      <div class="stat-card"><div class="stat-top"><span class="stat-lbl">Open Incidents</span><div class="stat-icon red"><i class="ti ti-alert-circle"></i></div></div><div class="stat-val">2</div></div>
+      <div class="stat-card"><div class="stat-top"><span class="stat-lbl">Closed (30 days)</span><div class="stat-icon green"><i class="ti ti-circle-check"></i></div></div><div class="stat-val">5</div></div>
+      <div class="stat-card"><div class="stat-top"><span class="stat-lbl">Days Since Last Incident</span><div class="stat-icon blue"><i class="ti ti-calendar"></i></div></div><div class="stat-val">14</div></div>
+    </div>
+    <div class="panel">
+      <div class="tbl-wrap">
+        <table id="incident-table">
+          <thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Severity</th><th>Date</th><th>Reporter</th><th>Status</th></tr></thead>
+          <tbody id="incident-tbody">
+            <tr><td class="td-tag">INC-026</td><td class="td-main">Spill — BSL-2 area, bench B3</td><td>Biohazard Spill</td><td><span class="badge b-yellow">Moderate</span></td><td>May 29</td><td>A. Torres</td><td><span class="badge b-yellow">Under Review</span></td></tr>
+            <tr><td class="td-tag">INC-025</td><td class="td-main">Near-miss — sharps disposal</td><td>Sharps / Needlestick</td><td><span class="badge b-red">High</span></td><td>May 20</td><td>R. Kim</td><td><span class="badge b-yellow">Under Review</span></td></tr>
+            <tr><td class="td-tag">INC-024</td><td class="td-main">Incorrect waste stream labeling</td><td>Waste Management</td><td><span class="badge b-gray">Low</span></td><td>May 5</td><td>M. Patel</td><td><span class="badge b-green">Closed</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ HSE — CHEMICALS ═══════════ -->
+  <div class="page" id="page-hse-chemicals">
+    <div class="page-hd">
+      <div><p class="sec-lbl">HSE Management</p><h1 class="page-h1">Chemical Inventory &amp; SDS</h1></div>
+      <div class="hd-actions"><button class="btn btn-primary btn-sm"><i class="ti ti-plus"></i> Add Chemical</button></div>
+    </div>
+    <div class="panel">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Chemical</th><th>CAS #</th><th>Location</th><th>Quantity</th><th>Hazard Class</th><th>SDS</th><th>Last Updated</th></tr></thead>
+          <tbody>
+            <tr><td class="td-main">Formaldehyde 37%</td><td>50-00-0</td><td>Lab A, Cabinet 2</td><td>2.5 L</td><td><span class="badge b-red">Carcinogen</span></td><td><span class="badge b-green">Current</span></td><td>Jan 2026</td></tr>
+            <tr><td class="td-main">Ethanol 70%</td><td>64-17-5</td><td>Lab A, B &amp; BSC</td><td>10 L</td><td><span class="badge b-yellow">Flammable</span></td><td><span class="badge b-green">Current</span></td><td>Mar 2026</td></tr>
+            <tr><td class="td-main">Sodium Azide</td><td>26628-22-8</td><td>Lab B, Fridge</td><td>50 g</td><td><span class="badge b-red">Toxic / Reactive</span></td><td><span class="badge b-yellow">Review Due</span></td><td>Jun 2024</td></tr>
+            <tr><td class="td-main">Phosphate Buffer Saline</td><td>7601-54-9</td><td>Lab A</td><td>20 L</td><td><span class="badge b-gray">Non-hazardous</span></td><td><span class="badge b-green">Current</span></td><td>Apr 2026</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ HSE — INSPECTIONS ═══════════ -->
+  <div class="page" id="page-hse-inspections">
+    <div class="page-hd">
+      <div><p class="sec-lbl">HSE Management</p><h1 class="page-h1">Safety Inspections</h1></div>
+      <div class="hd-actions"><button class="btn btn-primary btn-sm"><i class="ti ti-plus"></i> Schedule Inspection</button></div>
+    </div>
+    <div class="panel">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Inspection</th><th>Location</th><th>Type</th><th>Scheduled</th><th>Inspector</th><th>Status</th><th>Findings</th></tr></thead>
+          <tbody>
+            <tr><td class="td-main">Q2 Lab Safety Inspection</td><td>Lab A &amp; B</td><td>Internal</td><td>Jun 19</td><td>HSE Officer</td><td><span class="badge b-blue">Scheduled</span></td><td>–</td></tr>
+            <tr><td class="td-main">BSC Certification Check</td><td>Lab B</td><td>Equipment</td><td>Jun 30</td><td>External Cert.</td><td><span class="badge b-blue">Scheduled</span></td><td>–</td></tr>
+            <tr><td class="td-main">Q1 Lab Safety Inspection</td><td>Lab A</td><td>Internal</td><td>Mar 15</td><td>HSE Officer</td><td><span class="badge b-green">Complete</span></td><td><span class="badge b-gray">2 minor</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ SYSTEM RELIANCE — VALIDATION ═══════════ -->
+  <div class="page" id="page-sys-validation">
+    <div class="page-hd">
+      <div><p class="sec-lbl">System Reliance</p><h1 class="page-h1">IQ / OQ / PQ Validation</h1></div>
+      <div class="hd-actions"><button class="btn btn-primary btn-sm"><i class="ti ti-plus"></i> New Validation</button></div>
+    </div>
+    <div class="panel">
+      <div class="tbl-wrap">
+        <table id="validation-table">
+          <thead><tr><th>System / Equipment</th><th>IQ</th><th>OQ</th><th>PQ</th><th>Qualified Date</th><th>Next Due</th><th>Status</th></tr></thead>
+          <tbody id="validation-tbody">
+            <tr><td class="td-main">LIMS — LabVantage 8.7</td><td><span class="badge b-green">✓ Pass</span></td><td><span class="badge b-green">✓ Pass</span></td><td><span class="badge b-green">✓ Pass</span></td><td>Jan 15, 2026</td><td>Jan 2028</td><td><span class="badge b-green">Qualified</span></td></tr>
+            <tr><td class="td-main">Ultra-Low Freezer (−80°C)</td><td><span class="badge b-green">✓ Pass</span></td><td><span class="badge b-green">✓ Pass</span></td><td><span class="badge b-yellow">Pending</span></td><td>–</td><td>Overdue</td><td><span class="badge b-yellow">In Progress</span></td></tr>
+            <tr><td class="td-main">Biosafety Cabinet Class II</td><td><span class="badge b-green">✓ Pass</span></td><td><span class="badge b-green">✓ Pass</span></td><td><span class="badge b-green">✓ Pass</span></td><td>Nov 2025</td><td>Nov 2026</td><td><span class="badge b-green">Qualified</span></td></tr>
+            <tr><td class="td-main">Cell Counter — Vi-CELL</td><td><span class="badge b-gray">Not Started</span></td><td><span class="badge b-gray">Not Started</span></td><td><span class="badge b-gray">Not Started</span></td><td>–</td><td>Required</td><td><span class="badge b-red">Unqualified</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ SYSTEM RELIANCE — EQUIPMENT ═══════════ -->
+  <div class="page" id="page-sys-equipment">
+    <div class="page-hd">
+      <div><p class="sec-lbl">System Reliance</p><h1 class="page-h1">Equipment Register</h1></div>
+      <div class="hd-actions"><button class="btn btn-primary btn-sm"><i class="ti ti-plus"></i> Add Equipment</button></div>
+    </div>
+    <div class="panel">
+      <div class="tbl-wrap">
+        <table id="equipment-table">
+          <thead><tr><th>Equipment</th><th>ID</th><th>Location</th><th>Last Calibration</th><th>Next Calibration</th><th>Status</th></tr></thead>
+          <tbody id="equipment-tbody">
+            <tr><td class="td-main">Ultra-Low Freezer</td><td class="td-tag">EQ-001</td><td>Lab B</td><td>Dec 2025</td><td>Dec 2026</td><td><span class="badge b-green">Operational</span></td></tr>
+            <tr><td class="td-main">Biosafety Cabinet II</td><td class="td-tag">EQ-002</td><td>Lab A</td><td>Nov 2025</td><td>Nov 2026</td><td><span class="badge b-green">Operational</span></td></tr>
+            <tr><td class="td-main">Microplate Reader</td><td class="td-tag">EQ-003</td><td>Lab A</td><td>Jan 2026</td><td>Jan 2027</td><td><span class="badge b-green">Operational</span></td></tr>
+            <tr><td class="td-main">Centrifuge (high-speed)</td><td class="td-tag">EQ-004</td><td>Lab B</td><td>Aug 2025</td><td style="color:var(--red);font-weight:700">Aug 2026 ↑</td><td><span class="badge b-red">Calibration Due</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ SYSTEM RELIANCE — CHANGE CONTROL ═══════════ -->
+  <div class="page" id="page-sys-change">
+    <div class="page-hd">
+      <div><p class="sec-lbl">System Reliance</p><h1 class="page-h1">Change Control</h1></div>
+      <div class="hd-actions"><button class="btn btn-primary btn-sm" onclick="openModal('change-modal')"><i class="ti ti-plus"></i> Raise Change</button></div>
+    </div>
+    <div class="panel">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>CC #</th><th>Description</th><th>Category</th><th>Raised By</th><th>Date</th><th>Impact</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td class="td-tag">CC-047</td><td class="td-main">LIMS upgrade to v8.8</td><td>Software</td><td>IT</td><td>May 28</td><td><span class="badge b-yellow">Medium</span></td><td><span class="badge b-blue">Under Review</span></td></tr>
+            <tr><td class="td-tag">CC-046</td><td class="td-main">New cell thaw protocol</td><td>Process</td><td>Lab Dir.</td><td>May 12</td><td><span class="badge b-red">High</span></td><td><span class="badge b-yellow">Approved — Implementing</span></td></tr>
+            <tr><td class="td-tag">CC-045</td><td class="td-main">Updated biosafety cabinet model</td><td>Equipment</td><td>HSE</td><td>Apr 3</td><td><span class="badge b-yellow">Medium</span></td><td><span class="badge b-green">Closed</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ FMEA ═══════════ -->
+  <div class="page" id="page-risk-fmea">
+    <div class="page-hd">
+      <div><p class="sec-lbl">Risk Intelligence</p><h1 class="page-h1">FMEA — Failure Mode &amp; Effects Analysis</h1></div>
+      <div class="hd-actions"><button class="btn btn-primary btn-sm"><i class="ti ti-plus"></i> Add FMEA Entry</button></div>
+    </div>
+    <div class="panel">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Process Step</th><th>Failure Mode</th><th>Effect</th><th>Severity</th><th>Occurrence</th><th>Detectability</th><th>RPN</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td class="td-main">Sample receipt</td><td>Mislabeled sample</td><td>Wrong patient result</td><td>9</td><td>3</td><td>4</td><td><span class="badge b-red">108</span></td><td>Double-check barcode scan</td></tr>
+            <tr><td class="td-main">Centrifugation</td><td>Incorrect speed</td><td>Sample degradation</td><td>7</td><td>2</td><td>3</td><td><span class="badge b-yellow">42</span></td><td>SOP revision</td></tr>
+            <tr><td class="td-main">Storage — −80°C</td><td>Freezer failure</td><td>Sample loss</td><td>10</td><td>1</td><td>2</td><td><span class="badge b-yellow">20</span></td><td>Temperature alarm + backup</td></tr>
+            <tr><td class="td-main">PCR amplification</td><td>Reagent contamination</td><td>False positive results</td><td>8</td><td>2</td><td>4</td><td><span class="badge b-red">64</span></td><td>Dedicated PCR area, negative controls</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ SETTINGS ═══════════ -->
+  <div class="page" id="page-settings">
+    <div class="page-hd">
+      <div><p class="sec-lbl">Configuration</p><h1 class="page-h1">Settings</h1><p class="page-sub">Manage your workspace, team, and AI engine configuration</p></div>
+      <div class="hd-actions"><button class="btn btn-primary btn-sm" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save Changes</button></div>
+    </div>
+
+    <!-- User Profile -->
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="panel-hd"><div><div class="panel-title">User Profile</div></div></div>
+      <div class="panel-body">
+        <div class="form-row">
+          <div class="form-grp" style="margin-bottom:0">
+            <label class="form-lbl">Full Name</label>
+            <input class="form-ctrl" value="J. Haldemann">
+          </div>
+          <div class="form-grp" style="margin-bottom:0">
+            <label class="form-lbl">Email Address</label>
+            <input class="form-ctrl" value="john.h.haldemann@gmail.com">
+          </div>
+        </div>
+        <div class="form-row" style="margin-top:14px;">
+          <div class="form-grp" style="margin-bottom:0">
+            <label class="form-lbl">Role</label>
+            <select class="form-ctrl"><option selected>Principal Investigator</option><option>QA Lead</option><option>Regulatory Affairs</option><option>Lab Director</option><option>HSE Officer</option><option>Admin</option></select>
+          </div>
+          <div class="form-grp" style="margin-bottom:0">
+            <label class="form-lbl">Organization</label>
+            <input class="form-ctrl" value="PredictSafeBIO">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team Members -->
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="panel-hd"><div class="panel-title">Team Members</div><button class="btn btn-outline btn-sm"><i class="ti ti-user-plus"></i> Invite</button></div>
+      <div class="panel-body" style="padding:0 18px;">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">JH</div>
+          <div style="flex:1;"><div style="font-weight:700;font-size:13px;">J. Haldemann</div><div style="font-size:11.5px;color:var(--text3);">john.h.haldemann@gmail.com</div></div>
+          <span class="badge b-blue">Admin</span><span class="badge b-green" style="font-size:10px;">You</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
+          <div style="width:36px;height:36px;border-radius:50%;background:#22C55E;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">AT</div>
+          <div style="flex:1;"><div style="font-weight:700;font-size:13px;">A. Torres</div><div style="font-size:11.5px;color:var(--text3);">a.torres@predictsafebio.com</div></div>
+          <span class="badge b-gray">Editor</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
+          <div style="width:36px;height:36px;border-radius:50%;background:#9333EA;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">RK</div>
+          <div style="flex:1;"><div style="font-weight:700;font-size:13px;">R. Kim</div><div style="font-size:11.5px;color:var(--text3);">r.kim@predictsafebio.com</div></div>
+          <span class="badge b-gray">Viewer</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;">
+          <div style="width:36px;height:36px;border-radius:50%;background:#F59E0B;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">MP</div>
+          <div style="flex:1;"><div style="font-weight:700;font-size:13px;">M. Patel</div><div style="font-size:11.5px;color:var(--text3);">m.patel@predictsafebio.com</div></div>
+          <span class="badge b-gray">Editor</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <!-- Notifications -->
+      <div class="panel">
+        <div class="panel-hd"><div class="panel-title">Notifications</div></div>
+        <div class="panel-body" style="padding:0 18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);">
+            <div><div style="font-weight:600;font-size:13px;">Deadline reminders</div><div style="font-size:11.5px;color:var(--text3);">7, 3 &amp; 1 day before due date</div></div>
+            <div style="width:40px;height:22px;background:var(--blue);border-radius:99px;cursor:pointer;position:relative;" onclick="this.style.background=this.style.background===''||this.style.background==='rgb(55,138,221)'?'#CBD5E1':'#378ADD'"><div style="width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:2px;right:2px;transition:right .15s;"></div></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);">
+            <div><div style="font-weight:600;font-size:13px;">Overdue escalations</div><div style="font-size:11.5px;color:var(--text3);">Email team lead when 1+ day overdue</div></div>
+            <div style="width:40px;height:22px;background:var(--blue);border-radius:99px;cursor:pointer;position:relative;"><div style="width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:2px;right:2px;"></div></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);">
+            <div><div style="font-weight:600;font-size:13px;">Weekly digest</div><div style="font-size:11.5px;color:var(--text3);">Monday morning summary of open items</div></div>
+            <div style="width:40px;height:22px;background:var(--blue);border-radius:99px;cursor:pointer;position:relative;"><div style="width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:2px;right:2px;"></div></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;">
+            <div><div style="font-weight:600;font-size:13px;">Document expiry alerts</div><div style="font-size:11.5px;color:var(--text3);">30 days before a document expires</div></div>
+            <div style="width:40px;height:22px;background:#CBD5E1;border-radius:99px;cursor:pointer;position:relative;"><div style="width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Engine -->
+      <div class="panel">
+        <div class="panel-hd">
+          <div><div class="panel-title">AI Engine Configuration</div><div class="panel-sub">Controls for the built-in biosafety intelligence engine</div></div>
+          <span class="badge b-green">Active</span>
+        </div>
+        <div class="panel-body">
+          <div class="form-grp">
+            <label class="form-lbl">Gap Analysis Sensitivity</label>
+            <select class="form-ctrl">
+              <option>High — flag all potential gaps</option>
+              <option selected>Medium — flag significant gaps</option>
+              <option>Low — critical gaps only</option>
+            </select>
+            <div class="hint">Affects how many document gap recommendations AI generates per SOP</div>
+          </div>
+          <div class="form-grp">
+            <label class="form-lbl">Risk Auto-Score Model</label>
+            <select class="form-ctrl">
+              <option selected>ISO 31000 — Likelihood × Impact</option>
+              <option>ICH Q9 — Severity × Probability × Detectability</option>
+              <option>FDA RBM — Risk-Based Monitoring</option>
+            </select>
+          </div>
+          <div class="form-grp">
+            <label class="form-lbl">Critical Risk Threshold (RPN)</label>
+            <input class="form-ctrl" type="number" value="15" min="1" max="25">
+            <div class="hint">Risks scoring at or above this value are flagged as critical</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--border);margin-top:4px;">
+            <div><div style="font-weight:600;font-size:13px;">AI Gap Analysis</div><div style="font-size:11.5px;color:var(--text3);">Auto-scan SOPs for missing elements</div></div>
+            <div style="width:40px;height:22px;background:var(--blue);border-radius:99px;cursor:pointer;position:relative;"><div style="width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:2px;right:2px;"></div></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--border);">
+            <div><div style="font-weight:600;font-size:13px;">Predictive Deadline Alerts</div><div style="font-size:11.5px;color:var(--text3);">AI predicts at-risk submissions before deadline</div></div>
+            <div style="width:40px;height:22px;background:var(--blue);border-radius:99px;cursor:pointer;position:relative;"><div style="width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:2px;right:2px;"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- API / Backend -->
+    <div class="panel">
+      <div class="panel-hd"><div><div class="panel-title">Backend API</div><div class="panel-sub">Configure how the frontend connects to your platform's internal database</div></div><span class="badge b-green">Connected</span></div>
+      <div class="panel-body">
+        <div class="form-row">
+          <div class="form-grp" style="margin-bottom:0">
+            <label class="form-lbl">API Base URL</label>
+            <input class="form-ctrl" id="api-base-url" placeholder="https://api.predictsafebio.com/v1" value="https://api.predictsafebio.com/v1">
+          </div>
+          <div class="form-grp" style="margin-bottom:0">
+            <label class="form-lbl">Environment</label>
+            <select class="form-ctrl"><option>Production</option><option>Staging</option><option>Development</option></select>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding:12px 14px;background:#EAF3DE;border-radius:8px;border:1px solid #A3D077;font-size:12px;color:var(--green);display:flex;align-items:center;gap:8px;">
+          <i class="ti ti-circle-check" style="font-size:16px;"></i>
+          Platform API is responding normally · Last check: just now · Avg response: 142ms
+        </div>
+        <div style="margin-top:10px;font-size:11.5px;color:var(--text3);">
+          All modules pull data from your internal database via these endpoints:
+          <code style="display:block;background:#F4F8FD;border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-top:8px;line-height:2;font-size:11px;">
+            GET  /documents &nbsp;&nbsp;· &nbsp;POST /documents<br>
+            GET  /risks &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;· &nbsp;POST /risks<br>
+            GET  /compliance &nbsp;· &nbsp;POST /compliance<br>
+            GET  /incidents &nbsp;&nbsp;· &nbsp;POST /incidents<br>
+            GET  /equipment &nbsp;&nbsp;· &nbsp;POST /equipment
+          </code>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /main -->
+</div><!-- /content -->
+</div><!-- /app -->
+
+<!-- ════ MODALS ════ -->
+<div class="modal-ov" id="modal-doc-modal" onclick="if(event.target===this)closeModal('doc-modal')">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-title"><i class="ti ti-file-plus"></i> New Controlled Document</div><button class="modal-x" onclick="closeModal('doc-modal')">✕</button></div>
+    <div class="form-row"><div class="form-grp" style="margin-bottom:0"><label class="form-lbl">Document Title <span class="req">*</span></label><input class="form-ctrl" placeholder="e.g. Biosafety Cabinet Decontamination SOP"></div><div class="form-grp" style="margin-bottom:0"><label class="form-lbl">Type <span class="req">*</span></label><select class="form-ctrl"><option>SOP</option><option>Form</option><option>Template</option><option>Policy</option></select></div></div>
+    <div class="form-row" style="margin-top:14px;"><div class="form-grp" style="margin-bottom:0"><label class="form-lbl">Version</label><input class="form-ctrl" placeholder="v1.0"></div><div class="form-grp" style="margin-bottom:0"><label class="form-lbl">Owner / Author</label><input class="form-ctrl" placeholder="Name"></div></div>
+    <div class="form-grp" style="margin-top:14px;"><label class="form-lbl">Notes / Scope</label><textarea class="form-ctrl" rows="3" placeholder="Describe purpose and scope of this document…"></textarea></div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal('doc-modal');saveRecord('document')">Save Document</button><button class="btn btn-outline" onclick="closeModal('doc-modal')">Cancel</button></div>
+  </div>
+</div>
+
+<div class="modal-ov" id="modal-risk-modal" onclick="if(event.target===this)closeModal('risk-modal')">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-title"><i class="ti ti-alert-triangle"></i> Add Risk</div><button class="modal-x" onclick="closeModal('risk-modal')">✕</button></div>
+    <div class="form-grp"><label class="form-lbl">Risk Title <span class="req">*</span></label><input class="form-ctrl" placeholder="Describe the risk scenario…"></div>
+    <div class="form-row"><div class="form-grp" style="margin-bottom:0"><label class="form-lbl">Category</label><select class="form-ctrl"><option>Biosafety</option><option>Data Integrity</option><option>Regulatory</option><option>Operational</option><option>IT / Systems</option></select></div><div class="form-grp" style="margin-bottom:0"><label class="form-lbl">Owner</label><input class="form-ctrl" placeholder="Name or team"></div></div>
+    <div class="form-row" style="margin-top:14px;"><div class="form-grp" style="margin-bottom:0"><label class="form-lbl">Likelihood (1–5)</label><select class="form-ctrl"><option>1 — Rare</option><option>2 — Unlikely</option><option>3 — Possible</option><option>4 — Likely</option><option>5 — Almost Certain</option></select></div><div class="form-grp" style="margin-bottom:0"><label class="form-lbl">Impact (1–5)</label><select class="form-ctrl"><option>1 — Negligible</option><option>2 — Minor</option><option>3 — Moderate</option><option>4 — Major</option><option>5 — Critical</option></select></div></div>
+    <div class="form-grp" style="margin-top:14px;"><label class="form-lbl">Existing Controls</label><textarea class="form-ctrl" rows="2" placeholder="Describe current controls in place…"></textarea></div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal('risk-modal');saveRecord('risk')">Add Risk</button><button class="btn btn-outline" onclick="closeModal('risk-modal')">Cancel</button></div>
+  </div>
+</div>
+
+<div class="modal-ov" id="modal-incident-modal" onclick="if(event.target===this)closeModal('incident-modal')">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-title"><i class="ti ti-ambulance"></i> Report Incident</div><button class="modal-x" onclick="closeModal('incident-modal')">✕</button></div>
+    <div class="form-row"><div class="form-grp" style="margin-bottom:0"><label class="form-lbl">Incident Type <span class="req">*</span></label><select class="form-ctrl"><option>Biohazard Spill</option><option>Sharps / Needlestick</option><option>Chemical Exposure</option><option>Near-Miss</option><option>Waste Management</option><option>Equipment Failure</option></select></div><div class="form-grp" style="margin-bottom:0"><label class="form-lbl">Severity <span class="req">*</span></label><select class="form-ctrl"><option>Low</option><option>Moderate</option><option>High</option><option>Critical</option></select></div></div>
+    <div class="form-grp" style="margin-top:14px;"><label class="form-lbl">Description <span class="req">*</span></label><textarea class="form-ctrl" rows="3" placeholder="Describe what happened, where, and who was involved…"></textarea></div>
+    <div class="form-row"><div class="form-grp" style="margin-bottom:0"><label class="form-lbl">Date &amp; Time</label><input class="form-ctrl" type="datetime-local"></div><div class="form-grp" style="margin-bottom:0"><label class="form-lbl">Location</label><input class="form-ctrl" placeholder="e.g. Lab B, Bench 3"></div></div>
+    <div class="form-grp" style="margin-top:14px;"><label class="form-lbl">Immediate Actions Taken</label><textarea class="form-ctrl" rows="2" placeholder="What was done immediately after the incident?"></textarea></div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal('incident-modal');saveRecord('incident')">Submit Report</button><button class="btn btn-outline" onclick="closeModal('incident-modal')">Cancel</button></div>
+  </div>
+</div>
+
+<div class="modal-ov" id="modal-comp-modal" onclick="if(event.target===this)closeModal('comp-modal')">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-title"><i class="ti ti-send"></i> New Regulatory Submission</div><button class="modal-x" onclick="closeModal('comp-modal')">✕</button></div>
+    <div class="form-grp"><label class="form-lbl">Submission Name <span class="req">*</span></label><input class="form-ctrl" placeholder="e.g. IND Safety Report Q2 2026"></div>
+    <div class="form-row"><div class="form-grp" style="margin-bottom:0"><label class="form-lbl">Agency</label><select class="form-ctrl"><option>FDA</option><option>EMA</option><option>IRB</option><option>Other</option></select></div><div class="form-grp" style="margin-bottom:0"><label class="form-lbl">Type</label><select class="form-ctrl"><option>IND</option><option>NDA</option><option>GMP</option><option>Safety</option><option>Protocol</option></select></div></div>
+    <div class="form-row" style="margin-top:14px;"><div class="form-grp" style="margin-bottom:0"><label class="form-lbl">Assigned To</label><select class="form-ctrl"><option>Reg Affairs</option><option>Quality Team</option><option>Medical Affairs</option><option>Clinical Ops</option></select></div><div class="form-grp" style="margin-bottom:0"><label class="form-lbl">Due Date <span class="req">*</span></label><input class="form-ctrl" type="date"></div></div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal('comp-modal');saveRecord('submission')">Save Submission</button><button class="btn btn-outline" onclick="closeModal('comp-modal')">Cancel</button></div>
+  </div>
+</div>
+
+<script>
+// ─── NAVIGATION ───
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pg = document.getElementById('page-' + id);
+  if(pg) pg.classList.add('active');
+  // Update sidebar active states
+  document.querySelectorAll('.snav-sub').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.snav-sub').forEach(s => {
+    if(s.getAttribute('onclick') && s.getAttribute('onclick').includes("'"+id+"'")) s.classList.add('active');
+  });
+}
+
+function toggleCat(el, subId) {
+  const sub = document.getElementById(subId);
+  const chev = el.querySelector('.chev');
+  if(!sub) return;
+  const isOpen = !sub.classList.contains('hidden');
+  if(isOpen) { sub.classList.add('hidden'); chev.classList.remove('open'); }
+  else { sub.classList.remove('hidden'); chev.classList.add('open'); }
+}
+
+// ─── MODALS ───
+function openModal(id) {
+  document.getElementById('modal-'+id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById('modal-'+id).classList.remove('open');
+}
+
+// ─── PLATFORM API ───
+// All data is served by your built-in backend. Update API_BASE to match your environment.
+// Each module calls the relevant endpoint and renders the response into the table.
+const API_BASE = (function() {
+  try { return localStorage.getItem('psb_api_url') || 'https://api.predictsafebio.com/v1'; } catch(e) { return ''; }
+})();
+
+// Generic fetch from your platform's REST API
+async function apiFetch(endpoint, method='GET', body=null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if(body) opts.body = JSON.stringify(body);
+  const r = await fetch(API_BASE + endpoint, opts);
+  if(!r.ok) throw new Error('API error: HTTP ' + r.status);
+  return r.json();
+}
+
+// Save a new record — called by modal Save buttons
+// Replace this function body with your platform's actual save logic
+async function saveRecord(type) {
+  // TODO: collect form data and POST to your API
+  // Example: await apiFetch('/documents', 'POST', { name, type, version, owner });
+  showToast('Saved successfully');
+}
+
+// Save settings
+function saveSettings() {
+  try {
+    const url = document.getElementById('api-base-url');
+    if(url) localStorage.setItem('psb_api_url', url.value);
+  } catch(e){}
+  showToast('Settings saved');
+}
+
+// Toast notification
+function showToast(msg) {
+  let t = document.getElementById('psb-toast');
+  if(!t) {
+    t = document.createElement('div');
+    t.id = 'psb-toast';
+    t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#0D2B4E;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.2);transition:opacity .3s;';
+    document.body.appendChild(t);
+  }
+  t.textContent = '✓ ' + msg;
+  t.style.opacity = '1';
+  setTimeout(() => { t.style.opacity = '0'; }, 2500);
+}
+
+function statusBadge(s) {
+  if(!s) return '<span class="badge b-gray">Unknown</span>';
+  const m = {
+    'Approved':'b-green','Complete':'b-green','Submitted':'b-green','Closed':'b-green','Mitigated':'b-green','Accepted':'b-green','Current':'b-green',
+    'In Review':'b-blue','In Progress':'b-yellow','Pending':'b-blue','Scheduled':'b-blue','Under Review':'b-yellow',
+    'Overdue':'b-red','Open':'b-red','Unqualified':'b-red','Calibration Due':'b-red',
+    'Draft':'b-gray','Not Started':'b-gray','Unknown':'b-gray','Expiring':'b-yellow'
+  };
+  const cls = m[s] || 'b-gray';
+  return `<span class="badge ${cls}">${s}</span>`;
+}
+
+// Fetch live data from your platform API on page load
+// Each function below calls your API and re-renders the relevant table.
+// They are no-ops until API_BASE resolves to a live endpoint.
+async function refreshAll() {
+  await Promise.allSettled([loadRisks(), loadCompliance(), loadIncidents(), loadEquipment(), loadValidations()]);
+}
+
+// ─── DATA LOADERS ───
+// Each function calls your platform API. If the API is unavailable, sample data remains.
+// Response format expected: { records: [ { id, name, status, ... }, ... ] }
+// Adjust field names below to match your API's actual response schema.
+
+async function loadRisks() {
+  try {
+    const data = await apiFetch('/risks');
+    const records = data.records || data.data || data;
+    if(!records || !records.length) return;
+    const tbody = document.getElementById('risk-tbody');
+    tbody.innerHTML = records.map((r,i) => {
+      const score = (r.likelihood||r.Likelihood||1) * (r.impact||r.Impact||1);
+      const sc = score >= 15 ? 'b-red' : score >= 8 ? 'b-yellow' : 'b-gray';
+      return `<tr>
+        <td class="td-tag">${r.risk_id||r['Risk ID']||'RSK-'+String(i+1).padStart(3,'0')}</td>
+        <td class="td-main">${r.title||r.Title||'—'}</td>
+        <td>${r.category||r.Category||'—'}</td>
+        <td>${r.likelihood||r.Likelihood||'—'}</td>
+        <td>${r.impact||r.Impact||'—'}</td>
+        <td><span class="badge ${sc}">${score}</span></td>
+        <td>${r.owner||r.Owner||'—'}</td>
+        <td>${statusBadge(r.status||r.Status)}</td>
+        <td><button class="btn btn-ghost btn-sm">View</button></td>
+      </tr>`;
+    }).join('');
+    const open = records.filter(r => (r.status||r.Status)==='Open').length;
+    document.getElementById('ds-risks').textContent = open;
+  } catch(e) { console.info('Risks endpoint not yet available — showing sample data'); }
+}
+
+async function loadCompliance() {
+  try {
+    const data = await apiFetch('/compliance');
+    const records = data.records || data.data || data;
+    if(!records || !records.length) return;
+    const tbody = document.getElementById('comp-tbody');
+    tbody.innerHTML = records.map(r => {
+      const dueRaw = r.due_date || r['Due Date'];
+      const due = dueRaw ? new Date(dueRaw).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—';
+      const isOver = dueRaw && new Date(dueRaw) < new Date() && (r.status||r.Status) !== 'Submitted';
+      return `<tr>
+        <td class="td-main">${r.name||r.Name||r.title||'—'}</td>
+        <td>${r.agency||r.Agency||'—'}</td>
+        <td>${r.type||r.Type||'—'}</td>
+        <td>${r.assigned_to||r['Assigned To']||'—'}</td>
+        <td ${isOver?'style="color:var(--red);font-weight:700"':''}>${due}${isOver?' ↑':''}</td>
+        <td>${statusBadge(r.status||r.Status)}</td>
+        <td><button class="btn btn-ghost btn-sm">View</button></td>
+      </tr>`;
+    }).join('');
+    const overdue = records.filter(r => { const d=r.due_date||r['Due Date']; return d && new Date(d)<new Date() && (r.status||r.Status)!=='Submitted'; }).length;
+    document.getElementById('ds-comp').textContent = records.length + (overdue ? ` (${overdue} overdue)` : '');
+  } catch(e) { console.info('Compliance endpoint not yet available — showing sample data'); }
+}
+
+async function loadIncidents() {
+  try {
+    const data = await apiFetch('/incidents');
+    const records = data.records || data.data || data;
+    if(!records || !records.length) return;
+    const tbody = document.getElementById('incident-tbody');
+    tbody.innerHTML = records.map((r,i) => {
+      const dateRaw = r.date || r.Date;
+      const date = dateRaw ? new Date(dateRaw).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—';
+      return `<tr>
+        <td class="td-tag">INC-${String(i+1).padStart(3,'0')}</td>
+        <td class="td-main">${r.title||r.Title||r.name||'—'}</td>
+        <td>${r.type||r.Type||'—'}</td>
+        <td>${statusBadge(r.severity||r.Severity||'—')}</td>
+        <td>${date}</td>
+        <td>${r.reporter||r.Reporter||'—'}</td>
+        <td>${statusBadge(r.status||r.Status)}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) { console.info('Incidents endpoint not yet available — showing sample data'); }
+}
+
+async function loadEquipment() {
+  try {
+    const data = await apiFetch('/equipment');
+    const records = data.records || data.data || data;
+    if(!records || !records.length) return;
+    const tbody = document.getElementById('equipment-tbody');
+    tbody.innerHTML = records.map((r,i) => `<tr>
+      <td class="td-main">${r.name||r.Name||'—'}</td>
+      <td class="td-tag">${r.equipment_id||r['Equipment ID']||'EQ-'+String(i+1).padStart(3,'0')}</td>
+      <td>${r.location||r.Location||'—'}</td>
+      <td>${r.last_calibration||r['Last Calibration']||'—'}</td>
+      <td>${r.next_calibration||r['Next Calibration']||'—'}</td>
+      <td>${statusBadge(r.status||r.Status)}</td>
+    </tr>`).join('');
+  } catch(e) { console.info('Equipment endpoint not yet available — showing sample data'); }
+}
+
+async function loadValidations() {
+  try {
+    const data = await apiFetch('/validations');
+    const records = data.records || data.data || data;
+    if(!records || !records.length) return;
+    const tbody = document.getElementById('validation-tbody');
+    const pBadge = s => s==='Pass'?'<span class="badge b-green">✓ Pass</span>':s==='Fail'?'<span class="badge b-red">✗ Fail</span>':'<span class="badge b-gray">—</span>';
+    tbody.innerHTML = records.map(r => `<tr>
+      <td class="td-main">${r.name||r.Name||'—'}</td>
+      <td>${pBadge(r.iq||r.IQ)}</td>
+      <td>${pBadge(r.oq||r.OQ)}</td>
+      <td>${pBadge(r.pq||r.PQ)}</td>
+      <td>${r.qualified_date||r['Qualified Date']||'—'}</td>
+      <td>${r.next_due||r['Next Due']||'—'}</td>
+      <td>${statusBadge(r.status||r.Status)}</td>
+    </tr>`).join('');
+  } catch(e) { console.info('Validations endpoint not yet available — showing sample data'); }
+}
+
+// Checklist interactivity
+document.querySelectorAll('.ck-box').forEach(b => {
+  b.addEventListener('click', () => {
+    if(b.classList.contains('done')) { b.classList.remove('done'); }
+    else if(b.classList.contains('part')) { b.classList.remove('part'); b.classList.add('done'); }
+    else { b.classList.add('part'); }
+  });
+});
+
+// On load — attempt to fetch live data from your platform API
+// Falls back silently to sample data if the API isn't reachable yet
+refreshAll();
+</script>
+</body>
+</html>

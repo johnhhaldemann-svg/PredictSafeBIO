@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { BookOpen, ClipboardList, HeartPulse, LayoutDashboard, Lock, ShieldCheck, UserPlus, Users } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { redirect } from "next/navigation";
 import { Activity, AlertTriangle, CheckCircle2, Clock, Database, Server, ShieldCheck, Users, XCircle } from "lucide-react";
 import { AppShell } from "@/components/AppShell";

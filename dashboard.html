@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PredictSafe BIO — Dashboard</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1d2e; font-size: 13px; }
+.shell { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+/* Top Bar */
+.topbar { background: #1a1d2e; color: white; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 48px; flex-shrink: 0; }
+.topbar-brand { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.topbar-brand-logo { width: 24px; height: 24px; background: #4f7ef8; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+.topbar-brand span { background: #4f7ef8; color: white; border-radius: 5px; padding: 2px 7px; font-size: 11px; }
+.topbar-nav { display: flex; gap: 2px; }
+.topbar-nav a { color: #8a8fa8; font-size: 12px; padding: 6px 11px; border-radius: 5px; cursor: pointer; text-decoration: none; transition: color 0.1s; }
+.topbar-nav a:hover { color: #c9d0e8; }
+.topbar-nav a.active { background: rgba(255,255,255,0.1); color: white; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.btn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; text-decoration: none; }
+.btn-primary { background: #4f7ef8; color: white; }
+.btn-ghost { background: transparent; color: #8a8fa8; border: 1px solid #2e3349; }
+.btn-ghost:hover { color: white; border-color: #4a4f6a; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; background: #4f7ef8; color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; cursor: pointer; position: relative; }
+.avatar-menu { position: absolute; top: 36px; right: 0; background: white; border: 1px solid #e8eaf0; border-radius: 8px; padding: 6px; min-width: 160px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); display: none; z-index: 100; }
+.avatar-menu.open { display: block; }
+.avatar-menu a { display: block; padding: 7px 10px; font-size: 12px; color: #374151; border-radius: 5px; cursor: pointer; text-decoration: none; }
+.avatar-menu a:hover { background: #f4f6f9; }
+.avatar-menu a.danger { color: #dc2626; }
+.notif-btn { position: relative; }
+.notif-dot { position: absolute; top: 0; right: 0; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; border: 2px solid #1a1d2e; }
+
+/* Body */
+.body { flex: 1; overflow-y: auto; padding: 24px; }
+
+/* Welcome bar */
+.welcome-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.welcome-text h1 { font-size: 20px; font-weight: 800; }
+.welcome-text p { font-size: 12px; color: #6b7280; margin-top: 3px; }
+.welcome-actions { display: flex; gap: 8px; }
+
+/* Audit countdown banner */
+.audit-banner { background: linear-gradient(135deg, #1e3a5f 0%, #1a1d2e 100%); border-radius: 12px; padding: 18px 22px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; border: 1px solid rgba(79,126,248,0.3); }
+.audit-banner-left { display: flex; align-items: center; gap: 16px; }
+.audit-countdown { text-align: center; background: rgba(79,126,248,0.2); border: 1px solid rgba(79,126,248,0.3); border-radius: 8px; padding: 10px 16px; }
+.audit-days { font-size: 32px; font-weight: 900; color: #4f7ef8; line-height: 1; }
+.audit-days-label { font-size: 10px; color: #8a8fa8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.audit-info h3 { font-size: 15px; font-weight: 700; color: white; margin-bottom: 4px; }
+.audit-info p { font-size: 12px; color: #8a8fa8; }
+.audit-prog { margin-top: 8px; }
+.audit-prog-bar { height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; width: 280px; }
+.audit-prog-fill { height: 100%; background: #4f7ef8; border-radius: 3px; }
+.audit-prog-label { font-size: 10px; color: #8a8fa8; margin-top: 4px; }
+.audit-banner-right { display: flex; gap: 8px; }
+
+/* Health score ring */
+.health-ring-wrap { display: flex; align-items: center; gap: 20px; background: white; border: 1px solid #e8eaf0; border-radius: 12px; padding: 16px 20px; margin-bottom: 22px; }
+.health-ring-text { }
+.health-pct { font-size: 32px; font-weight: 900; color: #10b981; }
+.health-label { font-size: 12px; color: #6b7280; margin-top: 2px; }
+.health-trend { font-size: 11px; color: #10b981; font-weight: 600; margin-top: 4px; }
+
+/* KPI Grid */
+.kpi-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 22px; }
+.kpi-tile { background: white; border: 1px solid #e8eaf0; border-radius: 10px; padding: 14px 16px; cursor: pointer; transition: all 0.15s; text-decoration: none; display: block; }
+.kpi-tile:hover { border-color: #c7d2fe; box-shadow: 0 2px 8px rgba(79,126,248,0.08); transform: translateY(-1px); }
+.kpi-tile-num { font-size: 26px; font-weight: 900; line-height: 1; margin-bottom: 4px; }
+.kpi-tile-label { font-size: 11px; color: #6b7280; }
+.kpi-tile-delta { font-size: 10px; font-weight: 600; margin-top: 4px; }
+.delta-up { color: #10b981; } .delta-dn { color: #ef4444; } .delta-neu { color: #9ca3af; }
+.c-blue { color: #4f7ef8; } .c-green { color: #10b981; } .c-red { color: #ef4444; }
+.c-amber { color: #f59e0b; } .c-purple { color: #7c3aed; } .c-teal { color: #0d9488; }
+
+/* Nav cards */
+.nav-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 22px; }
+.nav-card { border-radius: 10px; padding: 18px; cursor: pointer; text-decoration: none; display: block; transition: all 0.15s; border: 1px solid transparent; }
+.nav-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.nav-card-icon { font-size: 22px; margin-bottom: 10px; }
+.nav-card-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.nav-card-desc { font-size: 11px; opacity: 0.8; line-height: 1.4; }
+.nav-card-meta { font-size: 10px; font-weight: 700; margin-top: 10px; opacity: 0.7; }
+.nc-compliance { background: #eff3fe; color: #3730a3; border-color: #c7d2fe; }
+.nc-risk { background: #fff7ed; color: #9a3412; border-color: #fed7aa; }
+.nc-vendors { background: #f5f3ff; color: #5b21b6; border-color: #ddd6fe; }
+.nc-reports { background: #f0fdfa; color: #134e4a; border-color: #99f6e4; }
+.nc-settings { background: #f8fafc; color: #334155; border-color: #e2e8f0; }
+
+/* Two-col bottom */
+.bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.panel { background: white; border: 1px solid #e8eaf0; border-radius: 10px; overflow: hidden; }
+.panel-header { padding: 14px 16px; border-bottom: 1px solid #e8eaf0; display: flex; align-items: center; justify-content: space-between; }
+.panel-title { font-size: 13px; font-weight: 700; }
+.panel-link { font-size: 11px; color: #4f7ef8; font-weight: 600; cursor: pointer; text-decoration: none; }
+.panel-link:hover { text-decoration: underline; }
+.panel-body { padding: 4px 0; }
+
+/* Activity feed */
+.activity-item { display: flex; gap: 10px; padding: 10px 16px; border-bottom: 1px solid #f3f4f6; transition: background 0.1s; }
+.activity-item:last-child { border-bottom: none; }
+.activity-item:hover { background: #fafbff; }
+.activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.ad-red { background: #ef4444; }
+.ad-green { background: #10b981; }
+.ad-amber { background: #f59e0b; }
+.ad-blue { background: #4f7ef8; }
+.ad-grey { background: #d1d5db; }
+.activity-text { flex: 1; font-size: 12px; color: #374151; line-height: 1.4; }
+.activity-text strong { color: #1a1d2e; }
+.activity-time { font-size: 10px; color: #9ca3af; flex-shrink: 0; }
+
+/* Deadlines */
+.deadline-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid #f3f4f6; }
+.deadline-item:last-child { border-bottom: none; }
+.deadline-date { text-align: center; width: 40px; flex-shrink: 0; }
+.deadline-month { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #9ca3af; letter-spacing: 0.05em; }
+.deadline-day { font-size: 20px; font-weight: 900; line-height: 1; }
+.deadline-day.urgent { color: #ef4444; }
+.deadline-day.soon { color: #f59e0b; }
+.deadline-day.ok { color: #374151; }
+.deadline-info { flex: 1; }
+.deadline-name { font-size: 12px; font-weight: 600; color: #1a1d2e; }
+.deadline-meta { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+.deadline-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; flex-shrink: 0; }
+.db-compliance { background: #eff3fe; color: #4f7ef8; }
+.db-risk { background: #fff7ed; color: #c2410c; }
+.db-vendor { background: #f5f3ff; color: #7c3aed; }
+
+/* Critical issues strip */
+.issues-strip { background: white; border: 1px solid #e8eaf0; border-radius: 10px; padding: 14px 16px; margin-bottom: 22px; }
+.issues-strip-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.issues-strip-title { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.issues-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.issue-card { border: 1px solid #fecaca; border-radius: 8px; padding: 12px; background: #fff5f5; }
+.issue-type { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; margin-bottom: 5px; display: flex; align-items: center; gap: 4px; }
+.issue-title { font-size: 12px; font-weight: 700; color: #dc2626; margin-bottom: 4px; }
+.issue-desc { font-size: 11px; color: #6b7280; line-height: 1.4; }
+.issue-action { font-size: 11px; color: #4f7ef8; font-weight: 600; margin-top: 8px; cursor: pointer; text-decoration: none; display: inline-block; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:22px;">
+      <div class="topbar-brand">
+        <div class="topbar-brand-logo">🛡</div>
+        PredictSafe <span>BIO</span>
+      </div>
+      <nav class="topbar-nav">
+        <a class="active" href="dashboard.html">Home</a>
+        <a href="compliance_map_redesign.html">Compliance</a>
+        <a href="risk_page_redesign.html">Risk</a>
+        <a href="vendors_page_redesign.html">Vendors</a>
+        <a href="reports_page_redesign.html">Reports</a>
+        <a href="settings_page_redesign.html">Settings</a>
+      </nav>
+    </div>
+    <div class="topbar-right">
+      <div class="notif-btn" style="position:relative;">
+        <button class="btn btn-ghost" style="padding:5px 9px;">🔔</button>
+        <div class="notif-dot"></div>
+      </div>
+      <button class="btn btn-primary" onclick="window.location.href='reports_page_redesign.html'">↑ Export Report</button>
+      <div style="position:relative;">
+        <div class="avatar" onclick="this.nextElementSibling.classList.toggle('open')">JH
+          <div class="avatar-menu">
+            <a>👤 My Profile</a>
+            <a href="settings_page_redesign.html">⚙️ Settings</a>
+            <a onclick="window.location.href='index.html'" class="danger">↩ Sign Out</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- Welcome -->
+    <div class="welcome-bar">
+      <div class="welcome-text">
+        <h1>Good morning, John 👋</h1>
+        <p>Wednesday, June 3, 2026 · PredictSafe BIO workspace · 3 items need your attention today</p>
+      </div>
+      <div class="welcome-actions">
+        <button class="btn btn-ghost" style="font-size:12px;" onclick="window.location.href='compliance_map_redesign.html'">View Compliance</button>
+        <button class="btn btn-primary" onclick="window.location.href='reports_page_redesign.html'">Generate Report</button>
+      </div>
+    </div>
+
+    <!-- Audit Countdown Banner -->
+    <div class="audit-banner">
+      <div class="audit-banner-left">
+        <div class="audit-countdown">
+          <div class="audit-days">73</div>
+          <div class="audit-days-label">Days to audit</div>
+        </div>
+        <div class="audit-info">
+          <h3>SOC 2 Type II Audit — Aug 15, 2026</h3>
+          <p>Auditor: KPMG LLP · Evidence collection closes Jul 15 · 88% audit package ready</p>
+          <div class="audit-prog">
+            <div class="audit-prog-bar"><div class="audit-prog-fill" style="width:88%;"></div></div>
+            <div class="audit-prog-label">129 / 147 owner attestations signed · 18 remaining</div>
+          </div>
+        </div>
+      </div>
+      <div class="audit-banner-right">
+        <button class="btn btn-ghost" onclick="window.location.href='reports_page_redesign.html'" style="font-size:12px;color:#8a8fa8;border-color:#2e3349;">View Package</button>
+        <button class="btn btn-primary" onclick="alert('Chasing 18 attestations via email...')" style="font-size:12px;">Chase 18 Attestations</button>
+      </div>
+    </div>
+
+    <!-- Overall Health + KPI Grid -->
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:12px;margin-bottom:22px;align-items:stretch;">
+      <div class="health-ring-wrap" style="margin-bottom:0;flex-direction:column;text-align:center;padding:20px 24px;gap:8px;">
+        <svg width="80" height="80" viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="32" fill="none" stroke="#e8eaf0" stroke-width="8"/>
+          <circle cx="40" cy="40" r="32" fill="none" stroke="#10b981" stroke-width="8"
+            stroke-dasharray="152 200" stroke-dashoffset="50" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+          <text x="40" y="45" text-anchor="middle" font-size="16" font-weight="900" fill="#10b981">76%</text>
+        </svg>
+        <div class="health-pct" style="font-size:14px;font-weight:700;color:#10b981;">Overall Health</div>
+        <div class="health-trend">↑ +4% from last month</div>
+      </div>
+      <div class="kpi-grid" style="margin-bottom:0;">
+        <a class="kpi-tile" href="compliance_map_redesign.html">
+          <div class="kpi-tile-num c-blue">147</div>
+          <div class="kpi-tile-label">Total Controls</div>
+          <div class="kpi-tile-delta delta-neu">3 frameworks</div>
+        </a>
+        <a class="kpi-tile" href="compliance_map_redesign.html">
+          <div class="kpi-tile-num c-green">112</div>
+          <div class="kpi-tile-label">Passing</div>
+          <div class="kpi-tile-delta delta-up">↑ 4 this week</div>
+        </a>
+        <a class="kpi-tile" href="compliance_map_redesign.html">
+          <div class="kpi-tile-num c-red">18</div>
+          <div class="kpi-tile-label">Failing</div>
+          <div class="kpi-tile-delta delta-dn">↑ 2 new</div>
+        </a>
+        <a class="kpi-tile" href="risk_page_redesign.html">
+          <div class="kpi-tile-num c-red">3</div>
+          <div class="kpi-tile-label">Critical Risks</div>
+          <div class="kpi-tile-delta delta-dn">↑ 1 this month</div>
+        </a>
+        <a class="kpi-tile" href="vendors_page_redesign.html">
+          <div class="kpi-tile-num c-amber">5</div>
+          <div class="kpi-tile-label">Certs Expiring</div>
+          <div class="kpi-tile-delta delta-dn">&lt;90 days</div>
+        </a>
+        <a class="kpi-tile" href="compliance_map_redesign.html">
+          <div class="kpi-tile-num c-red">5</div>
+          <div class="kpi-tile-label">Open Tasks</div>
+          <div class="kpi-tile-delta delta-dn">2 overdue</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Critical Issues Strip -->
+    <div class="issues-strip">
+      <div class="issues-strip-header">
+        <div class="issues-strip-title">🔴 Needs Attention Now <span style="font-size:11px;font-weight:500;color:#9ca3af;margin-left:4px;">3 critical items</span></div>
+        <a class="panel-link" href="compliance_map_redesign.html">View all →</a>
+      </div>
+      <div class="issues-grid">
+        <div class="issue-card">
+          <div class="issue-type"><span>📋</span> Compliance</div>
+          <div class="issue-title">AC-3 MFA Gap — 3 Accounts</div>
+          <div class="issue-desc">3 privileged admin accounts are still running without MFA. Q1 access review also overdue.</div>
+          <a class="issue-action" href="compliance_map_redesign.html">Resolve in Compliance →</a>
+        </div>
+        <div class="issue-card">
+          <div class="issue-type"><span>⚠️</span> Risk</div>
+          <div class="issue-title">R-002 GDPR Residual Score: 15</div>
+          <div class="issue-desc">GDPR breach risk remains Critical. 14 of 31 vendor DPA reviews completed — pace is behind schedule.</div>
+          <a class="issue-action" href="risk_page_redesign.html">View in Risk →</a>
+        </div>
+        <div class="issue-card">
+          <div class="issue-type"><span>🏢</span> Vendor</div>
+          <div class="issue-title">Medidata ISO 27001 Expired</div>
+          <div class="issue-desc">Medidata Rave's ISO 27001 certification expired March 2026. Renewal not yet received — follow up required.</div>
+          <a class="issue-action" href="vendors_page_redesign.html">View in Vendors →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page Navigation Cards -->
+    <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:10px;">Quick Navigation</div>
+    <div class="nav-cards">
+      <a class="nav-card nc-compliance" href="compliance_map_redesign.html">
+        <div class="nav-card-icon">📋</div>
+        <div class="nav-card-title">Compliance</div>
+        <div class="nav-card-desc">Controls, evidence, audit history, and open tasks across all frameworks.</div>
+        <div class="nav-card-meta">18 failing · 11 in review →</div>
+      </a>
+      <a class="nav-card nc-risk" href="risk_page_redesign.html">
+        <div class="nav-card-icon">⚠️</div>
+        <div class="nav-card-title">Risk</div>
+        <div class="nav-card-desc">Risk register, heatmap, mitigation plans, and trend analysis.</div>
+        <div class="nav-card-meta">3 critical · avg residual 24.2 →</div>
+      </a>
+      <a class="nav-card nc-vendors" href="vendors_page_redesign.html">
+        <div class="nav-card-icon">🏢</div>
+        <div class="nav-card-title">Vendors</div>
+        <div class="nav-card-desc">Certifications, questionnaires, contracts, and 4th-party mapping.</div>
+        <div class="nav-card-meta">22 vendors · 5 certs expiring →</div>
+      </a>
+      <a class="nav-card nc-reports" href="reports_page_redesign.html">
+        <div class="nav-card-icon">📄</div>
+        <div class="nav-card-title">Reports</div>
+        <div class="nav-card-desc">Generate audit packages, schedule reports, and build custom exports.</div>
+        <div class="nav-card-meta">Audit package 88% ready →</div>
+      </a>
+      <a class="nav-card nc-settings" href="settings_page_redesign.html">
+        <div class="nav-card-icon">⚙️</div>
+        <div class="nav-card-title">Settings</div>
+        <div class="nav-card-desc">Frameworks, users, integrations, notifications, and data retention.</div>
+        <div class="nav-card-meta">5 users · 3 integrations →</div>
+      </a>
+    </div>
+
+    <!-- Activity + Deadlines -->
+    <div class="bottom-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Recent Activity</div>
+          <a class="panel-link">View all →</a>
+        </div>
+        <div class="panel-body">
+          <div class="activity-item">
+            <div class="activity-dot ad-red"></div>
+            <div class="activity-text"><strong>R. Chen</strong> uploaded evidence to AC-3 Access Enforcement — file rejected (expired cert)</div>
+            <div class="activity-time">12m ago</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot ad-green"></div>
+            <div class="activity-text"><strong>Security Team</strong> marked AC-7 Unsuccessful Login Attempts as <strong>Passing</strong></div>
+            <div class="activity-time">2h ago</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot ad-amber"></div>
+            <div class="activity-text"><strong>System</strong> flagged Okta SOC 2 cert expiring in <strong>87 days</strong> — owner notified</div>
+            <div class="activity-time">3h ago</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot ad-blue"></div>
+            <div class="activity-text"><strong>J. Haldemann</strong> generated June Executive Summary report and sent to board</div>
+            <div class="activity-time">Yesterday</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot ad-red"></div>
+            <div class="activity-text"><strong>System</strong> flagged BioNTech CRO questionnaire as <strong>overdue</strong> — 18 days past due</div>
+            <div class="activity-time">Yesterday</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot ad-green"></div>
+            <div class="activity-text"><strong>M. Torres</strong> uploaded SoD_Matrix_v2.xlsx to AC-5 Separation of Duties</div>
+            <div class="activity-time">2 days ago</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot ad-blue"></div>
+            <div class="activity-text"><strong>IT Team</strong> connected AWS CloudTrail integration — evidence auto-sync enabled</div>
+            <div class="activity-time">3 days ago</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Upcoming Deadlines</div>
+          <a class="panel-link" href="compliance_map_redesign.html">View all →</a>
+        </div>
+        <div class="panel-body">
+          <div class="deadline-item">
+            <div class="deadline-date">
+              <div class="deadline-month">JUN</div>
+              <div class="deadline-day urgent">10</div>
+            </div>
+            <div class="deadline-info">
+              <div class="deadline-name">Enable MFA on 3 admin accounts</div>
+              <div class="deadline-meta">AC-3 · Owner: IT · Overdue</div>
+            </div>
+            <span class="deadline-badge db-compliance">Compliance</span>
+          </div>
+          <div class="deadline-item">
+            <div class="deadline-date">
+              <div class="deadline-month">JUN</div>
+              <div class="deadline-day urgent">15</div>
+            </div>
+            <div class="deadline-info">
+              <div class="deadline-name">Update Access Control Policy</div>
+              <div class="deadline-meta">AC-1 · Owner: Security Team · 5 days</div>
+            </div>
+            <span class="deadline-badge db-compliance">Compliance</span>
+          </div>
+          <div class="deadline-item">
+            <div class="deadline-date">
+              <div class="deadline-month">JUN</div>
+              <div class="deadline-day soon">25</div>
+            </div>
+            <div class="deadline-info">
+              <div class="deadline-name">Least Privilege attestations due</div>
+              <div class="deadline-meta">AC-6 · Owner: IT · 23 days</div>
+            </div>
+            <span class="deadline-badge db-compliance">Compliance</span>
+          </div>
+          <div class="deadline-item">
+            <div class="deadline-date">
+              <div class="deadline-month">JUN</div>
+              <div class="deadline-day soon">28</div>
+            </div>
+            <div class="deadline-info">
+              <div class="deadline-name">DocuSign questionnaire deadline</div>
+              <div class="deadline-meta">Vendor · Owner: Legal · 26 days</div>
+            </div>
+            <span class="deadline-badge db-vendor">Vendor</span>
+          </div>
+          <div class="deadline-item">
+            <div class="deadline-date">
+              <div class="deadline-month">JUL</div>
+              <div class="deadline-day ok">1</div>
+            </div>
+            <div class="deadline-info">
+              <div class="deadline-name">GDPR DPA review completion</div>
+              <div class="deadline-meta">R-002 mitigation · Owner: Legal</div>
+            </div>
+            <span class="deadline-badge db-risk">Risk</span>
+          </div>
+          <div class="deadline-item">
+            <div class="deadline-date">
+              <div class="deadline-month">JUL</div>
+              <div class="deadline-day ok">15</div>
+            </div>
+            <div class="deadline-info">
+              <div class="deadline-name">Evidence collection closes</div>
+              <div class="deadline-meta">SOC 2 audit prep · All owners</div>
+            </div>
+            <span class="deadline-badge db-compliance">Compliance</span>
+          </div>
+          <div class="deadline-item">
+            <div class="deadline-date">
+              <div class="deadline-month">AUG</div>
+              <div class="deadline-day ok">15</div>
+            </div>
+            <div class="deadline-info">
+              <div class="deadline-name">KPMG Audit Begins</div>
+              <div class="deadline-meta">SOC 2 Type II · Full team</div>
+            </div>
+            <span class="deadline-badge db-compliance">Compliance</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /body -->
+</div><!-- /shell -->
+
+<script>
+// Close avatar menu when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.avatar')) {
+    document.querySelectorAll('.avatar-menu').forEach(m => m.classList.remove('open'));
+  }
+});
+</script>
+</body>
+</html>

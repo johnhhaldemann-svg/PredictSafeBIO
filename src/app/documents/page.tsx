@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { Bot, FileText } from "lucide-react";
 import { AppShell } from "@/components/AppShell";

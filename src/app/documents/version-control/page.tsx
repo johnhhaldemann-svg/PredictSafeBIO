@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { CheckCircle2, GitBranch, History, ListChecks, Plus, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
