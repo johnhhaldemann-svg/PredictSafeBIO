@@ -16,7 +16,7 @@ const myWorkPage = readFileSync(join(process.cwd(), "src/app/my-work/page.tsx"),
 const workbenchClient = readFileSync(join(process.cwd(), "src/components/WorkbenchClient.tsx"), "utf8");
 const workKpis = readFileSync(join(process.cwd(), "src/lib/foundation/work-kpis.ts"), "utf8");
 const auditPage = readFileSync(join(process.cwd(), "src/app/admin/audit/page.tsx"), "utf8");
-const appShell = readFileSync(join(process.cwd(), "src/components/AppShell.tsx"), "utf8");
+const platformNav = readFileSync(join(process.cwd(), "src/components/PlatformCategoryNav.tsx"), "utf8");
 const reviewActionsPanel = readFileSync(join(process.cwd(), "src/components/FoundationReviewActionsPanel.tsx"), "utf8");
 const notificationCenter = readFileSync(join(process.cwd(), "src/components/FoundationNotificationCenter.tsx"), "utf8");
 const copyVerificationButton = readFileSync(join(process.cwd(), "src/components/CopyVerificationSummaryButton.tsx"), "utf8");
@@ -298,8 +298,8 @@ describe("foundation UI alignment", () => {
     expect(workbenchClient).toContain("WorkbenchCloseoutNote");
     expect(workbenchClient).toContain("task-closeout-note");
     expect(workbenchClient).toContain("action.status !== \"complete\"");
-    expect(appShell).toContain("My Work");
-    expect(appShell).toContain("/my-work");
+    expect(platformNav).toContain("My Work");
+    expect(platformNav).toContain("/my-work");
     expect(myWorkPage).toContain("export default async function MyWorkPage");
     expect(myWorkPage).toContain("Assigned Work");
     expect(myWorkPage).toContain("Priority/Blocked/Overdue");

@@ -155,7 +155,7 @@ export default async function EmailTemplatesPage({ searchParams }: Props) {
 
               <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
                 Plain-text fallback
-                <span className="muted" style={{ fontSize: "0.75rem" }}>For email clients that don't render HTML.</span>
+                <span className="muted" style={{ fontSize: "0.75rem" }}>For email clients that do not render HTML.</span>
                 <textarea
                   name="body_text"
                   defaultValue={activeTemplate.body_text}

@@ -10,10 +10,12 @@ import {
 } from "./role-permissions";
 
 describe("role permissions", () => {
-  it("normalizes unknown roles to member access", () => {
+  it("normalizes canonical and legacy roles to workspace access tiers", () => {
     expect(normalizeWorkspaceRole("owner")).toBe("owner");
     expect(normalizeWorkspaceRole("member")).toBe("member");
-    expect(normalizeWorkspaceRole("admin")).toBe("member");
+    expect(normalizeWorkspaceRole("admin")).toBe("owner");
+    expect(normalizeWorkspaceRole("provider")).toBe("owner");
+    expect(normalizeWorkspaceRole("patient")).toBe("member");
     expect(normalizeWorkspaceRole(null)).toBe("member");
   });
 

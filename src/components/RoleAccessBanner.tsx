@@ -15,14 +15,14 @@ type Props = {
   allowedMessage?: string;
 };
 
-const roleOrder: WorkspaceRole[] = ["patient", "provider", "admin", "superadmin"];
+const roleOrder: WorkspaceRole[] = ["member", "owner", "platform_staff", "superadmin"];
 
 function meetsRequirement(current: string | null | undefined, required: WorkspaceRole): boolean {
   let cur: WorkspaceRole;
   if (current === "superadmin") cur = "superadmin";
-  else if (current === "admin" || current === "owner" || current === "company_admin") cur = "admin";
-  else if (current === "provider" || current === "project_admin" || current === "safety_manager") cur = "provider";
-  else cur = "patient";
+  else if (current === "platform_staff") cur = "platform_staff";
+  else if (current === "admin" || current === "owner" || current === "company_admin" || current === "provider" || current === "project_admin" || current === "safety_manager") cur = "owner";
+  else cur = "member";
   return roleOrder.indexOf(cur) >= roleOrder.indexOf(required);
 }
 

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
 import {
+  type SubscriptionPlan,
   upsertPlan,
   createManualOverride,
   revokeManualOverride,
@@ -28,7 +29,7 @@ async function requireSuperAdmin() {
 
 export async function savePlanAction(formData: FormData) {
   const { actorId } = await requireSuperAdmin();
-  const tier = String(formData.get("tier") ?? "");
+  const tier = String(formData.get("tier") ?? "") as SubscriptionPlan["tier"];
   const name = String(formData.get("name") ?? "").trim();
   const price_cents = parseInt(String(formData.get("price_cents") ?? "0"), 10);
   const stripe_price_id = String(formData.get("stripe_price_id") ?? "").trim() || null;

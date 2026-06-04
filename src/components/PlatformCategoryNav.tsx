@@ -62,6 +62,7 @@ const categories: Category[] = [
     icon: ClipboardCheck,
     subItems: [
       { href: "/foundation", label: "Compliance Map", icon: ClipboardCheck },
+      { href: "/change-plan", label: "Change Plan", icon: GitBranch },
       { href: "/programs",   label: "Programs",       icon: BookOpen       },
     ]
   },

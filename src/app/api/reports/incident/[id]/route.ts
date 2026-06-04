@@ -14,6 +14,10 @@ import { getIncidentReportData } from "@/lib/reports/report-service";
 
 export const dynamic = "force-dynamic";
 
+function asResponseBody(buffer: Buffer): ArrayBuffer {
+  return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer;
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -35,7 +39,7 @@ export async function GET(
 
   if (format === "docx") {
     const buffer = await buildIncidentDocx(data);
-    return new NextResponse(buffer, {
+    return new NextResponse(asResponseBody(buffer), {
       status: 200,
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -49,10 +53,10 @@ export async function GET(
   }
 
   const pdfBuffer = await renderToBuffer(
-    React.createElement(IncidentReportPDF, { data })
+    React.createElement(IncidentReportPDF, { data }) as Parameters<typeof renderToBuffer>[0]
   );
 
-  return new NextResponse(pdfBuffer, {
+  return new NextResponse(asResponseBody(pdfBuffer), {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",

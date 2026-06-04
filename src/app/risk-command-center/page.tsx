@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { Activity, AlertTriangle, CheckCircle2, ShieldCheck, TrendingUp, Zap } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import Link from "next/link";
 import { getProfileContext } from "@/lib/supabase/data-helpers";
 import { ComplianceAssistant } from "@/components/ComplianceAssistant";
 import { RiskCellReviewCard } from "@/components/RiskCellReviewCard";
@@ -25,6 +26,12 @@ const CELL_TYPE_ORDER: CellType[] = [
 
 const SEVERITY_ORDER: CellSeverity[] = ["critical", "high", "medium", "low"];
 
+const SEVERITY_BADGE: Record<CellSeverity, string> = {
+  critical: "status-critical",
+  high: "status-missing",
+  medium: "status-needs-review",
+  low: "status-current"
+};
 
 export default async function RiskCommandCenterPage() {
   const [summary, ctx] = await Promise.all([

@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Activity, AlertCircle, AlertTriangle, Beaker, Bot, CheckCircle2, ClipboardList, Clock, FileText, Gauge, ListChecks, Plus, Save, ShieldCheck, Sparkles, TrendingUp, Zap } from "lucide-react";
 import { assessBioRisk } from "@/lib/bio-ai/engine";
 import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
-import type { BioAiInput, BioSignalType } from "@/lib/bio-ai/types";
+import type { BioAiInput, BioRiskLevel, BioSignalType } from "@/lib/bio-ai/types";
 import { getFieldReportDueState } from "@/lib/foundation/timing";
 import { getFoundationDueBucket, getFoundationWorkKpis, isFoundationReadyForClosure } from "@/lib/foundation/work-kpis";
 import { commonUtilities, gapModuleCards, platformCategories } from "@/lib/platform-outline";
@@ -156,14 +156,14 @@ export function WorkbenchClient({
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "blocked" | "error">("idle");
   const [saveMessage, setSaveMessage] = useState("Assessment has not been saved yet.");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const analysisTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const assessment = useMemo(() => assessBioRisk(input), [input]);
 
-  // Show a brief "AI analyzing" pulse whenever the input changes
-  useEffect(() => {
+  function pulseAnalysis() {
+    if (analysisTimeoutRef.current) clearTimeout(analysisTimeoutRef.current);
     setIsAnalyzing(true);
-    const t = setTimeout(() => setIsAnalyzing(false), 700);
-    return () => clearTimeout(t);
-  }, [input]);
+    analysisTimeoutRef.current = setTimeout(() => setIsAnalyzing(false), 700);
+  }
   const commandSummary = commandCenter ?? {
     assessmentCount: 2,
     criticalRiskCount: assessment.level === "critical" ? 1 : 0,
@@ -242,11 +242,13 @@ export function WorkbenchClient({
   }, [assignees, foundationActions]);
 
   function updateField<K extends keyof BioAiInput>(key: K, value: BioAiInput[K]) {
+    pulseAnalysis();
     setInput((current) => ({ ...current, [key]: value }));
   }
 
   function autoFillFromWorkspace() {
     // Prefills context fields from workspace / org data where not yet populated
+    pulseAnalysis();
     setInput((current) => ({
       ...current,
       siteName: current.siteName || "Main Biotech Facility",
@@ -259,6 +261,7 @@ export function WorkbenchClient({
   }
 
   function addPresetSignal(preset: typeof signalPresets[number]) {
+    pulseAnalysis();
     setInput((current) => ({
       ...current,
       signals: [
@@ -275,6 +278,7 @@ export function WorkbenchClient({
   }
 
   function addSignal() {
+    pulseAnalysis();
     setInput((current) => ({
       ...current,
       signals: [
@@ -352,7 +356,7 @@ export function WorkbenchClient({
                 <tr key={a.id}>
                   <td>{a.workflow}</td>
                   <td>{a.area}</td>
-                  <td><StatusBadge level={a.level} /></td>
+                  <td><StatusBadge level={a.level as BioRiskLevel} /></td>
                   <td>{a.score}</td>
                   <td>{a.humanReviewStatus.replace(/_/g, " ")}</td>
                   <td>{a.reviewedAt ? new Date(a.reviewedAt).toLocaleDateString() : "Not reviewed"}</td>

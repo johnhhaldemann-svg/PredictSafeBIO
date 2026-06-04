@@ -77,7 +77,7 @@ export default async function ProviderNewPage({ searchParams }: Props) {
               <h2 style={{ margin: "0 0 0.5rem" }}>Profile submitted for review</h2>
               <p style={{ margin: 0 }}>
                 Your provider profile is now in our moderation queue. We typically review profiles within 1–2 business days.
-                You'll receive an email once it's approved or if we need additional information.
+                You will receive an email once it is approved or if we need additional information.
               </p>
             </div>
             <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
