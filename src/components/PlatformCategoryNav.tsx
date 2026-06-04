@@ -52,7 +52,7 @@ const categories: Category[] = [
       { href: "/workbench",   label: "Command Center",    icon: Gauge        },
       { href: "/assessments", label: "Assessments",       icon: ShieldCheck  },
       { href: "/providers",   label: "Provider Directory",icon: Stethoscope  },
-      { href: "/bios/new",    label: "Add Patient Bio",   icon: ClipboardList},
+      { href: "/bios/new",    label: "Add Personnel Record", icon: ClipboardList},
       { href: "/my-work",     label: "My Work",           icon: ClipboardList},
     ]
   },

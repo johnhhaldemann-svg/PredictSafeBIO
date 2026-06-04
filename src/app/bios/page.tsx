@@ -68,10 +68,10 @@ export default async function BiosListPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Patient Bios</p>
-          <h1>Patient records</h1>
+          <p className="section-label">Personnel Records</p>
+          <h1>Personnel records</h1>
           <p className="muted">
-            HIPAA-safe patient bios for your organization. All records use display names only.
+            Personnel records for your organization. All records use display names only.
           </p>
         </header>
 
@@ -86,7 +86,7 @@ export default async function BiosListPage({ searchParams }: Props) {
         <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
           <Link href="/bios/new" className={atLimit ? "button-secondary" : "button-primary"}
             style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.85rem", opacity: atLimit ? 0.5 : 1, pointerEvents: atLimit ? "none" : "auto" }}>
-            <PlusCircle size={14} /> Add patient bio
+            <PlusCircle size={14} /> Add personnel record
           </Link>
 
           {/* Usage meter */}
@@ -119,13 +119,13 @@ export default async function BiosListPage({ searchParams }: Props) {
         {activeBios.length === 0 ? (
           <section className="panel" style={{ textAlign: "center", padding: "2.5rem" }}>
             <Users size={32} style={{ color: "var(--muted)", margin: "0 auto 1rem" }} />
-            <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>No patient bios yet</p>
+            <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>No personnel records yet</p>
             <p className="muted" style={{ fontSize: "0.85rem", marginBottom: "1.25rem" }}>
-              Create your first patient record to get started.
+              Create your first personnel record to get started.
             </p>
             <Link href="/bios/new" className="button-primary"
               style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <PlusCircle size={14} /> Add first bio
+              <PlusCircle size={14} /> Add first record
             </Link>
           </section>
         ) : (
