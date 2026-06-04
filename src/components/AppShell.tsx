@@ -50,7 +50,6 @@ export async function AppShell({ children }: { children: ReactNode }) {
             <Link href="/admin/organizations" className="tnav-auth-link">Orgs</Link>
             <Link href="/admin/users" className="tnav-auth-link">Users</Link>
             <Link href="/admin/audit" className="tnav-auth-link">Audit</Link>
-            <Link href="/admin/platform" className="tnav-auth-link">Platform</Link>
           </nav>
           <div className="tnav-spacer" aria-hidden="true" />
           <div className="user-area">

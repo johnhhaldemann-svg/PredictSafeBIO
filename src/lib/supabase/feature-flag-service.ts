@@ -34,7 +34,7 @@ const ENV_FALLBACKS: Record<string, boolean> = {
 
 export async function listFeatureFlags(): Promise<FeatureFlag[]> {
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data, error } = await (admin as any)
     .from("platform_feature_flags")
     .select("*")
@@ -43,7 +43,7 @@ export async function listFeatureFlags(): Promise<FeatureFlag[]> {
 
   if (error || !data) return [];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return (data as any[]).map((f: any) => ({
     id: f.id,
     key: f.key,
@@ -60,7 +60,7 @@ export async function listFeatureFlags(): Promise<FeatureFlag[]> {
 
 export async function isFeatureEnabled(key: string): Promise<boolean> {
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data } = await (admin as any)
     .from("platform_feature_flags")
     .select("enabled")
@@ -68,7 +68,7 @@ export async function isFeatureEnabled(key: string): Promise<boolean> {
     .maybeSingle();
 
   if (data !== null && data !== undefined) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     return (data as any).enabled ?? false;
   }
 
@@ -84,7 +84,7 @@ export async function setFeatureFlag(
   actorId: string
 ): Promise<{ error: string | null }> {
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("platform_feature_flags")
     .update({

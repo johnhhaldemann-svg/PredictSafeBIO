@@ -106,7 +106,7 @@ export async function listProviderBiosByStatus(
 ): Promise<PendingBioRow[]> {
   const admin = getSupabaseAdminClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let query = (admin as any)
     .from("provider_profiles")
     .select(`
@@ -124,7 +124,7 @@ export async function listProviderBiosByStatus(
   const { data } = await query;
 
   // Fetch pending report counts per profile
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: reportCounts } = await (admin as any)
     .from("bio_reports")
     .select("target_id, status")
@@ -136,7 +136,7 @@ export async function listProviderBiosByStatus(
     countMap.set(r.target_id, (countMap.get(r.target_id) ?? 0) + 1);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return ((data ?? []) as any[]).map((p: any) => ({
     id: p.id,
     user_id: p.user_id,
@@ -158,7 +158,7 @@ export async function listProviderBiosByStatus(
 export async function getBioForReview(profileId: string): Promise<BioForReview | null> {
   const admin = getSupabaseAdminClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: profile } = await (admin as any)
     .from("provider_profiles")
     .select(`
@@ -173,11 +173,11 @@ export async function getBioForReview(profileId: string): Promise<BioForReview |
     .maybeSingle();
 
   if (!profile) return null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const p = profile as any;
 
   // Fetch open reports for this profile
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: reports } = await (admin as any)
     .from("bio_reports")
     .select(`
@@ -245,7 +245,7 @@ async function auditLog(
   payload: Record<string, unknown>
 ) {
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   await (admin as any).from("audit_events").insert({
     organization_id: organizationId,
     actor_id: actorId,
@@ -264,7 +264,7 @@ export async function approveProviderBio(
   const admin = getSupabaseAdminClient();
   const now = new Date().toISOString();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("provider_profiles")
     .update({
@@ -296,7 +296,7 @@ export async function requestBioChanges(
   const admin = getSupabaseAdminClient();
   const now = new Date().toISOString();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("provider_profiles")
     .update({
@@ -326,7 +326,7 @@ export async function rejectProviderBio(
   const admin = getSupabaseAdminClient();
   const now = new Date().toISOString();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("provider_profiles")
     .update({
@@ -357,7 +357,7 @@ export async function takedownProviderBio(
   const admin = getSupabaseAdminClient();
   const now = new Date().toISOString();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("provider_profiles")
     .update({
@@ -386,7 +386,7 @@ export async function restoreProviderBio(
   const admin = getSupabaseAdminClient();
   const now = new Date().toISOString();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("provider_profiles")
     .update({
@@ -420,7 +420,7 @@ export async function updateNpiChecklist(
   const now = new Date().toISOString();
 
   // Fetch existing checklist
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: existing } = await (admin as any)
     .from("provider_profiles")
     .select("npi_checklist")
@@ -440,7 +440,7 @@ export async function updateNpiChecklist(
   ];
   const allVerified = allKeys.every((k) => updatedChecklist[k]?.checked === true);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("provider_profiles")
     .update({
@@ -471,7 +471,7 @@ export async function listBioReports(
 ): Promise<BioReportRow[]> {
   const admin = getSupabaseAdminClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let query = (admin as any)
     .from("bio_reports")
     .select(`
@@ -486,7 +486,7 @@ export async function listBioReports(
 
   const { data } = await query;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return ((data ?? []) as any[]).map((r: any) => ({
     id: r.id,
     target_type: r.target_type,
@@ -511,7 +511,7 @@ export async function triageReport(
   const admin = getSupabaseAdminClient();
   const now = new Date().toISOString();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("bio_reports")
     .update({

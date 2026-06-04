@@ -25,12 +25,12 @@ type EmailTemplate = {
 
 async function listEmailTemplates(): Promise<EmailTemplate[]> {
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data } = await (admin as any)
     .from("email_templates")
     .select("*")
     .order("key");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return ((data ?? []) as any[]).map((t: any) => ({
     key: t.key,
     label: t.label,

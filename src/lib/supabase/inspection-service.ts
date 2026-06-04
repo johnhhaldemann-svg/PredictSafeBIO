@@ -390,7 +390,7 @@ export function pickAssignee(
  *
  * Returns a summary of what was created / skipped.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function autoScheduleInspections(
   orgId: string,
   serviceClient: any

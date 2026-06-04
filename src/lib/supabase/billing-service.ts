@@ -86,11 +86,11 @@ export type RevenueSummary = {
 
 export async function listPlans(includeInactive = false): Promise<SubscriptionPlan[]> {
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let q = (admin as any).from("subscription_plans").select("*").order("sort_order");
   if (!includeInactive) q = q.eq("is_active", true);
   const { data } = await q;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return ((data ?? []) as any[]).map((p: any) => ({
     id: p.id,
     name: p.name,
@@ -116,7 +116,7 @@ export async function upsertPlan(
     created_by: actorId,
     updated_at: new Date().toISOString(),
   };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("subscription_plans")
     .upsert(payload, { onConflict: "tier" });
@@ -129,7 +129,7 @@ export async function listSubscriptions(
   filters: { status?: string; tier?: string } = {}
 ): Promise<Subscription[]> {
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let q = (admin as any)
     .from("subscriptions")
     .select("*, organizations(name), subscription_plans(name, tier, price_cents)")
@@ -138,7 +138,7 @@ export async function listSubscriptions(
   if (filters.status) q = q.eq("status", filters.status);
   const { data } = await q;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let rows = ((data ?? []) as any[]).map((s: any) => ({
     id: s.id,
     organization_id: s.organization_id,
@@ -187,7 +187,7 @@ export async function setSubscription(
 ): Promise<{ error: string | null }> {
   const admin = getSupabaseAdminClient();
   const now = new Date().toISOString();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("subscriptions")
     .upsert(
@@ -216,7 +216,7 @@ export async function recordBillingEvent(event: {
 }): Promise<{ error: string | null; alreadyProcessed: boolean }> {
   const admin = getSupabaseAdminClient();
   // Check idempotency — skip if already processed
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: existing } = await (admin as any)
     .from("billing_events")
     .select("id")
@@ -225,7 +225,7 @@ export async function recordBillingEvent(event: {
 
   if (existing) return { error: null, alreadyProcessed: true };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any).from("billing_events").insert(event);
   return { error: error?.message ?? null, alreadyProcessed: false };
 }
@@ -235,7 +235,7 @@ export async function listBillingEvents(
   limit = 50
 ): Promise<BillingEvent[]> {
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let q = (admin as any)
     .from("billing_events")
     .select("*, organizations(name)")
@@ -245,7 +245,7 @@ export async function listBillingEvents(
   if (organizationId) q = q.eq("organization_id", organizationId);
   const { data } = await q;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return ((data ?? []) as any[]).map((e: any) => ({
     id: e.id,
     organization_id: e.organization_id ?? null,
@@ -263,7 +263,7 @@ export async function listBillingEvents(
 
 export async function listManualOverrides(organizationId?: string): Promise<ManualOverride[]> {
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let q = (admin as any)
     .from("manual_billing_overrides")
     .select("*, organizations(name), profiles!manual_billing_overrides_created_by_fkey(full_name)")
@@ -272,7 +272,7 @@ export async function listManualOverrides(organizationId?: string): Promise<Manu
   if (organizationId) q = q.eq("organization_id", organizationId);
   const { data } = await q;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return ((data ?? []) as any[]).map((o: any) => ({
     id: o.id,
     organization_id: o.organization_id,
@@ -300,7 +300,7 @@ export async function createManualOverride(
   }
 ): Promise<{ error: string | null }> {
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any).from("manual_billing_overrides").insert({
     ...override,
     created_by: actorId,
@@ -312,7 +312,7 @@ export async function revokeManualOverride(
   overrideId: string
 ): Promise<{ error: string | null }> {
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("manual_billing_overrides")
     .update({ is_active: false })

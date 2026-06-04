@@ -30,7 +30,7 @@ export default async function StaffPermissionsPage({ searchParams }: Props) {
   const admin = getSupabaseAdminClient();
 
   // Load all platform_staff users
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: staffProfiles } = await (admin as any)
     .from("profiles")
     .select("id, full_name, organization_id")
@@ -39,7 +39,7 @@ export default async function StaffPermissionsPage({ searchParams }: Props) {
   const staffIds: string[] = (staffProfiles ?? []).map((p: { id: string }) => p.id);
 
   // Load all platform-scope grants
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: grants } = staffIds.length > 0
     ? await (admin as any)
         .from("feature_permission_grants")
@@ -50,13 +50,13 @@ export default async function StaffPermissionsPage({ searchParams }: Props) {
 
   // Build a quick lookup: grantMap[userId][feature] = allowed
   const grantMap: Record<string, Record<string, boolean>> = {};
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   for (const g of (grants ?? []) as any[]) {
     if (!grantMap[g.user_id]) grantMap[g.user_id] = {};
     grantMap[g.user_id][g.feature] = g.allowed;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const staffList = (staffProfiles ?? []) as any[];
 
   return (

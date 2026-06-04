@@ -95,10 +95,10 @@ export async function listAdminUsers(
   if (filters.status) query = query.eq("account_status", filters.status);
   if (filters.organizationId) query = query.eq("organization_id", filters.organizationId);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: profiles, count } = await (query as any);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let users: AdminUserRow[] = ((profiles ?? []) as any[]).map((p: any) => {
     const auth = authMap.get(p.id);
     const org = p.organizations as { name: string } | null;
@@ -139,7 +139,7 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
 
   // Profile + org — cast as any because new columns (account_status) may not be
   // in the generated Supabase types until `supabase gen types` is re-run.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: profile } = await (admin as any)
     .from("profiles")
     .select("id, full_name, role, account_status, organization_id, created_at, organizations(name)")
@@ -147,12 +147,12 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
     .maybeSingle();
 
   if (!profile) return null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const p = profile as any;
   const org = p.organizations as { name: string } | null;
 
   // Provider profile — new table; cast to avoid generated-types mismatch
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: providerProfile } = await (admin as any)
     .from("provider_profiles")
     .select("specialty, license_number, npi_number, credentials, accepting_patients")
@@ -160,7 +160,7 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
     .maybeSingle();
 
   // Patient bio (no encrypted_notes — never expose that to UI)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: patientBio } = await (admin as any)
     .from("patient_bios")
     .select("display_name, date_of_birth_year, biological_sex, conditions, allergies, is_active")
@@ -201,7 +201,7 @@ export async function changeUserRole(
 ): Promise<{ error: string | null }> {
   const admin = getSupabaseAdminClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("profiles")
     .update({ role: newRole, updated_at: new Date().toISOString() })
@@ -209,7 +209,7 @@ export async function changeUserRole(
 
   if (error) return { error: (error as { message: string }).message };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   await (admin as any).from("audit_events").insert({
     organization_id: organizationId,
     actor_id: actorId,
@@ -229,7 +229,7 @@ export async function setUserAccountStatus(
 ): Promise<{ error: string | null }> {
   const admin = getSupabaseAdminClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("profiles")
     .update({ account_status: status, updated_at: new Date().toISOString() })
@@ -244,7 +244,7 @@ export async function setUserAccountStatus(
     await admin.auth.admin.updateUserById(targetUserId, { ban_duration: "none" });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   await (admin as any).from("audit_events").insert({
     organization_id: organizationId,
     actor_id: actorId,
@@ -273,7 +273,7 @@ export async function sendPasswordResetEmail(
   if (error) return { error: error.message };
 
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   await (admin as any).from('audit_events').insert({
     organization_id: organizationId,
     actor_id: actorId,

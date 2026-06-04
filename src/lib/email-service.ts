@@ -20,16 +20,16 @@ type EmailVars = Record<string, string>;
 
 async function getTemplate(key: string): Promise<{ subject: string; body_html: string; body_text: string } | null> {
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data } = await (admin as any)
     .from("email_templates")
     .select("subject, body_html, body_text, is_active")
     .eq("key", key)
     .maybeSingle();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   if (!data || !(data as any).is_active) return null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const d = data as any;
   return { subject: d.subject, body_html: d.body_html, body_text: d.body_text };
 }

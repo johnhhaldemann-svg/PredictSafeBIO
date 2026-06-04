@@ -45,14 +45,14 @@ const DEFAULTS: PlatformBranding = {
 
 export async function listPlatformConfig(): Promise<PlatformConfigEntry[]> {
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data } = await (admin as any)
     .from("platform_config")
     .select("*")
     .order("category")
     .order("label");
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return ((data ?? []) as any[]).map((r: any) => ({
     key: r.key,
     value: r.value,
@@ -91,7 +91,7 @@ export async function updatePlatformConfig(
   actorId: string
 ): Promise<{ error: string | null }> {
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("platform_config")
     .update({ value, updated_by: actorId, updated_at: new Date().toISOString() })
@@ -110,7 +110,7 @@ export async function updatePlatformConfigBulk(
   const admin = getSupabaseAdminClient();
 
   for (const [key, value] of Object.entries(updates)) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { error } = await (admin as any)
       .from("platform_config")
       .update({ value, updated_by: actorId, updated_at: now })

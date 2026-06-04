@@ -66,7 +66,6 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  typescript: { ignoreBuildErrors: true }, // temp: bypasses OneDrive-corrupted stub files
   reactStrictMode: true,
 
   async redirects() {

@@ -40,7 +40,7 @@ export async function submitProviderProfileAction(formData: FormData) {
   const admin = getSupabaseAdminClient();
 
   // Check if this user already has a pending/approved profile
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: existing } = await (admin as any)
     .from("provider_profiles")
     .select("id, review_status")
@@ -51,7 +51,7 @@ export async function submitProviderProfileAction(formData: FormData) {
     redirect(`/providers/new?error=You+already+have+a+provider+profile+(${existing.review_status})`);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any).from("provider_profiles").insert({
     organization_id:  orgId,
     user_id:          user.id,

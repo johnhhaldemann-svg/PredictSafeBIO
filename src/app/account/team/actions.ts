@@ -24,7 +24,7 @@ export async function toggleMemberPermissionAction(formData: FormData) {
   const allowed   = formData.get("allowed") === "true";
 
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("feature_permission_grants")
     .upsert({

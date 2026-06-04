@@ -1,7 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { assertSupabaseServiceEnv } from "./env";
 
-let adminClient: ReturnType<typeof createClient> | null = null;
+// Untyped (no generated Database type in this repo), so default through `any`
+// to avoid `.from(...).update/insert/select` inferring `never` row types.
+let adminClient: SupabaseClient | null = null;
 
 export function getSupabaseAdminClient() {
   if (!adminClient) {

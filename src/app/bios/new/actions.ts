@@ -41,7 +41,7 @@ export async function submitPatientBioAction(formData: FormData) {
   if (custom_allergies)  allergies.push(...custom_allergies.split(",").map(s => s.trim()).filter(Boolean));
 
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any).from("patient_bios").insert({
     organization_id:   orgId,
     user_id:           user.id,

@@ -18,7 +18,7 @@ export default async function ProviderProfilePage({ params }: Props) {
   const { id } = await params;
   const admin = getSupabaseAdminClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data } = await (admin as any)
     .from("provider_profiles")
     .select(`
@@ -36,7 +36,7 @@ export default async function ProviderProfilePage({ params }: Props) {
 
   if (!data) notFound();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const p = data as any;
   const provider = {
     id:                p.id as string,

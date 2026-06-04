@@ -39,11 +39,11 @@ export default async function BillingOverridesPage({ searchParams }: Props) {
 
   const [overrides, orgsRaw] = await Promise.all([
     listManualOverrides(),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (getSupabaseAdminClient() as any).from("organizations").select("id, name").order("name"),
   ]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const orgs = ((orgsRaw.data ?? []) as any[]).map((o: any) => ({ id: o.id as string, name: o.name as string }));
 
   return (

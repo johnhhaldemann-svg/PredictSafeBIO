@@ -75,7 +75,7 @@ export async function signUpAction(formData: FormData) {
   // custom SMTP at signup time. Password resets still use email (configure SMTP
   // in Supabase Auth settings before launch for that flow).
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: created, error: createError } = await (admin as any).auth.admin.createUser({
     email,
     password,

@@ -39,7 +39,7 @@ export default async function BillingPage() {
   const plans = await listPlans();
 
   // Check if org has an active subscription
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: sub } = await (supabase as any)
     .from("subscriptions")
     .select("plan_id, status, trial_end_at, subscription_plans(name, tier)")
@@ -47,7 +47,7 @@ export default async function BillingPage() {
     .in("status", ["active", "trialing"])
     .maybeSingle();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const currentTier = (sub as any)?.subscription_plans?.tier ?? null;
 
   return (
@@ -77,7 +77,7 @@ export default async function BillingPage() {
             <div className="panel-heading">
               <div>
                 <p className="section-label">Current Plan</p>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                { }
                 <h2>{(sub as any)?.subscription_plans?.name}</h2>
               </div>
               <span className="status-chip status-current">Active</span>

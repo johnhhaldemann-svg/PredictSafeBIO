@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
   const windowEnd   = new Date(now.getTime() + 3.5 * 24 * 60 * 60 * 1000).toISOString();
 
   // Find trialing subscriptions expiring in ~3 days
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: expiring, error } = await (admin as any)
     .from("subscriptions")
     .select("id, organization_id, trial_end_at")
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const subs = (expiring ?? []) as any[];
   let sent = 0;
   let failed = 0;
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
     const expiryDate = trialEnd.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
     // Get org owner email
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data: profile } = await (admin as any)
       .from("profiles")
       .select("id")
@@ -65,13 +65,13 @@ export async function GET(req: NextRequest) {
       .limit(1)
       .maybeSingle();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const userId = (profile as any)?.id;
     if (!userId) continue;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data: authUser } = await (admin as any).auth.admin.getUserById(userId);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const email = (authUser?.user as any)?.email;
     if (!email) continue;
 

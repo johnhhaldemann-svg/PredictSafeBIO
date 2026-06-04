@@ -104,7 +104,7 @@ export async function getSignupGrowth(): Promise<SignupGrowth> {
 
     if (!rows) return [];
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const typedRows = rows as any[];
     const map = new Map<string, Record<string, number>>();
     for (const r of typedRows) {
@@ -135,19 +135,19 @@ export async function getSignupGrowth(): Promise<SignupGrowth> {
   const { data: allUsersRaw } = await admin
     .from("profiles")
     .select("role, created_at");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const allUsers = (allUsersRaw ?? []) as any[];
   const now = Date.now();
 
   const totals = {
     all_time: allUsers.length,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     last_7d:  allUsers.filter((u: any) => new Date(u.created_at as string).getTime() > now - 7  * 86400000).length,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     last_30d: allUsers.filter((u: any) => new Date(u.created_at as string).getTime() > now - 30 * 86400000).length,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     last_90d: allUsers.filter((u: any) => new Date(u.created_at as string).getTime() > now - 90 * 86400000).length,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     by_role: allUsers.reduce<Record<string, number>>((acc, u: any) => {
       const role = u.role as string;
       acc[role] = (acc[role] ?? 0) + 1;
@@ -163,7 +163,7 @@ export async function getSignupGrowth(): Promise<SignupGrowth> {
 export async function getTopViewedProfiles(limit = 20): Promise<ProfileViewStat[]> {
   const admin = getSupabaseAdminClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: viewData } = await (admin as any)
     .from("profile_views")
     .select("profile_id, viewed_at")
@@ -172,7 +172,7 @@ export async function getTopViewedProfiles(limit = 20): Promise<ProfileViewStat[
   if (!viewData || viewData.length === 0) return [];
 
   const countMap = new Map<string, { count: number; last: string }>();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   for (const v of viewData as any[]) {
     const existing = countMap.get(v.profile_id as string);
     if (!existing) {
@@ -189,14 +189,14 @@ export async function getTopViewedProfiles(limit = 20): Promise<ProfileViewStat[
 
   if (topIds.length === 0) return [];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: profiles } = await (admin as any)
     .from("provider_profiles")
     .select("id, specialty, npi_number, organizations ( name ), profiles!provider_profiles_user_id_fkey ( full_name )")
     .in("id", topIds);
 
   return topIds.map((id) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const p = ((profiles ?? []) as any[]).find((x: any) => x.id === id) as any;
     const stats = countMap.get(id)!;
     return {
@@ -216,20 +216,20 @@ export async function getTopViewedProfiles(limit = 20): Promise<ProfileViewStat[
 export async function getModerationStats(): Promise<ModerationStats> {
   const admin = getSupabaseAdminClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const [{ data: profilesRaw }, { data: reportsRaw }] = await Promise.all([
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (admin as any).from("provider_profiles")
       .select("review_status, npi_verified, submitted_at, reviewed_at")
       .eq("is_active", true),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (admin as any).from("bio_reports")
       .select("status, reason, created_at, reviewed_at"),
   ]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const pp = (profilesRaw ?? []) as any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const rr = (reportsRaw ?? []) as any[];
 
   const total_approved          = pp.filter((p: any) => p.review_status === "approved").length;
@@ -241,7 +241,7 @@ export async function getModerationStats(): Promise<ModerationStats> {
   const decided = total_approved + total_rejected;
   const approval_rate_pct = decided > 0 ? Math.round((total_approved / decided) * 100) : 0;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const reviewTimes = pp
     .filter((p: any) => p.submitted_at && p.reviewed_at)
     .map((p: any) =>
@@ -282,12 +282,12 @@ export async function getModerationStats(): Promise<ModerationStats> {
 export async function exportUsers(): Promise<UserExportRow[]> {
   const admin = getSupabaseAdminClient();
   // Excluded: full_name, email — account_status cast as any since not in generated types
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data } = await (admin as any)
     .from("profiles")
     .select("id, role, account_status, organization_id, created_at")
     .order("created_at");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return ((data ?? []) as any[]).map((r: any) => ({
     id:               r.id as string,
     role:             r.role as string,
@@ -300,13 +300,13 @@ export async function exportUsers(): Promise<UserExportRow[]> {
 export async function exportBios(): Promise<BioExportRow[]> {
   const admin = getSupabaseAdminClient();
   // Excluded: license_number, npi_number, full names, encrypted_notes
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data } = await (admin as any)
     .from("provider_profiles")
     .select("id, organization_id, specialty, credentials, review_status, is_public, npi_verified, submitted_at, reviewed_at")
     .eq("is_active", true)
     .order("created_at");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return ((data ?? []) as any[]).map((r: any) => ({
     profile_id:     r.id as string,
     organization_id: r.organization_id as string,
@@ -323,12 +323,12 @@ export async function exportBios(): Promise<BioExportRow[]> {
 export async function exportFlags(): Promise<FlagExportRow[]> {
   const admin = getSupabaseAdminClient();
   // Excluded: reporter_id, reviewer_notes
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data } = await (admin as any)
     .from("bio_reports")
     .select("id, target_type, reason, status, created_at, reviewed_at")
     .order("created_at");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return ((data ?? []) as any[]).map((r: any) => ({
     report_id:   r.id as string,
     target_type: r.target_type as string,

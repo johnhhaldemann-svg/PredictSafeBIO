@@ -22,7 +22,7 @@ export async function updateProviderProfileAction(formData: FormData) {
   }
 
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("provider_profiles")
     .update({
@@ -52,7 +52,7 @@ export async function withdrawProviderProfileAction() {
   if (!user) redirect("/login");
 
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("provider_profiles")
     .update({ is_active: false, updated_at: new Date().toISOString() })

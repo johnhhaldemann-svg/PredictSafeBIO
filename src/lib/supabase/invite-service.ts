@@ -185,7 +185,7 @@ export async function createWorkspaceInvitation(input: {
       input.redirectTo ??
       `${process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? ""}/auth/confirm?next=/onboarding`;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data: linkData, error: linkError } = await (adminClient as any).auth.admin.generateLink({
       type: "invite",
       email,

@@ -38,7 +38,7 @@ export default async function BiosListPage({ searchParams }: Props) {
   const admin = getSupabaseAdminClient();
 
   const [biosResult, usage] = await Promise.all([
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (admin as any)
       .from("patient_bios")
       .select("id, display_name, date_of_birth_year, biological_sex, conditions, allergies, is_active, created_at")
@@ -47,7 +47,7 @@ export default async function BiosListPage({ searchParams }: Props) {
     getOrgUsage(orgId),
   ]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const allBios = ((biosResult.data ?? []) as any[]).map((b: any) => ({
     id:                b.id as string,
     display_name:      b.display_name as string,

@@ -54,14 +54,14 @@ export default async function ProviderAccountPage({ searchParams }: Props) {
   const sp = await searchParams;
   const admin = getSupabaseAdminClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data } = await (admin as any)
     .from("provider_profiles")
     .select("*")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const profile = data as any | null;
   const statusKey = (profile?.review_status ?? "draft") as keyof typeof STATUS_CONFIG;
   const status = STATUS_CONFIG[statusKey] ?? STATUS_CONFIG.draft;

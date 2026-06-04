@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
   let stripe: import("stripe").default;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const Stripe = require("stripe");
     stripe = new Stripe(stripeKey, { apiVersion: "2024-06-20" });
   } catch {
@@ -60,14 +60,14 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: sub } = await (admin as any)
     .from("subscriptions")
     .select("stripe_customer_id")
     .eq("organization_id", orgId)
     .maybeSingle();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const customerId = (sub as any)?.stripe_customer_id;
 
   if (!customerId) {

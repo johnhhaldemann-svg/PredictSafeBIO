@@ -20,7 +20,7 @@ export async function deactivateBioAction(formData: FormData) {
   if (!bioId) redirect("/bios?error=Missing+bio+ID");
 
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("patient_bios")
     .update({ is_active: false, updated_at: new Date().toISOString() })

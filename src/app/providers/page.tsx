@@ -62,7 +62,7 @@ type Props = {
 
 async function listApprovedProviders(filters: { specialty?: string; q?: string }): Promise<Provider[]> {
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let query = (admin as any)
     .from("provider_profiles")
     .select(`
@@ -79,7 +79,7 @@ async function listApprovedProviders(filters: { specialty?: string; q?: string }
 
   const { data } = await query;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let providers: Provider[] = ((data ?? []) as any[]).map((p: any) => ({
     id:                p.id as string,
     specialty:         p.specialty as string,
@@ -111,13 +111,13 @@ async function listApprovedProviders(filters: { specialty?: string; q?: string }
 
 async function getSpecialties(): Promise<string[]> {
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data } = await (admin as any)
     .from("provider_profiles")
     .select("specialty")
     .eq("review_status", "approved")
     .eq("is_public", true);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const all = ((data ?? []) as any[]).map((p: any) => p.specialty as string);
   return [...new Set(all)].sort();
 }

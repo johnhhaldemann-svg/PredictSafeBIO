@@ -19,7 +19,7 @@ export async function togglePlatformPermissionAction(formData: FormData) {
   const allowed = formData.get("allowed") === "true";
 
   const admin = getSupabaseAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await (admin as any)
     .from("feature_permission_grants")
     .upsert({ user_id: userId, granted_by: user.id, scope: "platform", feature, allowed, updated_at: new Date().toISOString() },

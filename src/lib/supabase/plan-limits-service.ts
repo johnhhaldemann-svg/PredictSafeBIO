@@ -39,19 +39,19 @@ export async function getOrgUsage(organizationId: string): Promise<OrgUsage> {
   const admin = getSupabaseAdminClient();
 
   const [providerRes, patientRes, subRes] = await Promise.all([
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (admin as any)
       .from("provider_profiles")
       .select("id", { count: "exact", head: true })
       .eq("organization_id", organizationId),
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (admin as any)
       .from("patient_bios")
       .select("id", { count: "exact", head: true })
       .eq("organization_id", organizationId),
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (admin as any)
       .from("subscriptions")
       .select("plan_id, subscription_plans ( name, tier, max_providers, max_patients )")
@@ -60,7 +60,7 @@ export async function getOrgUsage(organizationId: string): Promise<OrgUsage> {
       .maybeSingle(),
   ]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const plan = (subRes.data as any)?.subscription_plans ?? null;
 
   return {

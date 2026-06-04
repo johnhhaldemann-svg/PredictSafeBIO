@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
   let stripe: import("stripe").default;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const Stripe = require("stripe");
     stripe = new Stripe(stripeKey, { apiVersion: "2024-06-20" });
   } catch {
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Plan not found" }, { status: 404 });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const p = plan as any;
   if (!p.stripe_price_id) {
     return NextResponse.json(
