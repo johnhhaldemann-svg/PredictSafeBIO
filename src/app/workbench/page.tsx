@@ -1,8 +1,9 @@
+export const dynamic = "force-dynamic";
+
 import type { Metadata } from "next";
 import { AppShell } from "@/components/AppShell";
 import { WorkbenchClient } from "@/components/WorkbenchClient";
-
-export const metadata: Metadata = { title: "Workbench – PredictSafeBIO" };
+import { SuperAdminDashboard } from "@/components/SuperAdminDashboard";
 import {
   getAuditReadinessConsoleSummary,
   getFoundationAdminAccessSummary,
@@ -13,16 +14,69 @@ import {
   getIntelligenceFoundationWorkbenchInput,
   listChangePlanItems,
   listAssessments,
-  listDocuments
+  listDocuments,
 } from "@/lib/supabase/data";
+import { getAuthSummary } from "@/lib/supabase/account-service";
+import { getPlatformData } from "@/lib/supabase/platform-service";
+import { getKnowledgePendingCount } from "@/lib/supabase/knowledge-service";
+import { listProviderBiosByStatus, listBioReports } from "@/lib/supabase/moderation-service";
 
-/** Resolves all fetches in parallel; a single failure returns its fallback
- *  instead of crashing the whole page. */
+export const metadata: Metadata = { title: "Workbench – PredictSafeBIO" };
+
 function safeSettle<T>(promise: Promise<T>, fallback: T): Promise<T> {
   return promise.catch(() => fallback);
 }
 
 export default async function WorkbenchPage() {
+  const auth = await safeSettle(getAuthSummary(), {
+    configured: false,
+    signedIn: false,
+    needsOnboarding: false,
+    userId: undefined,
+    userEmail: undefined,
+    organizationId: undefined,
+    role: undefined,
+  });
+
+  if (auth.role === "superadmin") {
+    const fetchedAt = new Date().toISOString();
+    const [platform, knowledgePending, pendingBios, pendingReports] = await Promise.all([
+      safeSettle(getPlatformData(), {
+        metrics: {
+          totalOrgs: 0, totalUsers: 0, onboardedUsers: 0,
+          totalAssessments: 0, totalDocuments: 0, totalAuditEvents: 0,
+          totalTasks: 0, totalTrainingRecords: 0, totalCapaRecords: 0,
+          totalInspections: 0, tablesWithRls: 0, tablesWithoutRls: 0, rlsTablesListed: [],
+        },
+        security: {
+          leakedPasswordProtection: "unknown" as const,
+          smtpConfigured: false,
+          serviceRolePresent: false,
+          supabaseConfigured: false,
+        },
+        orgs: [],
+        recentAuditEvents: [],
+        checklist: [],
+      }),
+      safeSettle(getKnowledgePendingCount(auth.organizationId ?? ""), 0),
+      safeSettle(listProviderBiosByStatus("pending"), []),
+      safeSettle(listBioReports(auth.organizationId ?? "", "pending"), []),
+    ]);
+
+    return (
+      <AppShell>
+        <SuperAdminDashboard
+          platform={platform}
+          knowledgePending={knowledgePending}
+          moderationPending={pendingBios.length}
+          moderationReports={pendingReports.length}
+          fetchedAt={fetchedAt}
+        />
+      </AppShell>
+    );
+  }
+
+  // Standard workbench for all other roles
   const [
     initialInput,
     foundationActions,
@@ -33,19 +87,19 @@ export default async function WorkbenchPage() {
     assessments,
     documents,
     auditReadiness,
-    changePlan
+    changePlan,
   ] = await Promise.all([
     safeSettle(getIntelligenceFoundationWorkbenchInput(), {
       signals: [],
       area: undefined,
-      workflow: undefined
+      workflow: undefined,
     } as Awaited<ReturnType<typeof getIntelligenceFoundationWorkbenchInput>>),
     safeSettle(getFoundationReviewActionsSummary(), []),
     safeSettle(getFoundationAdminAccessSummary(), {
       configured: false,
       signedIn: false,
       isOwner: false,
-      message: "Could not load access summary."
+      message: "Could not load access summary.",
     }),
     safeSettle(getFoundationAssigneeOptions(), []),
     safeSettle(getFoundationNotificationSummary(), { unreadCount: 0, notifications: [] }),
@@ -53,7 +107,7 @@ export default async function WorkbenchPage() {
       environment: "unknown",
       deploymentUrl: "",
       productionReady: false,
-      reason: "Could not load verification summary."
+      reason: "Could not load verification summary.",
     }),
     safeSettle(listAssessments(), []),
     safeSettle(listDocuments(), []),
@@ -65,15 +119,15 @@ export default async function WorkbenchPage() {
       generatedActions: [],
       notes: [],
       humanReviewStatus: "Draft - human review required",
-      draftOnly: true
+      draftOnly: true,
     }),
     safeSettle(listChangePlanItems(), {
       items: [],
       canManage: false,
       signedIn: false,
       isFallback: true,
-      message: "Could not load change plan."
-    })
+      message: "Could not load change plan.",
+    }),
   ]);
 
   const commandCenter = {
@@ -103,7 +157,7 @@ export default async function WorkbenchPage() {
       .filter((a) => a.level === "critical" || a.humanReviewRequired)
       .slice(0, 3)
       .map((a) => `${a.workflow} / ${a.level}`),
-    ownerMode: adminAccess.isOwner
+    ownerMode: adminAccess.isOwner,
   };
 
   return (
