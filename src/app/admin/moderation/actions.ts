@@ -14,7 +14,7 @@ import {
   type NpiChecklistKey,
   type ReportStatus,
 } from "@/lib/supabase/moderation-service";
-import { isAdminOrAbove } from "@/lib/role-permissions";
+import { canViewPlatform } from "@/lib/role-permissions";
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
 
@@ -36,7 +36,7 @@ async function requireModerationActor() {
     role: profile?.role,
   };
 
-  if (!isAdminOrAbove(access)) redirect("/");
+  if (!canViewPlatform(access)) redirect("/");
 
   return { actorId: user.id, organizationId: profile?.organization_id as string };
 }

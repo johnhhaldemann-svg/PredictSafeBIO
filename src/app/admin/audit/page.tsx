@@ -1,10 +1,12 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { FoundationReviewActionsPanel } from "@/components/FoundationReviewActionsPanel";
-import { getFoundationAdminAccessSummary, getFoundationAssigneeOptions, getFoundationReviewActionsSummary, listAuditEvents } from "@/lib/supabase/data";
+import { getAuthSummary, getFoundationAdminAccessSummary, getFoundationAssigneeOptions, getFoundationReviewActionsSummary, listAuditEvents } from "@/lib/supabase/data";
 import { getAuditEventTarget } from "@/lib/review-workflow";
+import { canViewPlatform } from "@/lib/role-permissions";
 
 const foundationAuditEventTypes = [
   "all",
@@ -45,6 +47,9 @@ export default async function AuditPage({
 }: {
   searchParams: Promise<{ eventType?: string; sourceModule?: string }>;
 }) {
+  const auth = await getAuthSummary();
+  if (!canViewPlatform(auth)) redirect("/");
+
   const params = await searchParams;
   const eventType = params.eventType ?? "all";
   const sourceModule = params.sourceModule ?? "all";

@@ -14,10 +14,12 @@ describe("account page", () => {
     expect(page).not.toContain('name="organizationId"');
   });
 
-  it("exposes profile, password, and company profile update surfaces", () => {
+  it("exposes profile and password surfaces and links company config to Company Settings", () => {
     expect(page).toContain("updateAccountProfileAction");
-    expect(page).toContain("updateCompanyProfileAction");
     expect(page).toContain('href="/account/password"');
-    expect(page).toContain('name="returnTo" value="/account"');
+    // Company editing now lives on the canonical Company Settings page.
+    expect(page).toContain('href="/account/company"');
+    expect(page).toContain("CompanyProfileSummary");
+    expect(page).not.toContain("updateCompanyProfileAction");
   });
 });

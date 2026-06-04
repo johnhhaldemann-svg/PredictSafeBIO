@@ -9,7 +9,17 @@ import {
   sendPasswordResetEmail,
   setUserAccountStatus,
 } from "@/lib/supabase/user-admin-service";
-import { isAdminOrAbove, isSuperAdmin } from "@/lib/role-permissions";
+import {
+  canViewPlatform,
+  isSuperAdmin,
+  isPlatformRole,
+  ASSIGNABLE_ORG_ROLES,
+  ASSIGNABLE_PLATFORM_ROLES,
+} from "@/lib/role-permissions";
+
+const ASSIGNABLE_ROLE_VALUES = new Set(
+  [...ASSIGNABLE_ORG_ROLES, ...ASSIGNABLE_PLATFORM_ROLES].map((r) => r.value)
+);
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
 
@@ -26,7 +36,7 @@ async function requireAdminActor() {
 
   const access = { signedIn: true, userId: user.id, organizationId: profile?.organization_id, role: profile?.role };
 
-  if (!isAdminOrAbove(access)) redirect("/");
+  if (!canViewPlatform(access)) redirect("/");
 
   return {
     actorId: user.id,
@@ -38,12 +48,23 @@ async function requireAdminActor() {
 // ── Change role ───────────────────────────────────────────────────────────────
 
 export async function changeUserRoleAction(formData: FormData) {
-  const { actorId, organizationId } = await requireAdminActor();
+  const { actorId, organizationId, isSuperAdminActor } = await requireAdminActor();
 
   const targetUserId = String(formData.get("userId") ?? "");
   const newRole = String(formData.get("role") ?? "");
 
   if (!targetUserId || !newRole) return;
+
+  // Reject unknown roles — only the curated assignable set is allowed.
+  if (!ASSIGNABLE_ROLE_VALUES.has(newRole)) {
+    redirect(`/admin/users/${targetUserId}?error=${encodeURIComponent("Invalid role")}`);
+  }
+
+  // Only a Super Admin may grant platform roles (platform_staff / superadmin).
+  // This blocks a platform_staff user from POSTing role=superadmin to self-escalate.
+  if (isPlatformRole(newRole) && !isSuperAdminActor) {
+    redirect(`/admin/users/${targetUserId}?error=${encodeURIComponent("Only a Super Admin can assign platform roles")}`);
+  }
 
   const { error } = await changeUserRole(actorId, targetUserId, newRole, organizationId);
   if (error) {

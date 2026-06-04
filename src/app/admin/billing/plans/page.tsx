@@ -6,7 +6,7 @@ import { ArrowLeft, CheckCircle2, Settings, ShieldAlert } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { createServerClient } from "@/lib/supabase/server";
 import { listPlans } from "@/lib/supabase/billing-service";
-import { isAdminOrAbove } from "@/lib/role-permissions";
+import { canViewPlatform } from "@/lib/role-permissions";
 import { savePlanAction } from "../actions";
 
 /**
@@ -25,7 +25,7 @@ export default async function BillingPlansPage({ searchParams }: Props) {
     .from("profiles").select("role, organization_id").eq("id", user.id).single();
 
   const access = { signedIn: true, userId: user.id, organizationId: profile?.organization_id, role: profile?.role };
-  if (!isAdminOrAbove(access)) redirect("/");
+  if (!canViewPlatform(access)) redirect("/");
 
   const sp = await searchParams;
   const plans = await listPlans(true); // include inactive

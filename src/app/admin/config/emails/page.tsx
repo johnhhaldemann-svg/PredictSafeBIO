@@ -4,9 +4,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Mail, ShieldAlert, Zap } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { PlatformConfigError } from "@/components/PlatformConfigError";
 import { createServerClient } from "@/lib/supabase/server";
-import { isAdminOrAbove } from "@/lib/role-permissions";
+import { canViewPlatform } from "@/lib/role-permissions";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isSupabaseServiceConfigured } from "@/lib/supabase/env";
 import { saveEmailTemplateAction } from "../actions";
 
 type Props = { searchParams: Promise<{ success?: string; error?: string; tab?: string }> };
@@ -53,7 +55,9 @@ export default async function EmailTemplatesPage({ searchParams }: Props) {
     .from("profiles").select("role, organization_id").eq("id", user.id).single();
 
   const access = { signedIn: true, userId: user.id, organizationId: profile?.organization_id, role: profile?.role };
-  if (!isAdminOrAbove(access)) redirect("/");
+  if (!canViewPlatform(access)) redirect("/");
+
+  if (!isSupabaseServiceConfigured()) return <PlatformConfigError feature="Email Templates" />;
 
   const sp = await searchParams;
   const templates = await listEmailTemplates();

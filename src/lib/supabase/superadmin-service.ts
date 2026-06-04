@@ -11,6 +11,7 @@ import { getPlatformData, type PlatformData } from "./platform-service";
 import { bioRiskFamilies } from "@/lib/bio-ai/risk-families";
 import { doNotClaim, draftAiRecommendationGuardrail, sourceArtifacts } from "@/lib/bio-ai/source-artifacts";
 import { assessBioRisk } from "@/lib/bio-ai/engine";
+import type { BioAiAssessment, BioSignalType } from "@/lib/bio-ai/types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -75,7 +76,7 @@ const SIGNAL_TYPES = [
   "clinical_study", "regulatory_commitment"
 ];
 
-async function getAiEngineStatus(): Promise<AiEngineStatus> {
+export async function getAiEngineStatus(): Promise<AiEngineStatus> {
   // Run a smoke test assessment to verify the engine is functional
   let smokeTestResult: "pass" | "fail" = "fail";
   let smokeTestScore = 0;
@@ -137,6 +138,44 @@ async function getAiEngineStatus(): Promise<AiEngineStatus> {
 }
 
 // ---------------------------------------------------------------------------
+// Ad-hoc assessment — run the engine on a custom scenario for debugging
+// ---------------------------------------------------------------------------
+
+export type AdHocAssessmentInput = {
+  area: string;
+  workflow: string;
+  signalType: BioSignalType;
+  signalLabel: string;
+  severity: number;
+  likelihood: number;
+  scope: number;
+  controlGap: number;
+  dataIntegrityConcern: number;
+  controlEffectiveness: "missing" | "ineffective" | "partial" | "effective" | "unknown";
+  dataCompleteness: number;
+};
+
+export function runAdHocAssessment(input: AdHocAssessmentInput): BioAiAssessment {
+  return assessBioRisk({
+    area: input.area,
+    workflow: input.workflow,
+    controlEffectiveness: input.controlEffectiveness,
+    dataCompleteness: input.dataCompleteness,
+    signals: [
+      {
+        type: input.signalType,
+        label: input.signalLabel,
+        severity: input.severity,
+        likelihood: input.likelihood,
+        scope: input.scope,
+        controlGap: input.controlGap,
+        dataIntegrityConcern: input.dataIntegrityConcern
+      }
+    ]
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Database stats for visual
 // ---------------------------------------------------------------------------
 
@@ -159,7 +198,7 @@ const DB_TABLES: { table: string; label: string; category: DbTableStat["category
   { table: "permits",             label: "Permits",             category: "compliance" },
 ];
 
-async function getDbStats(): Promise<DbTableStat[]> {
+export async function getDbStats(): Promise<DbTableStat[]> {
   if (!isSupabaseConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return DB_TABLES.map((t) => ({ ...t, count: 0 }));
   }

@@ -133,7 +133,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
       {/* ── Body: sidebar + content ── */}
       <div className="app-body">
         <aside className="app-sidebar">
-          <PlatformCategoryNav />
+          <PlatformCategoryNav canViewPlatform={tier === "platform_staff"} />
         </aside>
 
         <div className="app-content">

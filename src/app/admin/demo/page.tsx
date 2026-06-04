@@ -1,15 +1,17 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { seedDemoWorkspaceAction } from "@/app/admin/demo/actions";
 import { getAuthSummary } from "@/lib/supabase/data";
-import { canManageWorkspace } from "@/lib/role-permissions";
+import { canViewPlatform } from "@/lib/role-permissions";
 
 export default async function AdminDemoPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const params = await searchParams;
   const auth = await getAuthSummary();
-  const canSeedDemo = canManageWorkspace(auth);
+  if (!canViewPlatform(auth)) redirect("/");
+  const canSeedDemo = true;
 
   return (
     <AppShell>

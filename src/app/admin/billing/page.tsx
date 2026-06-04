@@ -10,7 +10,7 @@ import {
   listSubscriptions,
   listBillingEvents,
 } from "@/lib/supabase/billing-service";
-import { isAdminOrAbove } from "@/lib/role-permissions";
+import { canViewPlatform } from "@/lib/role-permissions";
 
 const STATUS_CLASS: Record<string, string> = {
   active:     "status-current",
@@ -43,7 +43,7 @@ export default async function BillingPage() {
     organizationId: profile?.organization_id,
     role: profile?.role,
   };
-  if (!isAdminOrAbove(access)) redirect("/");
+  if (!canViewPlatform(access)) redirect("/");
 
   const stripeConfigured = Boolean(process.env.STRIPE_SECRET_KEY);
 

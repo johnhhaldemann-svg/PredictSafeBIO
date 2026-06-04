@@ -6,7 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { getAuthSummary } from "@/lib/supabase/data";
 import { getKnowledgeReviewSummary, listKnowledgeEntries } from "@/lib/supabase/knowledge-service";
 import type { AiKnowledgeEntry, AiKnowledgeReviewStatus } from "@/lib/bio-ai/types";
-import { isAdminRole } from "@/lib/role-permissions";
+import { canViewPlatform } from "@/lib/role-permissions";
 import { approveEntryAction, flagEntryAction, rejectEntryAction } from "./actions";
 
 // ── Label/style maps ─────────────────────────────────────────────────────────
@@ -54,8 +54,8 @@ export default async function AiKnowledgePage({
   const params = await searchParams;
   const auth = await getAuthSummary();
 
-  // Gate: owners only
-  if (!auth.signedIn || !isAdminRole(auth.role)) {
+  // Gate: platform staff / superadmin only
+  if (!canViewPlatform(auth)) {
     return (
       <AppShell>
         <div className="page-stack">
@@ -65,8 +65,7 @@ export default async function AiKnowledgePage({
           </header>
           <section className="panel">
             <p className="muted">
-              Only workspace owners can review AI engine knowledge entries.
-              Contact your owner to request access.
+              Only PredictSafeBIO platform staff can review AI engine knowledge entries.
             </p>
             <Link className="button-secondary" href="/workbench">Return to Dashboard</Link>
           </section>

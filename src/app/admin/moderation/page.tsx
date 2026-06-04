@@ -7,7 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { createServerClient } from "@/lib/supabase/server";
 import { listProviderBiosByStatus, listBioReports } from "@/lib/supabase/moderation-service";
 import type { ReviewStatus } from "@/lib/supabase/moderation-service";
-import { isAdminOrAbove } from "@/lib/role-permissions";
+import { canViewPlatform } from "@/lib/role-permissions";
 
 /**
  * /admin/moderation — Content Moderation Queue
@@ -57,7 +57,7 @@ export default async function ModerationPage({ searchParams }: Props) {
     .single();
 
   const access = { signedIn: true, userId: user.id, organizationId: profile?.organization_id, role: profile?.role };
-  if (!isAdminOrAbove(access)) redirect("/");
+  if (!canViewPlatform(access)) redirect("/");
 
   const params = await searchParams;
   const tab = params.tab ?? "pending";

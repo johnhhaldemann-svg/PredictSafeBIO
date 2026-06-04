@@ -239,7 +239,6 @@ export function SuperAdminDashboard({
               { label: "Analytics", href: "/admin/analytics", icon: Activity },
               { label: "Audit Log", href: "/admin/audit", icon: FileCheck },
               { label: "Feature Flags", href: "/admin/config/flags", icon: Zap },
-              { label: "Staff Permissions", href: "/admin/staff-permissions", icon: Lock },
               { label: "AI Diagnostics", href: "/admin/superadmin", icon: Brain },
             ].map(({ label, href, icon: Icon }) => (
               <Link
