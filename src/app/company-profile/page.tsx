@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { AppShell } from "@/components/AppShell";
 import { updateCompanyProfileAction } from "@/app/account/actions";
 import { companyProfileToEditableText } from "@/lib/account-profile";

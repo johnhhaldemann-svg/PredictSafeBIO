@@ -1,3 +1,4 @@
+import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { assertSupabaseBrowserEnv } from "./env";
@@ -21,3 +22,6 @@ export async function createSupabaseServerClient() {
     }
   });
 }
+
+// Alias for callers using the shorter name
+export { createSupabaseServerClient as createServerClient };

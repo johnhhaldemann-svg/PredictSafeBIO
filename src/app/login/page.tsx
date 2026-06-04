@@ -4,12 +4,13 @@ import { signInAction } from "@/app/auth/actions";
 import { getAuthSummary } from "@/lib/supabase/data";
 
 type LoginPageProps = {
-  searchParams: Promise<{ message?: string; next?: string }>;
+  searchParams: Promise<{ message?: string; next?: string; email?: string }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const next = params.next?.startsWith("/") ? params.next : "/workbench";
+  const prefillEmail = params.email ?? "";
   const auth = await getAuthSummary();
 
   return (
@@ -42,7 +43,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               <input type="hidden" name="next" value={next} />
               <label>
                 Email
-                <input name="email" type="email" autoComplete="email" required />
+                <input name="email" type="email" autoComplete="email" required defaultValue={prefillEmail} />
               </label>
               <label>
                 Password

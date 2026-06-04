@@ -17,7 +17,8 @@ describe("user-visible message customer copy", () => {
   it("auth actions use customer language for connection and signup messages", () => {
     expect(authActions).toContain("Workspace is not connected");
     expect(authActions).toContain("Contact your administrator");
-    expect(authActions).toContain("confirmation link to activate your account");
+    expect(authActions).toContain("email_confirm: true");
+    expect(authActions).toContain("Account created. Sign in to continue.");
     expect(authActions).not.toContain("Supabase is not configured yet");
     expect(authActions).not.toContain("Add the project URL and publishable key");
     expect(authActions).not.toContain("Supabase confirmation link");
@@ -49,8 +50,9 @@ describe("user-visible message customer copy", () => {
     expect(accountPage).toContain("same secure path as reset links");
     expect(accountPage).toContain("managed by your workspace owner");
     expect(accountPage).not.toContain("Supabase recovery-safe path");
-    expect(teamPage).toContain("invitation email");
-    expect(teamPage).toContain("link to join your workspace");
+    expect(teamPage).toContain("Generate an invite link");
+    expect(teamPage).toContain("one-time invite link");
+    expect(teamPage).toContain("No SMTP required");
     expect(teamPage).toContain("authentication settings");
     expect(teamPage).toContain("Connect your workspace to manage real invitations");
     expect(teamPage).not.toContain("Supabase Auth invite email");

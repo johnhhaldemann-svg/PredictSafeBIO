@@ -2692,6 +2692,15 @@ export async function getErgonomicLevel2LaunchContext(params: {
     };
   }
 
+  // Level 2 evaluation requires an owner-role (credentialed evaluator) account.
+  if (profile.role !== "owner") {
+    return {
+      ...locked,
+      reason: "Level 2 evaluation requires a qualified evaluator account. Contact your workspace owner to have your role upgraded.",
+      recentInspections: []
+    };
+  }
+
   try {
     const supabase = await createSupabaseServerClient();
     const recent = latestRows(
@@ -2753,6 +2762,8 @@ export async function saveErgonomicSelfAssessment(
       riskLevel: ErgonomicRiskLevel;
       repeatedModerateFlag: boolean;
       correctiveActionRecommended: boolean;
+      level2AutoAssigned: boolean;
+      level2RequestId: string | null;
       message: string;
     }
   | { ok: false; message: string }
@@ -2873,6 +2884,68 @@ export async function saveErgonomicSelfAssessment(
       );
     }
 
+    // Auto-assign Level 2 when risk score exceeds 3 (moderate-high threshold).
+    let level2AutoAssigned = false;
+    let level2RequestId: string | null = null;
+    if (result.riskScore > 3) {
+      const { data: l2Request } = await supabase
+        .from("ergonomic_advanced_evaluation_requests")
+        .insert({
+          organization_id: context.organizationId,
+          self_assessment_id: assessment.id,
+          requested_by: context.userId,
+          status: "requested",
+          request_reason: `Level 2 auto-assigned: score ${result.riskScore}/9 (${result.riskLevel}) from Level 1 screening.`,
+          source_payload: signalPayload
+        })
+        .select("id")
+        .single();
+
+      if (l2Request) {
+        level2AutoAssigned = true;
+        level2RequestId = l2Request.id;
+
+        const l2Priority = result.riskLevel === "severe" ? "urgent" : "high";
+        const { data: l2Task } = await supabase
+          .from("tasks")
+          .insert({
+            organization_id: context.organizationId,
+            source_module: "ergonomic_advanced_evaluation",
+            source_record_id: l2Request.id,
+            assigned_to: context.userId,
+            title: `Level 2 ergonomic evaluation (auto) - ${ergonomicLabel("task", input.taskType)} [score ${result.riskScore}/9]`,
+            status: "open",
+            due_date: formatDateOnly(getFieldReportDueDate(l2Priority)),
+            priority: l2Priority,
+            created_by: context.userId
+          })
+          .select("id")
+          .single();
+
+        await Promise.all([
+          supabase
+            .from("ergonomic_self_assessments")
+            .update({
+              level_2_request_id: l2Request.id,
+              escalation_status: "advanced_evaluation_requested",
+              updated_at: new Date().toISOString()
+            })
+            .eq("organization_id", context.organizationId)
+            .eq("id", assessment.id),
+          l2Task?.id
+            ? supabase.from("notifications").insert({
+                organization_id: context.organizationId,
+                user_id: context.userId,
+                task_id: l2Task.id,
+                notification_type: "task",
+                title: "Level 2 ergonomic evaluation auto-assigned",
+                body: `Risk score ${result.riskScore}/9 exceeded threshold. A qualified evaluator must complete the Level 2 measurement inspection.`
+              })
+            : Promise.resolve()
+        ]);
+      }
+    }
+
     await supabase.from("audit_events").insert({
       organization_id: context.organizationId,
       actor_id: context.userId,
@@ -2887,6 +2960,8 @@ export async function saveErgonomicSelfAssessment(
           riskLevel: result.riskLevel,
           repeatedModerateFlag,
           correctiveActionRecommended,
+          level2AutoAssigned,
+          level2RequestId,
           signalPayload
         },
         {
@@ -2899,6 +2974,10 @@ export async function saveErgonomicSelfAssessment(
       )
     });
 
+    const autoMsg = level2AutoAssigned
+      ? ` Score exceeded threshold — Level 2 evaluation auto-assigned for a qualified evaluator.`
+      : "";
+
     return {
       ok: true,
       assessmentId: assessment.id,
@@ -2906,9 +2985,11 @@ export async function saveErgonomicSelfAssessment(
       riskLevel: result.riskLevel,
       repeatedModerateFlag,
       correctiveActionRecommended,
+      level2AutoAssigned,
+      level2RequestId,
       message: correctiveActionRecommended
-        ? "Screening saved. SafePredict created a supervisor/corrective-action review task."
-        : "Screening saved. SafePredict captured the Level 1 ergonomic risk signal."
+        ? `Screening saved. SafePredict created a supervisor/corrective-action review task.${autoMsg}`
+        : `Screening saved. SafePredict captured the Level 1 ergonomic risk signal.${autoMsg}`
     };
   } catch (error) {
     return { ok: false, message: error instanceof Error ? error.message : "Could not save ergonomic screening." };

@@ -19,6 +19,9 @@ export async function createCapaAction(formData: FormData) {
   const effectivenessCheckDue = String(formData.get("effectivenessCheckDue") ?? "").trim() || null;
   const sourceAssessmentId = String(formData.get("sourceAssessmentId") ?? "").trim() || null;
   const sourceIncidentId = String(formData.get("sourceIncidentId") ?? "").trim() || null;
+  const linkedRecordType = String(formData.get("linkedRecordType") ?? "").trim() || null;
+  const linkedRecordId = String(formData.get("linkedRecordId") ?? "").trim() || null;
+  const rootCause = String(formData.get("rootCause") ?? "").trim() || null;
   const initialAction = String(formData.get("initialAction") ?? "").trim() || null;
 
   if (!title) redirect(authMessage("/operations/capa", "Title is required."));
@@ -30,6 +33,9 @@ export async function createCapaAction(formData: FormData) {
     effectivenessCheckDue,
     sourceAssessmentId,
     sourceIncidentId,
+    linkedRecordType,
+    linkedRecordId,
+    rootCause,
     initialAction
   });
 

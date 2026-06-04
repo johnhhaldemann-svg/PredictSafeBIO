@@ -7,7 +7,7 @@ const client = readFileSync(join(process.cwd(), "src/app/ergonomics/self-assessm
 const inspections = readFileSync(join(process.cwd(), "src/app/inspections/page.tsx"), "utf8");
 const level2Page = readFileSync(join(process.cwd(), "src/app/ergonomics/advanced-evaluation/page.tsx"), "utf8");
 const level2Client = readFileSync(join(process.cwd(), "src/app/ergonomics/advanced-evaluation/Level2InspectionClient.tsx"), "utf8");
-const shell = readFileSync(join(process.cwd(), "src/components/AppShell.tsx"), "utf8");
+const platformNav = readFileSync(join(process.cwd(), "src/components/PlatformCategoryNav.tsx"), "utf8");
 
 describe("ergonomic Level 1 UI", () => {
   it("surfaces the worker-facing Level 1 screening route", () => {
@@ -35,8 +35,8 @@ describe("ergonomic Level 1 UI", () => {
     // Button text is rendered as hardcoded labels alongside the dynamic titles
     expect(inspections).toContain("Start screening");
     expect(inspections).toContain("Open evaluation");
-    expect(shell).toContain("HSE Management");
-    expect(shell).toContain("/ergonomics/self-assessment");
+    expect(platformNav).toContain("HSE Management");
+    expect(platformNav).toContain("/ergonomics/self-assessment");
   });
 
   it("keeps Level 2 measurement inspection separate and gated", () => {

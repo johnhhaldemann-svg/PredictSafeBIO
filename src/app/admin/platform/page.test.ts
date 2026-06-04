@@ -7,9 +7,9 @@ const platformService = readFileSync(join(process.cwd(), "src/lib/supabase/platf
 const envExample = readFileSync(join(process.cwd(), ".env.example"), "utf8");
 
 describe("platform ops page", () => {
-  it("is gated by PLATFORM_ADMIN_KEY and shows access restricted without it", () => {
+  it("is gated by PLATFORM_ADMIN_KEY and redirects without it", () => {
     expect(platformPage).toContain("PLATFORM_ADMIN_KEY");
-    expect(platformPage).toContain("Access restricted");
+    expect(platformPage).toContain('redirect("/login")');
     expect(platformPage).toContain("params.key !== adminKey");
   });
 

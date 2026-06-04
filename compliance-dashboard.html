@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PredictSafeBIO — Compliance Hub</title>
+<style>
+  :root {
+    --bg: #f4f6fa;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --primary: #2563eb;
+    --primary-soft: #eff6ff;
+    --primary-dark: #1d4ed8;
+    --success: #16a34a;
+    --success-soft: #f0fdf4;
+    --warning: #d97706;
+    --warning-soft: #fffbeb;
+    --danger: #dc2626;
+    --danger-soft: #fef2f2;
+    --neutral: #64748b;
+    --neutral-soft: #f8fafc;
+    --text: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --sidebar-w: 240px;
+    --header-h: 60px;
+    --radius: 10px;
+    --shadow: 0 1px 4px rgba(0,0,0,.07), 0 4px 16px rgba(0,0,0,.04);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    z-index: 100;
+  }
+  .sidebar-logo {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-mark {
+    width: 32px; height: 32px;
+    background: var(--primary);
+    border-radius: 8px;
+    display: grid; place-items: center;
+    color: #fff; font-weight: 700; font-size: 14px;
+  }
+  .logo-text { font-weight: 700; font-size: 13px; color: var(--text); line-height: 1.2; }
+  .logo-sub { font-size: 11px; color: var(--text-muted); }
+
+  .sidebar-score {
+    margin: 14px 14px 8px;
+    background: var(--primary-soft);
+    border: 1px solid #bfdbfe;
+    border-radius: var(--radius);
+    padding: 12px 14px;
+  }
+  .score-label { font-size: 11px; color: var(--primary); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  .score-value { font-size: 28px; font-weight: 800; color: var(--primary-dark); line-height: 1.1; }
+  .score-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .score-bar { height: 5px; background: #bfdbfe; border-radius: 99px; margin-top: 8px; }
+  .score-fill { height: 100%; background: var(--primary); border-radius: 99px; width: 74%; }
+
+  .nav-section { padding: 10px 10px 4px; font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: .6px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 14px; margin: 1px 6px;
+    border-radius: 8px; cursor: pointer;
+    font-size: 13.5px; color: var(--text-secondary);
+    transition: background .15s, color .15s;
+    text-decoration: none;
+  }
+  .nav-item:hover { background: var(--bg); color: var(--text); }
+  .nav-item.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+  .nav-item .icon { width: 18px; text-align: center; flex-shrink: 0; }
+  .nav-badge {
+    margin-left: auto; background: var(--danger); color: #fff;
+    border-radius: 99px; font-size: 10px; font-weight: 700;
+    padding: 1px 6px; min-width: 18px; text-align: center;
+  }
+  .nav-badge.warn { background: var(--warning); }
+  .nav-badge.ok { background: var(--success); }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    height: var(--header-h);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 28px;
+    gap: 16px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar-title { font-size: 16px; font-weight: 700; flex: 1; }
+  .topbar-actions { display: flex; gap: 8px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 7px; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: 1px solid transparent; transition: all .15s;
+  }
+  .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-outline { background: #fff; color: var(--text-secondary); border-color: var(--border); }
+  .btn-outline:hover { background: var(--bg); color: var(--text); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-ghost { background: transparent; border: none; color: var(--text-secondary); }
+  .btn-ghost:hover { color: var(--primary); }
+
+  .content { padding: 24px 28px; flex: 1; }
+
+  /* ── SECTION TABS ── */
+  .tab-bar {
+    display: flex; gap: 4px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .tab {
+    padding: 10px 18px; font-size: 13.5px; font-weight: 500;
+    color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; transition: color .15s, border-color .15s;
+  }
+  .tab:hover { color: var(--text-secondary); }
+  .tab.active { color: var(--primary); border-color: var(--primary); font-weight: 600; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .card-title { font-size: 14px; font-weight: 700; flex: 1; }
+  .card-body { padding: 20px; }
+
+  /* ── STAT CARDS ── */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+  }
+  .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+  .stat-value { font-size: 28px; font-weight: 800; margin: 4px 0 2px; }
+  .stat-delta { font-size: 12px; color: var(--text-muted); }
+  .stat-delta.up { color: var(--success); }
+  .stat-delta.down { color: var(--danger); }
+
+  /* ── GRID ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  /* ── STATUS BADGE ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 99px; font-size: 11.5px; font-weight: 600;
+  }
+  .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+  .badge-success { background: var(--success-soft); color: var(--success); }
+  .badge-success::before { background: var(--success); }
+  .badge-warning { background: var(--warning-soft); color: var(--warning); }
+  .badge-warning::before { background: var(--warning); }
+  .badge-danger { background: var(--danger-soft); color: var(--danger); }
+  .badge-danger::before { background: var(--danger); }
+  .badge-neutral { background: var(--neutral-soft); color: var(--neutral); }
+  .badge-neutral::before { background: var(--text-muted); }
+  .badge-primary { background: var(--primary-soft); color: var(--primary); }
+  .badge-primary::before { background: var(--primary); }
+
+  /* ── PROGRESS BAR ── */
+  .prog-wrap { margin-bottom: 14px; }
+  .prog-label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; }
+  .prog-label span:first-child { color: var(--text-secondary); font-weight: 500; }
+  .prog-label span:last-child { color: var(--text-muted); }
+  .prog-bar { height: 8px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 99px; transition: width .4s ease; }
+  .prog-fill-success { background: var(--success); }
+  .prog-fill-warning { background: var(--warning); }
+  .prog-fill-primary { background: var(--primary); }
+  .prog-fill-danger { background: var(--danger); }
+
+  /* ── TABLE ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; padding: 10px 14px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--text-muted);
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  td {
+    padding: 12px 14px; border-bottom: 1px solid var(--border);
+    font-size: 13.5px; color: var(--text-secondary);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--neutral-soft); }
+  td.td-main { color: var(--text); font-weight: 500; }
+
+  /* ── CHECKLIST ── */
+  .checklist-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .checklist-item:last-child { border-bottom: none; }
+  .check-box {
+    width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px;
+    border-radius: 4px; border: 2px solid var(--border);
+    display: grid; place-items: center; cursor: pointer;
+    transition: all .15s;
+  }
+  .check-box.checked { background: var(--success); border-color: var(--success); }
+  .check-box.checked::after { content: '✓'; color: #fff; font-size: 11px; font-weight: 700; }
+  .check-box.partial { background: var(--warning); border-color: var(--warning); }
+  .check-box.partial::after { content: '–'; color: #fff; font-size: 12px; font-weight: 700; }
+  .check-info { flex: 1; }
+  .check-title { font-size: 13.5px; font-weight: 500; color: var(--text); }
+  .check-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .check-due { font-size: 11px; background: var(--warning-soft); color: var(--warning); padding: 2px 7px; border-radius: 99px; font-weight: 600; }
+  .check-overdue { font-size: 11px; background: var(--danger-soft); color: var(--danger); padding: 2px 7px; border-radius: 99px; font-weight: 600; }
+
+  /* ── DOCUMENT AREA ── */
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    text-align: center;
+    background: var(--neutral-soft);
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+  }
+  .drop-zone:hover { border-color: var(--primary); background: var(--primary-soft); }
+  .drop-zone .dz-icon { font-size: 28px; margin-bottom: 8px; }
+  .drop-zone p { color: var(--text-muted); font-size: 13px; }
+  .drop-zone strong { color: var(--primary); }
+
+  .doc-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .doc-item:last-child { border-bottom: none; }
+  .doc-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--primary-soft); display: grid; place-items: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .doc-info { flex: 1; min-width: 0; }
+  .doc-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .doc-meta { font-size: 11.5px; color: var(--text-muted); }
+  .doc-actions { display: flex; gap: 6px; }
+
+  /* ── FORM ── */
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  .form-label .required { color: var(--danger); margin-left: 2px; }
+  .form-control {
+    width: 100%; padding: 9px 12px;
+    border: 1px solid var(--border); border-radius: 7px;
+    font-size: 13.5px; color: var(--text); background: #fff;
+    transition: border-color .15s, box-shadow .15s;
+    outline: none; font-family: inherit;
+  }
+  .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+  .form-control::placeholder { color: var(--text-muted); }
+  select.form-control { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
+  .form-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+  /* ── TIMELINE ── */
+  .timeline { padding-left: 4px; }
+  .tl-item { display: flex; gap: 14px; padding-bottom: 20px; position: relative; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-left { display: flex; flex-direction: column; align-items: center; width: 20px; flex-shrink: 0; }
+  .tl-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--primary); border: 2px solid var(--primary-soft);
+    flex-shrink: 0; z-index: 1;
+  }
+  .tl-dot.done { background: var(--success); border-color: var(--success-soft); }
+  .tl-dot.warn { background: var(--warning); border-color: var(--warning-soft); }
+  .tl-dot.danger { background: var(--danger); border-color: var(--danger-soft); }
+  .tl-dot.pending { background: var(--border); border-color: var(--bg); }
+  .tl-line { flex: 1; width: 2px; background: var(--border); margin-top: 2px; }
+  .tl-item:last-child .tl-line { display: none; }
+  .tl-body { flex: 1; padding-top: 0; }
+  .tl-title { font-size: 13.5px; font-weight: 600; color: var(--text); }
+  .tl-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── ALERT ── */
+  .alert {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;
+    border: 1px solid;
+  }
+  .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .alert-body { flex: 1; }
+  .alert-title { font-size: 13px; font-weight: 700; }
+  .alert-msg { font-size: 12.5px; margin-top: 2px; }
+  .alert-warn { background: var(--warning-soft); border-color: #fcd34d; }
+  .alert-warn .alert-title { color: #92400e; }
+  .alert-warn .alert-msg { color: #b45309; }
+  .alert-danger { background: var(--danger-soft); border-color: #fca5a5; }
+  .alert-danger .alert-title { color: #991b1b; }
+  .alert-danger .alert-msg { color: #b91c1c; }
+  .alert-success { background: var(--success-soft); border-color: #86efac; }
+  .alert-success .alert-title { color: #14532d; }
+  .alert-success .alert-msg { color: #15803d; }
+
+  /* ── PANEL TABS (inside sections) ── */
+  .panel-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+  .panel-tab {
+    padding: 10px 16px; font-size: 13px; font-weight: 500; cursor: pointer;
+    color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px;
+    transition: all .15s;
+  }
+  .panel-tab.active { color: var(--primary); border-color: var(--primary); }
+
+  /* ── SECTION PAGES (hidden/shown) ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── UTILITY ── */
+  .mb-16 { margin-bottom: 16px; }
+  .mb-20 { margin-bottom: 20px; }
+  .mb-24 { margin-bottom: 24px; }
+  .mt-12 { margin-top: 12px; }
+  .mt-16 { margin-top: 16px; }
+  .flex { display: flex; }
+  .items-center { align-items: center; }
+  .gap-8 { gap: 8px; }
+  .gap-12 { gap: 12px; }
+  .justify-between { justify-content: space-between; }
+  .text-muted { color: var(--text-muted); font-size: 12.5px; }
+  .font-bold { font-weight: 700; }
+  .text-sm { font-size: 12px; }
+  .w-full { width: 100%; }
+
+  /* ── REPORT CARD ── */
+  .report-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 20px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer; transition: box-shadow .15s;
+  }
+  .report-card:hover { box-shadow: 0 4px 20px rgba(37,99,235,.12); border-color: #bfdbfe; }
+  .report-icon { width: 42px; height: 42px; border-radius: 10px; background: var(--primary-soft); display: grid; place-items: center; font-size: 20px; }
+  .report-info { flex: 1; }
+  .report-name { font-size: 13.5px; font-weight: 700; color: var(--text); }
+  .report-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .report-action { color: var(--primary); font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+
+  /* animate in */
+  @keyframes fadeUp { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: none; } }
+  .page.active { animation: fadeUp .25s ease; }
+
+  /* Tooltip */
+  [data-tip] { position: relative; }
+  [data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 6px); left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b; color: #fff; font-size: 11.5px;
+    padding: 4px 9px; border-radius: 6px; white-space: nowrap;
+    z-index: 999; pointer-events: none;
+  }
+
+  /* Notification dot */
+  .notif-dot { width: 8px; height: 8px; background: var(--danger); border-radius: 50%; margin-left: auto; }
+
+  /* empty state */
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+  .empty-state .empty-icon { font-size: 36px; margin-bottom: 10px; }
+  .empty-state p { font-size: 13px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+  /* Quick-add modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(15,23,42,.4);
+    z-index: 200; display: none; place-items: center;
+  }
+  .modal-overlay.open { display: grid; }
+  .modal {
+    background: #fff; border-radius: 14px; padding: 28px;
+    width: 520px; max-width: 95vw;
+    box-shadow: 0 25px 60px rgba(0,0,0,.18);
+    animation: fadeUp .2s ease;
+  }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .modal-title { font-size: 16px; font-weight: 700; }
+  .modal-close { cursor: pointer; color: var(--text-muted); font-size: 18px; border: none; background: none; }
+  .modal-close:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">PS</div>
+    <div>
+      <div class="logo-text">PredictSafeBIO</div>
+      <div class="logo-sub">Compliance Hub</div>
+    </div>
+  </div>
+
+  <div class="sidebar-score">
+    <div class="score-label">Overall Score</div>
+    <div class="score-value">74%</div>
+    <div class="score-sub">6 items need attention</div>
+    <div class="score-bar"><div class="score-fill"></div></div>
+  </div>
+
+  <div class="nav-section">Overview</div>
+  <a class="nav-item active" onclick="navigate('dashboard')">
+    <span class="icon">📊</span> Dashboard
+  </a>
+  <a class="nav-item" onclick="navigate('timeline')">
+    <span class="icon">📅</span> Milestones
+    <span class="nav-badge warn">2</span>
+  </a>
+
+  <div class="nav-section">Compliance</div>
+  <a class="nav-item" onclick="navigate('regulatory')">
+    <span class="icon">📋</span> Regulatory
+    <span class="nav-badge">3</span>
+  </a>
+  <a class="nav-item" onclick="navigate('safety')">
+    <span class="icon">🛡️</span> Safety Reporting
+  </a>
+  <a class="nav-item" onclick="navigate('clinical')">
+    <span class="icon">🧬</span> Clinical
+    <span class="nav-badge warn">1</span>
+  </a>
+  <a class="nav-item" onclick="navigate('quality')">
+    <span class="icon">✅</span> Quality & Audits
+  </a>
+
+  <div class="nav-section">Documents</div>
+  <a class="nav-item" onclick="navigate('documents')">
+    <span class="icon">📁</span> Document Vault
+  </a>
+  <a class="nav-item" onclick="navigate('submissions')">
+    <span class="icon">📤</span> Submissions
+  </a>
+
+  <div class="nav-section">Insights</div>
+  <a class="nav-item" onclick="navigate('reports')">
+    <span class="icon">📈</span> Reports
+  </a>
+  <a class="nav-item" onclick="navigate('settings')">
+    <span class="icon">⚙️</span> Settings
+  </a>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="topbar-actions">
+      <button class="btn btn-outline btn-sm" onclick="openModal()">＋ Add Item</button>
+      <button class="btn btn-primary btn-sm" onclick="navigate('reports')">📈 Generate Report</button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ══════════════════════════════
+         DASHBOARD PAGE
+    ══════════════════════════════ -->
+    <div class="page active" id="page-dashboard">
+
+      <div class="alert alert-danger mb-16">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-body">
+          <div class="alert-title">3 Regulatory Submissions Overdue</div>
+          <div class="alert-msg">FDA Form 483 response, IND safety report, and CMC amendment are past their deadlines. <a href="#" style="color:var(--danger);font-weight:600;" onclick="navigate('regulatory')">Review now →</a></div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Compliance Score</div>
+          <div class="stat-value" style="color:var(--primary)">74%</div>
+          <div class="stat-delta up">↑ 6% from last month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Open Tasks</div>
+          <div class="stat-value" style="color:var(--warning)">18</div>
+          <div class="stat-delta down">↑ 4 since last week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Docs Pending Review</div>
+          <div class="stat-value" style="color:var(--text)">7</div>
+          <div class="stat-delta">2 expiring in 14 days</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Completed (30 days)</div>
+          <div class="stat-value" style="color:var(--success)">41</div>
+          <div class="stat-delta up">↑ 12 vs prior period</div>
+        </div>
+      </div>
+
+      <div class="grid-2 mb-24">
+        <!-- Compliance areas -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Compliance by Area</div>
+            <span class="badge badge-warning">4 gaps</span>
+          </div>
+          <div class="card-body">
+            <div class="prog-wrap">
+              <div class="prog-label"><span>Regulatory Submissions</span><span>58%</span></div>
+              <div class="prog-bar"><div class="prog-fill prog-fill-warning" style="width:58%"></div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>Safety Reporting</span><span>91%</span></div>
+              <div class="prog-bar"><div class="prog-fill prog-fill-success" style="width:91%"></div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>Clinical Protocol</span><span>72%</span></div>
+              <div class="prog-bar"><div class="prog-fill prog-fill-primary" style="width:72%"></div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>Quality & GMP</span><span>83%</span></div>
+              <div class="prog-bar"><div class="prog-fill prog-fill-success" style="width:83%"></div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>Data Integrity</span><span>45%</span></div>
+              <div class="prog-bar"><div class="prog-fill prog-fill-danger" style="width:45%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upcoming deadlines -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Upcoming Deadlines</div>
+            <button class="btn btn-ghost btn-sm" onclick="navigate('timeline')">View all →</button>
+          </div>
+          <div class="card-body">
+            <div class="checklist-item">
+              <div class="check-box partial"></div>
+              <div class="check-info">
+                <div class="check-title">IND Annual Report</div>
+                <div class="check-sub">FDA submission required</div>
+              </div>
+              <span class="check-overdue">3 days overdue</span>
+            </div>
+            <div class="checklist-item">
+              <div class="check-box partial"></div>
+              <div class="check-info">
+                <div class="check-title">SAE Narrative Update</div>
+                <div class="check-sub">Safety data reconciliation</div>
+              </div>
+              <span class="check-due">Due Jun 10</span>
+            </div>
+            <div class="checklist-item">
+              <div class="check-box"></div>
+              <div class="check-info">
+                <div class="check-title">GMP Site Audit</div>
+                <div class="check-sub">Manufacturing site inspection</div>
+              </div>
+              <span class="check-due">Due Jun 19</span>
+            </div>
+            <div class="checklist-item">
+              <div class="check-box"></div>
+              <div class="check-info">
+                <div class="check-title">Protocol Amendment v3.2</div>
+                <div class="check-sub">IRB approval pending</div>
+              </div>
+              <span class="check-due">Due Jun 30</span>
+            </div>
+            <div class="checklist-item">
+              <div class="check-box checked"></div>
+              <div class="check-info">
+                <div class="check-title">Training Records Update</div>
+                <div class="check-sub">All staff sign-off complete</div>
+              </div>
+              <span class="badge badge-success">Complete</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent activity -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Recent Activity</div>
+          <span class="text-muted">Last 7 days</span>
+        </div>
+        <div class="card-body">
+          <div class="timeline">
+            <div class="tl-item">
+              <div class="tl-left"><div class="tl-dot done"></div><div class="tl-line"></div></div>
+              <div class="tl-body">
+                <div class="tl-title">Training Records Completed</div>
+                <div class="tl-meta">J. Haldemann · Jun 2, 2026</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-left"><div class="tl-dot danger"></div><div class="tl-line"></div></div>
+              <div class="tl-body">
+                <div class="tl-title">IND Annual Report — Deadline Missed</div>
+                <div class="tl-meta">System alert · Jun 1, 2026 · <a href="#" style="color:var(--danger);font-size:12px;" onclick="navigate('regulatory')">Action required</a></div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-left"><div class="tl-dot done"></div><div class="tl-line"></div></div>
+              <div class="tl-body">
+                <div class="tl-title">CMC Section Uploaded</div>
+                <div class="tl-meta">J. Haldemann · May 30, 2026</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-left"><div class="tl-dot warn"></div><div class="tl-line"></div></div>
+              <div class="tl-body">
+                <div class="tl-title">Safety Review — 2 Items Flagged</div>
+                <div class="tl-meta">Auto-review · May 28, 2026</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-left"><div class="tl-dot done"></div></div>
+              <div class="tl-body">
+                <div class="tl-title">Q1 Quality Audit Closed</div>
+                <div class="tl-meta">Quality team · May 25, 2026</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /dashboard -->
+
+
+    <!-- ══════════════════════════════
+         REGULATORY PAGE
+    ══════════════════════════════ -->
+    <div class="page" id="page-regulatory">
+
+      <div class="alert alert-danger mb-16">
+        <div class="alert-icon">🚨</div>
+        <div class="alert-body">
+          <div class="alert-title">3 overdue submissions require immediate action</div>
+          <div class="alert-msg">Submissions past deadline trigger automatic FDA escalation risk. Resolve before Jun 10.</div>
+        </div>
+      </div>
+
+      <div class="card mb-20">
+        <div class="card-header">
+          <div class="card-title">Regulatory Submissions Tracker</div>
+          <div style="display:flex;gap:8px;">
+            <select class="form-control" style="width:auto;padding:5px 28px 5px 10px;font-size:12px;">
+              <option>All Status</option>
+              <option>Overdue</option>
+              <option>In Progress</option>
+              <option>Complete</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="openModal()">＋ New Submission</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Submission</th>
+                <th>Type</th>
+                <th>Assigned To</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="td-main">IND Annual Report (2026)</td>
+                <td>FDA / IND</td>
+                <td>J. Haldemann</td>
+                <td style="color:var(--danger);font-weight:600;">May 31 ↑</td>
+                <td><span class="badge badge-danger">Overdue</span></td>
+                <td><button class="btn btn-outline btn-sm">Resolve</button></td>
+              </tr>
+              <tr>
+                <td class="td-main">Form 483 Response</td>
+                <td>FDA / CDER</td>
+                <td>Quality Team</td>
+                <td style="color:var(--danger);font-weight:600;">May 28 ↑</td>
+                <td><span class="badge badge-danger">Overdue</span></td>
+                <td><button class="btn btn-outline btn-sm">Resolve</button></td>
+              </tr>
+              <tr>
+                <td class="td-main">CMC Amendment v2.1</td>
+                <td>FDA / IND</td>
+                <td>R&amp;D Team</td>
+                <td style="color:var(--danger);font-weight:600;">Jun 1 ↑</td>
+                <td><span class="badge badge-danger">Overdue</span></td>
+                <td><button class="btn btn-outline btn-sm">Resolve</button></td>
+              </tr>
+              <tr>
+                <td class="td-main">SAE Narrative Update</td>
+                <td>Safety</td>
+                <td>Medical Affairs</td>
+                <td>Jun 10, 2026</td>
+                <td><span class="badge badge-warning">In Progress</span></td>
+                <td><button class="btn btn-ghost btn-sm">View</button></td>
+              </tr>
+              <tr>
+                <td class="td-main">Protocol Amendment v3.2</td>
+                <td>IRB</td>
+                <td>Clinical Ops</td>
+                <td>Jun 30, 2026</td>
+                <td><span class="badge badge-primary">Pending</span></td>
+                <td><button class="btn btn-ghost btn-sm">View</button></td>
+              </tr>
+              <tr>
+                <td class="td-main">DSUR Annual Report</td>
+                <td>EMA</td>
+                <td>Regulatory Affairs</td>
+                <td>Jul 15, 2026</td>
+                <td><span class="badge badge-neutral">Not Started</span></td>
+                <td><button class="btn btn-ghost btn-sm">Start</button></td>
+              </tr>
+              <tr>
+                <td class="td-main">Q1 Manufacturing Report</td>
+                <td>FDA / GMP</td>
+                <td>Quality Team</td>
+                <td>Mar 31, 2026</td>
+                <td><span class="badge badge-success">Submitted</span></td>
+                <td><button class="btn btn-ghost btn-sm">View</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Quick-fill regulatory form -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Quick Submission Entry</div>
+          <span class="text-muted">Fills Airtable automatically on save</span>
+        </div>
+        <div class="card-body">
+          <div class="form-row mb-16">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Submission Name <span class="required">*</span></label>
+              <input class="form-control" placeholder="e.g. IND Safety Report Q2 2026">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Submission Type <span class="required">*</span></label>
+              <select class="form-control">
+                <option>Select type…</option>
+                <option>FDA / IND</option>
+                <option>FDA / NDA</option>
+                <option>FDA / CDER</option>
+                <option>FDA / GMP</option>
+                <option>EMA</option>
+                <option>IRB</option>
+                <option>Safety</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row mb-16">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Assigned To</label>
+              <select class="form-control">
+                <option>J. Haldemann</option>
+                <option>Quality Team</option>
+                <option>Medical Affairs</option>
+                <option>Clinical Ops</option>
+                <option>Regulatory Affairs</option>
+                <option>R&amp;D Team</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Due Date <span class="required">*</span></label>
+              <input class="form-control" type="date">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes / Context</label>
+            <textarea class="form-control" rows="3" placeholder="Add any relevant context, links, or instructions for the assignee…"></textarea>
+          </div>
+          <button class="btn btn-primary">Save to Tracker</button>
+          <button class="btn btn-outline" style="margin-left:8px;">Save &amp; Notify Assignee</button>
+        </div>
+      </div>
+    </div><!-- /regulatory -->
+
+
+    <!-- ══════════════════════════════
+         SAFETY PAGE
+    ══════════════════════════════ -->
+    <div class="page" id="page-safety">
+      <div class="grid-2 mb-24">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">SAE / SUSAR Tracker</div>
+            <button class="btn btn-primary btn-sm" onclick="openModal()">＋ Report Event</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Event ID</th><th>Category</th><th>Reported</th><th>Status</th><th>Narrative</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="td-main">SAE-026</td><td>Serious AE</td><td>May 29</td>
+                  <td><span class="badge badge-warning">In Review</span></td>
+                  <td><button class="btn btn-ghost btn-sm">Draft</button></td>
+                </tr>
+                <tr>
+                  <td class="td-main">SAE-025</td><td>SUSAR</td><td>May 12</td>
+                  <td><span class="badge badge-success">Closed</span></td>
+                  <td><button class="btn btn-ghost btn-sm">View</button></td>
+                </tr>
+                <tr>
+                  <td class="td-main">SAE-024</td><td>Unexpected AE</td><td>Apr 30</td>
+                  <td><span class="badge badge-success">Closed</span></td>
+                  <td><button class="btn btn-ghost btn-sm">View</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Safety Reporting Status</div></div>
+          <div class="card-body">
+            <div class="prog-wrap">
+              <div class="prog-label"><span>15-Day Expedited Reports</span><span>100%</span></div>
+              <div class="prog-bar"><div class="prog-fill prog-fill-success" style="width:100%"></div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>DSUR Sections Complete</span><span>78%</span></div>
+              <div class="prog-bar"><div class="prog-fill prog-fill-primary" style="width:78%"></div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>SAE Narratives Finalized</span><span>67%</span></div>
+              <div class="prog-bar"><div class="prog-fill prog-fill-warning" style="width:67%"></div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>MedDRA Coding</span><span>91%</span></div>
+              <div class="prog-bar"><div class="prog-fill prog-fill-success" style="width:91%"></div></div>
+            </div>
+            <div class="mt-16">
+              <button class="btn btn-outline btn-sm w-full">Export Safety Summary →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Report an Adverse Event</div><span class="text-muted">Auto-saves to Airtable</span></div>
+        <div class="card-body">
+          <div class="form-row-3 mb-16">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Event Category <span class="required">*</span></label>
+              <select class="form-control"><option>Select…</option><option>Serious AE (SAE)</option><option>SUSAR</option><option>Unexpected AE</option><option>Non-Serious AE</option></select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Onset Date <span class="required">*</span></label>
+              <input class="form-control" type="date">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Reporter</label>
+              <input class="form-control" placeholder="Name / site">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Event Description <span class="required">*</span></label>
+            <textarea class="form-control" rows="3" placeholder="Describe the adverse event…"></textarea>
+          </div>
+          <div class="form-row mb-16">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Causality Assessment</label>
+              <select class="form-control"><option>Select…</option><option>Related</option><option>Possibly Related</option><option>Unlikely Related</option><option>Not Related</option></select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Outcome</label>
+              <select class="form-control"><option>Select…</option><option>Resolved</option><option>Resolving</option><option>Not Resolved</option><option>Fatal</option></select>
+            </div>
+          </div>
+          <button class="btn btn-primary">Submit Report</button>
+          <button class="btn btn-outline" style="margin-left:8px;">Save Draft</button>
+        </div>
+      </div>
+    </div><!-- /safety -->
+
+
+    <!-- ══════════════════════════════
+         TIMELINE / MILESTONES PAGE
+    ══════════════════════════════ -->
+    <div class="page" id="page-timeline">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Milestone Timeline</div>
+            <button class="btn btn-primary btn-sm" onclick="openModal()">＋ Add Milestone</button>
+          </div>
+          <div class="card-body">
+            <div class="timeline">
+              <div class="tl-item">
+                <div class="tl-left"><div class="tl-dot done"></div><div class="tl-line"></div></div>
+                <div class="tl-body">
+                  <div class="tl-title">Phase 1 IND Approval</div>
+                  <div class="tl-meta" style="display:flex;align-items:center;gap:8px;">Jan 15, 2026 <span class="badge badge-success">Complete</span></div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-left"><div class="tl-dot done"></div><div class="tl-line"></div></div>
+                <div class="tl-body">
+                  <div class="tl-title">First Patient Enrolled</div>
+                  <div class="tl-meta" style="display:flex;align-items:center;gap:8px;">Mar 3, 2026 <span class="badge badge-success">Complete</span></div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-left"><div class="tl-dot danger"></div><div class="tl-line"></div></div>
+                <div class="tl-body">
+                  <div class="tl-title">IND Annual Report Submission</div>
+                  <div class="tl-meta" style="display:flex;align-items:center;gap:8px;">May 31, 2026 <span class="badge badge-danger">Overdue</span></div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-left"><div class="tl-dot warn"></div><div class="tl-line"></div></div>
+                <div class="tl-body">
+                  <div class="tl-title">SAE Narrative Finalization</div>
+                  <div class="tl-meta" style="display:flex;align-items:center;gap:8px;">Jun 10, 2026 <span class="badge badge-warning">At Risk</span></div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+                <div class="tl-body">
+                  <div class="tl-title">GMP Site Audit</div>
+                  <div class="tl-meta" style="display:flex;align-items:center;gap:8px;">Jun 19, 2026 <span class="badge badge-primary">Scheduled</span></div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-left"><div class="tl-dot pending"></div><div class="tl-line"></div></div>
+                <div class="tl-body">
+                  <div class="tl-title">Protocol Amendment v3.2 — IRB</div>
+                  <div class="tl-meta" style="display:flex;align-items:center;gap:8px;">Jun 30, 2026 <span class="badge badge-neutral">Pending</span></div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-left"><div class="tl-dot pending"></div><div class="tl-line"></div></div>
+                <div class="tl-body">
+                  <div class="tl-title">Interim Data Analysis</div>
+                  <div class="tl-meta" style="display:flex;align-items:center;gap:8px;">Jul 31, 2026 <span class="badge badge-neutral">Planned</span></div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-left"><div class="tl-dot pending"></div></div>
+                <div class="tl-body">
+                  <div class="tl-title">Phase 2 IND Amendment</div>
+                  <div class="tl-meta" style="display:flex;align-items:center;gap:8px;">Q4 2026 <span class="badge badge-neutral">Planned</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="card">
+            <div class="card-header"><div class="card-title">⚡ Action Required</div></div>
+            <div class="card-body">
+              <div class="checklist-item">
+                <div class="check-box partial"></div>
+                <div class="check-info">
+                  <div class="check-title">Submit IND Annual Report</div>
+                  <div class="check-sub">3 days overdue · Assign to Regulatory Affairs</div>
+                </div>
+              </div>
+              <div class="checklist-item">
+                <div class="check-box partial"></div>
+                <div class="check-info">
+                  <div class="check-title">Finalize SAE-026 Narrative</div>
+                  <div class="check-sub">Due Jun 10 · Medical Affairs</div>
+                </div>
+              </div>
+              <div class="checklist-item">
+                <div class="check-box"></div>
+                <div class="check-info">
+                  <div class="check-title">Prepare GMP Audit Package</div>
+                  <div class="check-sub">Due Jun 15 · Quality Team</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">📋 Compliance Checklist</div><span class="text-muted">This quarter</span></div>
+            <div class="card-body">
+              <div class="checklist-item">
+                <div class="check-box checked"></div>
+                <div class="check-info"><div class="check-title">Training Records Updated</div><div class="check-sub">All staff — May 2026</div></div>
+              </div>
+              <div class="checklist-item">
+                <div class="check-box checked"></div>
+                <div class="check-info"><div class="check-title">SOP Review Cycle Complete</div><div class="check-sub">15 SOPs reviewed</div></div>
+              </div>
+              <div class="checklist-item">
+                <div class="check-box partial"></div>
+                <div class="check-info"><div class="check-title">Pharmacovigilance Agreement</div><div class="check-sub">Partner sign-off pending</div></div>
+              </div>
+              <div class="checklist-item">
+                <div class="check-box"></div>
+                <div class="check-info"><div class="check-title">REMS Update Submission</div><div class="check-sub">Not started</div></div>
+              </div>
+              <div class="checklist-item">
+                <div class="check-box checked"></div>
+                <div class="check-info"><div class="check-title">Q1 Data Integrity Audit</div><div class="check-sub">Closed May 25</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /timeline -->
+
+
+    <!-- ══════════════════════════════
+         DOCUMENTS PAGE
+    ══════════════════════════════ -->
+    <div class="page" id="page-documents">
+      <div class="grid-2 mb-20">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Upload Documents</div></div>
+          <div class="card-body">
+            <div class="drop-zone" onclick="alert('Select files to upload — this will sync to Airtable attachments.')">
+              <div class="dz-icon">☁️</div>
+              <p><strong>Click to upload</strong> or drag &amp; drop</p>
+              <p style="margin-top:4px;">PDF, DOCX, XLSX · Up to 50MB per file</p>
+            </div>
+            <div class="form-row mt-12">
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">Category</label>
+                <select class="form-control">
+                  <option>Select category…</option>
+                  <option>Regulatory Submission</option>
+                  <option>Safety Report</option>
+                  <option>Clinical Protocol</option>
+                  <option>CMC / Manufacturing</option>
+                  <option>SOP</option>
+                  <option>Audit Report</option>
+                  <option>Training Record</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">Expiry Date</label>
+                <input class="form-control" type="date">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Document Stats</div></div>
+          <div class="card-body">
+            <div class="stats-row" style="grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 0;">
+              <div class="stat-card" style="padding:14px;">
+                <div class="stat-label">Total Docs</div>
+                <div class="stat-value" style="font-size:22px;">84</div>
+              </div>
+              <div class="stat-card" style="padding:14px;">
+                <div class="stat-label">Pending Review</div>
+                <div class="stat-value" style="font-size:22px;color:var(--warning)">7</div>
+              </div>
+              <div class="stat-card" style="padding:14px;">
+                <div class="stat-label">Expiring Soon</div>
+                <div class="stat-value" style="font-size:22px;color:var(--danger)">2</div>
+              </div>
+              <div class="stat-card" style="padding:14px;">
+                <div class="stat-label">Approved</div>
+                <div class="stat-value" style="font-size:22px;color:var(--success)">75</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Document Vault</div>
+          <div style="display:flex;gap:8px;">
+            <select class="form-control" style="width:auto;padding:5px 28px 5px 10px;font-size:12px;">
+              <option>All Categories</option>
+              <option>Regulatory Submission</option>
+              <option>Safety Report</option>
+              <option>CMC / Manufacturing</option>
+              <option>SOP</option>
+            </select>
+            <input class="form-control" placeholder="Search documents…" style="width:200px;">
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="doc-item">
+            <div class="doc-icon">📄</div>
+            <div class="doc-info">
+              <div class="doc-name">IND_2026_Annual_Report_DRAFT.pdf</div>
+              <div class="doc-meta">Regulatory Submission · 2.4 MB · Uploaded May 28 · <strong style="color:var(--danger)">Needs final review</strong></div>
+            </div>
+            <div class="doc-actions">
+              <span class="badge badge-warning">Draft</span>
+              <button class="btn btn-outline btn-sm">View</button>
+            </div>
+          </div>
+          <div class="doc-item">
+            <div class="doc-icon">📊</div>
+            <div class="doc-info">
+              <div class="doc-name">CMC_Section_v4.1_FINAL.docx</div>
+              <div class="doc-meta">CMC / Manufacturing · 1.1 MB · Uploaded May 30</div>
+            </div>
+            <div class="doc-actions">
+              <span class="badge badge-success">Approved</span>
+              <button class="btn btn-outline btn-sm">View</button>
+            </div>
+          </div>
+          <div class="doc-item">
+            <div class="doc-icon">📋</div>
+            <div class="doc-info">
+              <div class="doc-name">Safety_Database_Reconciliation_Q2.xlsx</div>
+              <div class="doc-meta">Safety Report · 880 KB · Uploaded Jun 1 · <strong style="color:var(--warning)">Expires Jun 30</strong></div>
+            </div>
+            <div class="doc-actions">
+              <span class="badge badge-primary">In Review</span>
+              <button class="btn btn-outline btn-sm">View</button>
+            </div>
+          </div>
+          <div class="doc-item">
+            <div class="doc-icon">📄</div>
+            <div class="doc-info">
+              <div class="doc-name">SOP_0047_Pharmacovigilance_v2.pdf</div>
+              <div class="doc-meta">SOP · 560 KB · Reviewed Mar 2026</div>
+            </div>
+            <div class="doc-actions">
+              <span class="badge badge-success">Approved</span>
+              <button class="btn btn-outline btn-sm">View</button>
+            </div>
+          </div>
+          <div class="doc-item">
+            <div class="doc-icon">🧬</div>
+            <div class="doc-info">
+              <div class="doc-name">Protocol_Amendment_v3.2_DRAFT.pdf</div>
+              <div class="doc-meta">Clinical Protocol · 1.8 MB · Uploaded Jun 2 · <strong style="color:var(--danger)">IRB approval pending</strong></div>
+            </div>
+            <div class="doc-actions">
+              <span class="badge badge-neutral">Pending</span>
+              <button class="btn btn-outline btn-sm">View</button>
+            </div>
+          </div>
+          <div class="doc-item">
+            <div class="doc-icon">📋</div>
+            <div class="doc-info">
+              <div class="doc-name">Training_Records_AllStaff_Jun2026.pdf</div>
+              <div class="doc-meta">Training Record · 340 KB · Uploaded Jun 2</div>
+            </div>
+            <div class="doc-actions">
+              <span class="badge badge-success">Approved</span>
+              <button class="btn btn-outline btn-sm">View</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /documents -->
+
+
+    <!-- ══════════════════════════════
+         REPORTS PAGE
+    ══════════════════════════════ -->
+    <div class="page" id="page-reports">
+      <div class="alert alert-success mb-20">
+        <div class="alert-icon">✅</div>
+        <div class="alert-body">
+          <div class="alert-title">Reports generate automatically from your live Airtable data</div>
+          <div class="alert-msg">No manual compilation needed. Click any report to generate and download a PDF or send to a stakeholder.</div>
+        </div>
+      </div>
+
+      <div class="grid-2 mb-20">
+        <div class="report-card" onclick="alert('Generating Compliance Summary Report…\n\nThis will compile all open/closed items into a formatted PDF.')">
+          <div class="report-icon">📊</div>
+          <div class="report-info">
+            <div class="report-name">Compliance Summary Report</div>
+            <div class="report-desc">Overall score, open items, completion by area — executive overview</div>
+          </div>
+          <div class="report-action">Generate →</div>
+        </div>
+        <div class="report-card" onclick="alert('Generating Regulatory Submission Status…')">
+          <div class="report-icon">📋</div>
+          <div class="report-info">
+            <div class="report-name">Regulatory Submission Status</div>
+            <div class="report-desc">All submissions, deadlines, owners, and completion status</div>
+          </div>
+          <div class="report-action">Generate →</div>
+        </div>
+        <div class="report-card" onclick="alert('Generating Safety Signal Report…')">
+          <div class="report-icon">🛡️</div>
+          <div class="report-info">
+            <div class="report-name">Safety Signal Report</div>
+            <div class="report-desc">SAE/SUSAR listing, narrative status, MedDRA coding completeness</div>
+          </div>
+          <div class="report-action">Generate →</div>
+        </div>
+        <div class="report-card" onclick="alert('Generating Document Expiry Report…')">
+          <div class="report-icon">📁</div>
+          <div class="report-info">
+            <div class="report-name">Document Expiry & Review Report</div>
+            <div class="report-desc">Upcoming expirations, pending approvals, and version control gaps</div>
+          </div>
+          <div class="report-action">Generate →</div>
+        </div>
+        <div class="report-card" onclick="alert('Generating Audit Readiness Assessment…')">
+          <div class="report-icon">✅</div>
+          <div class="report-info">
+            <div class="report-name">Audit Readiness Assessment</div>
+            <div class="report-desc">GMP audit prep checklist and gap analysis vs FDA expectations</div>
+          </div>
+          <div class="report-action">Generate →</div>
+        </div>
+        <div class="report-card" onclick="alert('Generating Board / Investor Summary…')">
+          <div class="report-icon">📈</div>
+          <div class="report-info">
+            <div class="report-name">Board / Investor Summary</div>
+            <div class="report-desc">High-level compliance health for board or investor meetings</div>
+          </div>
+          <div class="report-action">Generate →</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Schedule Automated Reports</div></div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Report Type</label>
+              <select class="form-control">
+                <option>Compliance Summary Report</option>
+                <option>Regulatory Submission Status</option>
+                <option>Safety Signal Report</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Frequency</label>
+              <select class="form-control">
+                <option>Weekly</option>
+                <option>Monthly</option>
+                <option>Quarterly</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Send To</label>
+              <input class="form-control" placeholder="email@company.com" value="john.h.haldemann@gmail.com">
+            </div>
+          </div>
+          <button class="btn btn-primary">Schedule Report</button>
+        </div>
+      </div>
+    </div><!-- /reports -->
+
+
+    <!-- ══════════════════════════════
+         CLINICAL PAGE
+    ══════════════════════════════ -->
+    <div class="page" id="page-clinical">
+      <div class="alert alert-warn mb-16">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-body">
+          <div class="alert-title">Protocol Amendment v3.2 awaiting IRB approval</div>
+          <div class="alert-msg">No new patients can be enrolled under updated criteria until IRB approval is received. Due Jun 30.</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Trial Compliance Status</div></div>
+          <div class="card-body">
+            <div class="prog-wrap"><div class="prog-label"><span>ICF Version Currency</span><span>100%</span></div><div class="prog-bar"><div class="prog-fill prog-fill-success" style="width:100%"></div></div></div>
+            <div class="prog-wrap"><div class="prog-label"><span>Protocol Deviations Resolved</span><span>82%</span></div><div class="prog-bar"><div class="prog-fill prog-fill-primary" style="width:82%"></div></div></div>
+            <div class="prog-wrap"><div class="prog-label"><span>Data Entry Completeness</span><span>68%</span></div><div class="prog-bar"><div class="prog-fill prog-fill-warning" style="width:68%"></div></div></div>
+            <div class="prog-wrap"><div class="prog-label"><span>Site Training Currency</span><span>93%</span></div><div class="prog-bar"><div class="prog-fill prog-fill-success" style="width:93%"></div></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Protocol Deviations</div><button class="btn btn-primary btn-sm">＋ Log Deviation</button></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Type</th><th>Site</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td class="td-main">PD-014</td><td>Eligibility</td><td>Site 02</td><td><span class="badge badge-warning">Open</span></td></tr>
+                <tr><td class="td-main">PD-013</td><td>Visit Window</td><td>Site 01</td><td><span class="badge badge-success">Resolved</span></td></tr>
+                <tr><td class="td-main">PD-012</td><td>ICF Timing</td><td>Site 03</td><td><span class="badge badge-success">Resolved</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div><!-- /clinical -->
+
+
+    <!-- ══════════════════════════════
+         QUALITY PAGE
+    ══════════════════════════════ -->
+    <div class="page" id="page-quality">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">GMP / Quality Checklist</div><span class="badge badge-warning">83% complete</span></div>
+          <div class="card-body">
+            <div class="checklist-item"><div class="check-box checked"></div><div class="check-info"><div class="check-title">SOP Annual Review</div><div class="check-sub">15 of 15 SOPs reviewed</div></div></div>
+            <div class="checklist-item"><div class="check-box checked"></div><div class="check-info"><div class="check-title">Equipment Calibration Logs</div><div class="check-sub">All manufacturing equipment current</div></div></div>
+            <div class="checklist-item"><div class="check-box checked"></div><div class="check-info"><div class="check-title">Change Control Documentation</div><div class="check-sub">CC-42 through CC-47 filed</div></div></div>
+            <div class="checklist-item"><div class="check-box partial"></div><div class="check-info"><div class="check-title">GMP Audit Prep Package</div><div class="check-sub">In preparation — due Jun 15</div></div><span class="check-due">Jun 15</span></div>
+            <div class="checklist-item"><div class="check-box"></div><div class="check-info"><div class="check-title">Supplier Qualification Review</div><div class="check-sub">2 of 5 suppliers reviewed</div></div><span class="check-due">Jun 30</span></div>
+            <div class="checklist-item"><div class="check-box"></div><div class="check-info"><div class="check-title">Batch Record Review Q2</div><div class="check-sub">Not started</div></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">CAPA Tracker</div><button class="btn btn-primary btn-sm">＋ Open CAPA</button></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>CAPA ID</th><th>Source</th><th>Due</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td class="td-main">CAPA-019</td><td>Form 483</td><td style="color:var(--danger)">Jun 5 ↑</td><td><span class="badge badge-danger">Overdue</span></td></tr>
+                <tr><td class="td-main">CAPA-018</td><td>Internal Audit</td><td>Jun 20</td><td><span class="badge badge-warning">In Progress</span></td></tr>
+                <tr><td class="td-main">CAPA-017</td><td>Customer Complaint</td><td>May 15</td><td><span class="badge badge-success">Closed</span></td></tr>
+                <tr><td class="td-main">CAPA-016</td><td>Deviation</td><td>Apr 30</td><td><span class="badge badge-success">Closed</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div><!-- /quality -->
+
+
+    <!-- ══════════════════════════════
+         SUBMISSIONS PAGE
+    ══════════════════════════════ -->
+    <div class="page" id="page-submissions">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Submission History</div><button class="btn btn-primary btn-sm" onclick="openModal()">＋ Log Submission</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Submission</th><th>Agency</th><th>Ref. #</th><th>Response Due</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Mar 28, 2026</td><td class="td-main">Q1 Manufacturing Report</td><td>FDA</td><td>IND-2026-001</td><td>N/A</td><td><span class="badge badge-success">Accepted</span></td></tr>
+              <tr><td>Feb 14, 2026</td><td class="td-main">Protocol Amendment v3.1</td><td>IRB</td><td>IRB-2026-017</td><td>Jun 30</td><td><span class="badge badge-success">Approved</span></td></tr>
+              <tr><td>Jan 20, 2026</td><td class="td-main">IND Safety Update</td><td>FDA</td><td>IND-2025-089</td><td>N/A</td><td><span class="badge badge-success">Accepted</span></td></tr>
+              <tr><td>Dec 5, 2025</td><td class="td-main">Phase 1 IND Application</td><td>FDA</td><td>IND-2025-044</td><td>N/A</td><td><span class="badge badge-success">Approved</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /submissions -->
+
+
+    <!-- ══════════════════════════════
+         SETTINGS PAGE
+    ══════════════════════════════ -->
+    <div class="page" id="page-settings">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Notifications & Alerts</div></div>
+          <div class="card-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+              <div><div style="font-weight:600;font-size:13.5px;">Deadline reminders</div><div class="text-muted">7 days, 3 days, 1 day before due date</div></div>
+              <div style="width:40px;height:22px;background:var(--primary);border-radius:99px;cursor:pointer;position:relative;"><div style="width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:2px;right:2px;"></div></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+              <div><div style="font-weight:600;font-size:13.5px;">Overdue escalation</div><div class="text-muted">Email to team lead when item is 1+ days overdue</div></div>
+              <div style="width:40px;height:22px;background:var(--primary);border-radius:99px;cursor:pointer;position:relative;"><div style="width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:2px;right:2px;"></div></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+              <div><div style="font-weight:600;font-size:13.5px;">Weekly digest</div><div class="text-muted">Monday morning summary of open items</div></div>
+              <div style="width:40px;height:22px;background:var(--primary);border-radius:99px;cursor:pointer;position:relative;"><div style="width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:2px;right:2px;"></div></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;">
+              <div><div style="font-weight:600;font-size:13.5px;">Document expiry warnings</div><div class="text-muted">30 days before document expires</div></div>
+              <div style="width:40px;height:22px;background:var(--border);border-radius:99px;cursor:pointer;position:relative;"><div style="width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Team Members</div><button class="btn btn-outline btn-sm">Invite</button></div>
+          <div class="card-body">
+            <div class="doc-item">
+              <div class="doc-icon" style="background:var(--primary-soft);font-size:14px;">JH</div>
+              <div class="doc-info"><div class="doc-name">J. Haldemann</div><div class="doc-meta">Admin · john.h.haldemann@gmail.com</div></div>
+              <span class="badge badge-primary">You</span>
+            </div>
+            <div class="doc-item">
+              <div class="doc-icon" style="background:var(--success-soft);font-size:14px;">QT</div>
+              <div class="doc-info"><div class="doc-name">Quality Team</div><div class="doc-meta">Editor · quality@predictsafebio.com</div></div>
+            </div>
+            <div class="doc-item">
+              <div class="doc-icon" style="background:var(--warning-soft);font-size:14px;">RA</div>
+              <div class="doc-info"><div class="doc-name">Regulatory Affairs</div><div class="doc-meta">Editor · regaffairs@predictsafebio.com</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /settings -->
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+
+<!-- QUICK ADD MODAL -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">＋ Add Compliance Item</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Item Type <span class="required">*</span></label>
+      <select class="form-control">
+        <option>Regulatory Submission</option>
+        <option>Milestone</option>
+        <option>Document Upload</option>
+        <option>Safety Event</option>
+        <option>CAPA</option>
+        <option>Protocol Deviation</option>
+        <option>Audit Item</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Title <span class="required">*</span></label>
+      <input class="form-control" placeholder="Enter a descriptive title…">
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Assigned To</label>
+        <select class="form-control">
+          <option>J. Haldemann</option>
+          <option>Quality Team</option>
+          <option>Regulatory Affairs</option>
+          <option>Medical Affairs</option>
+          <option>Clinical Ops</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Due Date</label>
+        <input class="form-control" type="date">
+      </div>
+    </div>
+    <div class="form-group mt-16">
+      <label class="form-label">Notes</label>
+      <textarea class="form-control" rows="2" placeholder="Optional context…"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:20px;">
+      <button class="btn btn-primary" onclick="closeModal();alert('Item saved to Airtable!')">Save Item</button>
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const pages = {
+    dashboard: 'Dashboard',
+    regulatory: 'Regulatory Submissions',
+    safety: 'Safety Reporting',
+    timeline: 'Milestones & Timeline',
+    documents: 'Document Vault',
+    submissions: 'Submission History',
+    reports: 'Reports & Analytics',
+    clinical: 'Clinical Compliance',
+    quality: 'Quality & Audits',
+    settings: 'Settings',
+  };
+
+  function navigate(id) {
+    // Hide all pages
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    // Show target
+    const target = document.getElementById('page-' + id);
+    if (target) target.classList.add('active');
+
+    // Update nav
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + id + "'")) {
+        n.classList.add('active');
+      }
+    });
+
+    // Update title
+    document.getElementById('page-title').textContent = pages[id] || id;
+  }
+
+  function openModal() {
+    document.getElementById('modal').classList.add('open');
+  }
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+  }
+
+  // Checkbox toggle demo
+  document.querySelectorAll('.check-box').forEach(box => {
+    box.addEventListener('click', () => {
+      if (box.classList.contains('checked')) {
+        box.classList.remove('checked');
+      } else if (box.classList.contains('partial')) {
+        box.classList.remove('partial');
+        box.classList.add('checked');
+      } else {
+        box.classList.add('partial');
+      }
+    });
+  });
+</script>
+</body>
+</html>

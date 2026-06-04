@@ -358,3 +358,69 @@ export type AuditEvent = {
   payload?: Record<string, unknown>;
   createdAt?: string;
 };
+// ---------------------------------------------------------------------------
+// AI Knowledge Review types (ai_knowledge_entries table)
+// ---------------------------------------------------------------------------
+
+export type AiKnowledgeType =
+  | "assessment_input"
+  | "foundation_context"
+  | "risk_signal"
+  | "biotype_context"
+  | "applicability_rule"
+  | "evidence_map"
+  | "change_impact"
+  | "reference_rule"
+  | "ergonomic_assessment"
+  | "document_analysis"
+  | "other";
+
+export type AiKnowledgeQuality =
+  | "validated_knowledge"
+  | "reasonable_knowledge"
+  | "low_quality"
+  | "junk";
+
+export type AiKnowledgeReviewStatus = "pending" | "approved" | "flagged" | "rejected";
+
+export type AiKnowledgeReviewDecision = {
+  entryId: string;
+  reviewStatus: AiKnowledgeReviewStatus;
+  qualityClassification?: AiKnowledgeQuality | null;
+  reviewNotes?: string | null;
+  excludedFromEngine?: boolean;
+};
+
+export type AiKnowledgeEntry = {
+  id: string;
+  organizationId: string;
+  knowledgeType: AiKnowledgeType;
+  sourceModule?: string | null;
+  sourceRecordId?: string | null;
+  label: string;
+  contentSummary: string;
+  contentJson?: Record<string, unknown>;
+  aiRiskLevel?: "low" | "moderate" | "high" | "critical" | null;
+  aiConfidence?: "low" | "medium" | "high" | null;
+  aiHumanReviewRequired: boolean;
+  submittedBy?: string | null;
+  submittedAt: string;
+  reviewStatus: AiKnowledgeReviewStatus;
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+  reviewNotes?: string | null;
+  qualityClassification?: AiKnowledgeQuality | null;
+  excludedFromEngine?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type AiKnowledgeReviewSummary = {
+  totalEntries: number;
+  pendingCount: number;
+  approvedCount: number;
+  flaggedCount: number;
+  rejectedCount: number;
+  junkCount: number;
+  humanReviewRequiredCount: number;
+};

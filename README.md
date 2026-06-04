@@ -24,6 +24,8 @@ npm run dev
 
 Copy `.env.example` to `.env.local` and fill Supabase values when connecting a live project.
 
+Install dependencies in the same OS/runtime where commands will run. Do not reuse `node_modules` across Windows, macOS, Linux, or WSL installs. If Linux or WSL tests fail with a missing native package such as `@rolldown/binding-linux-x64-gnu`, reinstall dependencies from inside that Linux/WSL environment before running `npm test`.
+
 ## Verification
 
 ```bash

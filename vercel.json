@@ -1,6 +1,18 @@
 {
-  "framework": "nextjs",
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm ci"
+  "version": 2,
+  "name": "predictsafe-bio",
+  "crons": [
+    {
+      "path": "/api/cron/revalidate-pages",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/trial-expiry",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/inspection-scheduler",
+      "schedule": "0 8 * * *"
+    }
+  ]
 }

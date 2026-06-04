@@ -1,122 +1,168 @@
 import Link from "next/link";
 import {
-  Activity,
-  Boxes,
-  BrainCircuit,
-  ClipboardCheck,
-  ClipboardList,
-  FileText,
-  FlaskConical,
-  GitBranch,
-  HeartPulse,
-  LayoutDashboard,
+  Brain,
   LogOut,
-  Settings,
-  ShieldCheck,
-  UserCircle,
-  Users
+  ShieldCheck
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { signOutAction } from "@/app/auth/actions";
 import { getAuthSummary } from "@/lib/supabase/data";
+import { getKnowledgePendingCount } from "@/lib/supabase/knowledge-service";
+import { getNavTier, getRoleLabel, getRoleBadgeClass } from "@/lib/role-permissions";
+import { PlatformCategoryNav } from "./PlatformCategoryNav";
 
-const navItems = [
-  { href: "/workbench", label: "BioRisk Scoring", icon: FlaskConical, section: "Risk Intelligence" },
-  { href: "/my-work", label: "My Work", icon: ClipboardList, section: "Risk Intelligence" },
-  { href: "/assessments", label: "Risk Register", icon: ClipboardCheck, section: "Risk Intelligence" },
-  { href: "/documents", label: "SOPs & Templates", icon: FileText, section: "Document Control" },
-  { href: "/documents/version-control", label: "Version Control", icon: GitBranch, section: "Document Control" },
-  { href: "/foundation", label: "Compliance Map", icon: BrainCircuit, section: "Compliance" },
-  { href: "/operations", label: "HSE Operations", icon: Boxes, section: "HSE Management" },
-  { href: "/operations/capa", label: "CAPA Register", icon: ClipboardList, section: "HSE Management" },
-  { href: "/training-matrix", label: "Training Matrix", icon: ClipboardCheck, section: "HSE Management" },
-  { href: "/ergonomics/self-assessment", label: "Hazard Tracking", icon: HeartPulse, section: "HSE Management" },
-  { href: "/inspections", label: "Inspection / Audit", icon: ClipboardList, section: "HSE Management" },
-  { href: "/company-profile", label: "Company Profile", icon: LayoutDashboard, section: "Common Utilities" },
-  { href: "/change-plan", label: "Change Plan", icon: GitBranch, section: "Common Utilities" },
-  { href: "/admin/audit", label: "Immutable Audit Log", icon: Activity, section: "System Reliance" },
-  { href: "/admin/demo", label: "Admin Utilities", icon: Settings, section: "System Reliance" },
-  { href: "/account/team", label: "Team & Invites", icon: Users, section: "System Reliance" }
-];
+function getInitials(email: string | null | undefined): string {
+  if (!email) return "JH";
+  const parts = email.split("@")[0].split(/[._-]/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return email.slice(0, 2).toUpperCase();
+}
 
 export async function AppShell({ children }: { children: ReactNode }) {
   const auth = await getAuthSummary();
+  const initials = getInitials(auth.userEmail);
+  const tier = getNavTier(auth.role);
+  const roleLabel = getRoleLabel(auth.role);
+  const roleBadgeClass = getRoleBadgeClass(auth.role);
 
-  return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <Link href="/workbench" className="brand" aria-label="PredictSafeBIO platform">
-          <span className="brand-mark">
-            <ShieldCheck size={18} />
-          </span>
-          <span>
-            <strong>PredictSafeBIO</strong>
-            <small>One Platform. Every BioType.</small>
-          </span>
-        </Link>
-        <nav className="nav-list" aria-label="Primary navigation">
-          {navItems.map((item, index) => {
-            const showSection = index === 0 || navItems[index - 1].section !== item.section;
-            return (
-              <div className="nav-group" key={item.href}>
-                {showSection ? <span className="nav-section">{item.section}</span> : null}
-                <Link href={item.href} className="nav-link">
-                  <item.icon size={17} />
-                  <span>{item.label}</span>
-                </Link>
-              </div>
-            );
-          })}
-        </nav>
-      </aside>
-      <main className="main-panel">
-        <header className="app-header" aria-label="Account status">
-          <div>
-            <p className="header-kicker">{auth.configured ? "Workspace connected" : "Demo mode"}</p>
-            <strong>{auth.signedIn ? auth.userEmail : "Public workbench"}</strong>
-          </div>
-          <div className="auth-actions">
-            {auth.signedIn ? (
-              <>
-                {auth.needsOnboarding ? (
-                  <Link className="button-secondary compact" href="/onboarding">
-                    Finish onboarding
-                  </Link>
-                ) : (
-                  <Link className="auth-pill" href="/account">
-                    <UserCircle size={15} />
-                    Org workspace
-                  </Link>
-                )}
-                <form action={signOutAction}>
-                  <button className="icon-button" type="submit" aria-label="Sign out" title="Sign out">
-                    <LogOut size={17} />
-                  </button>
-                </form>
-              </>
-            ) : (
-              <>
-                <Link className="button-secondary compact" href="/login?next=/workbench">
-                  Sign in
-                </Link>
-                <Link className="button-primary compact" href="/signup?next=/onboarding">
-                  Sign up
-                </Link>
-              </>
-            )}
+  const isSuperAdmin = tier === "superadmin";
+  const isOwner = tier === "owner" || tier === "platform_staff" || isSuperAdmin;
+  const pendingCount = isOwner && auth.organizationId
+    ? await getKnowledgePendingCount(auth.organizationId)
+    : 0;
+
+  // ── Superadmin gets a sidebar-free shell ──────────────────────────────────
+  if (isSuperAdmin) {
+    return (
+      <div className="app-shell superadmin-shell">
+        <a href="#main-content" className="skip-nav">Skip to main content</a>
+        <header className="top-nav" aria-label="Superadmin navigation">
+          <Link href="/admin/organizations" className="logo-area" aria-label="PredictSafeBIO platform admin">
+            <div className="logo-box" style={{ background: "#7c3aed" }}>
+              <ShieldCheck size={16} color="#fff" aria-hidden="true" />
+            </div>
+            <div className="logo-text">
+              <strong>PredictSafeBIO</strong>
+              <small>Platform Admin</small>
+            </div>
+          </Link>
+          <nav className="tnav-admin-links" aria-label="Admin sections">
+            <Link href="/admin/organizations" className="tnav-auth-link">Orgs</Link>
+            <Link href="/admin/users" className="tnav-auth-link">Users</Link>
+            <Link href="/admin/audit" className="tnav-auth-link">Audit</Link>
+          </nav>
+          <div className="tnav-spacer" aria-hidden="true" />
+          <div className="user-area">
+            <span className={`role-chip ${roleBadgeClass}`}>{roleLabel}</span>
+            <div className="u-avatar">{initials}</div>
+            <span className="tnav-auth-link">{auth.userEmail ?? "Admin"}</span>
+            <form action={signOutAction} style={{ display: "inline" }}>
+              <button className="icon-button tnav-icon-btn" type="submit" aria-label="Sign out" title="Sign out">
+                <LogOut size={16} />
+              </button>
+            </form>
           </div>
         </header>
-        {!auth.configured && (
-          <div className="demo-mode-banner" role="status" aria-live="polite">
-            <ShieldCheck size={15} />
-            <strong>Demo mode</strong>
-            {" — You’re viewing sample data. "}
-            <a href="/signup" className="text-link">Sign up</a>
-            {" to create your organization’s live workspace."}
+        <div className="app-body superadmin-body">
+          <div className="app-content superadmin-content">
+            <main className="app-main" id="main-content">
+              {children}
+            </main>
           </div>
-        )}
-        {children}
-      </main>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Standard shell with sidebar ───────────────────────────────────────────
+  return (
+    <div className="app-shell">
+      {/* ── Skip navigation ── */}
+      <a href="#main-content" className="skip-nav">Skip to main content</a>
+      {/* ── Top bar ── */}
+      <header className="top-nav" aria-label="Primary navigation">
+        <Link href="/workbench" className="logo-area" aria-label="PredictSafeBIO platform">
+          <div className="logo-box">
+            <ShieldCheck size={16} color="#fff" aria-hidden="true" />
+          </div>
+          <div className="logo-text">
+            <strong>PredictSafeBIO</strong>
+            <small>Biosafety Intelligence</small>
+          </div>
+        </Link>
+
+        <div className="tnav-spacer" aria-hidden="true" />
+
+        <div className="user-area">
+          {auth.signedIn ? (
+            <>
+              {isOwner && pendingCount > 0 && (
+                <Link
+                  href="/admin/ai-knowledge"
+                  className="tnav-badge-link"
+                  title={`${pendingCount} entries pending review`}
+                >
+                  <Brain size={13} aria-hidden="true" />
+                  <span className="nav-badge" aria-label={`${pendingCount} pending`}>
+                    {pendingCount > 99 ? "99+" : pendingCount}
+                  </span>
+                </Link>
+              )}
+              <span className={`role-chip ${roleBadgeClass}`} title={`Your role: ${roleLabel}`}>
+                {roleLabel}
+              </span>
+              <div className="u-avatar" aria-label={`User: ${auth.userEmail ?? ""}`}>{initials}</div>
+              <Link href="/account" className="tnav-auth-link" aria-label="Account settings">
+                {auth.userEmail ?? "Account"}
+              </Link>
+              <form action={signOutAction} style={{ display: "inline" }}>
+                <button className="icon-button tnav-icon-btn" type="submit" aria-label="Sign out" title="Sign out">
+                  <LogOut size={16} />
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link className="tnav-auth-link" href="/login?next=/workbench">Sign in</Link>
+              <Link className="tnav-auth-primary" href="/signup?next=/onboarding">Get started</Link>
+            </>
+          )}
+        </div>
+      </header>
+
+      {/* ── Body: sidebar + content ── */}
+      <div className="app-body">
+        <aside className="app-sidebar">
+          <PlatformCategoryNav />
+        </aside>
+
+        <div className="app-content">
+          {/* Demo / disconnected banner */}
+          {!auth.signedIn && (
+            <div className="demo-mode-banner" role="alert" aria-label="Demo mode notice">
+              <span>
+                You are viewing sample data.{" "}
+                <Link href="/signup">Sign up</Link> or{" "}
+                <Link href="/login?next=/workbench">sign in</Link> to connect your workspace.
+              </span>
+            </div>
+          )}
+
+          {/* Workspace context strip */}
+          {auth.signedIn && auth.organizationId && (
+            <div className="workspace-bar" aria-label="Workspace context">
+              <span className="muted">
+                Workspace connected · {auth.fullName ?? auth.userEmail ?? "Signed in"} ·{" "}
+                <span className={roleBadgeClass} style={{ fontWeight: 600 }}>{roleLabel}</span>
+              </span>
+            </div>
+          )}
+
+          <main className="app-main" id="main-content">
+            {children}
+          </main>
+        </div>
+      </div>
     </div>
   );
 }

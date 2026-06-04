@@ -1,5 +1,7 @@
 export const featureFlags = {
-  llmDraftAssist: process.env.NEXT_PUBLIC_ENABLE_LLM_DRAFT_ASSIST === "true"
+  llmDraftAssist: process.env.NEXT_PUBLIC_ENABLE_LLM_DRAFT_ASSIST === "true",
+  riskCells: process.env.NEXT_PUBLIC_FEATURE_RISK_CELLS === "true",
+  demoMode: process.env.NEXT_PUBLIC_FEATURE_DEMO_MODE === "true"
 };
 
 export const llmDraftAssistGate = {
@@ -11,4 +13,12 @@ export const llmDraftAssistGate = {
 
 export function assertLlmDraftAssistDisabled() {
   return !featureFlags.llmDraftAssist;
+}
+
+export function isAuditLogEnabled(): boolean {
+  return process.env.AUDIT_LOG_ENABLED === "true";
+}
+
+export function isRiskCellsEnabled(): boolean {
+  return featureFlags.riskCells;
 }

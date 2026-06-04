@@ -6,6 +6,7 @@ import { canManageWorkspace } from "@/lib/role-permissions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getProfileContext } from "@/lib/supabase/data-helpers";
 import { authMessage } from "@/lib/auth-routing";
+import { scoreTrainingGap, resolveRiskCell } from "@/lib/supabase/continuous-scoring-service";
 
 // ---------------------------------------------------------------------------
 // Owner: create a training requirement
@@ -43,15 +44,31 @@ export async function createTrainingRequirementAction(formData: FormData) {
   }
 
   // Auto-create an assignment for the creating owner so they appear in the matrix
-  await supabase.from("training_assignments").insert({
+  const dueDateStr = frequencyMonths
+    ? new Date(Date.now() + frequencyMonths * 30 * 86400000).toISOString().slice(0, 10)
+    : null;
+
+  const { data: assignmentRow } = await supabase.from("training_assignments").insert({
     organization_id: context.organizationId,
     training_requirement_id: data.id,
     assigned_user_id: context.userId,
     status: "assigned",
-    due_date: frequencyMonths
-      ? new Date(Date.now() + frequencyMonths * 30 * 86400000).toISOString().slice(0, 10)
-      : null
-  });
+    due_date: dueDateStr
+  }).select("id").single();
+
+  // Score the open training assignment via bio-ai and write a risk_cell.
+  // Each assignment gets its own cell so completion resolves it precisely.
+  if (assignmentRow?.id) {
+    void scoreTrainingGap({
+      requirementId: data.id,
+      assignmentId: assignmentRow.id,
+      title,
+      roleKey,
+      dueDateStr,
+      organizationId: context.organizationId,
+      userId: context.userId,
+    });
+  }
 
   await supabase.from("audit_events").insert({
     organization_id: context.organizationId,
@@ -119,6 +136,15 @@ export async function markTrainingCompleteAction(formData: FormData) {
     .eq("organization_id", context.organizationId);
 
   if (error) redirect(authMessage("/training-matrix", error.message));
+
+  // Resolve the bio-ai risk cell for this assignment — removes it from the
+  // Risk Command Center's active queue and promotes it to improvement_cell.
+  void resolveRiskCell({
+    organizationId: context.organizationId,
+    linkedRecordType: "training_assignments",
+    linkedRecordId: assignmentId,
+    resolveLabel: `Training complete: ${evidenceNote ?? "evidence submitted"}`,
+  });
 
   await supabase.from("audit_events").insert({
     organization_id: context.organizationId,

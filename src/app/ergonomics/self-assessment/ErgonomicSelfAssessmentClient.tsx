@@ -74,9 +74,16 @@ export function ErgonomicSelfAssessmentClient() {
   const [assessmentState, submitAction] = useActionState(submitErgonomicSelfAssessmentAction, initialAssessmentState);
   const [advancedState, requestAction] = useActionState(requestAdvancedEvaluationAction, initialAdvancedState);
   const [draft, setDraft] = useState<DraftInput>(defaultInput);
+  const [draftDirty, setDraftDirty] = useState(false);
   const result = useMemo(() => scoreErgonomicLevel1(draft), [draft]);
 
+  // Hide post-submission banners once the user edits the form again
+  const showSubmissionBanners = !draftDirty;
+
+  const markDirty = () => setDraftDirty(true);
+
   const setBodyPart = (part: ErgonomicBodyPart, checked: boolean) => {
+    markDirty();
     setDraft((current) => {
       const nextParts = checked ? [...current.bodyParts, part] : current.bodyParts.filter((item) => item !== part);
       const normalized = normalizeBodyParts(part === "none" && checked ? ["none"] : nextParts.filter((item) => item !== "none"));
@@ -87,7 +94,7 @@ export function ErgonomicSelfAssessmentClient() {
   return (
     <div className="ergonomic-screening-grid">
       <section className="panel ergonomic-form-panel">
-        <form action={submitAction} className="ergonomic-form">
+        <form action={submitAction} className="ergonomic-form" onSubmit={() => setDraftDirty(false)}>
           <fieldset>
             <legend>1. What type of work are you doing?</legend>
             <div className="option-grid task-option-grid">
@@ -96,7 +103,7 @@ export function ErgonomicSelfAssessmentClient() {
                   <input
                     checked={draft.taskType === option.value}
                     name="taskType"
-                    onChange={() => setDraft((current) => ({ ...current, taskType: option.value }))}
+                    onChange={() => { markDirty(); setDraft((current) => ({ ...current, taskType: option.value })); }}
                     type="radio"
                     value={option.value}
                   />
@@ -115,7 +122,7 @@ export function ErgonomicSelfAssessmentClient() {
                   <input
                     checked={draft.discomfortLevel === option.value}
                     name="discomfortLevel"
-                    onChange={() => setDraft((current) => ({ ...current, discomfortLevel: option.value }))}
+                    onChange={() => { markDirty(); setDraft((current) => ({ ...current, discomfortLevel: option.value })); }}
                     type="radio"
                     value={option.value}
                   />
@@ -153,7 +160,7 @@ export function ErgonomicSelfAssessmentClient() {
                   <input
                     checked={draft.frequency === option.value}
                     name="frequency"
-                    onChange={() => setDraft((current) => ({ ...current, frequency: option.value }))}
+                    onChange={() => { markDirty(); setDraft((current) => ({ ...current, frequency: option.value })); }}
                     type="radio"
                     value={option.value}
                   />
@@ -244,10 +251,27 @@ export function ErgonomicSelfAssessmentClient() {
           </ul>
         </section>
 
-        {assessmentState.correctiveActionRecommended ? (
+        {showSubmissionBanners && assessmentState.correctiveActionRecommended ? (
           <div className="draft-banner">
             <AlertTriangle size={18} />
             Corrective-action review was recommended from this Level 1 screening.
+          </div>
+        ) : null}
+
+        {showSubmissionBanners && assessmentState.level2AutoAssigned ? (
+          <div className="draft-banner draft-banner-level2">
+            <AlertTriangle size={18} />
+            <span>
+              <strong>Level 2 auto-assigned.</strong> Risk score exceeded threshold — a qualified evaluator (workspace owner) must complete the Level 2 measurement inspection.
+              {assessmentState.level2RequestId ? (
+                <>
+                  {" "}
+                  <Link href={`/ergonomics/advanced-evaluation?requestId=${assessmentState.level2RequestId}`}>
+                    Open Level 2 →
+                  </Link>
+                </>
+              ) : null}
+            </span>
           </div>
         ) : null}
       </aside>
@@ -288,8 +312,18 @@ export function ErgonomicSelfAssessmentClient() {
           </div>
           <p>
             If symptoms continue or the task feels worse, request an advanced ergonomic evaluation with measurements and photos.
+            Level 2 is separate from this Level 1 screening and requires a qualified evaluator to complete.
           </p>
-          {assessmentState.assessmentId ? (
+          {showSubmissionBanners && assessmentState.level2AutoAssigned && assessmentState.level2RequestId ? (
+            <div className="advanced-request-form">
+              <p className="save-message save-saved">
+                Level 2 already auto-assigned for this screening.
+              </p>
+              <Link className="button-primary large-action" href={`/ergonomics/advanced-evaluation?requestId=${assessmentState.level2RequestId}`}>
+                Open Level 2 Measurement Inspection
+              </Link>
+            </div>
+          ) : showSubmissionBanners && assessmentState.assessmentId ? (
             <form action={requestAction} className="advanced-request-form">
               <input name="assessmentId" type="hidden" value={assessmentState.assessmentId} />
               <input
@@ -312,7 +346,7 @@ export function ErgonomicSelfAssessmentClient() {
           )}
           <div className="level-two-note">
             <ShieldCheck size={16} />
-            Level 2 is separate and may include measurements, photos, industrial ergonomic equation data points, specialist review, formal recommendations, and corrective actions.
+            Level 2 requires a qualified evaluator account (workspace owner). It may include measurements, photos, industrial ergonomic equation data points, specialist review, formal recommendations, and corrective actions.
           </div>
         </section>
       </aside>

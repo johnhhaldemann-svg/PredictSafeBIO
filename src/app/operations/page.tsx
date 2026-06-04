@@ -1,4 +1,9 @@
+export const dynamic = "force-dynamic";
+
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = { title: "HSE Management – PredictSafeBIO" };
 import { AlertTriangle, Boxes, ClipboardList, DatabaseZap, FlaskConical, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { FoundationReviewActionsPanel } from "@/components/FoundationReviewActionsPanel";

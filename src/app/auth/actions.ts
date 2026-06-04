@@ -8,6 +8,7 @@ import { demoCompanyProfile } from "@/lib/demo-data";
 import type { ReviewOwnerRole } from "@/lib/bio-ai/types";
 import { authMessage, friendlyAuthError, passwordMeetsMinimum, safeAuthNext } from "@/lib/auth-routing";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 function field(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -42,7 +43,7 @@ export async function signInAction(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    redirect(authMessage(`/login?next=${encodeURIComponent(next)}`, friendlyAuthError(error.message)));
+    redirect(authMessage(`/login?next=${encodeURIComponent(next)}&email=${encodeURIComponent(email)}`, friendlyAuthError(error.message)));
   }
 
   const {
@@ -65,25 +66,40 @@ export async function signUpAction(formData: FormData) {
     redirect(authMessage(`/signup?next=${encodeURIComponent(next)}`, "Email and password are required."));
   }
 
-  const supabase = await createClientOrRedirect("/signup");
-  const origin = (await headers()).get("origin");
-  const emailRedirectTo = origin ? `${origin}/auth/confirm?next=${encodeURIComponent("/onboarding")}` : undefined;
-  const { data, error } = await supabase.auth.signUp({
+  if (!passwordMeetsMinimum(password)) {
+    redirect(authMessage(`/signup?next=${encodeURIComponent(next)}`, "Use a stronger password with at least 8 characters."));
+  }
+
+  // Use the admin client to create the user with email pre-confirmed.
+  // This bypasses Supabase's email confirmation rate limit and avoids needing
+  // custom SMTP at signup time. Password resets still use email (configure SMTP
+  // in Supabase Auth settings before launch for that flow).
+  const admin = getSupabaseAdminClient();
+   
+  const { data: created, error: createError } = await (admin as any).auth.admin.createUser({
     email,
     password,
-    options: emailRedirectTo ? { emailRedirectTo } : undefined
+    email_confirm: true,
   });
 
-  if (error) {
-    redirect(authMessage(`/signup?next=${encodeURIComponent(next)}`, friendlyAuthError(error.message)));
+  if (createError) {
+    redirect(authMessage(`/signup?next=${encodeURIComponent(next)}`, friendlyAuthError(createError.message)));
+  }
+
+  if (!created?.user) {
+    redirect(authMessage(`/signup?next=${encodeURIComponent(next)}`, "Account creation failed. Please try again."));
+  }
+
+  // Sign the user in immediately — no confirmation email needed
+  const supabase = await createClientOrRedirect("/signup");
+  const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (signInError) {
+    // Account created but sign-in failed — send them to login
+    redirect(authMessage("/login", "Account created. Sign in to continue."));
   }
 
   revalidatePath("/", "layout");
-
-  if (!data.session) {
-    redirect(authMessage("/login", "Account created. Check your email for a confirmation link to activate your account, then sign in."));
-  }
-
   redirect("/onboarding");
 }
 

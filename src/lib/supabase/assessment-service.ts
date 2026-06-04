@@ -16,6 +16,7 @@ import { demoAuditEvents } from "@/lib/demo-data";
 import { isSupabaseConfigured } from "./env";
 import { createSupabaseServerClient } from "./server";
 import { getProfileContext, mapAuditEvent } from "./data-helpers";
+import { logAssessmentKnowledgeEntry } from "./knowledge-service";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -32,6 +33,9 @@ export type SavedAssessmentSummary = {
   humanReviewStatus: HumanReviewStatus | string;
   reviewedAt?: string | null;
   createdAt?: string;
+  assignedReviewerId?: string | null;
+  assignedReviewerName?: string | null;
+  reviewDueDate?: string | null;
 };
 
 export type SavedAssessmentDetail = SavedAssessmentSummary & {
@@ -139,7 +143,7 @@ export async function listAssessments(): Promise<SavedAssessmentSummary[]> {
   const { data, error } = await supabase
     .from("assessments")
     .select(
-      "id,input_snapshot,score,level,confidence,human_review_required,human_review_status,reviewed_at,created_at"
+      "id,input_snapshot,score,level,confidence,human_review_required,human_review_status,reviewed_at,created_at,assigned_reviewer_id,review_due_date,reviewer:profiles!assessments_assigned_reviewer_id_fkey(full_name)"
     )
     .eq("organization_id", context.organizationId)
     .order("created_at", { ascending: false })
@@ -149,6 +153,7 @@ export async function listAssessments(): Promise<SavedAssessmentSummary[]> {
 
   return data.map((row) => {
     const input = row.input_snapshot as BioAiInput;
+    const reviewer = row.reviewer as { full_name?: string | null } | null;
     return {
       id: row.id,
       workflow: input.workflow ?? "Untitled workflow",
@@ -159,7 +164,10 @@ export async function listAssessments(): Promise<SavedAssessmentSummary[]> {
       humanReviewRequired: row.human_review_required,
       humanReviewStatus: row.human_review_status,
       reviewedAt: row.reviewed_at,
-      createdAt: row.created_at
+      createdAt: row.created_at,
+      assignedReviewerId: row.assigned_reviewer_id ?? null,
+      assignedReviewerName: reviewer?.full_name ?? null,
+      reviewDueDate: row.review_due_date ?? null
     };
   });
 }
@@ -174,7 +182,7 @@ export async function getAssessmentDetail(
   const { data, error } = await supabase
     .from("assessments")
     .select(
-      "id,input_snapshot,output_snapshot,score,level,confidence,human_review_required,human_review_status,reviewer_notes,reviewed_by,reviewed_at,created_at"
+      "id,input_snapshot,output_snapshot,score,level,confidence,human_review_required,human_review_status,reviewer_notes,reviewed_by,reviewed_at,created_at,assigned_reviewer_id,review_due_date,reviewer:profiles!assessments_assigned_reviewer_id_fkey(full_name)"
     )
     .eq("organization_id", context.organizationId)
     .eq("id", assessmentId)
@@ -205,6 +213,7 @@ export async function getAssessmentDetail(
     })
     .map(mapAuditEvent);
 
+  const reviewer = data.reviewer as { full_name?: string | null } | null;
   return {
     id: data.id,
     workflow: input.workflow ?? "Untitled workflow",
@@ -218,6 +227,9 @@ export async function getAssessmentDetail(
     reviewedBy: data.reviewed_by,
     reviewedAt: data.reviewed_at,
     createdAt: data.created_at,
+    assignedReviewerId: data.assigned_reviewer_id ?? null,
+    assignedReviewerName: reviewer?.full_name ?? null,
+    reviewDueDate: data.review_due_date ?? null,
     input,
     output,
     signals: (signals ?? []).map((signal) => signal.payload as BioAiSignal),
@@ -228,7 +240,9 @@ export async function getAssessmentDetail(
 export async function updateAssessmentReview(
   assessmentId: string,
   status: HumanReviewStatus,
-  reviewerNotes: string
+  reviewerNotes: string,
+  assignedReviewerId?: string | null,
+  reviewDueDate?: string | null
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   const context = await getProfileContext();
   if (!context) {
@@ -237,14 +251,23 @@ export async function updateAssessmentReview(
 
   const supabase = await createSupabaseServerClient();
   const reviewedAt = new Date().toISOString();
+
+  // Only owners can change assignment/due date — enforced server-side
+  const isOwner = context.role === "owner" || context.role === "admin" || context.role === "company_admin";
+  const updatePayload: Record<string, unknown> = {
+    human_review_status: status,
+    reviewer_notes: reviewerNotes || null,
+    reviewed_by: context.userId,
+    reviewed_at: reviewedAt
+  };
+  if (isOwner) {
+    if (assignedReviewerId !== undefined) updatePayload.assigned_reviewer_id = assignedReviewerId || null;
+    if (reviewDueDate !== undefined) updatePayload.review_due_date = reviewDueDate || null;
+  }
+
   const { data: assessment, error } = await supabase
     .from("assessments")
-    .update({
-      human_review_status: status,
-      reviewer_notes: reviewerNotes || null,
-      reviewed_by: context.userId,
-      reviewed_at: reviewedAt
-    })
+    .update(updatePayload)
     .eq("organization_id", context.organizationId)
     .eq("id", assessmentId)
     .select("id,score,level")
@@ -268,6 +291,8 @@ export async function updateAssessmentReview(
         status,
         reviewerNotes,
         reviewedAt,
+        assignedReviewerId: assignedReviewerId ?? null,
+        reviewDueDate: reviewDueDate ?? null,
         level: assessment.level,
         score: assessment.score
       },
@@ -354,6 +379,9 @@ export async function saveAssessment(input: BioAiInput) {
       }
     )
   });
+
+  // Log to AI knowledge review queue (non-blocking).
+  void logAssessmentKnowledgeEntry(input, assessment, context.organizationId).catch(() => {});
 
   return { ok: true, status: 201, id: data.id, assessment };
 }

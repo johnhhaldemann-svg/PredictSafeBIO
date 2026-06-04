@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PredictSafe BIO — Reports</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1d2e; font-size: 13px; }
+.shell { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+.topbar { background: #1a1d2e; color: white; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 48px; flex-shrink: 0; }
+.topbar-brand { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.topbar-brand span { background: #4f7ef8; color: white; border-radius: 5px; padding: 2px 7px; font-size: 11px; }
+.topbar-nav { display: flex; gap: 2px; }
+.topbar-nav a { color: #8a8fa8; font-size: 12px; padding: 6px 11px; border-radius: 5px; cursor: pointer; text-decoration: none; }
+.topbar-nav a.active { background: rgba(255,255,255,0.1); color: white; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.btn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+.btn-primary { background: #0d9488; color: white; }
+.btn-primary:hover { background: #0f766e; }
+.btn-ghost { background: transparent; color: #8a8fa8; border: 1px solid #2e3349; }
+.btn-ghost:hover { color: white; border-color: #4a4f6a; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; background: #4f7ef8; color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+
+.kpi-bar { background: white; border-bottom: 1px solid #e8eaf0; padding: 10px 20px; display: flex; align-items: center; gap: 0; flex-shrink: 0; }
+.kpi-card { flex: 1; padding: 0 18px; border-right: 1px solid #e8eaf0; }
+.kpi-card:first-child { padding-left: 0; }
+.kpi-card:last-child { border-right: none; }
+.kpi-num { font-size: 22px; font-weight: 800; line-height: 1; }
+.kpi-label { font-size: 11px; color: #6b7280; margin-top: 2px; }
+.kpi-delta { font-size: 10px; font-weight: 600; margin-top: 3px; }
+.up { color: #10b981; } .dn { color: #ef4444; } .neu { color: #9ca3af; }
+.c-teal { color: #0d9488; } .c-green { color: #10b981; } .c-amber { color: #f59e0b; } .c-blue { color: #4f7ef8; } .c-grey { color: #9ca3af; }
+
+.body { display: flex; flex: 1; overflow: hidden; }
+
+.sidebar { width: 196px; background: white; border-right: 1px solid #e8eaf0; flex-shrink: 0; padding: 14px 0; overflow-y: auto; }
+.sidebar-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; padding: 6px 16px 4px; }
+.sidebar-item { display: flex; align-items: center; justify-content: space-between; padding: 7px 16px; cursor: pointer; font-size: 12px; color: #374151; transition: all 0.1s; }
+.sidebar-item:hover { background: #f4f6f9; }
+.sidebar-item.active { background: #f0fdfa; color: #0d9488; font-weight: 600; border-right: 2px solid #0d9488; }
+.badge { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+.b-teal { background: #ccfbf1; color: #0d9488; }
+.b-grey { background: #f3f4f6; color: #6b7280; }
+.b-amber { background: #fef3c7; color: #d97706; }
+.b-green { background: #d1fae5; color: #059669; }
+
+.main { flex: 1; overflow-y: auto; padding: 18px 20px; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.page-title { font-size: 16px; font-weight: 800; }
+.page-subtitle { font-size: 11px; color: #6b7280; margin-top: 2px; }
+
+.tabs { display: flex; border-bottom: 2px solid #e8eaf0; margin-bottom: 16px; }
+.tab { padding: 8px 15px; font-size: 12px; font-weight: 600; color: #6b7280; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; display: flex; align-items: center; gap: 6px; transition: all 0.1s; }
+.tab.active { color: #0d9488; border-bottom-color: #0d9488; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.filter-bar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; }
+.search-box { display: flex; align-items: center; background: white; border: 1px solid #e8eaf0; border-radius: 7px; padding: 0 10px; gap: 6px; width: 240px; }
+.search-box input { border: none; outline: none; font-size: 12px; padding: 7px 0; flex: 1; background: transparent; }
+.chip { font-size: 11px; padding: 5px 10px; border-radius: 6px; background: white; border: 1px solid #e8eaf0; color: #374151; cursor: pointer; font-weight: 500; transition: all 0.1s; }
+.chip.on { background: #f0fdfa; border-color: #99f6e4; color: #0d9488; font-weight: 700; }
+
+.notice { display: flex; align-items: center; gap: 8px; font-size: 11px; padding: 8px 12px; border-radius: 7px; margin-bottom: 12px; font-weight: 500; background: #f0fdfa; color: #134e4a; border: 1px solid #99f6e4; }
+
+/* Report cards */
+.report-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.report-card { background: white; border: 1px solid #e8eaf0; border-radius: 10px; padding: 16px; cursor: pointer; transition: all 0.15s; }
+.report-card:hover { border-color: #99f6e4; box-shadow: 0 2px 8px rgba(13,148,136,0.08); }
+.report-card-icon { font-size: 28px; margin-bottom: 10px; }
+.report-card-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.report-card-desc { font-size: 11px; color: #6b7280; line-height: 1.5; margin-bottom: 12px; }
+.report-card-meta { font-size: 10px; color: #9ca3af; margin-bottom: 10px; }
+.report-card-actions { display: flex; gap: 6px; }
+.btn-xs { font-size: 11px; padding: 4px 10px; border-radius: 5px; border: none; cursor: pointer; font-weight: 600; }
+.btn-xs-primary { background: #0d9488; color: white; }
+.btn-xs-ghost { background: #f4f6f9; color: #374151; }
+
+/* History list */
+.history-list { display: flex; flex-direction: column; gap: 6px; }
+.history-row { background: white; border: 1px solid #e8eaf0; border-radius: 8px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; transition: all 0.1s; }
+.history-row:hover { border-color: #99f6e4; }
+.history-icon { font-size: 20px; flex-shrink: 0; }
+.history-info { flex: 1; }
+.history-name { font-weight: 600; font-size: 13px; }
+.history-meta { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+.history-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.report-type-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+.rt-soc { background: #eff3fe; color: #4f7ef8; }
+.rt-hipaa { background: #fef3c7; color: #d97706; }
+.rt-iso { background: #d1fae5; color: #059669; }
+.rt-custom { background: #f5f3ff; color: #7c3aed; }
+.rt-exec { background: #f0fdfa; color: #0d9488; }
+.icon-btn { background: #f4f6f9; border: none; border-radius: 5px; padding: 4px 8px; font-size: 11px; cursor: pointer; color: #374151; }
+.icon-btn:hover { background: #ccfbf1; color: #0d9488; }
+
+/* Schedule list */
+.sched-list { display: flex; flex-direction: column; gap: 8px; }
+.sched-card { background: white; border: 1px solid #e8eaf0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; }
+.sched-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.sched-info { flex: 1; }
+.sched-name { font-weight: 700; font-size: 13px; }
+.sched-freq { font-size: 11px; color: #6b7280; margin-top: 3px; }
+.sched-next { font-size: 11px; color: #374151; font-weight: 600; margin-top: 3px; }
+.sched-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.toggle { width: 36px; height: 20px; background: #0d9488; border-radius: 10px; position: relative; cursor: pointer; }
+.toggle::after { content: ''; position: absolute; width: 14px; height: 14px; background: white; border-radius: 50%; top: 3px; right: 3px; transition: all 0.2s; }
+.toggle.off { background: #d1d5db; }
+.toggle.off::after { right: auto; left: 3px; }
+.sched-recipients { font-size: 10px; color: #9ca3af; }
+
+/* Builder */
+.builder { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.builder-panel { background: white; border: 1px solid #e8eaf0; border-radius: 10px; padding: 16px; }
+.builder-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #e8eaf0; }
+.form-group { margin-bottom: 12px; }
+.form-label { font-size: 11px; font-weight: 700; color: #374151; display: block; margin-bottom: 5px; }
+.form-input { width: 100%; border: 1px solid #e8eaf0; border-radius: 6px; padding: 7px 10px; font-size: 12px; outline: none; color: #1a1d2e; background: white; }
+.form-input:focus { border-color: #0d9488; }
+.check-group { display: flex; flex-direction: column; gap: 8px; }
+.check-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #374151; cursor: pointer; }
+.check-box { width: 16px; height: 16px; border: 2px solid #d1d5db; border-radius: 3px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.1s; }
+.check-box.checked { background: #0d9488; border-color: #0d9488; color: white; font-size: 10px; }
+.preview-box { background: #f9fafb; border: 1px solid #e8eaf0; border-radius: 6px; padding: 14px; min-height: 140px; }
+.preview-section { display: flex; align-items: center; justify-content: space-between; font-size: 11px; padding: 6px 0; border-bottom: 1px dashed #e8eaf0; color: #6b7280; }
+.preview-section:last-child { border-bottom: none; }
+.preview-section.included { color: #0d9488; font-weight: 600; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:22px;">
+      <div class="topbar-brand">PredictSafe <span>BIO</span></div>
+      <nav class="topbar-nav">
+        <a href="compliance_map_redesign.html">Compliance</a>
+        <a href="risk_page_redesign.html">Risk</a>
+        <a href="vendors_page_redesign.html">Vendors</a>
+        <a class="active">Reports</a>
+        <a href="settings_page_redesign.html">Settings</a>
+      </nav>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost">🔔</button>
+      <button class="btn btn-primary">+ Generate Report</button>
+      <div class="avatar">JH</div>
+    </div>
+  </div>
+
+  <div class="kpi-bar">
+    <div class="kpi-card"><div class="kpi-num c-teal">24</div><div class="kpi-label">Reports Generated</div><div class="kpi-delta neu">This year</div></div>
+    <div class="kpi-card"><div class="kpi-num c-green">6</div><div class="kpi-label">Scheduled Reports</div><div class="kpi-delta neu">Active</div></div>
+    <div class="kpi-card"><div class="kpi-num c-amber">2</div><div class="kpi-label">Auditor Packages</div><div class="kpi-delta neu">Pending delivery</div></div>
+    <div class="kpi-card"><div class="kpi-num c-blue">3</div><div class="kpi-label">Frameworks Covered</div><div class="kpi-delta neu">SOC2 · HIPAA · ISO</div></div>
+    <div class="kpi-card"><div class="kpi-num c-teal">Aug 15</div><div class="kpi-label">Next Audit Date</div><div class="kpi-delta neu">73 days away</div></div>
+  </div>
+
+  <div class="body">
+    <div class="sidebar">
+      <div class="sidebar-label">Report Types</div>
+      <div class="sidebar-item active">All Reports <span class="badge b-teal">24</span></div>
+      <div class="sidebar-item">SOC 2 <span class="badge b-grey">8</span></div>
+      <div class="sidebar-item">HIPAA <span class="badge b-grey">5</span></div>
+      <div class="sidebar-item">ISO 27001 <span class="badge b-grey">4</span></div>
+      <div class="sidebar-item">Executive Summary <span class="badge b-grey">5</span></div>
+      <div class="sidebar-item">Custom <span class="badge b-grey">2</span></div>
+      <div style="height:10px;"></div>
+      <div class="sidebar-label">Status</div>
+      <div class="sidebar-item">✅ Delivered <span class="badge b-green">18</span></div>
+      <div class="sidebar-item">⏳ Pending <span class="badge b-amber">4</span></div>
+      <div class="sidebar-item">📅 Scheduled <span class="badge b-teal">6</span></div>
+    </div>
+
+    <div class="main">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Reports</div>
+          <div class="page-subtitle">Audit-ready packages, scheduled exports, and custom report builder. No live control data — use Compliance page for that.</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost" style="font-size:12px;">📅 Schedule Report</button>
+          <button class="btn btn-primary">+ Generate Report</button>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('library',this)">📚 Report Library <span class="badge b-teal" style="font-size:10px;">24</span></div>
+        <div class="tab" onclick="switchTab('scheduled',this)">📅 Scheduled <span class="badge b-grey" style="font-size:10px;">6</span></div>
+        <div class="tab" onclick="switchTab('auditor',this)">📦 Auditor Packages <span class="badge b-amber" style="font-size:10px;">2 pending</span></div>
+        <div class="tab" onclick="switchTab('builder',this)">🔧 Report Builder</div>
+      </div>
+
+      <!-- LIBRARY TAB -->
+      <div class="tab-panel active" id="panel-library">
+        <div class="notice">📚 <strong>Report Library:</strong> Generated and historical reports only — no live compliance status. For current control health, see the Compliance page.</div>
+
+        <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#374151;">Quick Generate</div>
+        <div class="report-grid" style="margin-bottom:20px;">
+          <div class="report-card">
+            <div class="report-card-icon">📊</div>
+            <div class="report-card-title">Executive Summary</div>
+            <div class="report-card-desc">1-page compliance health snapshot for board or investor review. Overall score, critical issues, trend.</div>
+            <div class="report-card-meta">⏱ ~30 seconds to generate</div>
+            <div class="report-card-actions">
+              <button class="btn-xs btn-xs-primary" onclick="alert('Generating Executive Summary...')">Generate PDF</button>
+              <button class="btn-xs btn-xs-ghost">Preview</button>
+            </div>
+          </div>
+          <div class="report-card">
+            <div class="report-card-icon">🔍</div>
+            <div class="report-card-title">SOC 2 Readiness Report</div>
+            <div class="report-card-desc">Full control-by-control readiness assessment across all 5 trust service criteria with evidence status.</div>
+            <div class="report-card-meta">⏱ ~2 minutes to generate</div>
+            <div class="report-card-actions">
+              <button class="btn-xs btn-xs-primary" onclick="alert('Generating SOC 2 Report...')">Generate PDF</button>
+              <button class="btn-xs btn-xs-ghost">Preview</button>
+            </div>
+          </div>
+          <div class="report-card">
+            <div class="report-card-icon">📦</div>
+            <div class="report-card-title">Auditor Package</div>
+            <div class="report-card-desc">Full evidence bundle with all controls, uploaded files, and owner attestations. Formatted for external auditors.</div>
+            <div class="report-card-meta">⏱ ~5 minutes to compile</div>
+            <div class="report-card-actions">
+              <button class="btn-xs btn-xs-primary" onclick="switchTab('auditor',null)">Build Package</button>
+              <button class="btn-xs btn-xs-ghost">Learn more</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#374151;display:flex;align-items:center;justify-content:space-between;">
+          Recent Reports
+          <div class="filter-bar" style="margin:0;">
+            <div class="search-box" style="width:180px;"><span style="color:#9ca3af;font-size:12px;">🔍</span><input placeholder="Search…"></div>
+            <div class="chip on" style="font-size:10px;padding:4px 8px;">All</div>
+            <div class="chip" style="font-size:10px;padding:4px 8px;">SOC 2</div>
+            <div class="chip" style="font-size:10px;padding:4px 8px;">HIPAA</div>
+            <div class="chip" style="font-size:10px;padding:4px 8px;">Executive</div>
+          </div>
+        </div>
+
+        <div class="history-list">
+          <div class="history-row">
+            <div class="history-icon">📊</div>
+            <div class="history-info">
+              <div class="history-name">Executive Summary — June 2026</div>
+              <div class="history-meta">Generated Jun 1, 2026 · By J. Haldemann · 1 page · PDF · 148 KB</div>
+            </div>
+            <div class="history-right">
+              <span class="report-type-badge rt-exec">Executive</span>
+              <button class="icon-btn">👁 View</button>
+              <button class="icon-btn">⬇ Download</button>
+              <button class="icon-btn">📧 Share</button>
+            </div>
+          </div>
+          <div class="history-row">
+            <div class="history-icon">🔍</div>
+            <div class="history-info">
+              <div class="history-name">SOC 2 Type II Readiness Report — Q1 2026</div>
+              <div class="history-meta">Generated Apr 2, 2026 · By R. Chen · 47 pages · PDF · 2.1 MB</div>
+            </div>
+            <div class="history-right">
+              <span class="report-type-badge rt-soc">SOC 2</span>
+              <button class="icon-btn">👁 View</button>
+              <button class="icon-btn">⬇ Download</button>
+              <button class="icon-btn">📧 Share</button>
+            </div>
+          </div>
+          <div class="history-row">
+            <div class="history-icon">🏥</div>
+            <div class="history-info">
+              <div class="history-name">HIPAA Security Rule Assessment — Q1 2026</div>
+              <div class="history-meta">Generated Mar 28, 2026 · By M. Torres · 32 pages · PDF · 1.4 MB</div>
+            </div>
+            <div class="history-right">
+              <span class="report-type-badge rt-hipaa">HIPAA</span>
+              <button class="icon-btn">👁 View</button>
+              <button class="icon-btn">⬇ Download</button>
+              <button class="icon-btn">📧 Share</button>
+            </div>
+          </div>
+          <div class="history-row">
+            <div class="history-icon">📦</div>
+            <div class="history-info">
+              <div class="history-name">Auditor Evidence Package — KPMG Q1 2026</div>
+              <div class="history-meta">Generated Mar 15, 2026 · By J. Haldemann · 147 controls · ZIP · 84 MB</div>
+            </div>
+            <div class="history-right">
+              <span class="report-type-badge rt-soc">SOC 2</span>
+              <button class="icon-btn">⬇ Download</button>
+              <button class="icon-btn">📧 Resend</button>
+            </div>
+          </div>
+          <div class="history-row">
+            <div class="history-icon">🌐</div>
+            <div class="history-info">
+              <div class="history-name">ISO 27001 Gap Analysis — Annual 2025</div>
+              <div class="history-meta">Generated Jan 10, 2026 · By Security Team · 28 pages · PDF · 980 KB</div>
+            </div>
+            <div class="history-right">
+              <span class="report-type-badge rt-iso">ISO 27001</span>
+              <button class="icon-btn">👁 View</button>
+              <button class="icon-btn">⬇ Download</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCHEDULED TAB -->
+      <div class="tab-panel" id="panel-scheduled">
+        <div class="notice">📅 <strong>Scheduled Reports:</strong> Automated report cadence and recipient lists. Not a live data view.</div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+          <button class="btn btn-primary" style="font-size:12px;">+ Add Schedule</button>
+        </div>
+        <div class="sched-list">
+          <div class="sched-card">
+            <div class="sched-icon" style="background:#eff3fe;">📊</div>
+            <div class="sched-info">
+              <div class="sched-name">Weekly Executive Summary</div>
+              <div class="sched-freq">Every Monday at 8:00 AM</div>
+              <div class="sched-next">Next run: Jun 9, 2026</div>
+            </div>
+            <div class="sched-right">
+              <div class="toggle"></div>
+              <div class="sched-recipients">3 recipients · PDF</div>
+              <div style="display:flex;gap:5px;"><button class="icon-btn">✏️ Edit</button></div>
+            </div>
+          </div>
+          <div class="sched-card">
+            <div class="sched-icon" style="background:#f0fdfa;">🔍</div>
+            <div class="sched-info">
+              <div class="sched-name">Monthly SOC 2 Readiness Snapshot</div>
+              <div class="sched-freq">1st of each month at 9:00 AM</div>
+              <div class="sched-next">Next run: Jul 1, 2026</div>
+            </div>
+            <div class="sched-right">
+              <div class="toggle"></div>
+              <div class="sched-recipients">5 recipients · PDF + CSV</div>
+              <div style="display:flex;gap:5px;"><button class="icon-btn">✏️ Edit</button></div>
+            </div>
+          </div>
+          <div class="sched-card">
+            <div class="sched-icon" style="background:#fef3c7;">🏥</div>
+            <div class="sched-info">
+              <div class="sched-name">Quarterly HIPAA Assessment</div>
+              <div class="sched-freq">First Monday of each quarter</div>
+              <div class="sched-next">Next run: Jul 7, 2026</div>
+            </div>
+            <div class="sched-right">
+              <div class="toggle"></div>
+              <div class="sched-recipients">Legal team · PDF</div>
+              <div style="display:flex;gap:5px;"><button class="icon-btn">✏️ Edit</button></div>
+            </div>
+          </div>
+          <div class="sched-card">
+            <div class="sched-icon" style="background:#f3f4f6;">📋</div>
+            <div class="sched-info">
+              <div class="sched-name">Vendor Certification Expiry Digest</div>
+              <div class="sched-freq">Every Friday at 3:00 PM</div>
+              <div class="sched-next">Next run: Jun 6, 2026</div>
+            </div>
+            <div class="sched-right">
+              <div class="toggle off"></div>
+              <div class="sched-recipients" style="color:#ef4444;font-weight:600;">Paused</div>
+              <div style="display:flex;gap:5px;"><button class="icon-btn">✏️ Edit</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AUDITOR PACKAGES TAB -->
+      <div class="tab-panel" id="panel-auditor">
+        <div class="notice">📦 <strong>Auditor Packages:</strong> Evidence bundles formatted for external auditors. Assembled from live data at time of generation — the package itself is a static snapshot.</div>
+        <div class="two-col" style="margin-bottom:16px;">
+          <div style="background:white;border:1px solid #e8eaf0;border-radius:10px;padding:16px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <div style="font-size:13px;font-weight:700;">KPMG — Q2 2026 Audit Package</div>
+              <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;background:#fef3c7;color:#d97706;">In Preparation</span>
+            </div>
+            <div style="font-size:11px;color:#6b7280;margin-bottom:10px;">Target delivery: Jul 1, 2026 · Audit date: Aug 15, 2026</div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid #f3f4f6;"><span style="color:#6b7280;">Controls included</span><span style="font-weight:600;">147 / 147</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid #f3f4f6;"><span style="color:#6b7280;">Evidence files</span><span style="font-weight:600;">41 files</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid #f3f4f6;"><span style="color:#6b7280;">Owner attestations</span><span style="font-weight:600;color:#d97706;">129 / 147 signed</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;"><span style="color:#6b7280;">Package readiness</span><span style="font-weight:700;color:#d97706;">88%</span></div>
+            </div>
+            <div style="height:6px;background:#e8eaf0;border-radius:3px;overflow:hidden;margin-bottom:12px;"><div style="width:88%;height:100%;background:#f59e0b;border-radius:3px;"></div></div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-primary" style="font-size:12px;flex:1;" onclick="alert('Chasing 18 missing attestations...')">Chase 18 Attestations</button>
+              <button class="btn btn-ghost" style="font-size:12px;" onclick="alert('Preview package...')">Preview</button>
+            </div>
+          </div>
+          <div style="background:white;border:1px solid #e8eaf0;border-radius:10px;padding:16px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <div style="font-size:13px;font-weight:700;">KPMG — Q1 2026 Audit Package</div>
+              <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;background:#d1fae5;color:#059669;">Delivered</span>
+            </div>
+            <div style="font-size:11px;color:#6b7280;margin-bottom:10px;">Delivered: Mar 15, 2026 · Audit period: Jan–Mar 2026</div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid #f3f4f6;"><span style="color:#6b7280;">Controls included</span><span style="font-weight:600;">143 / 143</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid #f3f4f6;"><span style="color:#6b7280;">Evidence files</span><span style="font-weight:600;">38 files</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid #f3f4f6;"><span style="color:#6b7280;">Owner attestations</span><span style="font-weight:600;color:#059669;">143 / 143 signed</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;"><span style="color:#6b7280;">Auditor findings</span><span style="font-weight:700;color:#ef4444;">2 findings issued</span></div>
+            </div>
+            <div style="height:6px;background:#e8eaf0;border-radius:3px;overflow:hidden;margin-bottom:12px;"><div style="width:100%;height:100%;background:#10b981;border-radius:3px;"></div></div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-ghost" style="font-size:12px;flex:1;">⬇ Download ZIP</button>
+              <button class="btn btn-ghost" style="font-size:12px;">📧 Resend</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUILDER TAB -->
+      <div class="tab-panel" id="panel-builder">
+        <div class="notice">🔧 <strong>Report Builder:</strong> Configure a custom report by selecting sections, date range, and format. Data is pulled at generation time — the output is a static document.</div>
+        <div class="builder">
+          <div class="builder-panel">
+            <div class="builder-title">1. Report Configuration</div>
+            <div class="form-group">
+              <label class="form-label">Report Name</label>
+              <input class="form-input" placeholder="e.g. Board Compliance Briefing — Q2 2026">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Framework</label>
+              <select class="form-input">
+                <option>SOC 2 Type II</option>
+                <option>HIPAA Security Rule</option>
+                <option>ISO 27001</option>
+                <option>All Frameworks (Combined)</option>
+                <option>Custom Selection</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date Range</label>
+              <div style="display:flex;gap:8px;">
+                <input class="form-input" type="date" value="2026-01-01" style="flex:1;">
+                <input class="form-input" type="date" value="2026-06-03" style="flex:1;">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Output Format</label>
+              <select class="form-input">
+                <option>PDF (Formatted)</option>
+                <option>CSV (Data Export)</option>
+                <option>PDF + CSV Bundle</option>
+                <option>XLSX (Spreadsheet)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sections to Include</label>
+              <div class="check-group">
+                <label class="check-item" onclick="this.querySelector('.check-box').classList.toggle('checked');this.querySelector('.check-box').textContent=this.querySelector('.check-box').classList.contains('checked')?'✓':''">
+                  <div class="check-box checked">✓</div> Executive summary & health score
+                </label>
+                <label class="check-item" onclick="this.querySelector('.check-box').classList.toggle('checked');this.querySelector('.check-box').textContent=this.querySelector('.check-box').classList.contains('checked')?'✓':''">
+                  <div class="check-box checked">✓</div> Control-by-control status
+                </label>
+                <label class="check-item" onclick="this.querySelector('.check-box').classList.toggle('checked');this.querySelector('.check-box').textContent=this.querySelector('.check-box').classList.contains('checked')?'✓':''">
+                  <div class="check-box checked">✓</div> Evidence file index
+                </label>
+                <label class="check-item" onclick="this.querySelector('.check-box').classList.toggle('checked');this.querySelector('.check-box').textContent=this.querySelector('.check-box').classList.contains('checked')?'✓':''">
+                  <div class="check-box">✓</div> Risk register summary
+                </label>
+                <label class="check-item" onclick="this.querySelector('.check-box').classList.toggle('checked');this.querySelector('.check-box').textContent=this.querySelector('.check-box').classList.contains('checked')?'✓':''">
+                  <div class="check-box checked">✓</div> Open findings & remediation plans
+                </label>
+                <label class="check-item" onclick="this.querySelector('.check-box').classList.toggle('checked');this.querySelector('.check-box').textContent=this.querySelector('.check-box').classList.contains('checked')?'✓':''">
+                  <div class="check-box">✓</div> Vendor certification status
+                </label>
+                <label class="check-item" onclick="this.querySelector('.check-box').classList.toggle('checked');this.querySelector('.check-box').textContent=this.querySelector('.check-box').classList.contains('checked')?'✓':''">
+                  <div class="check-box">✓</div> Audit history timeline
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="builder-panel">
+            <div class="builder-title">2. Preview Structure</div>
+            <div class="preview-box">
+              <div class="preview-section included">✓ Cover Page & Executive Summary</div>
+              <div class="preview-section included">✓ SOC 2 Control Status (147 controls)</div>
+              <div class="preview-section included">✓ Evidence Index (41 files)</div>
+              <div class="preview-section" style="color:#d1d5db;">— Risk Register (not included)</div>
+              <div class="preview-section included">✓ Open Findings & Remediation</div>
+              <div class="preview-section" style="color:#d1d5db;">— Vendor Certifications (not included)</div>
+              <div class="preview-section" style="color:#d1d5db;">— Audit History (not included)</div>
+            </div>
+            <div style="margin-top:12px;font-size:11px;color:#6b7280;">Estimated size: ~2.4 MB PDF · ~45 pages</div>
+            <div style="margin-top:16px;">
+              <div class="form-group">
+                <label class="form-label">Deliver to</label>
+                <input class="form-input" placeholder="email@example.com, email2@example.com">
+              </div>
+              <div style="display:flex;gap:8px;margin-top:8px;">
+                <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="alert('Report generation started. You will receive an email when ready.')">Generate &amp; Send Report</button>
+                <button class="btn btn-ghost" onclick="alert('Saved as draft.')">Save Draft</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(id, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  if (el) el.classList.add('active');
+  else {
+    const map = { library:0, scheduled:1, auditor:2, builder:3 };
+    const tabs = document.querySelectorAll('.tab');
+    if (map[id] !== undefined) tabs[map[id]].classList.add('active');
+  }
+  const panel = document.getElementById('panel-' + id);
+  if (panel) panel.classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -1,4 +1,10 @@
+export const dynamic = "force-dynamic";
+
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = { title: "Document Control – PredictSafeBIO" };
+import { Bot, FileText } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { createDocumentMetadataAction } from "@/app/documents/actions";
 import { generateDocumentGapRecommendations } from "@/lib/documents/recommendations";
@@ -10,14 +16,34 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
   const params = await searchParams;
   const [documents, auth] = await Promise.all([listDocuments(), getAuthSummary()]);
   const canCreateDocuments = canCreateWorkspaceRecord(auth);
+  const totalDocumentGaps = documents.reduce((sum, doc) => sum + generateDocumentGapRecommendations(doc).length, 0);
 
   return (
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Document Control</p>
-          <h1>SOPs, Forms & Templates</h1>
+          <div className="page-header-left">
+            <p className="section-label">Document Control</p>
+            <h1>SOPs, Forms &amp; Templates</h1>
+          </div>
+          <Link className="button-primary" href="/documents">
+            <FileText size={14} />
+            Register document
+          </Link>
         </header>
+
+        {documents.length > 0 && totalDocumentGaps > 0 ? (
+          <div className="ai-context-bar">
+            <Bot size={15} />
+            <span>
+              <strong>AI identified {totalDocumentGaps} document gap{totalDocumentGaps !== 1 ? "s" : ""}.</strong>{" "}
+              Review recommended updates and missing evidence across your controlled records.
+            </span>
+            <Link className="ai-fill-btn" href="/documents">
+              View gaps
+            </Link>
+          </div>
+        ) : null}
         <section className="panel">
           <div className="panel-heading">
             <div>
@@ -113,7 +139,6 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
         <section className="document-grid">
           {documents.length === 0 ? (
             <article className="document-card">
-              <span>Live workspace</span>
               <strong>No document metadata saved yet</strong>
               <p>Create a controlled metadata record above to generate draft gap and AI-assisted update recommendations.</p>
             </article>

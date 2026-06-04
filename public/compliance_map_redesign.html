@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PredictSafe BIO — Compliance Map</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1d2e; font-size: 13px; }
+.shell { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+/* Top Bar */
+.topbar { background: #1a1d2e; color: white; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 48px; flex-shrink: 0; }
+.topbar-brand { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.topbar-brand span { background: #4f7ef8; color: white; border-radius: 5px; padding: 2px 7px; font-size: 11px; }
+.topbar-nav { display: flex; gap: 2px; }
+.topbar-nav a { color: #8a8fa8; font-size: 12px; padding: 6px 11px; border-radius: 5px; cursor: pointer; text-decoration: none; transition: all 0.1s; }
+.topbar-nav a:hover { color: #c9d0e8; }
+.topbar-nav a.active { background: rgba(255,255,255,0.1); color: white; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.btn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+.btn-primary { background: #4f7ef8; color: white; }
+.btn-primary:hover { background: #3a6ae8; }
+.btn-ghost { background: transparent; color: #8a8fa8; border: 1px solid #2e3349; }
+.btn-ghost:hover { color: white; border-color: #4a4f6a; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; background: #4f7ef8; color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+
+/* KPI Bar */
+.kpi-bar { background: white; border-bottom: 1px solid #e8eaf0; padding: 10px 20px; display: flex; align-items: center; gap: 0; flex-shrink: 0; }
+.kpi-card { flex: 1; padding: 0 18px; border-right: 1px solid #e8eaf0; }
+.kpi-card:first-child { padding-left: 0; }
+.kpi-card:last-child { border-right: none; }
+.kpi-num { font-size: 22px; font-weight: 800; line-height: 1; }
+.kpi-label { font-size: 11px; color: #6b7280; margin-top: 2px; }
+.kpi-delta { font-size: 10px; font-weight: 600; margin-top: 3px; }
+.kpi-delta.up { color: #10b981; } .kpi-delta.dn { color: #ef4444; } .kpi-delta.neutral { color: #9ca3af; }
+.c-blue { color: #4f7ef8; } .c-green { color: #10b981; } .c-red { color: #ef4444; } .c-amber { color: #f59e0b; } .c-grey { color: #9ca3af; }
+.health-wrap { display: flex; align-items: center; gap: 10px; padding-left: 18px; }
+
+/* Body */
+.body { display: flex; flex: 1; overflow: hidden; }
+
+/* Sidebar */
+.sidebar { width: 196px; background: white; border-right: 1px solid #e8eaf0; overflow-y: auto; flex-shrink: 0; padding: 14px 0; }
+.sidebar-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; padding: 6px 16px 4px; }
+.sidebar-item { display: flex; align-items: center; justify-content: space-between; padding: 7px 16px; cursor: pointer; font-size: 12px; color: #374151; transition: all 0.1s; }
+.sidebar-item:hover { background: #f4f6f9; }
+.sidebar-item.active { background: #eff3fe; color: #4f7ef8; font-weight: 600; border-right: 2px solid #4f7ef8; }
+.badge { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+.b-red { background: #fee2e2; color: #dc2626; }
+.b-amber { background: #fef3c7; color: #d97706; }
+.b-green { background: #d1fae5; color: #059669; }
+.b-grey { background: #f3f4f6; color: #6b7280; }
+.b-blue { background: #eff3fe; color: #4f7ef8; }
+
+/* Main */
+.main { flex: 1; overflow-y: auto; padding: 18px 20px; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.page-title { font-size: 16px; font-weight: 800; }
+.page-subtitle { font-size: 11px; color: #6b7280; margin-top: 2px; }
+.page-actions { display: flex; gap: 7px; }
+
+/* Tabs */
+.tabs { display: flex; border-bottom: 2px solid #e8eaf0; margin-bottom: 14px; }
+.tab { padding: 8px 15px; font-size: 12px; font-weight: 600; color: #6b7280; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; display: flex; align-items: center; gap: 6px; transition: all 0.1s; }
+.tab:hover { color: #374151; }
+.tab.active { color: #4f7ef8; border-bottom-color: #4f7ef8; }
+
+/* Filter bar */
+.filter-bar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; }
+.search-box { display: flex; align-items: center; background: white; border: 1px solid #e8eaf0; border-radius: 7px; padding: 0 10px; gap: 6px; width: 240px; }
+.search-box input { border: none; outline: none; font-size: 12px; padding: 7px 0; flex: 1; background: transparent; color: #1a1d2e; }
+.chip { font-size: 11px; padding: 5px 10px; border-radius: 6px; background: white; border: 1px solid #e8eaf0; color: #374151; cursor: pointer; font-weight: 500; transition: all 0.1s; }
+.chip:hover { border-color: #4f7ef8; color: #4f7ef8; }
+.chip.on { background: #eff3fe; border-color: #c7d2fe; color: #4f7ef8; font-weight: 700; }
+
+/* Section header */
+.section-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e8eaf0; }
+.section-hdr-left { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; }
+.section-hdr-right { display: flex; gap: 10px; font-size: 11px; color: #6b7280; }
+
+/* Control Cards */
+.ctrl-list { display: flex; flex-direction: column; gap: 7px; }
+.ctrl-card { background: white; border: 1px solid #e8eaf0; border-radius: 10px; cursor: pointer; transition: all 0.15s; overflow: hidden; }
+.ctrl-card:hover { border-color: #c7d2fe; box-shadow: 0 2px 8px rgba(79,126,248,0.07); }
+.ctrl-card.open { border-color: #4f7ef8; }
+.ctrl-card-row { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+.ctrl-id { font-size: 11px; font-weight: 700; color: #9ca3af; font-family: monospace; min-width: 46px; }
+.ctrl-info { flex: 1; }
+.ctrl-name { font-weight: 600; font-size: 13px; }
+.ctrl-meta { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+.ctrl-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.status-pill { display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.sp-fail { background: #fee2e2; color: #dc2626; }
+.sp-pass { background: #d1fae5; color: #059669; }
+.sp-review { background: #fef3c7; color: #d97706; }
+.sp-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.link-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 5px; background: #f3f4f6; color: #6b7280; cursor: pointer; transition: all 0.1s; }
+.link-badge:hover { background: #e0e7ff; color: #4f7ef8; }
+.prog-bar { height: 4px; background: #e8eaf0; border-radius: 2px; overflow: hidden; margin: 0 14px 12px; }
+.prog-fill { height: 100%; border-radius: 2px; }
+
+/* Expanded panel */
+.ctrl-expand { display: none; padding: 12px 14px; border-top: 1px solid #e8eaf0; background: #fafbff; }
+.ctrl-card.open .ctrl-expand { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.exp-field label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; display: block; margin-bottom: 4px; }
+.exp-field p { font-size: 12px; color: #374151; line-height: 1.5; }
+.exp-actions { grid-column: 1/-1; display: flex; gap: 7px; padding-top: 10px; border-top: 1px solid #e8eaf0; flex-wrap: wrap; }
+.btn-s { padding: 5px 10px; font-size: 11px; font-weight: 600; border-radius: 5px; border: none; cursor: pointer; }
+.btn-sp { background: #4f7ef8; color: white; }
+.btn-sg { background: #f4f6f9; color: #374151; }
+.btn-sd { background: #fee2e2; color: #dc2626; margin-left: auto; }
+
+/* Evidence Tab */
+.ev-list { display: flex; flex-direction: column; gap: 7px; }
+.ev-card { background: white; border: 1px solid #e8eaf0; border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; transition: all 0.15s; }
+.ev-card:hover { border-color: #bbf7d0; box-shadow: 0 2px 6px rgba(16,185,129,0.07); }
+.ev-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.ev-icon.pdf { background: #fee2e2; }
+.ev-icon.xls { background: #d1fae5; }
+.ev-icon.lnk { background: #eff3fe; }
+.ev-icon.doc { background: #fef3c7; }
+.ev-info { flex: 1; }
+.ev-name { font-weight: 600; font-size: 13px; }
+.ev-meta { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+.ev-ctrl { font-size: 11px; color: #4f7ef8; font-weight: 600; margin-top: 3px; }
+.ev-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+.ev-status { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; white-space: nowrap; }
+.ev-approved { background: #d1fae5; color: #059669; }
+.ev-expired { background: #fee2e2; color: #dc2626; }
+.ev-pending { background: #fef3c7; color: #d97706; }
+.ev-actions { display: flex; gap: 5px; }
+.icon-btn { background: #f4f6f9; border: none; border-radius: 5px; padding: 4px 8px; font-size: 11px; cursor: pointer; color: #374151; white-space: nowrap; }
+.icon-btn:hover { background: #e0e7ff; color: #4f7ef8; }
+
+/* History Tab */
+.timeline { display: flex; flex-direction: column; position: relative; }
+.timeline::before { content: ''; position: absolute; left: 18px; top: 0; bottom: 0; width: 2px; background: #e8eaf0; }
+.tl-item { display: flex; gap: 14px; padding-bottom: 20px; position: relative; }
+.tl-dot { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; z-index: 1; border: 3px solid #f4f6f9; }
+.tl-dot.pass { background: #d1fae5; }
+.tl-dot.fail { background: #fee2e2; }
+.tl-dot.info { background: #eff3fe; }
+.tl-body { flex: 1; background: white; border: 1px solid #e8eaf0; border-radius: 10px; padding: 12px 14px; }
+.tl-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 6px; }
+.tl-title { font-weight: 700; font-size: 13px; }
+.tl-date { font-size: 11px; color: #9ca3af; }
+.tl-body p { font-size: 12px; color: #374151; line-height: 1.5; }
+.tl-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.tl-tag { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; background: #f3f4f6; color: #6b7280; }
+.tl-tag.red { background: #fee2e2; color: #dc2626; }
+.tl-tag.green { background: #d1fae5; color: #059669; }
+.tl-tag.blue { background: #eff3fe; color: #4f7ef8; }
+
+/* Tasks Tab */
+.task-list { display: flex; flex-direction: column; gap: 7px; }
+.task-card { background: white; border: 1px solid #e8eaf0; border-radius: 10px; padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start; transition: all 0.15s; }
+.task-card:hover { border-color: #fecaca; }
+.task-check { width: 18px; height: 18px; border-radius: 4px; border: 2px solid #d1d5db; flex-shrink: 0; margin-top: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.1s; font-size: 11px; font-weight: 700; color: white; }
+.task-check:hover { border-color: #4f7ef8; }
+.task-check.done { background: #10b981; border-color: #10b981; }
+.task-body { flex: 1; }
+.task-title { font-weight: 600; font-size: 13px; }
+.task-desc { font-size: 11px; color: #6b7280; margin-top: 3px; line-height: 1.4; }
+.task-ctrl-link { font-size: 11px; color: #4f7ef8; font-weight: 600; margin-top: 5px; cursor: pointer; }
+.task-ctrl-link:hover { text-decoration: underline; }
+.task-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.prio { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+.prio-high { background: #fee2e2; color: #dc2626; }
+.prio-med { background: #fef3c7; color: #d97706; }
+.prio-low { background: #f3f4f6; color: #6b7280; }
+.task-meta { font-size: 10px; color: #9ca3af; text-align: right; line-height: 1.5; }
+.task-assignee { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #374151; font-weight: 500; }
+.mini-avatar { width: 18px; height: 18px; border-radius: 50%; background: #6366f1; color: white; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.mini-avatar.green { background: #10b981; }
+.mini-avatar.amber { background: #f59e0b; }
+
+/* Tab panels */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Notice banners */
+.notice { display: flex; align-items: center; gap: 8px; font-size: 11px; padding: 8px 12px; border-radius: 7px; margin-bottom: 12px; font-weight: 500; }
+.notice-blue { background: #eff3fe; color: #3730a3; border: 1px solid #c7d2fe; }
+.notice-green { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.notice-amber { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.notice-red { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:22px;">
+      <div class="topbar-brand">PredictSafe <span>BIO</span></div>
+      <nav class="topbar-nav">
+        <a class="active">Compliance</a>
+        <a>Risk</a>
+        <a>Vendors</a>
+        <a>Reports</a>
+        <a>Settings</a>
+      </nav>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost">🔔</button>
+      <button class="btn btn-primary">↑ Export Report</button>
+      <div class="avatar">JH</div>
+    </div>
+  </div>
+
+  <!-- KPI Summary Bar -->
+  <div class="kpi-bar">
+    <div class="kpi-card">
+      <div class="kpi-num c-blue">147</div>
+      <div class="kpi-label">Total Controls</div>
+      <div class="kpi-delta neutral">3 frameworks</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num c-green">112</div>
+      <div class="kpi-label">Passing</div>
+      <div class="kpi-delta up">↑ 4 this week</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num c-red">18</div>
+      <div class="kpi-label">Failing</div>
+      <div class="kpi-delta dn">↑ 2 new</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num c-amber">11</div>
+      <div class="kpi-label">Needs Review</div>
+      <div class="kpi-delta neutral">7 days</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num c-red">41</div>
+      <div class="kpi-label">Evidence Files</div>
+      <div class="kpi-delta dn">3 expired</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num c-red">5</div>
+      <div class="kpi-label">Open Tasks</div>
+      <div class="kpi-delta dn">2 overdue</div>
+    </div>
+    <div class="health-wrap">
+      <svg width="40" height="40" viewBox="0 0 40 40">
+        <circle cx="20" cy="20" r="16" fill="none" stroke="#e8eaf0" stroke-width="4"/>
+        <circle cx="20" cy="20" r="16" fill="none" stroke="#10b981" stroke-width="4"
+          stroke-dasharray="76 100" stroke-dashoffset="25" stroke-linecap="round" transform="rotate(-90 20 20)"/>
+        <text x="20" y="24" text-anchor="middle" font-size="9" font-weight="800" fill="#10b981">76%</text>
+      </svg>
+      <div>
+        <div style="font-size:20px;font-weight:800;color:#10b981;">76%</div>
+        <div style="font-size:11px;color:#6b7280;">Overall Health</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-label">Frameworks</div>
+      <div class="sidebar-item active">SOC 2 Type II <span class="badge b-red">8</span></div>
+      <div class="sidebar-item">HIPAA <span class="badge b-amber">4</span></div>
+      <div class="sidebar-item">ISO 27001 <span class="badge b-green">✓</span></div>
+      <div style="height:10px;"></div>
+      <div class="sidebar-label">Domains</div>
+      <div class="sidebar-item active">Access Control <span class="badge b-red">3</span></div>
+      <div class="sidebar-item">Audit &amp; Logging <span class="badge b-amber">2</span></div>
+      <div class="sidebar-item">Change Mgmt <span class="badge b-grey">0</span></div>
+      <div class="sidebar-item">Risk Assessment <span class="badge b-red">2</span></div>
+      <div class="sidebar-item">Vendor Mgmt <span class="badge b-amber">1</span></div>
+      <div class="sidebar-item">Incident Response <span class="badge b-grey">0</span></div>
+      <div class="sidebar-item">Privacy <span class="badge b-red">1</span></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+      <div class="page-header">
+        <div>
+          <div class="page-title">SOC 2 Type II — Access Control</div>
+          <div class="page-subtitle">Last reviewed: May 28, 2026 · Next audit: Aug 15, 2026 · Owner: Security Team</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-ghost" style="font-size:12px;">📧 Request Review</button>
+          <button class="btn btn-primary">+ Add Control</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('controls',this)">📋 Controls <span class="badge b-blue">13</span></div>
+        <div class="tab" onclick="switchTab('evidence',this)">📁 Evidence <span class="badge b-grey">18</span></div>
+        <div class="tab" onclick="switchTab('history',this)">🕐 Audit History</div>
+        <div class="tab" onclick="switchTab('tasks',this)">✅ Open Tasks <span class="badge b-red">5</span></div>
+      </div>
+
+      <!-- CONTROLS TAB -->
+      <div class="tab-panel active" id="panel-controls">
+        <div class="notice notice-blue">📋 <strong>Controls tab:</strong> Status, owners, gaps, and progress only. Evidence and tasks are managed in their own tabs.</div>
+        <div class="filter-bar">
+          <div class="search-box"><span style="color:#9ca3af;">🔍</span><input placeholder="Search controls…" oninput="filterCtrl(this.value)"></div>
+          <div class="chip on" onclick="chipCtrl(this,'all')">All</div>
+          <div class="chip" onclick="chipCtrl(this,'fail')">🔴 Failing</div>
+          <div class="chip" onclick="chipCtrl(this,'review')">🟡 Review</div>
+          <div class="chip" onclick="chipCtrl(this,'pass')">🟢 Passing</div>
+        </div>
+        <div class="section-hdr">
+          <div class="section-hdr-left">Access Control <span class="badge b-red">3 failing</span><span class="badge b-amber">2 review</span></div>
+          <div class="section-hdr-right"><span class="c-green">✓ 8 passing</span><span style="color:#e8eaf0;padding:0 6px;">|</span>13 total</div>
+        </div>
+        <div class="ctrl-list" id="ctrlList">
+
+          <div class="ctrl-card" data-s="fail" data-n="ac-1 access control policy" onclick="toggleCtrl(this)">
+            <div class="ctrl-card-row">
+              <div class="ctrl-id">AC-1</div>
+              <div class="ctrl-info">
+                <div class="ctrl-name">Access Control Policy</div>
+                <div class="ctrl-meta">Owner: Security Team · Due Jun 15, 2026</div>
+              </div>
+              <div class="ctrl-right">
+                <div class="link-badge" onclick="event.stopPropagation();switchTab('evidence',null)">📁 2 files</div>
+                <div class="link-badge" onclick="event.stopPropagation();switchTab('tasks',null)">✅ 2 tasks</div>
+                <div class="status-pill sp-fail"><div class="sp-dot"></div>Failing</div>
+              </div>
+            </div>
+            <div class="prog-bar"><div class="prog-fill" style="width:30%;background:#ef4444;"></div></div>
+            <div class="ctrl-expand">
+              <div class="exp-field"><label>Description</label><p>Formal access control policy must be documented, approved by management, and communicated to all relevant users.</p></div>
+              <div class="exp-field"><label>Current Gap</label><p>Policy last updated 2023. Q1 2026 management sign-off missing. New staff distribution not evidenced.</p></div>
+              <div class="exp-actions">
+                <button class="btn-s btn-sp" onclick="event.stopPropagation();switchTab('evidence',null)">↑ Upload Evidence</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation();switchTab('tasks',null)">+ Create Task</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">💬 Comment</button>
+                <button class="btn-s btn-sd" onclick="event.stopPropagation()">Mark Exception</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ctrl-card" data-s="fail" data-n="ac-3 access enforcement" onclick="toggleCtrl(this)">
+            <div class="ctrl-card-row">
+              <div class="ctrl-id">AC-3</div>
+              <div class="ctrl-info">
+                <div class="ctrl-name">Access Enforcement</div>
+                <div class="ctrl-meta">Owner: IT · Due Jun 10, 2026</div>
+              </div>
+              <div class="ctrl-right">
+                <div class="link-badge" onclick="event.stopPropagation();switchTab('evidence',null)">📁 0 files</div>
+                <div class="link-badge" onclick="event.stopPropagation();switchTab('tasks',null)">✅ 1 task</div>
+                <div class="status-pill sp-fail"><div class="sp-dot"></div>Failing</div>
+              </div>
+            </div>
+            <div class="prog-bar"><div class="prog-fill" style="width:15%;background:#ef4444;"></div></div>
+            <div class="ctrl-expand">
+              <div class="exp-field"><label>Description</label><p>System enforces approved authorizations for logical access to information and system resources.</p></div>
+              <div class="exp-field"><label>Current Gap</label><p>3 privileged accounts without MFA. Quarterly access review not completed for Q1 2026.</p></div>
+              <div class="exp-actions">
+                <button class="btn-s btn-sp" onclick="event.stopPropagation();switchTab('evidence',null)">↑ Upload Evidence</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation();switchTab('tasks',null)">+ Create Task</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">💬 Comment</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ctrl-card" data-s="review" data-n="ac-5 separation of duties" onclick="toggleCtrl(this)">
+            <div class="ctrl-card-row">
+              <div class="ctrl-id">AC-5</div>
+              <div class="ctrl-info">
+                <div class="ctrl-name">Separation of Duties</div>
+                <div class="ctrl-meta">Owner: Legal · Due Jul 1, 2026</div>
+              </div>
+              <div class="ctrl-right">
+                <div class="link-badge" onclick="event.stopPropagation();switchTab('evidence',null)">📁 3 files</div>
+                <div class="link-badge" onclick="event.stopPropagation();switchTab('tasks',null)">✅ 1 task</div>
+                <div class="status-pill sp-review"><div class="sp-dot"></div>Review</div>
+              </div>
+            </div>
+            <div class="prog-bar"><div class="prog-fill" style="width:65%;background:#f59e0b;"></div></div>
+            <div class="ctrl-expand">
+              <div class="exp-field"><label>Description</label><p>Duties and areas of responsibility separated to reduce unauthorized modification opportunities.</p></div>
+              <div class="exp-field"><label>Current Gap</label><p>Evidence uploaded. Awaiting CISO sign-off before marking complete.</p></div>
+              <div class="exp-actions">
+                <button class="btn-s btn-sp" onclick="event.stopPropagation()">✓ Approve &amp; Close</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">💬 Comment</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ctrl-card" data-s="review" data-n="ac-6 least privilege" onclick="toggleCtrl(this)">
+            <div class="ctrl-card-row">
+              <div class="ctrl-id">AC-6</div>
+              <div class="ctrl-info">
+                <div class="ctrl-name">Least Privilege</div>
+                <div class="ctrl-meta">Owner: IT · Due Jun 25, 2026</div>
+              </div>
+              <div class="ctrl-right">
+                <div class="link-badge" onclick="event.stopPropagation();switchTab('evidence',null)">📁 1 file</div>
+                <div class="link-badge" onclick="event.stopPropagation();switchTab('tasks',null)">✅ 1 task</div>
+                <div class="status-pill sp-review"><div class="sp-dot"></div>Review</div>
+              </div>
+            </div>
+            <div class="prog-bar"><div class="prog-fill" style="width:70%;background:#f59e0b;"></div></div>
+            <div class="ctrl-expand">
+              <div class="exp-field"><label>Description</label><p>The principle of least privilege is employed, allowing only authorized accesses necessary for users to accomplish assigned tasks.</p></div>
+              <div class="exp-field"><label>Current Gap</label><p>Access reviews completed. Need final attestation from department heads by June 25.</p></div>
+              <div class="exp-actions">
+                <button class="btn-s btn-sp" onclick="event.stopPropagation()">✓ Approve &amp; Close</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">📧 Send Reminder</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">💬 Comment</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ctrl-card" data-s="pass" data-n="ac-2 account management" onclick="toggleCtrl(this)">
+            <div class="ctrl-card-row">
+              <div class="ctrl-id">AC-2</div>
+              <div class="ctrl-info">
+                <div class="ctrl-name">Account Management</div>
+                <div class="ctrl-meta">Owner: IT · Reviewed: May 20, 2026</div>
+              </div>
+              <div class="ctrl-right">
+                <div class="link-badge" onclick="event.stopPropagation();switchTab('evidence',null)">📁 4 files</div>
+                <div class="link-badge" onclick="event.stopPropagation();switchTab('tasks',null)">✅ 0 tasks</div>
+                <div class="status-pill sp-pass"><div class="sp-dot"></div>Passing</div>
+              </div>
+            </div>
+            <div class="prog-bar"><div class="prog-fill" style="width:100%;background:#10b981;"></div></div>
+            <div class="ctrl-expand">
+              <div class="exp-field"><label>Description</label><p>Manages information system accounts — establishing, activating, modifying, reviewing, and removing accounts.</p></div>
+              <div class="exp-field"><label>Status</label><p>All requirements met. Automated provisioning active via Okta. Next review: Aug 2026.</p></div>
+              <div class="exp-actions">
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">💬 Comment</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">📅 Schedule Review</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ctrl-card" data-s="pass" data-n="ac-7 unsuccessful login attempts" onclick="toggleCtrl(this)">
+            <div class="ctrl-card-row">
+              <div class="ctrl-id">AC-7</div>
+              <div class="ctrl-info">
+                <div class="ctrl-name">Unsuccessful Login Attempts</div>
+                <div class="ctrl-meta">Owner: Security Team · Reviewed: May 15, 2026</div>
+              </div>
+              <div class="ctrl-right">
+                <div class="link-badge" onclick="event.stopPropagation();switchTab('evidence',null)">📁 2 files</div>
+                <div class="link-badge" onclick="event.stopPropagation();switchTab('tasks',null)">✅ 0 tasks</div>
+                <div class="status-pill sp-pass"><div class="sp-dot"></div>Passing</div>
+              </div>
+            </div>
+            <div class="prog-bar"><div class="prog-fill" style="width:100%;background:#10b981;"></div></div>
+            <div class="ctrl-expand">
+              <div class="exp-field"><label>Description</label><p>System enforces a limit on consecutive invalid login attempts with automatic lockout after 5 attempts.</p></div>
+              <div class="exp-field"><label>Status</label><p>5-attempt lockout active, 30-min duration. SIEM alerts configured and tested quarterly.</p></div>
+              <div class="exp-actions">
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">💬 Comment</button>
+                <button class="btn-s btn-sg" onclick="event.stopPropagation()">📅 Schedule Review</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- EVIDENCE TAB -->
+      <div class="tab-panel" id="panel-evidence">
+        <div class="notice notice-green">📁 <strong>Evidence tab:</strong> All files, upload metadata, expiry dates, and reviewer approval. Control status is not shown here.</div>
+        <div class="filter-bar">
+          <div class="search-box"><span style="color:#9ca3af;">🔍</span><input placeholder="Search files…"></div>
+          <div class="chip on">All</div>
+          <div class="chip">⚠ Expiring</div>
+          <div class="chip">🔴 Expired</div>
+          <div class="chip">✓ Approved</div>
+          <div style="margin-left:auto;">
+            <button class="btn btn-primary" style="padding:6px 12px;font-size:12px;">↑ Upload File</button>
+          </div>
+        </div>
+        <div class="ev-list">
+
+          <div class="ev-card">
+            <div class="ev-icon pdf">📄</div>
+            <div class="ev-info">
+              <div class="ev-name">Draft_ACPolicy_v3.pdf</div>
+              <div class="ev-meta">Uploaded by J. Haldemann · May 10, 2026 · 1.2 MB</div>
+              <div class="ev-ctrl">↳ Maps to: AC-1 Access Control Policy</div>
+            </div>
+            <div class="ev-right">
+              <div class="ev-status ev-expired">Expired Apr 30</div>
+              <div class="ev-actions"><button class="icon-btn">👁 Preview</button><button class="icon-btn">⬇ Download</button><button class="icon-btn">🗑</button></div>
+            </div>
+          </div>
+
+          <div class="ev-card">
+            <div class="ev-icon xls">📊</div>
+            <div class="ev-info">
+              <div class="ev-name">Access_Review_Q1_2026.xlsx</div>
+              <div class="ev-meta">Uploaded by R. Chen · Apr 22, 2026 · 580 KB</div>
+              <div class="ev-ctrl">↳ Maps to: AC-2 Account Management</div>
+            </div>
+            <div class="ev-right">
+              <div class="ev-status ev-approved">Approved</div>
+              <div class="ev-actions"><button class="icon-btn">👁 Preview</button><button class="icon-btn">⬇ Download</button></div>
+            </div>
+          </div>
+
+          <div class="ev-card">
+            <div class="ev-icon lnk">🔗</div>
+            <div class="ev-info">
+              <div class="ev-name">Okta Admin Report — May 2026</div>
+              <div class="ev-meta">Auto-synced via Okta integration · May 1, 2026</div>
+              <div class="ev-ctrl">↳ Maps to: AC-2 Account Management</div>
+            </div>
+            <div class="ev-right">
+              <div class="ev-status ev-approved">Approved</div>
+              <div class="ev-actions"><button class="icon-btn">🔗 Open</button></div>
+            </div>
+          </div>
+
+          <div class="ev-card">
+            <div class="ev-icon doc">📝</div>
+            <div class="ev-info">
+              <div class="ev-name">SoD_Matrix_v2.xlsx</div>
+              <div class="ev-meta">Uploaded by M. Torres · May 18, 2026 · 340 KB</div>
+              <div class="ev-ctrl">↳ Maps to: AC-5 Separation of Duties</div>
+            </div>
+            <div class="ev-right">
+              <div class="ev-status ev-pending">Pending Review</div>
+              <div class="ev-actions"><button class="icon-btn">👁 Preview</button><button class="icon-btn">⬇ Download</button><button class="icon-btn">✓ Approve</button></div>
+            </div>
+          </div>
+
+          <div class="ev-card">
+            <div class="ev-icon pdf">📄</div>
+            <div class="ev-info">
+              <div class="ev-name">Pen_Test_Report_Q1.pdf</div>
+              <div class="ev-meta">Uploaded by Security Team · Mar 15, 2026 · 4.8 MB</div>
+              <div class="ev-ctrl">↳ Maps to: AC-7 Unsuccessful Login Attempts</div>
+            </div>
+            <div class="ev-right">
+              <div class="ev-status ev-approved">Approved</div>
+              <div class="ev-actions"><button class="icon-btn">👁 Preview</button><button class="icon-btn">⬇ Download</button></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- HISTORY TAB -->
+      <div class="tab-panel" id="panel-history">
+        <div class="notice notice-amber">🕐 <strong>Audit History:</strong> Past findings and remediation records only. For current control status, see the Controls tab.</div>
+        <div class="filter-bar">
+          <div class="chip on">All Cycles</div>
+          <div class="chip">2026</div>
+          <div class="chip">2025</div>
+          <div class="chip">2024</div>
+        </div>
+        <div class="timeline">
+
+          <div class="tl-item">
+            <div class="tl-dot info">🔵</div>
+            <div class="tl-body">
+              <div class="tl-header">
+                <div class="tl-title">Quarterly Review Started — Q2 2026</div>
+                <div class="tl-date">Jun 1, 2026 · J. Haldemann</div>
+              </div>
+              <p>Q2 review cycle initiated. 13 controls under review for Access Control domain. Evidence collection window open until Jul 15.</p>
+              <div class="tl-tags"><div class="tl-tag blue">In Progress</div><div class="tl-tag">13 controls</div></div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-dot pass">✅</div>
+            <div class="tl-body">
+              <div class="tl-header">
+                <div class="tl-title">Q1 2026 Audit — Access Control Closed</div>
+                <div class="tl-date">Mar 31, 2026 · External Auditor: KPMG</div>
+              </div>
+              <p>8 of 10 controls passed. 2 findings issued: AC-1 (policy not refreshed) and AC-3 (MFA gap on privileged accounts). Remediation plan accepted.</p>
+              <div class="tl-tags"><div class="tl-tag green">8 Passed</div><div class="tl-tag red">2 Findings</div><div class="tl-tag">Time-to-remediate: 45 days</div></div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-dot fail">❌</div>
+            <div class="tl-body">
+              <div class="tl-header">
+                <div class="tl-title">Finding: AC-1 Policy Out-of-Date</div>
+                <div class="tl-date">Mar 28, 2026 · KPMG</div>
+              </div>
+              <p>Access Control Policy document had not been reviewed or approved by management since Jan 2023. Missing annual review required by SOC 2 CC6.1.</p>
+              <div class="tl-tags"><div class="tl-tag red">High Severity</div><div class="tl-tag">CC6.1</div><div class="tl-tag">Remediation due: May 15</div></div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-dot pass">✅</div>
+            <div class="tl-body">
+              <div class="tl-header">
+                <div class="tl-title">Q3 2025 Audit — Access Control Passed</div>
+                <div class="tl-date">Sep 30, 2025 · External Auditor: KPMG</div>
+              </div>
+              <p>All 10 controls passed with no findings. Commendation noted for automated Okta provisioning workflow implemented in Q2 2025.</p>
+              <div class="tl-tags"><div class="tl-tag green">10 Passed</div><div class="tl-tag green">0 Findings</div></div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-dot fail">❌</div>
+            <div class="tl-body">
+              <div class="tl-header">
+                <div class="tl-title">Finding: AC-6 Least Privilege — Stale Accounts</div>
+                <div class="tl-date">Jun 12, 2025 · Internal Review</div>
+              </div>
+              <p>17 terminated employee accounts remained active beyond 30-day offboarding window. HR integration gap identified. Remediated via automated deprovisioning.</p>
+              <div class="tl-tags"><div class="tl-tag red">Medium Severity</div><div class="tl-tag green">Remediated Jun 28</div><div class="tl-tag">Time-to-remediate: 16 days</div></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TASKS TAB -->
+      <div class="tab-panel" id="panel-tasks">
+        <div class="notice notice-red">✅ <strong>Open Tasks:</strong> Action items and assignments only. For control health scores, see the Controls tab.</div>
+        <div class="filter-bar">
+          <div class="search-box"><span style="color:#9ca3af;">🔍</span><input placeholder="Search tasks…"></div>
+          <div class="chip on">All</div>
+          <div class="chip">🔴 High</div>
+          <div class="chip">🟡 Medium</div>
+          <div class="chip">⏰ Overdue</div>
+          <div style="margin-left:auto;">
+            <button class="btn btn-primary" style="padding:6px 12px;font-size:12px;">+ New Task</button>
+          </div>
+        </div>
+        <div class="task-list">
+
+          <div class="task-card">
+            <div class="task-check" onclick="toggleCheck(this)"></div>
+            <div class="task-body">
+              <div class="task-title">Update and re-publish Access Control Policy</div>
+              <div class="task-desc">Refresh policy document, get CISO approval, and distribute to all staff. Must include Q1 2026 review sign-off.</div>
+              <div class="task-ctrl-link" onclick="switchTab('controls',null)">↳ AC-1 · Access Control Policy</div>
+            </div>
+            <div class="task-right">
+              <div class="prio prio-high">High</div>
+              <div class="task-assignee"><div class="mini-avatar">ST</div>Security Team</div>
+              <div class="task-meta">Due Jun 15, 2026<br><span style="color:#ef4444;font-weight:600;">5 days left</span></div>
+            </div>
+          </div>
+
+          <div class="task-card">
+            <div class="task-check" onclick="toggleCheck(this)"></div>
+            <div class="task-body">
+              <div class="task-title">Enable MFA on 3 privileged admin accounts</div>
+              <div class="task-desc">Enforce MFA in Okta for accounts: svc-deploy, svc-infra, admin-backup. Confirm via SIEM alert test after enabling.</div>
+              <div class="task-ctrl-link" onclick="switchTab('controls',null)">↳ AC-3 · Access Enforcement</div>
+            </div>
+            <div class="task-right">
+              <div class="prio prio-high">High</div>
+              <div class="task-assignee"><div class="mini-avatar green">IT</div>IT Team</div>
+              <div class="task-meta">Due Jun 10, 2026<br><span style="color:#ef4444;font-weight:600;">Overdue</span></div>
+            </div>
+          </div>
+
+          <div class="task-card">
+            <div class="task-check" onclick="toggleCheck(this)"></div>
+            <div class="task-body">
+              <div class="task-title">Complete Q1 2026 quarterly access review</div>
+              <div class="task-desc">Review all user access levels against role definitions. Remove excess privileges. Document results in Access_Review template.</div>
+              <div class="task-ctrl-link" onclick="switchTab('controls',null)">↳ AC-3 · Access Enforcement</div>
+            </div>
+            <div class="task-right">
+              <div class="prio prio-high">High</div>
+              <div class="task-assignee"><div class="mini-avatar green">IT</div>IT Team</div>
+              <div class="task-meta">Due Jun 10, 2026<br><span style="color:#ef4444;font-weight:600;">Overdue</span></div>
+            </div>
+          </div>
+
+          <div class="task-card">
+            <div class="task-check" onclick="toggleCheck(this)"></div>
+            <div class="task-body">
+              <div class="task-title">Get CISO sign-off on SoD Matrix v2</div>
+              <div class="task-desc">SoD Matrix uploaded and under review. Send to CISO for final approval. Required before AC-5 can be marked complete.</div>
+              <div class="task-ctrl-link" onclick="switchTab('controls',null)">↳ AC-5 · Separation of Duties</div>
+            </div>
+            <div class="task-right">
+              <div class="prio prio-med">Medium</div>
+              <div class="task-assignee"><div class="mini-avatar amber">LG</div>Legal</div>
+              <div class="task-meta">Due Jul 1, 2026<br><span style="color:#f59e0b;font-weight:600;">29 days left</span></div>
+            </div>
+          </div>
+
+          <div class="task-card">
+            <div class="task-check" onclick="toggleCheck(this)"></div>
+            <div class="task-body">
+              <div class="task-title">Collect department head attestations for least privilege review</div>
+              <div class="task-desc">Send attestation form to all department heads. Collect signed confirmations that access lists for their teams are accurate.</div>
+              <div class="task-ctrl-link" onclick="switchTab('controls',null)">↳ AC-6 · Least Privilege</div>
+            </div>
+            <div class="task-right">
+              <div class="prio prio-med">Medium</div>
+              <div class="task-assignee"><div class="mini-avatar green">IT</div>IT Team</div>
+              <div class="task-meta">Due Jun 25, 2026<br><span style="color:#f59e0b;font-weight:600;">23 days left</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /main -->
+  </div><!-- /body -->
+</div><!-- /shell -->
+
+<script>
+function switchTab(id, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  if (el) {
+    el.classList.add('active');
+  } else {
+    const map = { controls: 0, evidence: 1, history: 2, tasks: 3 };
+    const tabs = document.querySelectorAll('.tab');
+    if (map[id] !== undefined) tabs[map[id]].classList.add('active');
+  }
+  const panel = document.getElementById('panel-' + id);
+  if (panel) panel.classList.add('active');
+}
+
+function toggleCtrl(card) {
+  const wasOpen = card.classList.contains('open');
+  document.querySelectorAll('.ctrl-card').forEach(c => c.classList.remove('open'));
+  if (!wasOpen) card.classList.add('open');
+}
+
+function chipCtrl(chip, status) {
+  document.querySelectorAll('#panel-controls .chip').forEach(c => c.classList.remove('on'));
+  chip.classList.add('on');
+  document.querySelectorAll('.ctrl-card').forEach(c => {
+    c.style.display = (status === 'all' || c.dataset.s === status) ? '' : 'none';
+  });
+}
+
+function filterCtrl(q) {
+  const lq = q.toLowerCase();
+  document.querySelectorAll('.ctrl-card').forEach(c => {
+    c.style.display = c.dataset.n.includes(lq) ? '' : 'none';
+  });
+}
+
+function toggleCheck(el) {
+  el.classList.toggle('done');
+  el.textContent = el.classList.contains('done') ? '✓' : '';
+}
+</script>
+</body>
+</html>

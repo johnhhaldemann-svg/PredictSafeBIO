@@ -9,6 +9,7 @@ import { canManageWorkspace, normalizeWorkspaceRole } from "@/lib/role-permissio
 import { getCompanyProfile } from "./account-service";
 import { isSupabaseConfigured } from "./env";
 import { createSupabaseServerClient } from "./server";
+import { logKnowledgeEntry } from "./knowledge-service";
 
 type FoundationWriteContext = {
   userId: string;
@@ -143,6 +144,15 @@ export async function updateFoundationEvidenceReadiness(input: {
     targetRecordId: data.id,
     payload: { evidenceId: data.id, requirementName: data.requirement_name, status, auditReady: input.auditReady }
   });
+
+  void logKnowledgeEntry({
+    knowledgeType: "evidence_map",
+    sourceModule: "evidence_map",
+    sourceRecordId: data.id,
+    label: `Evidence: ${data.requirement_name}`,
+    contentSummary: `Status changed to "${status}" for "${data.requirement_name}". Audit-ready: ${input.auditReady}.`,
+    aiHumanReviewRequired: !input.auditReady
+  }, context.organizationId).catch(() => {});
 
   return { ok: true, message: "Evidence readiness updated as draft - human review required." };
 }

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const changePlanPage = readFileSync(join(process.cwd(), "src/app/change-plan/page.tsx"), "utf8");
 const platformOutline = readFileSync(join(process.cwd(), "src/lib/platform-outline.ts"), "utf8");
-const appShell = readFileSync(join(process.cwd(), "src/components/AppShell.tsx"), "utf8");
+const platformNav = readFileSync(join(process.cwd(), "src/components/PlatformCategoryNav.tsx"), "utf8");
 const workbenchClient = readFileSync(join(process.cwd(), "src/components/WorkbenchClient.tsx"), "utf8");
 const workbenchPage = readFileSync(join(process.cwd(), "src/app/workbench/page.tsx"), "utf8");
 const changePlanActions = readFileSync(join(process.cwd(), "src/app/change-plan/actions.ts"), "utf8");
@@ -17,7 +17,7 @@ describe("command center and change plan", () => {
   it("adds a command-center first screen while preserving BioRisk scoring", () => {
     expect(workbenchClient).toContain("PredictSafeBIO Command Center");
     expect(workbenchClient).toContain("category.statusLabel");
-    expect(workbenchClient).toContain("BioRisk Scoring Engine");
+    expect(workbenchClient).toContain("BioRisk Engine");
     expect(workbenchClient).toContain("PredictSafeBIO Intelligence Platform Architecture");
     expect(workbenchPage).toContain("listAssessments");
     expect(workbenchPage).toContain("getAuditReadinessConsoleSummary");
@@ -67,10 +67,10 @@ describe("command center and change plan", () => {
   });
 
   it("adds Change Plan navigation and visible gap module cards", () => {
-    expect(appShell).toContain("Change Plan");
-    expect(appShell).toContain("/change-plan");
-    expect(appShell).toContain("/documents/version-control");
-    expect(appShell).toContain("/training-matrix");
+    expect(platformNav).toContain("Change Plan");
+    expect(platformNav).toContain("/change-plan");
+    expect(platformNav).toContain("/documents/version-control");
+    expect(platformNav).toContain("/training-matrix");
     expect(changePlanPage).toContain("Visible Gap Modules");
     expect(workbenchClient).toContain("gapModuleCards");
   });
