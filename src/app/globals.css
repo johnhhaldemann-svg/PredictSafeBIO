@@ -5976,3 +5976,147 @@ pre {
 .spin {
   animation: spin 0.9s linear infinite;
 }
+
+/* ── Lifecycle dashboard (home): Assess → Plan → Operate → Monitor ────────── */
+.lifecycle-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.lifecycle-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--muted);
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 16px;
+  box-shadow: 0 4px 14px rgba(16, 32, 60, 0.06);
+}
+
+.lifecycle-card--ok      { border-top-color: #16a34a; }
+.lifecycle-card--warn    { border-top-color: #d97706; }
+.lifecycle-card--alert   { border-top-color: #dc2626; }
+.lifecycle-card--neutral { border-top-color: #94a3b8; }
+
+.lifecycle-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lifecycle-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border-radius: 999px;
+  background: #102b55;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.lifecycle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+
+.lifecycle-titles {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.lifecycle-titles strong { font-size: 14px; }
+
+.lifecycle-question {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.lifecycle-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lifecycle-value {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text);
+}
+
+.lifecycle-value em {
+  font-size: 18px;
+  font-weight: 700;
+  font-style: normal;
+  color: var(--muted);
+  margin-left: 1px;
+}
+
+.lifecycle-caption {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.lifecycle-detail {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+  flex: 1 1 auto;
+}
+
+.lifecycle-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lifecycle-actions .button-primary,
+.lifecycle-actions .button-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Loop arrow between cards (wide layout only) */
+.lifecycle-arrow {
+  position: absolute;
+  top: 50%;
+  right: -15px;
+  transform: translateY(-50%);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
+@media (max-width: 1100px) {
+  .lifecycle-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lifecycle-arrow { display: none; }
+}
+
+@media (max-width: 640px) {
+  .lifecycle-grid { grid-template-columns: 1fr; }
+}

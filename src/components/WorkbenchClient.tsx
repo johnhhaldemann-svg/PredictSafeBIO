@@ -335,7 +335,7 @@ export function WorkbenchClient({
           <button className="button-primary" type="button" onClick={() => setActiveTab("command-center")}>New assessment</button>
         </header>
         <nav className="command-center-link-strip" aria-label="Risk Intelligence tabs">
-          <button className="button-secondary compact" type="button" onClick={() => setActiveTab("command-center")}>Command Center</button>
+          <button className="button-secondary compact" type="button" onClick={() => setActiveTab("command-center")}>Overview</button>
           <button className="button-primary compact" type="button" onClick={() => setActiveTab("risk-register")}>Risk Register</button>
         </nav>
         <section className="table-panel">
@@ -381,7 +381,7 @@ export function WorkbenchClient({
       {/* Single page-level H1 for screen readers — visually hidden (WCAG 1.3.1) */}
       <h1 className="sr-only">Workbench</h1>
       <nav className="command-center-link-strip" style={{ marginBottom: "0" }} aria-label="Risk Intelligence tabs">
-        <button className="button-primary compact" type="button" onClick={() => setActiveTab("command-center")}>Command Center</button>
+        <button className="button-primary compact" type="button" onClick={() => setActiveTab("command-center")}>Overview</button>
         <button className="button-secondary compact" type="button" onClick={() => setActiveTab("risk-register")}>Risk Register</button>
       </nav>
       <EnterpriseKPIStrip commandSummary={commandSummary} assessment={assessment} />
@@ -409,7 +409,7 @@ export function WorkbenchClient({
         </div>
         <div className="command-hero">
           <div>
-            <p className="section-label">PredictSafeBIO Command Center</p>
+            <p className="section-label">BioRisk Workbench</p>
             <h2 id="command-center-title">One platform for biotech safety, compliance, and biosafety operations</h2>
             <p>
               Category status, risk intelligence, action planning, audit readiness, and AI guardrails are gathered here before users move into

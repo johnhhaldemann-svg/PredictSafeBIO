@@ -54,7 +54,7 @@ const categories: Category[] = [
     href: "/workbench",
     icon: ShieldCheck,
     subItems: [
-      { href: "/workbench",   label: "Command Center",    icon: Gauge,        desc: "BioRisk score and live risk overview" },
+      { href: "/workbench",   label: "BioRisk Workbench", icon: Gauge,        desc: "BioRisk score and live risk overview" },
       { href: "/workbench?tab=risk-register", label: "Risk Register", icon: ShieldCheck, desc: "All assessed risks and their status" },
       { href: "/providers",   label: "Provider Directory",icon: Stethoscope,  desc: "Personnel and provider records" },
       { href: "/bios/new",    label: "Add Personnel Record", icon: ClipboardList, desc: "Create a new personnel bio record" },
@@ -76,7 +76,7 @@ const categories: Category[] = [
     href: "/operations",
     icon: HardHat,
     subItems: [
-      { href: "/risk-command-center",         label: "Risk Command",    icon: Gauge,         desc: "Prioritized HSE risk signals" },
+      { href: "/risk-command-center",         label: "Risk Monitor",    icon: Gauge,         desc: "Prioritized HSE risk signals" },
       { href: "/operations",                  label: "Operations",      icon: Activity,      desc: "Day-to-day HSE operational records" },
       { href: "/operations/capa",             label: "CAPA",            icon: AlertCircle,   desc: "Corrective and preventive actions" },
       { href: "/inspections",                 label: "Inspections",     icon: Stethoscope,   desc: "Scheduled and completed inspections" },
