@@ -169,7 +169,7 @@ export function NewAssessmentClient() {
         {/* Header */}
         <header className="page-header">
           <div className="page-header-left">
-            <p className="section-label">Risk Intelligence</p>
+            <p className="section-label">Assess</p>
             <h1>New BioRisk Assessment</h1>
           </div>
           <Link className="button-secondary" href="/assessments">

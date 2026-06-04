@@ -26,6 +26,7 @@ import {
   type InspectionStatus,
 } from "@/lib/supabase/inspection-service";
 import { createInspectionAction } from "./actions";
+import { DataLoadError } from "@/components/DataLoadError";
 
 const STATUS_CLASS: Record<InspectionStatus, string> = {
   planned: "status-needs-review",
@@ -67,8 +68,8 @@ export default async function InspectionsPage({ searchParams }: Props) {
   const params = await searchParams;
   const filterStatus = (params.filter as InspectionStatus | "all") ?? "all";
 
-  const [inspections, aiRecommendations, ergonomic, adminAccess] = await Promise.all([
-    listInspections(filterStatus !== "all" ? { status: filterStatus } : undefined).catch(() => []),
+  const [inspectionsResult, aiRecommendations, ergonomic, adminAccess] = await Promise.all([
+    listInspections(filterStatus !== "all" ? { status: filterStatus } : undefined).catch(() => null),
     getAiInspectionRecommendations().catch(() => []),
     getErgonomicLevel1Summary().catch(() => ({
       counts: [], recentScreenings: [], aiInsight: "",
@@ -80,6 +81,8 @@ export default async function InspectionsPage({ searchParams }: Props) {
     }))
   ]);
 
+  const loadFailed = inspectionsResult === null;
+  const inspections = inspectionsResult ?? [];
   const upcomingCount = inspections.filter((i) => i.status === "planned").length;
   const activeCount = inspections.filter((i) => i.status === "in_progress").length;
   const openFindingsTotal = inspections.reduce((n, i) => n + (i.openFindingCount ?? 0), 0);
@@ -89,7 +92,7 @@ export default async function InspectionsPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">HSE Management Systems</p>
+          <p className="section-label">Operate</p>
           <h1>Inspection / Audit Management</h1>
         </header>
 
@@ -238,7 +241,9 @@ export default async function InspectionsPage({ searchParams }: Props) {
               <h2>{inspections.length} inspection{inspections.length !== 1 ? "s" : ""}</h2>
             </div>
           </div>
-          {inspections.length === 0 ? (
+          {loadFailed ? (
+            <DataLoadError resource="inspections" />
+          ) : inspections.length === 0 ? (
             <p className="muted">No inspections found. Schedule one below.</p>
           ) : (
             <div className="action-list">

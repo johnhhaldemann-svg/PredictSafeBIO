@@ -6120,3 +6120,78 @@ pre {
 @media (max-width: 640px) {
   .lifecycle-grid { grid-template-columns: 1fr; }
 }
+
+/* LoopNext — "what's next in the safety loop" strip */
+.loop-next {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--cyan);
+  border-radius: 10px;
+  background: linear-gradient(160deg, #f8fbff 0%, #eef6ff 100%);
+  padding: 12px 16px;
+}
+
+.loop-next-text { min-width: 0; }
+
+.loop-next-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #0e7490;
+}
+
+.loop-next-text p {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.loop-next .button-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+}
+
+/* DataLoadError — distinguishes a failed fetch from an empty list */
+.data-load-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid #fcd9b6;
+  border-left: 3px solid #d97706;
+  border-radius: 10px;
+  background: #fff8ef;
+  padding: 12px 16px;
+  color: #92400e;
+}
+
+/* Provider Directory — "why this matters" purpose list */
+.provider-purpose-list {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.provider-purpose-list strong { color: var(--text); }
+
+.data-load-error > svg { flex: 0 0 auto; margin-top: 1px; }
+.data-load-error strong { font-size: 14px; }
+.data-load-error p {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: #b45309;
+  line-height: 1.45;
+}

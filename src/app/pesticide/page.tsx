@@ -40,7 +40,7 @@ export default async function PesticidePage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">HSE Management Systems</p>
+          <p className="section-label">Operate</p>
           <h1>Pesticide &amp; Disinfectant Control</h1>
         </header>
 

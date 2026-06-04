@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { listChemicals, hazardClassLabels, type HazardClass } from "@/lib/supabase/chemical-service";
 import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
 import { createChemicalAction, archiveChemicalAction } from "./actions";
+import { DataLoadError } from "@/components/DataLoadError";
 
 const HAZARD_CLASS: Record<HazardClass, string> = {
   flammable: "status-needs-review",
@@ -27,17 +28,19 @@ export default async function ChemicalInventoryPage({ searchParams }: Props) {
   const params = await searchParams;
   const filter = params.filter ?? "all";
 
-  const [chemicals, adminAccess] = await Promise.all([
+  const [chemicalsResult, adminAccess] = await Promise.all([
     listChemicals(
       filter === "expiring" ? { expiringSoon: true } :
       filter === "no-sds"   ? { missingSds: true } :
       undefined
-    ).catch(() => []),
+    ).catch(() => null),
     getFoundationAdminAccessSummary().catch(() => ({
       configured: false, signedIn: false, isOwner: false, message: ""
     }))
   ]);
 
+  const loadFailed = chemicalsResult === null;
+  const chemicals = chemicalsResult ?? [];
   const totalCount     = chemicals.length;
   const missingSds     = chemicals.filter((c) => !c.sdsPresent).length;
   const expiringSoon   = chemicals.filter((c) => c.expiringSoon).length;
@@ -47,7 +50,7 @@ export default async function ChemicalInventoryPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">HSE Management Systems</p>
+          <p className="section-label">Operate</p>
           <h1>Chemical &amp; SDS Management</h1>
         </header>
 
@@ -98,7 +101,9 @@ export default async function ChemicalInventoryPage({ searchParams }: Props) {
             </div>
           </div>
 
-          {chemicals.length === 0 ? (
+          {loadFailed ? (
+            <DataLoadError resource="chemical inventory" />
+          ) : chemicals.length === 0 ? (
             <p className="muted">No chemicals found. Add your first chemical below.</p>
           ) : (
             <div className="action-list">

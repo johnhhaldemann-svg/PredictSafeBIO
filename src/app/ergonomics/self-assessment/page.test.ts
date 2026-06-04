@@ -35,7 +35,7 @@ describe("ergonomic Level 1 UI", () => {
     // Button text is rendered as hardcoded labels alongside the dynamic titles
     expect(inspections).toContain("Start screening");
     expect(inspections).toContain("Open evaluation");
-    expect(platformNav).toContain("HSE Management");
+    expect(platformNav).toContain("Operate");
     expect(platformNav).toContain("/ergonomics/self-assessment");
   });
 

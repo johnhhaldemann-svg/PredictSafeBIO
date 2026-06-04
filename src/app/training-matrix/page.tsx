@@ -10,26 +10,32 @@ import {
   deleteTrainingRequirementAction,
   markTrainingCompleteAction
 } from "./actions";
+import { DataLoadError } from "@/components/DataLoadError";
 
 export default async function TrainingMatrixPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const params = await searchParams;
-  const [summary, adminAccess] = await Promise.all([
-    getTrainingMatrixSummary().catch(() => ({
-      counts: [], readinessScore: 0, rows: [], changeImpacts: [],
-      biotypeRequirements: [], guardrailText: "Draft - Human Review Required"
-    })),
+  const [summaryResult, adminAccess] = await Promise.all([
+    getTrainingMatrixSummary().catch(() => null),
     getFoundationAdminAccessSummary().catch(() => ({
       configured: false, signedIn: false, isOwner: false, message: ""
     }))
   ]);
 
+  const loadFailed = summaryResult === null;
+  const summary = summaryResult ?? {
+    counts: [], readinessScore: 0, rows: [], changeImpacts: [],
+    biotypeRequirements: [], guardrailText: "Draft - Human Review Required"
+  };
+
   return (
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">HSE Management Systems</p>
+          <p className="section-label">Operate</p>
           <h1>Training Matrix</h1>
         </header>
+
+        {loadFailed && <DataLoadError resource="the training matrix" />}
 
         <section className="command-center panel" aria-labelledby="training-matrix-title">
           <div className="command-hero">

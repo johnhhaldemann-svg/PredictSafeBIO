@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "Document Control – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Documents – PredictSafeBIO" };
 import { Bot, FileText } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { createDocumentMetadataAction } from "@/app/documents/actions";
@@ -23,7 +23,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
       <div className="page-stack">
         <header className="page-header">
           <div className="page-header-left">
-            <p className="section-label">Document Control</p>
+            <p className="section-label">Plan</p>
             <h1>SOPs, Forms &amp; Templates</h1>
           </div>
           <Link className="button-primary" href="/documents">

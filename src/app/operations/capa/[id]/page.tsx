@@ -28,7 +28,7 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
       <AppShell>
         <div className="page-stack">
           <header className="page-header">
-            <p className="section-label">HSE Management</p>
+            <p className="section-label">Operate</p>
             <h1>CAPA not found</h1>
           </header>
           <Link href="/operations/capa" className="button-secondary">Back to CAPA register</Link>

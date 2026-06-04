@@ -33,8 +33,8 @@ export type ChangePlanRow = {
 export const platformCategories: PlatformCategory[] = [
   {
     number: "1",
-    title: "Document Control",
-    shortTitle: "Document Control",
+    title: "Controlled Documents",
+    shortTitle: "Controlled Documents",
     href: "/documents",
     accent: "blue",
     features: [
@@ -50,8 +50,8 @@ export const platformCategories: PlatformCategory[] = [
   },
   {
     number: "2",
-    title: "Risk Intelligence",
-    shortTitle: "Risk Intelligence",
+    title: "BioRisk Assessment",
+    shortTitle: "BioRisk Assessment",
     href: "/workbench",
     accent: "blue",
     features: [
@@ -67,7 +67,7 @@ export const platformCategories: PlatformCategory[] = [
   },
   {
     number: "3",
-    title: "Compliance",
+    title: "Compliance & Readiness",
     shortTitle: "Compliance",
     href: "/foundation",
     accent: "green",
@@ -84,8 +84,8 @@ export const platformCategories: PlatformCategory[] = [
   },
   {
     number: "4",
-    title: "HSE Management Systems",
-    shortTitle: "HSE Management",
+    title: "HSE Operations",
+    shortTitle: "HSE Operations",
     href: "/operations",
     accent: "navy",
     features: [
@@ -131,7 +131,7 @@ export const commonUtilities = [
 
 export const changePlanRows: ChangePlanRow[] = [
   {
-    category: "Document Control",
+    category: "Controlled Documents",
     feature: "Version Control",
     owner: "Quality Unit",
     priority: "High",
@@ -158,7 +158,7 @@ export const changePlanRows: ChangePlanRow[] = [
     href: "/admin/demo"
   },
   {
-    category: "Risk Intelligence",
+    category: "BioRisk Assessment",
     feature: "Trend Analysis",
     owner: "Biosafety Officer",
     priority: "Medium",
@@ -167,7 +167,7 @@ export const changePlanRows: ChangePlanRow[] = [
     href: "/assessments"
   },
   {
-    category: "HSE Management Systems",
+    category: "HSE Operations",
     feature: "Training Matrix",
     owner: "QA / Training",
     priority: "High",
@@ -180,7 +180,7 @@ export const changePlanRows: ChangePlanRow[] = [
 export const gapModuleCards = [
   {
     title: "Version Control",
-    category: "Document Control",
+    category: "Controlled Documents",
     href: "/documents/version-control",
     summary: "Document metadata and planned version history for SOPs, forms, templates, and controlled records."
   },
@@ -198,13 +198,13 @@ export const gapModuleCards = [
   },
   {
     title: "Trend Analysis",
-    category: "Risk Intelligence",
+    category: "BioRisk Assessment",
     href: "/assessments",
     summary: "Saved BioRisk records and readiness score history for directional risk movement."
   },
   {
     title: "Training Matrix",
-    category: "HSE Management Systems",
+    category: "HSE Operations",
     href: "/training-matrix",
     summary: "BioType requirements, document impact, and training assignment readiness in one view."
   }
