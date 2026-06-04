@@ -1,10 +1,5 @@
-import { AppShell } from "@/components/AppShell";
-import { WorkbenchClient } from "@/components/WorkbenchClient";
+import { redirect } from "next/navigation";
 
 export default function HomePage() {
-  return (
-    <AppShell>
-      <WorkbenchClient />
-    </AppShell>
-  );
+  redirect("/workbench");
 }
