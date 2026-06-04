@@ -55,8 +55,8 @@ export default async function BioNewPage({ searchParams }: Props) {
           <div className="verification-pass-box" style={{ padding: "2rem", flexDirection: "column", gap: "1rem", alignItems: "flex-start" }}>
             <CheckCircle2 size={32} style={{ color: "#16a34a" }} />
             <div>
-              <h2 style={{ margin: "0 0 0.5rem" }}>Patient bio created</h2>
-              <p style={{ margin: 0 }}>The patient bio has been saved securely and is visible to your care team.</p>
+              <h2 style={{ margin: "0 0 0.5rem" }}>Personnel record created</h2>
+              <p style={{ margin: 0 }}>The personnel record has been saved securely and is visible to your team.</p>
             </div>
             <div style={{ display: "flex", gap: "0.75rem" }}>
               <Link href="/bios/new" className="button-primary">Add another</Link>
@@ -72,10 +72,10 @@ export default async function BioNewPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack" style={{ maxWidth: 680 }}>
         <header className="page-header">
-          <p className="section-label">Patient Bios</p>
-          <h1>New patient bio</h1>
+          <p className="section-label">Personnel Records</p>
+          <h1>New personnel record</h1>
           <p className="muted">
-            Create a privacy-safe patient record. Use a display name; no legal name required.
+            Create a privacy-safe personnel record. Use a display name; no legal name required.
             No full date of birth or contact information is collected.
           </p>
         </header>
@@ -90,7 +90,7 @@ export default async function BioNewPage({ searchParams }: Props) {
           <div className="verification-fail-box">
             <ShieldAlert size={15} />
             <span>
-              Your plan limit for patient bios has been reached.{" "}
+              Your plan limit for personnel records has been reached.{" "}
               <Link href="/account/billing" className="text-link">Upgrade →</Link>
             </span>
           </div>
@@ -110,8 +110,8 @@ export default async function BioNewPage({ searchParams }: Props) {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem 1.5rem" }}>
               <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
                 Display name <span style={{ color: "#dc2626" }}>*</span>
-                <span className="muted" style={{ fontSize: "0.72rem" }}>A chosen pseudonym, e.g. Patient A or initials only.</span>
-                <input name="display_name" required placeholder="e.g. Patient A, J.D., Room 4B" style={{ width: "100%" }} />
+                <span className="muted" style={{ fontSize: "0.72rem" }}>A chosen pseudonym, e.g. Person A or initials only.</span>
+                <input name="display_name" required placeholder="e.g. Person A, J.D., Lab 4B" style={{ width: "100%" }} />
               </label>
 
               <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
@@ -170,7 +170,7 @@ export default async function BioNewPage({ searchParams }: Props) {
             <div style={{ display: "flex", gap: "0.75rem" }}>
               <button className="button-primary" type="submit" disabled={atLimit}
                 style={{ opacity: atLimit ? 0.5 : 1 }}>
-                Save patient bio
+                Save personnel record
               </button>
               <Link href="/workbench" className="button-secondary">Cancel</Link>
             </div>

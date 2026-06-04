@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  ASSIGNABLE_ORG_ROLES,
+  ASSIGNABLE_PLATFORM_ROLES,
   canCreateWorkspaceRecord,
   canEditWorkspaceTaskGovernance,
   canManageWorkspace,
   canUpdateAssignedWorkspaceTask,
+  canViewPlatform,
   getWorkspaceTaskActorRole,
   hasWorkspaceAccess,
+  isPlatformRole,
   normalizeWorkspaceRole
 } from "./role-permissions";
 
@@ -43,5 +47,23 @@ describe("role permissions", () => {
   it("labels task audit actors from the enforced permission boundary", () => {
     expect(getWorkspaceTaskActorRole({ userId: "owner-id", role: "owner", organizationId: "org" })).toBe("owner");
     expect(getWorkspaceTaskActorRole({ userId: "member-id", role: "member", organizationId: "org" })).toBe("assigned_member");
+  });
+
+  it("restricts /admin/* platform utilities to platform staff and superadmin", () => {
+    const base = { signedIn: true, organizationId: "org", userId: "u" };
+    expect(canViewPlatform({ ...base, role: "superadmin" })).toBe(true);
+    expect(canViewPlatform({ ...base, role: "platform_staff" })).toBe(true);
+    expect(canViewPlatform({ ...base, role: "owner" })).toBe(false);
+    expect(canViewPlatform({ ...base, role: "member" })).toBe(false);
+  });
+
+  it("flags platform roles so only superadmins can assign them", () => {
+    expect(isPlatformRole("superadmin")).toBe(true);
+    expect(isPlatformRole("platform_staff")).toBe(true);
+    expect(isPlatformRole("owner")).toBe(false);
+    expect(isPlatformRole("member")).toBe(false);
+    // Org roles are owner-assignable; platform roles are superadmin-only.
+    expect(ASSIGNABLE_ORG_ROLES.some((r) => isPlatformRole(r.value))).toBe(false);
+    expect(ASSIGNABLE_PLATFORM_ROLES.every((r) => isPlatformRole(r.value))).toBe(true);
   });
 });

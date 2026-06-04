@@ -6,42 +6,6 @@ import {
   revokeWorkspaceInvitation
 } from "@/lib/supabase/invite-service";
 import { authMessage } from "@/lib/auth-routing";
-import { createServerClient } from "@/lib/supabase/server";
-import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import { isAdminOrAbove } from "@/lib/role-permissions";
-
-export async function toggleMemberPermissionAction(formData: FormData) {
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase.from("profiles").select("role, organization_id").eq("id", user.id).single();
-  const access = { signedIn: true, userId: user.id, organizationId: profile?.organization_id, role: profile?.role };
-  if (!isAdminOrAbove(access)) redirect("/");
-
-  const memberId  = formData.get("memberId") as string;
-  const feature   = formData.get("feature") as string;
-  const allowed   = formData.get("allowed") === "true";
-
-  const admin = getSupabaseAdminClient();
-   
-  const { error } = await (admin as any)
-    .from("feature_permission_grants")
-    .upsert({
-      user_id: memberId,
-      granted_by: user.id,
-      organization_id: profile?.organization_id,
-      scope: "org",
-      feature,
-      allowed,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: "user_id,scope,feature" });
-
-  if (error) {
-    redirect(authMessage("/account/team", `Error: ${error.message}`));
-  }
-  redirect(authMessage("/account/team", `Permission ${allowed ? "enabled" : "disabled"}: ${feature}`));
-}
 
 export async function createInviteAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();

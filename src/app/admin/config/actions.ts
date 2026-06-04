@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
-import { isAdminOrAbove } from "@/lib/role-permissions";
+import { canViewPlatform } from "@/lib/role-permissions";
 import { setFeatureFlag } from "@/lib/supabase/feature-flag-service";
 import { updatePlatformConfigBulk } from "@/lib/supabase/platform-config-service";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -18,7 +18,7 @@ async function requireAdmin() {
     .eq("id", user.id)
     .single();
   const access = { signedIn: true, userId: user.id, organizationId: profile?.organization_id, role: profile?.role };
-  if (!isAdminOrAbove(access)) redirect("/");
+  if (!canViewPlatform(access)) redirect("/");
   return { actorId: user.id };
 }
 

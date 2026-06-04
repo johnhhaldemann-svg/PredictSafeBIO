@@ -10,7 +10,7 @@ import { AppShell } from "@/components/AppShell";
 import { createServerClient } from "@/lib/supabase/server";
 import { getBioForReview, NPI_CHECKLIST_LABELS } from "@/lib/supabase/moderation-service";
 import type { NpiChecklistKey, ReviewStatus } from "@/lib/supabase/moderation-service";
-import { isAdminOrAbove } from "@/lib/role-permissions";
+import { canViewPlatform } from "@/lib/role-permissions";
 import {
   approveProfileAction,
   requestChangesAction,
@@ -68,7 +68,7 @@ export default async function BioReviewPage({ params, searchParams }: Props) {
     .single();
 
   const access = { signedIn: true, userId: user.id, organizationId: profile?.organization_id, role: profile?.role };
-  if (!isAdminOrAbove(access)) redirect("/");
+  if (!canViewPlatform(access)) redirect("/");
 
   const { id } = await params;
   const sp = await searchParams;

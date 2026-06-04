@@ -45,7 +45,7 @@ export default async function RiskCommandCenterPage() {
         <div className="page-stack">
           <header className="page-header">
             <p className="section-label">HSE Management Systems</p>
-            <h1>AI Risk Command Center</h1>
+            <h1>Risk Monitor</h1>
           </header>
           <p className="muted">Could not load risk data. Sign in to view your organization&apos;s risk feed.</p>
         </div>
@@ -60,7 +60,7 @@ export default async function RiskCommandCenterPage() {
       <div className="page-stack">
         <header className="page-header">
           <p className="section-label">HSE Management Systems</p>
-          <h1>AI Risk Command Center</h1>
+          <h1>Risk Monitor</h1>
         </header>
 
         {/* Top KPI strip */}

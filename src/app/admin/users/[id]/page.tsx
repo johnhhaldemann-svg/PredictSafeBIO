@@ -7,11 +7,12 @@ import { AppShell } from "@/components/AppShell";
 import { createServerClient } from "@/lib/supabase/server";
 import { getAdminUserDetail } from "@/lib/supabase/user-admin-service";
 import {
-  isAdminOrAbove,
+  canViewPlatform,
   isSuperAdmin,
   getDbRoleLabel,
   getRoleBadgeClass,
-  ASSIGNABLE_ROLES,
+  ASSIGNABLE_ORG_ROLES,
+  ASSIGNABLE_PLATFORM_ROLES,
 } from "@/lib/role-permissions";
 import {
   changeUserRoleAction,
@@ -58,7 +59,7 @@ export default async function UserDetailPage({ params, searchParams }: Props) {
     role: actorProfile?.role,
   };
 
-  if (!isAdminOrAbove(actorAccess)) redirect("/");
+  if (!canViewPlatform(actorAccess)) redirect("/");
 
   const { id } = await params;
   const sp = await searchParams;
@@ -72,10 +73,11 @@ export default async function UserDetailPage({ params, searchParams }: Props) {
     redirect("/admin/users");
   }
 
-  // Roles available in the dropdown — non-superadmins cannot assign superadmin
+  // Roles available in the dropdown — only superadmins may assign platform roles
+  // (platform_staff / superadmin). Platform staff can assign org roles only.
   const availableRoles = isActorSuperAdmin
-    ? ASSIGNABLE_ROLES
-    : ASSIGNABLE_ROLES.filter((r) => r.value !== "superadmin");
+    ? [...ASSIGNABLE_ORG_ROLES, ...ASSIGNABLE_PLATFORM_ROLES]
+    : ASSIGNABLE_ORG_ROLES;
 
   const isSuspended = userDetail.account_status === "suspended";
 

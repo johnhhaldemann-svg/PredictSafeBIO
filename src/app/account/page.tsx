@@ -2,10 +2,10 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Building2, KeyRound, ShieldCheck, UserCircle } from "lucide-react";
+import { Building2, KeyRound, UserCircle } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { updateAccountProfileAction, updateCompanyProfileAction } from "./actions";
-import { companyProfileToEditableText } from "@/lib/account-profile";
+import { CompanyProfileSummary } from "@/components/CompanyProfileForm";
+import { updateAccountProfileAction } from "./actions";
 import { getAccountSummary } from "@/lib/supabase/data";
 
 type AccountPageProps = {
@@ -19,8 +19,6 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   if (!account.signedIn) {
     redirect("/login?next=/account");
   }
-
-  const companyText = account.companyProfile ? companyProfileToEditableText(account.companyProfile) : null;
 
   return (
     <AppShell>
@@ -97,61 +95,22 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           </section>
         ) : null}
 
-        {account.companyProfile && companyText ? (
+        {account.companyProfile ? (
           <section className="panel">
             <div className="panel-heading">
               <div>
                 <p className="section-label">Company Profile Intelligence</p>
-                <h2>Workspace basics</h2>
+                <h2>{account.companyProfile.companyName}</h2>
               </div>
               <Building2 size={22} />
             </div>
-            <form action={updateCompanyProfileAction} className="document-form">
-              <input type="hidden" name="returnTo" value="/account" />
-              <div className="form-grid">
-                <label>
-                  Company name
-                  <input name="companyName" defaultValue={account.companyProfile.companyName} required />
-                </label>
-                <label>
-                  Primary site
-                  <input name="primarySite" defaultValue={account.companyProfile.primarySite} required />
-                </label>
-              </div>
-              <div className="form-grid wide-fields">
-                <label>
-                  Operating areas
-                  <textarea name="operatingAreas" defaultValue={companyText.operatingAreas} rows={5} />
-                </label>
-                <label>
-                  Programs
-                  <textarea name="programs" defaultValue={companyText.programs} rows={5} />
-                </label>
-                <label>
-                  Quality scope
-                  <textarea name="qualitySystemScope" defaultValue={companyText.qualitySystemScope} rows={5} />
-                </label>
-                <label>
-                  Biosafety levels
-                  <textarea name="biosafetyLevels" defaultValue={companyText.biosafetyLevels} rows={5} />
-                </label>
-                <label>
-                  Review owner roles
-                  <textarea name="reviewOwnerRoles" defaultValue={companyText.reviewOwnerRoles} rows={5} />
-                </label>
-                <label>
-                  Document families
-                  <textarea name="documentFamilies" defaultValue={companyText.documentFamilies} rows={5} />
-                </label>
-              </div>
-              <div className="guardrail-box">
-                <ShieldCheck size={18} />
-                <span>Company profile edits are saved as workspace configuration and recorded in the audit log.</span>
-              </div>
-              <button className="button-primary" type="submit">
-                Save company profile
-              </button>
-            </form>
+            <CompanyProfileSummary profile={account.companyProfile} />
+            <div className="guardrail-box">
+              <span>
+                Company configuration now lives in one place.{" "}
+                <Link className="text-link" href="/account/company">Manage company settings →</Link>
+              </span>
+            </div>
           </section>
         ) : null}
       </div>

@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { demoCompanyProfile } from "@/lib/demo-data";
 import type { ReviewOwnerRole } from "@/lib/bio-ai/types";
 import { authMessage, friendlyAuthError, passwordMeetsMinimum, safeAuthNext } from "@/lib/auth-routing";
+import { isPlatformRole } from "@/lib/role-permissions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -50,11 +51,16 @@ export async function signInAction(formData: FormData) {
     data: { user }
   } = await supabase.auth.getUser();
   const { data: profile } = user
-    ? await supabase.from("profiles").select("organization_id").eq("id", user.id).maybeSingle()
+    ? await supabase.from("profiles").select("organization_id, role").eq("id", user.id).maybeSingle()
     : { data: null };
 
+  // Platform staff (superadmin / platform_staff) are not tied to a company, so
+  // they are never forced through company onboarding. Everyone else must belong
+  // to a company before reaching the workspace.
+  const isPlatform = isPlatformRole(profile?.role);
+
   revalidatePath("/", "layout");
-  redirect(profile?.organization_id ? next : "/onboarding");
+  redirect(profile?.organization_id || isPlatform ? next : "/onboarding");
 }
 
 export async function signUpAction(formData: FormData) {
@@ -174,6 +180,60 @@ export async function completeOnboardingAction(formData: FormData) {
     redirect(authMessage("/login?next=%2Fonboarding", "Sign in before completing onboarding."));
   }
 
+  const fullNameInput = field(formData, "fullName") || user.email || "PredictSafeBIO user";
+
+  // ── Invite path ───────────────────────────────────────────────────────────
+  // If a pending, non-expired invitation matches this user's email, they JOIN
+  // the inviting organization with the assigned role — they do NOT create a new
+  // one. The admin client is required because RLS only lets org owners UPDATE an
+  // invitation (accept it); the invitee cannot mark it accepted themselves.
+  if (user.email) {
+    const admin = getSupabaseAdminClient();
+    const { data: invite } = await (admin as any)
+      .from("workspace_invitations")
+      .select("id, organization_id, role")
+      .eq("email", user.email.toLowerCase())
+      .eq("status", "pending")
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (invite?.organization_id) {
+      const { error: joinError } = await (admin as any).from("profiles").upsert(
+        {
+          id: user.id,
+          organization_id: invite.organization_id,
+          full_name: fullNameInput,
+          role: invite.role ?? "member",
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: "id" }
+      );
+
+      if (joinError) {
+        redirect(authMessage("/onboarding", joinError.message));
+      }
+
+      await (admin as any)
+        .from("workspace_invitations")
+        .update({ status: "accepted", accepted_at: new Date().toISOString() })
+        .eq("id", invite.id);
+
+      await (admin as any).from("audit_events").insert({
+        organization_id: invite.organization_id,
+        actor_id: user.id,
+        event_type: "company_profile_updated",
+        summary: `${fullNameInput} joined the workspace via invitation as ${invite.role ?? "member"}.`,
+        payload: { inviteId: invite.id, role: invite.role ?? "member", joinedViaInvite: true }
+      });
+
+      revalidatePath("/", "layout");
+      redirect("/workbench?message=onboarding-complete");
+    }
+  }
+
+  // ── Self-serve path — create a new organization, user becomes owner ─────────
   const organizationId = randomUUID();
   const organizationName = field(formData, "organizationName") || demoCompanyProfile.companyName;
   const companyName = field(formData, "companyName") || organizationName;

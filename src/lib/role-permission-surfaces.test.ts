@@ -36,11 +36,12 @@ describe("role permission surfaces", () => {
     expect(operationsPage).toContain('href="/login?next=/operations"');
   });
 
-  it("keeps training CRUD owner-gated and admin seeding owner-only", () => {
+  it("keeps training CRUD owner-gated and admin seeding platform-only", () => {
     expect(trainingMatrixPage).toContain("Training remains human validated");
     // Training CRUD (mark complete, delete, create) is now implemented and owner-gated
     expect(trainingMatrixPage).toContain("adminAccess.isOwner");
-    expect(adminDemoPage).toContain("canManageWorkspace(auth)");
+    // /admin/* platform utilities are gated to platform staff — owners cannot seed demo data
+    expect(adminDemoPage).toContain("canViewPlatform(auth)");
     expect(adminDemoPage).toContain("canSeedDemo");
   });
 });

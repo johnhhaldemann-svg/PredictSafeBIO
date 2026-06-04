@@ -7,8 +7,10 @@ import {
   UserPlus, Copy
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { PlatformConfigError } from "@/components/PlatformConfigError";
 import { createServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isSupabaseServiceConfigured } from "@/lib/supabase/env";
 import {
   updateOrgProfileAction,
   updateUserRoleAction,
@@ -80,6 +82,8 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
     .single();
 
   if (profile?.role !== "superadmin") redirect("/workbench");
+
+  if (!isSupabaseServiceConfigured()) return <PlatformConfigError feature="Organization" />;
 
   const admin = getSupabaseAdminClient();
 

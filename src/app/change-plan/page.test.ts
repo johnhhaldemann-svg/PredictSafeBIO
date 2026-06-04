@@ -15,7 +15,7 @@ const reviewWorkflow = readFileSync(join(process.cwd(), "src/lib/review-workflow
 
 describe("command center and change plan", () => {
   it("adds a command-center first screen while preserving BioRisk scoring", () => {
-    expect(workbenchClient).toContain("PredictSafeBIO Command Center");
+    expect(workbenchClient).toContain("BioRisk Workbench");
     expect(workbenchClient).toContain("category.statusLabel");
     expect(workbenchClient).toContain("BioRisk Engine");
     expect(workbenchClient).toContain("PredictSafeBIO Intelligence Platform Architecture");
