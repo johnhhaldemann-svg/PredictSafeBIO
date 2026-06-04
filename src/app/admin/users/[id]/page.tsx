@@ -11,7 +11,8 @@ import {
   isSuperAdmin,
   getDbRoleLabel,
   getRoleBadgeClass,
-  ASSIGNABLE_ROLES,
+  ASSIGNABLE_ORG_ROLES,
+  ASSIGNABLE_PLATFORM_ROLES,
 } from "@/lib/role-permissions";
 import {
   changeUserRoleAction,
@@ -72,10 +73,11 @@ export default async function UserDetailPage({ params, searchParams }: Props) {
     redirect("/admin/users");
   }
 
-  // Roles available in the dropdown — non-superadmins cannot assign superadmin
+  // Roles available in the dropdown — only superadmins may assign platform roles
+  // (platform_staff / superadmin). Platform staff can assign org roles only.
   const availableRoles = isActorSuperAdmin
-    ? ASSIGNABLE_ROLES
-    : ASSIGNABLE_ROLES.filter((r) => r.value !== "superadmin");
+    ? [...ASSIGNABLE_ORG_ROLES, ...ASSIGNABLE_PLATFORM_ROLES]
+    : ASSIGNABLE_ORG_ROLES;
 
   const isSuspended = userDetail.account_status === "suspended";
 

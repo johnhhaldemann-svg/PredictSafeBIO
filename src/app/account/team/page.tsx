@@ -8,24 +8,26 @@ import { listWorkspaceInvitations } from "@/lib/supabase/invite-service";
 import { getRoleLabel, getRoleBadgeClass } from "@/lib/role-permissions";
 import { createInviteAction, revokeInviteAction } from "./actions";
 
-// Role capabilities matrix for display
+// Workspace role capabilities matrix for display (org scope: Member vs Owner).
+// Platform roles (Platform Staff / Super Admin) are PredictSafeBIO-internal and
+// are intentionally not shown on this customer-facing team page.
 const roleMatrix = [
-  { feature: "Dashboard & My Work",          member: true,  owner: true,  superadmin: true },
-  { feature: "Hazard Screening (Level 1)",   member: true,  owner: true,  superadmin: true },
-  { feature: "Programs library & checklists",member: true,  owner: true,  superadmin: true },
-  { feature: "Documents (view)",             member: true,  owner: true,  superadmin: true },
-  { feature: "View Inspections",             member: true,  owner: true,  superadmin: true },
-  { feature: "Schedule & manage Inspections",member: false, owner: true,  superadmin: true },
-  { feature: "Risk Assessment & BioRisk",    member: false, owner: true,  superadmin: true },
-  { feature: "Compliance Map & Foundation",  member: false, owner: true,  superadmin: true },
-  { feature: "Operations & CAPA",            member: false, owner: true,  superadmin: true },
-  { feature: "Level 2 Evaluation (conduct)", member: false, owner: true,  superadmin: true },
-  { feature: "AI Knowledge Review",          member: false, owner: true,  superadmin: true },
-  { feature: "Reports & Audit Log",          member: false, owner: true,  superadmin: true },
-  { feature: "Team management & invitations",member: false, owner: true,  superadmin: true },
-  { feature: "Company profile (edit)",       member: false, owner: true,  superadmin: true },
-  { feature: "All Organizations (platform)", member: false, owner: false, superadmin: true },
-  { feature: "Platform management",          member: false, owner: false, superadmin: true },
+  { feature: "Dashboard & My Work",          member: true,  owner: true },
+  { feature: "Hazard Screening (Level 1)",   member: true,  owner: true },
+  { feature: "Programs library & checklists",member: true,  owner: true },
+  { feature: "Documents (view)",             member: true,  owner: true },
+  { feature: "View Inspections",             member: true,  owner: true },
+  { feature: "Assigned tasks (update)",      member: true,  owner: true },
+  { feature: "Schedule & manage Inspections",member: false, owner: true },
+  { feature: "Risk Assessment & BioRisk",    member: false, owner: true },
+  { feature: "Compliance Map & Foundation",  member: false, owner: true },
+  { feature: "Operations & CAPA",            member: false, owner: true },
+  { feature: "Level 2 Evaluation (conduct)", member: false, owner: true },
+  { feature: "Reports & Audit Log",          member: false, owner: true },
+  { feature: "Document editing",             member: false, owner: true },
+  { feature: "Training Matrix management",   member: false, owner: true },
+  { feature: "Team management & invitations",member: false, owner: true },
+  { feature: "Company profile (edit)",       member: false, owner: true },
 ];
 
 const statusLabel: Record<string, string> = {
@@ -125,9 +127,6 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
                   <th style={{ textAlign: "center", padding: "0.5rem 0.75rem", fontWeight: 600 }}>
                     <span className="status-current">Owner</span>
                   </th>
-                  <th style={{ textAlign: "center", padding: "0.5rem 0.75rem", fontWeight: 600 }}>
-                    <span className="status-critical">Platform Admin</span>
-                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -136,7 +135,6 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
                     <td style={{ padding: "0.45rem 0.75rem" }}>{row.feature}</td>
                     <td style={{ textAlign: "center", padding: "0.45rem 0.75rem" }}>{row.member ? <Check /> : <X />}</td>
                     <td style={{ textAlign: "center", padding: "0.45rem 0.75rem" }}>{row.owner ? <Check /> : <X />}</td>
-                    <td style={{ textAlign: "center", padding: "0.45rem 0.75rem" }}>{row.superadmin ? <Check /> : <X />}</td>
                   </tr>
                 ))}
               </tbody>
