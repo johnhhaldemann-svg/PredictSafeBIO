@@ -26,7 +26,7 @@ import {
   Server
 } from "lucide-react";
 
-type SubItem = { href: string; label: string; icon: React.ElementType };
+type SubItem = { href: string; label: string; icon: React.ElementType; desc: string };
 type Category = {
   title: string;
   href: string;
@@ -42,8 +42,8 @@ const categories: Category[] = [
     href: "/documents",
     icon: FileText,
     subItems: [
-      { href: "/documents",                 label: "All Documents",     icon: FileText      },
-      { href: "/documents/version-control", label: "Version Control",  icon: GitBranch     },
+      { href: "/documents",                 label: "All Documents",     icon: FileText,   desc: "Controlled SOPs, records, and files" },
+      { href: "/documents/version-control", label: "Version Control",  icon: GitBranch,  desc: "Revisions, approvals, and change history" },
     ]
   },
   {
@@ -51,11 +51,11 @@ const categories: Category[] = [
     href: "/workbench",
     icon: ShieldCheck,
     subItems: [
-      { href: "/workbench",   label: "Command Center",    icon: Gauge        },
-      { href: "/workbench?tab=risk-register", label: "Risk Register", icon: ShieldCheck },
-      { href: "/providers",   label: "Provider Directory",icon: Stethoscope  },
-      { href: "/bios/new",    label: "Add Personnel Record", icon: ClipboardList},
-      { href: "/my-work",     label: "My Work",           icon: ClipboardList},
+      { href: "/workbench",   label: "Command Center",    icon: Gauge,        desc: "BioRisk score and live risk overview" },
+      { href: "/workbench?tab=risk-register", label: "Risk Register", icon: ShieldCheck, desc: "All assessed risks and their status" },
+      { href: "/providers",   label: "Provider Directory",icon: Stethoscope,  desc: "Personnel and provider records" },
+      { href: "/bios/new",    label: "Add Personnel Record", icon: ClipboardList, desc: "Create a new personnel bio record" },
+      { href: "/my-work",     label: "My Work",           icon: ClipboardList, desc: "Tasks and follow-ups assigned to you" },
     ]
   },
   {
@@ -63,9 +63,9 @@ const categories: Category[] = [
     href: "/foundation",
     icon: ClipboardCheck,
     subItems: [
-      { href: "/foundation", label: "Compliance Map", icon: ClipboardCheck },
-      { href: "/change-plan", label: "Change Plan", icon: GitBranch },
-      { href: "/programs",   label: "Programs",       icon: BookOpen       },
+      { href: "/foundation", label: "Compliance Map", icon: ClipboardCheck, desc: "Coverage, gaps, and readiness by area" },
+      { href: "/change-plan", label: "Change Plan", icon: GitBranch, desc: "Planned changes and their impact" },
+      { href: "/programs",   label: "Programs",       icon: BookOpen,       desc: "Safety program tools and checklists" },
     ]
   },
   {
@@ -73,16 +73,16 @@ const categories: Category[] = [
     href: "/operations",
     icon: HardHat,
     subItems: [
-      { href: "/risk-command-center",         label: "Risk Command",    icon: Gauge         },
-      { href: "/operations",                  label: "Operations",      icon: Activity      },
-      { href: "/operations/capa",             label: "CAPA",            icon: AlertCircle   },
-      { href: "/inspections",                 label: "Inspections",     icon: Stethoscope   },
-      { href: "/training-matrix",             label: "Training Matrix", icon: GraduationCap },
-      { href: "/ergonomics/self-assessment",  label: "Ergonomics",      icon: Activity      },
-      { href: "/chemical-inventory",          label: "Chemical & SDS",  icon: FlaskConical  },
-      { href: "/waste-management",            label: "Waste Mgmt",      icon: Wrench        },
-      { href: "/permits",                     label: "Work Permits",    icon: Lock          },
-      { href: "/pesticide",                   label: "Pest & Disinfect",icon: ShieldCheck   },
+      { href: "/risk-command-center",         label: "Risk Command",    icon: Gauge,         desc: "Prioritized HSE risk signals" },
+      { href: "/operations",                  label: "Operations",      icon: Activity,      desc: "Day-to-day HSE operational records" },
+      { href: "/operations/capa",             label: "CAPA",            icon: AlertCircle,   desc: "Corrective and preventive actions" },
+      { href: "/inspections",                 label: "Inspections",     icon: Stethoscope,   desc: "Scheduled and completed inspections" },
+      { href: "/training-matrix",             label: "Training Matrix", icon: GraduationCap, desc: "Role-based training and expiries" },
+      { href: "/ergonomics/self-assessment",  label: "Ergonomics",      icon: Activity,      desc: "Ergonomic self-assessments" },
+      { href: "/chemical-inventory",          label: "Chemical & SDS",  icon: FlaskConical,  desc: "Chemical inventory and safety data sheets" },
+      { href: "/waste-management",            label: "Waste Mgmt",      icon: Wrench,        desc: "Hazardous and biohazard waste tracking" },
+      { href: "/permits",                     label: "Work Permits",    icon: Lock,          desc: "Permits for high-hazard work" },
+      { href: "/pesticide",                   label: "Pest & Disinfect",icon: ShieldCheck,   desc: "Pest control and disinfection logs" },
     ]
   },
   {
@@ -91,11 +91,11 @@ const categories: Category[] = [
     icon: Server,
     platformOnly: true,
     subItems: [
-      { href: "/admin/audit",        label: "Reports & Audit", icon: BarChart3 },
-      { href: "/admin/ai-knowledge", label: "AI Knowledge",    icon: Brain     },
-      { href: "/admin/billing",      label: "Billing",         icon: Wrench    },
-      { href: "/admin/config",       label: "Platform Config", icon: Settings  },
-      { href: "/admin/platform",     label: "Platform Admin",  icon: Lock      },
+      { href: "/admin/audit",        label: "Reports & Audit", icon: BarChart3, desc: "Audit log and platform reporting" },
+      { href: "/admin/ai-knowledge", label: "AI Knowledge",    icon: Brain,     desc: "Review and curate the AI knowledge base" },
+      { href: "/admin/billing",      label: "Billing",         icon: Wrench,    desc: "Plans, invoices, and overrides" },
+      { href: "/admin/config",       label: "Platform Config", icon: Settings,  desc: "Feature flags, branding, and emails" },
+      { href: "/admin/platform",     label: "Platform Admin",  icon: Lock,      desc: "Platform operations and security" },
     ]
   }
 ];
@@ -178,7 +178,10 @@ export function PlatformCategoryNav({ canViewPlatform = false }: { canViewPlatfo
                         className={`snav-subitem${isSubActive ? " snav-subitem--active" : ""}`}
                       >
                         <SubIcon size={13} aria-hidden="true" />
-                        <span>{sub.label}</span>
+                        <span className="snav-subitem-text">
+                          <span className="snav-subitem-label">{sub.label}</span>
+                          <span className="snav-subitem-desc">{sub.desc}</span>
+                        </span>
                       </Link>
                     </li>
                   );
