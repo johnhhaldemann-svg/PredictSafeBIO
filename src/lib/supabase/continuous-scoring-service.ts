@@ -1,3 +1,4 @@
+/**
  * Continuous Risk Scoring Service
  *
  * Bridges the data modules (inspections, chemicals, training) to the
@@ -385,6 +386,204 @@ export async function scoreTrainingGap(params: TrainingGapScoreParams): Promise<
       role_key: roleKey,
       due_date: dueDateStr,
       is_overdue: isOverdue,
+    },
+    createdBy: userId,
+  });
+}
+
+
+// ---------------------------------------------------------------------------
+// Waste Record Scoring
+// ---------------------------------------------------------------------------
+
+export type WasteScoreParams = {
+  record: {
+    id: string;
+    wasteType: string;
+    containerLabel?: string | null;
+    fillLevel?: number | null;
+    labelStatus: string;
+    pickupScheduledDate?: string | null;
+    incidentFlag: boolean;
+    disposalVendor?: string | null;
+  };
+  organizationId: string;
+  userId?: string | null;
+};
+
+const wasteTypeSeverity: Record<string, number> = {
+  biological: 5,
+  radioactive: 5,
+  sharps: 5,
+  chemical: 4,
+  pharmaceutical: 3,
+  mixed: 3,
+  liquid: 2,
+  solid: 2,
+  universal: 2,
+  other: 1,
+};
+
+export async function scoreWasteRecord(params: WasteScoreParams): Promise<void> {
+  const { record, organizationId, userId } = params;
+
+  const fill = record.fillLevel ?? 0;
+  const isIncident = record.incidentFlag;
+  const isLabelDamaged = record.labelStatus === "damaged";
+  const isUnlabeled = record.labelStatus === "unlabeled";
+  const hazardScore = wasteTypeSeverity[record.wasteType] ?? 2;
+
+  const pickupOverdue = record.pickupScheduledDate
+    ? new Date(record.pickupScheduledDate) < new Date()
+    : false;
+
+  const isBiohazard = ["biological", "sharps"].includes(record.wasteType);
+  const isHighHazard = ["biological", "radioactive", "sharps", "chemical"].includes(record.wasteType);
+
+  // Severity driven by fill level + hazard class
+  const fillSeverity = fill >= 100 ? 5 : fill >= 80 ? 4 : fill >= 60 ? 3 : 2;
+  const severity = Math.max(hazardScore, isIncident ? 5 : 1, fillSeverity);
+  const controlGap = isLabelDamaged ? 5 : isUnlabeled ? 4 : pickupOverdue ? 4 : 1;
+
+  const conditions: string[] = [];
+  if (fill >= 80) conditions.push(`${fill}% full`);
+  if (isIncident) conditions.push("incident flagged");
+  if (isLabelDamaged) conditions.push("label damaged");
+  if (isUnlabeled) conditions.push("unlabeled");
+  if (pickupOverdue) conditions.push("pickup overdue");
+  const conditionStr = conditions.length > 0 ? ` — ${conditions.join(", ")}` : "";
+
+  const signal: BioAiSignal = {
+    id: record.id,
+    type: isBiohazard ? "biosafety_event" : "contamination_event",
+    label: `${record.containerLabel ?? record.wasteType} waste${conditionStr}`,
+    severity,
+    likelihood: fillSeverity,
+    controlGap,
+    biosafetyImpactPotential: isBiohazard || isIncident,
+    evidence: conditionStr || undefined,
+    controls: record.disposalVendor ? [`disposal vendor: ${record.disposalVendor}`] : [],
+    sourceRecords: [{ module: "waste", recordId: record.id, label: record.containerLabel ?? record.wasteType }],
+  };
+
+  const input: BioAiInput = {
+    organizationId,
+    workflow: "waste management",
+    biosafetyImpactPotential: isBiohazard || isIncident,
+    contaminationSuspected: isIncident,
+    controlEffectiveness: isLabelDamaged || isUnlabeled ? "missing" : pickupOverdue ? "ineffective" : "effective",
+    signals: [signal],
+    sourceRecords: [{ module: "waste", recordId: record.id, label: record.containerLabel ?? record.wasteType }],
+  };
+
+  await scoreAndWriteRiskCell({
+    organizationId,
+    label: `Waste: ${record.containerLabel ?? record.wasteType}${conditionStr}`,
+    linkedRecordType: "waste_records",
+    linkedRecordId: record.id,
+    input,
+    extraPayload: {
+      waste_type: record.wasteType,
+      fill_level: fill,
+      label_status: record.labelStatus,
+      incident_flag: isIncident,
+      pickup_overdue: pickupOverdue,
+    },
+    createdBy: userId,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Permit Scoring
+// ---------------------------------------------------------------------------
+
+export type PermitScoreParams = {
+  permit: {
+    id: string;
+    permitType: string;
+    taskDescription?: string | null;
+    location?: string | null;
+    hazards?: string[];
+    requiredControls?: string[];
+    isolationVerified: boolean;
+    closeoutStatus: string;
+    startTime?: string | null;
+  };
+  organizationId: string;
+  userId?: string | null;
+};
+
+const permitTypeSeverity: Record<string, number> = {
+  confined_space: 5,
+  hot_work: 5,
+  loto: 4,
+  line_break: 4,
+  chemical_transfer: 4,
+  utility_shutdown: 3,
+  cleanroom: 3,
+  contractor: 2,
+};
+
+export async function scorePermitRecord(params: PermitScoreParams): Promise<void> {
+  const { permit, organizationId, userId } = params;
+
+  const hazardScore = permitTypeSeverity[permit.permitType] ?? 2;
+  const isHighRisk = ["confined_space", "hot_work", "loto", "line_break"].includes(permit.permitType);
+  const isBiosafety = ["cleanroom", "contractor"].includes(permit.permitType);
+
+  const hoursOpen = permit.startTime
+    ? (Date.now() - new Date(permit.startTime).getTime()) / 3600000
+    : 0;
+  const isOverdue = hoursOpen > 24;
+
+  const missingIsolation = !permit.isolationVerified && ["loto", "confined_space", "line_break"].includes(permit.permitType);
+  const isActive = ["active", "approved"].includes(permit.closeoutStatus);
+
+  const conditions: string[] = [];
+  if (isOverdue) conditions.push("open > 24 hrs");
+  if (missingIsolation) conditions.push("isolation not verified");
+  if (!isActive) conditions.push(permit.closeoutStatus);
+  const conditionStr = conditions.length > 0 ? ` — ${conditions.join(", ")}` : "";
+
+  const severity = Math.max(hazardScore, isOverdue ? 4 : 1, missingIsolation ? 5 : 1);
+
+  const signal: BioAiSignal = {
+    id: permit.id,
+    type: isHighRisk ? "biosafety_event" : isBiosafety ? "biosafety_event" : "change_control",
+    label: `${permit.permitType.replace(/_/g, " ")} permit${conditionStr}`,
+    severity,
+    likelihood: isActive ? 3 : 1,
+    controlGap: missingIsolation ? 5 : isOverdue ? 4 : 1,
+    biosafetyImpactPotential: isBiosafety || isHighRisk,
+    controls: permit.requiredControls ?? [],
+    evidence: permit.taskDescription ?? undefined,
+    sourceRecords: [{ module: "inspection", recordId: permit.id, label: permit.permitType }],
+  };
+
+  const input: BioAiInput = {
+    organizationId,
+    area: permit.location ?? undefined,
+    workflow: "controlled work permit",
+    biosafetyImpactPotential: isBiosafety || isHighRisk,
+    outOfToleranceEquipment: missingIsolation,
+    unapprovedChange: permit.closeoutStatus === "draft",
+    controlEffectiveness: missingIsolation ? "missing" : isOverdue ? "ineffective" : isActive ? "partial" : "effective",
+    signals: [signal],
+    sourceRecords: [{ module: "inspection", recordId: permit.id, label: permit.permitType }],
+  };
+
+  await scoreAndWriteRiskCell({
+    organizationId,
+    label: `Permit: ${permit.permitType.replace(/_/g, " ")}${permit.location ? ` — ${permit.location}` : ""}${conditionStr}`,
+    linkedRecordType: "controlled_work_permits",
+    linkedRecordId: permit.id,
+    input,
+    extraPayload: {
+      permit_type: permit.permitType,
+      location: permit.location,
+      closeout_status: permit.closeoutStatus,
+      hours_open: Math.round(hoursOpen),
+      isolation_verified: permit.isolationVerified,
     },
     createdBy: userId,
   });
