@@ -140,6 +140,17 @@ function demoPermits(): PermitRecord[] {
   ];
 }
 
+function filterDemoPermits(filters?: {
+  status?: CloseoutStatus;
+  overdue?: boolean;
+}) {
+  return demoPermits().filter((permit) => {
+    if (filters?.status && permit.closeoutStatus !== filters.status) return false;
+    if (filters?.overdue && !permit.isOverdue) return false;
+    return true;
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -192,11 +203,11 @@ export async function listPermits(filters?: {
   status?: CloseoutStatus;
   overdue?: boolean;
 }): Promise<PermitRecord[]> {
-  if (!isSupabaseConfigured()) return demoPermits();
+  if (!isSupabaseConfigured()) return filterDemoPermits(filters);
 
   try {
     const ctx = await getProfileContext();
-    if (!ctx) return demoPermits();
+    if (!ctx) return filterDemoPermits(filters);
 
     const supabase = await createSupabaseServerClient();
 
@@ -218,7 +229,7 @@ export async function listPermits(filters?: {
     if (filters?.overdue) return records.filter((r) => r.isOverdue);
     return records;
   } catch {
-    return demoPermits();
+    return filterDemoPermits(filters);
   }
 }
 

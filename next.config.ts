@@ -6,7 +6,8 @@ import type { NextConfig } from "next";
  * CSP notes:
  *  - 'unsafe-inline' on style-src is required by Next.js's inline style injection.
  *  - stripe.com is allowed for the Stripe.js checkout SDK.
- *  - Tighten script-src further once a nonce-based CSP is feasible.
+ *  - 'unsafe-inline' on script-src is required until Next's inline bootstrap
+ *    scripts are wired to a nonce-based CSP.
  *
  * HIPAA relevance:
  *  - X-Frame-Options + frame-ancestors prevent clickjacking attacks on auth/PHI pages.
@@ -39,8 +40,8 @@ const securityHeaders = [
     value: [
       // Default: only same-origin
       "default-src 'self'",
-      // Scripts: self + Stripe.js
-      "script-src 'self' 'unsafe-eval' https://js.stripe.com",
+      // Scripts: self + inline Next.js bootstrap + Stripe.js
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
       // Styles: self + inline (required by Next.js)
       "style-src 'self' 'unsafe-inline'",
       // Images: self + data URIs (for inline SVGs/base64)

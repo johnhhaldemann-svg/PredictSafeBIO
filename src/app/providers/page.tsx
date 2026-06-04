@@ -66,6 +66,19 @@ type Props = {
   searchParams: Promise<{ specialty?: string; q?: string }>;
 };
 
+function filterProviders(providers: Provider[], filters: { specialty?: string; q?: string }) {
+  const query = filters.q?.trim().toLowerCase();
+  return providers.filter((provider) => {
+    if (filters.specialty && provider.specialty !== filters.specialty) return false;
+    if (!query) return true;
+    return (
+      provider.full_name.toLowerCase().includes(query) ||
+      provider.specialty.toLowerCase().includes(query) ||
+      provider.credentials.some((credential) => credential.toLowerCase().includes(query))
+    );
+  });
+}
+
 async function listApprovedProviders(filters: { specialty?: string; q?: string }): Promise<Provider[]> {
   const admin = getSupabaseAdminClient();
    
@@ -81,8 +94,6 @@ async function listApprovedProviders(filters: { specialty?: string; q?: string }
     .eq("is_active", true)
     .order("created_at", { ascending: false });
 
-  if (filters.specialty) query = query.eq("specialty", filters.specialty);
-
   const { data } = await query;
 
    
@@ -97,22 +108,8 @@ async function listApprovedProviders(filters: { specialty?: string; q?: string }
     full_name:         p.profiles?.full_name as string | null ?? "Provider",
   }));
 
-  // Fall back to demo records when the live directory is empty and no filter is active
-  if (providers.length === 0 && !filters.specialty && !filters.q) {
-    return DEMO_PROVIDERS;
-  }
-
-  // Client-side name search
-  if (filters.q) {
-    const q = filters.q.toLowerCase();
-    providers = providers.filter(p =>
-      p.full_name.toLowerCase().includes(q) ||
-      p.specialty.toLowerCase().includes(q) ||
-      p.credentials.some((c: string) => c.toLowerCase().includes(q))
-    );
-  }
-
-  return providers;
+  if (providers.length === 0) providers = DEMO_PROVIDERS;
+  return filterProviders(providers, filters);
 }
 
 async function getSpecialties(): Promise<string[]> {
@@ -125,7 +122,8 @@ async function getSpecialties(): Promise<string[]> {
     .eq("is_public", true);
    
   const all = ((data ?? []) as any[]).map((p: any) => p.specialty as string);
-  return [...new Set(all)].sort();
+  const source = all.length > 0 ? all : DEMO_PROVIDERS.map((provider) => provider.specialty);
+  return [...new Set(source)].sort();
 }
 
 export default async function ProvidersDirectoryPage({ searchParams }: Props) {
@@ -228,11 +226,11 @@ export default async function ProvidersDirectoryPage({ searchParams }: Props) {
                     </div>
                   )}
 
-                  <div style={{ display: "flex", gap: "1rem", marginTop: 8, fontSize: "0.78rem" }}>
+                  <div style={{ display: "flex", gap: "0.55rem 1rem", marginTop: 8, fontSize: "0.78rem", flexWrap: "wrap", alignItems: "center" }}>
                     {p.license_state && (
                       <span className="muted">📍 {p.license_state}</span>
                     )}
-                    <span className="muted" style={{ color: p.accepting_patients ? "#16a34a" : "#6b7280" }}>
+                    <span className="muted" style={{ color: p.accepting_patients ? "#16a34a" : "#6b7280", minWidth: 0 }}>
                       {p.accepting_patients ? "✓ Available for consultation" : "Not currently available"}
                     </span>
                   </div>
