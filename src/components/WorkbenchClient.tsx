@@ -328,7 +328,7 @@ export function WorkbenchClient({
             <p className="section-label">Risk Intelligence</p>
             <h1>Risk Register</h1>
           </div>
-          <Link className="button-primary" href="/assessments">New assessment</Link>
+          <button className="button-primary" type="button" onClick={() => setActiveTab("command-center")}>New assessment</button>
         </header>
         <nav className="command-center-link-strip" aria-label="Risk Intelligence tabs">
           <button className="button-secondary compact" type="button" onClick={() => setActiveTab("command-center")}>Command Center</button>
@@ -338,25 +338,25 @@ export function WorkbenchClient({
           <table>
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Workflow</th>
                 <th>Area</th>
                 <th>Level</th>
                 <th>Score</th>
                 <th>Human review</th>
                 <th>Last reviewed</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               {assessments.map((a) => (
                 <tr key={a.id}>
-                  <td><Link href={"/assessments/" + a.id}>{a.id.slice(0, 8)}{"…"}</Link></td>
                   <td>{a.workflow}</td>
                   <td>{a.area}</td>
                   <td><StatusBadge level={a.level} /></td>
                   <td>{a.score}</td>
                   <td>{a.humanReviewStatus.replace(/_/g, " ")}</td>
                   <td>{a.reviewedAt ? new Date(a.reviewedAt).toLocaleDateString() : "Not reviewed"}</td>
+                  <td><Link href={"/assessments/" + a.id} className="text-link">Open →</Link></td>
                 </tr>
               ))}
             </tbody>
