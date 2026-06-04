@@ -74,9 +74,16 @@ export function ErgonomicSelfAssessmentClient() {
   const [assessmentState, submitAction] = useActionState(submitErgonomicSelfAssessmentAction, initialAssessmentState);
   const [advancedState, requestAction] = useActionState(requestAdvancedEvaluationAction, initialAdvancedState);
   const [draft, setDraft] = useState<DraftInput>(defaultInput);
+  const [draftDirty, setDraftDirty] = useState(false);
   const result = useMemo(() => scoreErgonomicLevel1(draft), [draft]);
 
+  // Hide post-submission banners once the user edits the form again
+  const showSubmissionBanners = !draftDirty;
+
+  const markDirty = () => setDraftDirty(true);
+
   const setBodyPart = (part: ErgonomicBodyPart, checked: boolean) => {
+    markDirty();
     setDraft((current) => {
       const nextParts = checked ? [...current.bodyParts, part] : current.bodyParts.filter((item) => item !== part);
       const normalized = normalizeBodyParts(part === "none" && checked ? ["none"] : nextParts.filter((item) => item !== "none"));
@@ -87,7 +94,7 @@ export function ErgonomicSelfAssessmentClient() {
   return (
     <div className="ergonomic-screening-grid">
       <section className="panel ergonomic-form-panel">
-        <form action={submitAction} className="ergonomic-form">
+        <form action={submitAction} className="ergonomic-form" onSubmit={() => setDraftDirty(false)}>
           <fieldset>
             <legend>1. What type of work are you doing?</legend>
             <div className="option-grid task-option-grid">
@@ -96,7 +103,7 @@ export function ErgonomicSelfAssessmentClient() {
                   <input
                     checked={draft.taskType === option.value}
                     name="taskType"
-                    onChange={() => setDraft((current) => ({ ...current, taskType: option.value }))}
+                    onChange={() => { markDirty(); setDraft((current) => ({ ...current, taskType: option.value })); }}
                     type="radio"
                     value={option.value}
                   />
@@ -115,7 +122,7 @@ export function ErgonomicSelfAssessmentClient() {
                   <input
                     checked={draft.discomfortLevel === option.value}
                     name="discomfortLevel"
-                    onChange={() => setDraft((current) => ({ ...current, discomfortLevel: option.value }))}
+                    onChange={() => { markDirty(); setDraft((current) => ({ ...current, discomfortLevel: option.value })); }}
                     type="radio"
                     value={option.value}
                   />
@@ -153,7 +160,7 @@ export function ErgonomicSelfAssessmentClient() {
                   <input
                     checked={draft.frequency === option.value}
                     name="frequency"
-                    onChange={() => setDraft((current) => ({ ...current, frequency: option.value }))}
+                    onChange={() => { markDirty(); setDraft((current) => ({ ...current, frequency: option.value })); }}
                     type="radio"
                     value={option.value}
                   />
@@ -244,14 +251,14 @@ export function ErgonomicSelfAssessmentClient() {
           </ul>
         </section>
 
-        {assessmentState.correctiveActionRecommended ? (
+        {showSubmissionBanners && assessmentState.correctiveActionRecommended ? (
           <div className="draft-banner">
             <AlertTriangle size={18} />
             Corrective-action review was recommended from this Level 1 screening.
           </div>
         ) : null}
 
-        {assessmentState.level2AutoAssigned ? (
+        {showSubmissionBanners && assessmentState.level2AutoAssigned ? (
           <div className="draft-banner draft-banner-level2">
             <AlertTriangle size={18} />
             <span>
@@ -307,7 +314,7 @@ export function ErgonomicSelfAssessmentClient() {
             If symptoms continue or the task feels worse, request an advanced ergonomic evaluation with measurements and photos.
             Level 2 is separate from this Level 1 screening and requires a qualified evaluator to complete.
           </p>
-          {assessmentState.level2AutoAssigned && assessmentState.level2RequestId ? (
+          {showSubmissionBanners && assessmentState.level2AutoAssigned && assessmentState.level2RequestId ? (
             <div className="advanced-request-form">
               <p className="save-message save-saved">
                 Level 2 already auto-assigned for this screening.
@@ -316,7 +323,7 @@ export function ErgonomicSelfAssessmentClient() {
                 Open Level 2 Measurement Inspection
               </Link>
             </div>
-          ) : assessmentState.assessmentId ? (
+          ) : showSubmissionBanners && assessmentState.assessmentId ? (
             <form action={requestAction} className="advanced-request-form">
               <input name="assessmentId" type="hidden" value={assessmentState.assessmentId} />
               <input
@@ -403,16 +410,4 @@ function nextStepIcon(level: string) {
 }
 
 function riskLabel(level: string) {
-  if (level === "low") return "Low Risk";
-  if (level === "moderate") return "Moderate Risk";
-  if (level === "high") return "High Risk";
-  if (level === "severe") return "Severe Risk";
-  return ergonomicLabel("task", level);
-}
-
-function riskClass(level: string) {
-  if (level === "low") return "status-low";
-  if (level === "moderate") return "status-moderate";
-  if (level === "high") return "status-high";
-  return "status-critical";
-}
+  if (level 
