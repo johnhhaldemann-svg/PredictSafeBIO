@@ -119,6 +119,19 @@ function demoRecords(): PesticideRecord[] {
   ];
 }
 
+function filterDemoRecords(filters?: {
+  productType?: ProductType;
+  deviationOnly?: boolean;
+  missingLabel?: boolean;
+}) {
+  return demoRecords().filter((record) => {
+    if (filters?.productType && record.productType !== filters.productType) return false;
+    if (filters?.deviationOnly && !record.deviationNoted) return false;
+    if (filters?.missingLabel && record.hasLabel) return false;
+    return true;
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -160,11 +173,11 @@ export async function listPesticideRecords(filters?: {
   deviationOnly?: boolean;
   missingLabel?: boolean;
 }): Promise<PesticideRecord[]> {
-  if (!isSupabaseConfigured()) return demoRecords();
+  if (!isSupabaseConfigured()) return filterDemoRecords(filters);
 
   try {
     const ctx = await getProfileContext();
-    if (!ctx) return demoRecords();
+    if (!ctx) return filterDemoRecords(filters);
 
     const supabase = await createSupabaseServerClient();
 
@@ -189,7 +202,7 @@ export async function listPesticideRecords(filters?: {
     if (error) throw error;
     return (data ?? []).map(mapRow);
   } catch {
-    return demoRecords();
+    return filterDemoRecords(filters);
   }
 }
 

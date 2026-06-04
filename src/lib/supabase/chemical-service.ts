@@ -146,6 +146,19 @@ function demoChemicals(): ChemicalRecord[] {
   ];
 }
 
+function filterDemoChemicals(filters?: {
+  hazardClass?: HazardClass;
+  expiringSoon?: boolean;
+  missingSds?: boolean;
+}) {
+  return demoChemicals().filter((chemical) => {
+    if (filters?.hazardClass && chemical.hazardClass !== filters.hazardClass) return false;
+    if (filters?.expiringSoon && !(chemical.expiringSoon || chemical.expired)) return false;
+    if (filters?.missingSds && chemical.sdsPresent) return false;
+    return true;
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -208,11 +221,11 @@ export async function listChemicals(filters?: {
   expiringSoon?: boolean;
   missingSds?: boolean;
 }): Promise<ChemicalRecord[]> {
-  if (!isSupabaseConfigured()) return demoChemicals();
+  if (!isSupabaseConfigured()) return filterDemoChemicals(filters);
 
   try {
     const ctx = await getProfileContext();
-    if (!ctx) return demoChemicals();
+    if (!ctx) return filterDemoChemicals(filters);
 
     const supabase = await createSupabaseServerClient();
 
@@ -241,7 +254,7 @@ export async function listChemicals(filters?: {
     if (error) throw error;
     return (data ?? []).map(mapRow);
   } catch {
-    return demoChemicals();
+    return filterDemoChemicals(filters);
   }
 }
 

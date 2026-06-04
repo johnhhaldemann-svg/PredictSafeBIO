@@ -150,6 +150,17 @@ function demoWasteRecords(): WasteRecord[] {
   ];
 }
 
+function filterDemoWasteRecords(filters?: {
+  status?: WasteStatus;
+  atRisk?: boolean;
+}) {
+  return demoWasteRecords().filter((record) => {
+    if (filters?.status && record.status !== filters.status) return false;
+    if (filters?.atRisk && !record.isAtRisk) return false;
+    return true;
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -210,11 +221,11 @@ export async function listWasteRecords(filters?: {
   status?: WasteStatus;
   atRisk?: boolean;
 }): Promise<WasteRecord[]> {
-  if (!isSupabaseConfigured()) return demoWasteRecords();
+  if (!isSupabaseConfigured()) return filterDemoWasteRecords(filters);
 
   try {
     const ctx = await getProfileContext();
-    if (!ctx) return demoWasteRecords();
+    if (!ctx) return filterDemoWasteRecords(filters);
 
     const supabase = await createSupabaseServerClient();
 
@@ -236,7 +247,7 @@ export async function listWasteRecords(filters?: {
     if (error) throw error;
     return (data ?? []).map(mapRow);
   } catch {
-    return demoWasteRecords();
+    return filterDemoWasteRecords(filters);
   }
 }
 

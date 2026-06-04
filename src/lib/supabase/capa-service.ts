@@ -141,6 +141,12 @@ function demoCapaRecords(): CapaRecord[] {
   ];
 }
 
+function filterDemoCapaRecords(filters?: { status?: CapaStatus | "all" }) {
+  const records = demoCapaRecords();
+  if (!filters?.status || filters.status === "all") return records;
+  return records.filter((record) => record.status === filters.status);
+}
+
 function demoCapaDetail(id: string): CapaDetail | null {
   const record = demoCapaRecords().find((r) => r.id === id);
   if (!record) return null;
@@ -185,10 +191,10 @@ function demoCapaDetail(id: string): CapaDetail | null {
 export async function listCapaRecords(filters?: {
   status?: CapaStatus | "all";
 }): Promise<CapaRecord[]> {
-  if (!isSupabaseConfigured()) return demoCapaRecords();
+  if (!isSupabaseConfigured()) return filterDemoCapaRecords(filters);
 
   const context = await getProfileContext();
-  if (!context) return demoCapaRecords();
+  if (!context) return filterDemoCapaRecords(filters);
 
   const supabase = await createSupabaseServerClient();
   let query = supabase
