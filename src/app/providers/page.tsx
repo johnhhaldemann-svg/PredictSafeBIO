@@ -11,11 +11,56 @@ import { getSupabaseAdminClient } from "@/lib/supabase/admin";
  * Filterable by specialty. No auth required to browse.
  */
 
+type Provider = {
+  id: string;
+  specialty: string;
+  npi_number: string | null;
+  credentials: string[];
+  accepting_patients: boolean;
+  license_state: string | null;
+  npi_verified: boolean;
+  full_name: string;
+};
+
+/** Sample records shown when the live directory is empty (unauthenticated demo view). */
+const DEMO_PROVIDERS: Provider[] = [
+  {
+    id: "demo-1",
+    full_name: "Dr. Sarah Chen",
+    specialty: "Occupational Health & Biosafety",
+    credentials: ["MD", "MPH", "CIH"],
+    license_state: "CA",
+    accepting_patients: true,
+    npi_number: null,
+    npi_verified: true,
+  },
+  {
+    id: "demo-2",
+    full_name: "Dr. Marcus Webb",
+    specialty: "Industrial Hygiene",
+    credentials: ["PhD", "CIH", "CSP"],
+    license_state: "MA",
+    accepting_patients: true,
+    npi_number: null,
+    npi_verified: true,
+  },
+  {
+    id: "demo-3",
+    full_name: "Dr. Priya Kapoor",
+    specialty: "Environmental Health & Safety",
+    credentials: ["DrPH", "CHMM"],
+    license_state: "TX",
+    accepting_patients: false,
+    npi_number: null,
+    npi_verified: false,
+  },
+];
+
 type Props = {
   searchParams: Promise<{ specialty?: string; q?: string }>;
 };
 
-async function listApprovedProviders(filters: { specialty?: string; q?: string }) {
+async function listApprovedProviders(filters: { specialty?: string; q?: string }): Promise<Provider[]> {
   const admin = getSupabaseAdminClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let query = (admin as any)
@@ -35,7 +80,7 @@ async function listApprovedProviders(filters: { specialty?: string; q?: string }
   const { data } = await query;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let providers = ((data ?? []) as any[]).map((p: any) => ({
+  let providers: Provider[] = ((data ?? []) as any[]).map((p: any) => ({
     id:                p.id as string,
     specialty:         p.specialty as string,
     npi_number:        p.npi_number as string | null,
@@ -45,6 +90,11 @@ async function listApprovedProviders(filters: { specialty?: string; q?: string }
     npi_verified:      p.npi_verified as boolean,
     full_name:         p.profiles?.full_name as string | null ?? "Provider",
   }));
+
+  // Fall back to demo records when the live directory is empty and no filter is active
+  if (providers.length === 0 && !filters.specialty && !filters.q) {
+    return DEMO_PROVIDERS;
+  }
 
   // Client-side name search
   if (filters.q) {
@@ -134,7 +184,7 @@ export default async function ProvidersDirectoryPage({ searchParams }: Props) {
         ) : (
           <div className="command-card-grid">
             {providers.map(p => (
-              <Link key={p.id} href={`/providers/${p.id}`} style={{ textDecoration: "none" }}>
+              <Link key={p.id} href={p.id.startsWith("demo-") ? "/providers" : `/providers/${p.id}`} style={{ textDecoration: "none" }}>
                 <article className="command-card" style={{ cursor: "pointer", height: "100%" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                     <div>
