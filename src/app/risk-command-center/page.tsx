@@ -12,6 +12,11 @@ import {
   type CellType,
   type CellSeverity
 } from "@/lib/supabase/risk-dashboard-service";
+import {
+  acknowledgeRiskCellAction,
+  dismissRiskCellAction,
+  escalateToCapaAction,
+} from "@/app/risk-command-center/actions";
 
 const CELL_TYPE_ORDER: CellType[] = [
   "failure_cell", "precursor_cell", "control_cell",
@@ -135,7 +140,7 @@ export default async function RiskCommandCenterPage() {
             </div>
             <div className="action-list">
               {topFailures.map((cell) => (
-                <RiskCellReviewCard key={cell.id} cell={cell} returnTo="/risk-command-center" />
+                <RiskCellReviewCard key={cell.id} cell={cell} returnTo="/risk-command-center" acknowledgeRiskCellAction={acknowledgeRiskCellAction} dismissRiskCellAction={dismissRiskCellAction} escalateToCapaAction={escalateToCapaAction} />
               ))}
             </div>
           </section>
@@ -152,7 +157,7 @@ export default async function RiskCommandCenterPage() {
             </div>
             <div className="action-list">
               {topPrecursors.map((cell) => (
-                <RiskCellReviewCard key={cell.id} cell={cell} returnTo="/risk-command-center" />
+                <RiskCellReviewCard key={cell.id} cell={cell} returnTo="/risk-command-center" acknowledgeRiskCellAction={acknowledgeRiskCellAction} dismissRiskCellAction={dismissRiskCellAction} escalateToCapaAction={escalateToCapaAction} />
               ))}
             </div>
           </section>
@@ -174,7 +179,7 @@ export default async function RiskCommandCenterPage() {
           ) : (
             <div className="action-list">
               {recentCells.map((cell) => (
-                <RiskCellReviewCard key={cell.id} cell={cell} returnTo="/risk-command-center" />
+                <RiskCellReviewCard key={cell.id} cell={cell} returnTo="/risk-command-center" acknowledgeRiskCellAction={acknowledgeRiskCellAction} dismissRiskCellAction={dismissRiskCellAction} escalateToCapaAction={escalateToCapaAction} />
               ))}
             </div>
           )}
