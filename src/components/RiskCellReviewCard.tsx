@@ -3,13 +3,21 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, ChevronDown, ChevronUp, ShieldAlert, Zap } from "lucide-react";
-import {
-  acknowledgeRiskCellAction,
-  dismissRiskCellAction,
-  escalateToCapaAction,
-} from "@/app/risk-command-center/actions";
-import { linkedRecordRoutes } from "@/lib/supabase/risk-dashboard-service";
+// Actions passed as props from the server page (avoids client→server-only import chain)
 import type { RiskCell } from "@/lib/supabase/risk-dashboard-service";
+
+// Defined inline to avoid importing server-only risk-dashboard-service in a client component
+const linkedRecordRoutes: Record<string, string> = {
+  chemical_inventory: "/chemical-inventory",
+  waste_records: "/waste-management",
+  capa_records: "/operations/capa",
+  controlled_work_permits: "/permits",
+  pesticide_disinfectant_records: "/pesticide",
+  biosafety_risk_assessments: "/assessments",
+  audit_findings: "/inspections",
+  assessment_signals: "/assessments",
+  ergonomic_risk_signals: "/ergonomics/self-assessment",
+};
 
 // ---------------------------------------------------------------------------
 // Payload shape written by continuous-scoring-service
@@ -94,9 +102,15 @@ function ScoreBar({ score }: { score: number }) {
 export function RiskCellReviewCard({
   cell,
   returnTo = "/risk-command-center",
+  acknowledgeRiskCellAction,
+  dismissRiskCellAction,
+  escalateToCapaAction,
 }: {
   cell: RiskCell;
   returnTo?: string;
+  acknowledgeRiskCellAction: (formData: FormData) => Promise<void>;
+  dismissRiskCellAction: (formData: FormData) => Promise<void>;
+  escalateToCapaAction: (formData: FormData) => Promise<void>;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [activeForm, setActiveForm] = useState<"dismiss" | "escalate" | null>(null);
