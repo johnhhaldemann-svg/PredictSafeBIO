@@ -390,9 +390,10 @@ export function pickAssignee(
  *
  * Returns a summary of what was created / skipped.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function autoScheduleInspections(
   orgId: string,
-  serviceClient: ReturnType<typeof import("@supabase/supabase-js").createClient>
+  serviceClient: any
 ): Promise<AutoScheduleResult> {
   // 1. Fetch completed inspections to feed the scheduler
   const { data: completedRows } = await serviceClient
@@ -1024,7 +1025,6 @@ export async function closeInspectionFinding(input: {
 
   if (error) return { ok: false, message: error.message };
 
-  // Resolve the risk cell so it leaves the active Risk Command Center queue
   void resolveRiskCell({
     organizationId: context.organizationId,
     linkedRecordType: "audit_findings",

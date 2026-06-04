@@ -4,13 +4,16 @@ import Link from "next/link";
 import {
   AlertTriangle,
   BellRing,
+  Calendar,
   CheckCircle2,
   Clock,
   ClipboardList,
   HeartPulse,
   Plus,
+  RefreshCw,
   ShieldCheck,
   Sparkles,
+  User,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { getErgonomicLevel1Summary, getFoundationAdminAccessSummary } from "@/lib/supabase/data";
@@ -182,6 +185,9 @@ export default async function InspectionsPage({ searchParams }: Props) {
                           Schedule now
                         </Link>
                       )}
+                      <span style={{ fontSize: "10px", color: "#7c3aed", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                        <Sparkles size={9} /> Auto-assigns daily
+                      </span>
                     </div>
                   </article>
                 );
@@ -190,17 +196,40 @@ export default async function InspectionsPage({ searchParams }: Props) {
           </section>
         )}
 
-        <nav className="command-center-link-strip" aria-label="Inspection status filter">
-          {(["all", "planned", "in_progress", "completed", "cancelled"] as const).map((s) => (
+        {/* Status filter + calendar / refresh actions */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
+          <nav className="command-center-link-strip" aria-label="Inspection status filter">
+            {(["all", "planned", "in_progress", "completed", "cancelled"] as const).map((s) => (
+              <Link
+                key={s}
+                href={s === "all" ? "/inspections" : `/inspections?filter=${s}`}
+                className={`button-secondary compact ${filterStatus === s ? "active-filter" : ""}`}
+              >
+                {s === "all" ? "All" : inspectionStatusLabels[s as InspectionStatus]}
+              </Link>
+            ))}
+          </nav>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             <Link
-              key={s}
-              href={s === "all" ? "/inspections" : `/inspections?filter=${s}`}
-              className={`button-secondary compact ${filterStatus === s ? "active-filter" : ""}`}
+              href="/inspections/calendar"
+              className="button-secondary compact"
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
             >
-              {s === "all" ? "All" : inspectionStatusLabels[s as InspectionStatus]}
+              <Calendar size={13} /> Compliance Calendar
             </Link>
-          ))}
-        </nav>
+            {adminAccess.isOwner && (
+              <form action="/api/inspections/auto-schedule" method="POST">
+                <button
+                  type="submit"
+                  className="button-secondary compact"
+                  style={{ display: "inline-flex", alignItems: "center", gap: "6px", cursor: "pointer" }}
+                >
+                  <RefreshCw size={13} /> Refresh AI Schedule
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
 
         <section className="panel">
           <div className="panel-heading">
@@ -213,31 +242,48 @@ export default async function InspectionsPage({ searchParams }: Props) {
             <p className="muted">No inspections found. Schedule one below.</p>
           ) : (
             <div className="action-list">
-              {inspections.map((insp) => (
-                <article className="action-row" key={insp.id}>
-                  <div>
-                    <strong>
-                      <Link href={`/inspections/${insp.id}`}>{insp.title}</Link>
-                    </strong>
-                    <span className={STATUS_CLASS[insp.status]}>
-                      {inspectionStatusLabels[insp.status]} &middot; {inspectionTypeLabels[insp.auditType] ?? insp.auditType}
-                    </span>
-                  </div>
-                  <p>
-                    {insp.scheduledFor
-                      ? `Scheduled ${new Date(insp.scheduledFor).toLocaleDateString()}`
-                      : "No date set"}
-                    {insp.completedAt
-                      ? ` · Completed ${new Date(insp.completedAt).toLocaleDateString()}`
-                      : ""}
-                    {" · "}
-                    {insp.findingCount ?? 0} finding{(insp.findingCount ?? 0) !== 1 ? "s" : ""}
-                    {(insp.openFindingCount ?? 0) > 0
-                      ? ` (${insp.openFindingCount} open)`
-                      : ""}
-                  </p>
-                </article>
-              ))}
+              {inspections.map((insp) => {
+                const isOverdue = insp.status === "planned" && insp.scheduledFor && new Date(insp.scheduledFor) < new Date();
+                return (
+                  <article
+                    className="action-row"
+                    key={insp.id}
+                    style={isOverdue ? { borderLeft: "3px solid var(--color-red, #c0392b)", paddingLeft: "10px" } : undefined}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <strong style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                        <Link href={`/inspections/${insp.id}`}>{insp.title}</Link>
+                        {insp.autoGenerated && (
+                          <span style={{ fontSize: "10px", color: "#7c3aed", background: "#f5f3ff", borderRadius: "4px", padding: "2px 6px", border: "1px solid #ddd6fe", display: "inline-flex", alignItems: "center", gap: "3px", fontWeight: 500 }}>
+                            <Sparkles size={9} /> AI-scheduled
+                          </span>
+                        )}
+                      </strong>
+                      <span className={STATUS_CLASS[insp.status]}>
+                        {inspectionStatusLabels[insp.status]} &middot; {inspectionTypeLabels[insp.auditType] ?? insp.auditType}
+                      </span>
+                      <p style={{ margin: "4px 0 0", fontSize: "0.8rem", color: "var(--color-muted)" }}>
+                        {insp.scheduledFor
+                          ? `Due ${new Date(insp.scheduledFor).toLocaleDateString()}`
+                          : "No date set"}
+                        {insp.completedAt
+                          ? ` · Completed ${new Date(insp.completedAt).toLocaleDateString()}`
+                          : ""}
+                        {" · "}
+                        {insp.findingCount ?? 0} finding{(insp.findingCount ?? 0) !== 1 ? "s" : ""}
+                        {(insp.openFindingCount ?? 0) > 0
+                          ? ` (${insp.openFindingCount} open)`
+                          : ""}
+                        {insp.assigneeName && (
+                          <span style={{ marginLeft: "8px", display: "inline-flex", alignItems: "center", gap: "4px", color: "#1d4ed8" }}>
+                            <User size={11} /> {insp.assigneeName}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
@@ -332,8 +378,7 @@ export default async function InspectionsPage({ searchParams }: Props) {
               </Link>
             </div>
           </article>
-
-          <article className="panel">
+   <article className="panel">
             <div className="panel-heading">
               <div>
                 <p className="section-label">Advanced evaluation</p>
