@@ -175,47 +175,27 @@ export default async function UserDetailPage({ params, searchParams }: Props) {
                 <p>{userDetail.provider_profile.license_number ?? "—"} ({userDetail.provider_profile.credentials?.join(", ") || "—"})</p>
               </article>
               <article className="action-row">
-                <div><strong>Accepting patients</strong></div>
+                <div><strong>Available for consultation</strong></div>
                 <p>{userDetail.provider_profile.accepting_patients ? "Yes" : "No"}</p>
               </article>
             </div>
           </section>
         )}
 
-        {/* Patient bio (if applicable) — no clinical PHI shown */}
+        {/* Personnel record (if applicable) — display name only, no health data */}
         {userDetail.patient_bio && (
           <section className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Patient</p>
-                <h2>Patient bio</h2>
+                <p className="section-label">Personnel</p>
+                <h2>Personnel record</h2>
               </div>
               <ShieldCheck size={20} />
-            </div>
-            <div className="verification-pending-box" style={{ marginBottom: "0.75rem" }}>
-              <ShieldAlert size={14} />
-              <span>PHI protected. Clinical notes are encrypted and not displayed here.</span>
             </div>
             <div className="action-list">
               <article className="action-row">
                 <div><strong>Display name</strong></div>
                 <p>{userDetail.patient_bio.display_name ?? "—"}</p>
-              </article>
-              <article className="action-row">
-                <div><strong>Biological sex</strong></div>
-                <p>{userDetail.patient_bio.biological_sex ?? "—"}</p>
-              </article>
-              <article className="action-row">
-                <div><strong>Birth year</strong></div>
-                <p>{userDetail.patient_bio.date_of_birth_year ?? "—"}</p>
-              </article>
-              <article className="action-row">
-                <div><strong>Conditions</strong></div>
-                <p>{userDetail.patient_bio.conditions?.join(", ") || "—"}</p>
-              </article>
-              <article className="action-row">
-                <div><strong>Allergies</strong></div>
-                <p>{userDetail.patient_bio.allergies?.join(", ") || "—"}</p>
               </article>
               <article className="action-row">
                 <div><strong>Record active</strong></div>

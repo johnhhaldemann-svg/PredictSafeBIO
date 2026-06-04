@@ -90,7 +90,7 @@ export default async function ConfigHubPage() {
           </div>
           <div className="action-list">
             {[
-              { label: "Audit log enabled (HIPAA)",    ok: flags.find(f => f.key === "audit_log")?.enabled ?? false },
+              { label: "Audit log enabled",            ok: flags.find(f => f.key === "audit_log")?.enabled ?? false },
               { label: "Stripe billing configured",    ok: Boolean(process.env.STRIPE_SECRET_KEY) },
               { label: "Email provider configured",    ok: Boolean(process.env.RESEND_API_KEY) },
               { label: "Support email set",             ok: Boolean(branding.support_email) },

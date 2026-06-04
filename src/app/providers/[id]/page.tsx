@@ -77,9 +77,9 @@ export default async function ProviderProfilePage({ params }: Props) {
 
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
               {provider.accepting_patients ? (
-                <span className="status-chip status-current">✓ Accepting patients</span>
+                <span className="status-chip status-current">✓ Available for consultation</span>
               ) : (
-                <span className="status-chip status-unknown">Not accepting patients</span>
+                <span className="status-chip status-unknown">Not currently available</span>
               )}
               {provider.npi_verified && (
                 <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: "0.75rem", color: "#16a34a" }}>

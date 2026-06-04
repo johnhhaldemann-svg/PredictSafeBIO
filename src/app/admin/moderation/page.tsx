@@ -232,7 +232,7 @@ export default async function ModerationPage({ searchParams }: Props) {
             </div>
             <div className="verification-pending-box" style={{ margin: "0 1.25rem 1rem" }}>
               <EyeOff size={14} />
-              <span>Data is preserved and HIPAA-compliant. Takedowns are reversible — click a row to restore.</span>
+              <span>Data is preserved and audit-safe. Takedowns are reversible — click a row to restore.</span>
             </div>
             {takenDownBios.length === 0 ? (
               <p className="muted" style={{ padding: "1.5rem" }}>No bios are currently taken down.</p>

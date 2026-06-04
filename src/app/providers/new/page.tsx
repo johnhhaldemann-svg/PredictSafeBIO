@@ -146,9 +146,9 @@ export default async function ProviderNewPage({ searchParams }: Props) {
                 </label>
 
                 <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
-                  NPI Number <span style={{ color: "#dc2626" }}>*</span>
-                  <span className="muted" style={{ fontSize: "0.72rem" }}>10-digit National Provider Identifier</span>
-                  <input name="npi_number" required placeholder="1234567890" maxLength={10}
+                  NPI Number <span className="muted" style={{ fontSize: "0.72rem" }}>(if applicable)</span>
+                  <span className="muted" style={{ fontSize: "0.72rem" }}>Optional — 10-digit ID for clinical / occupational-health providers</span>
+                  <input name="npi_number" placeholder="Optional" maxLength={10}
                     pattern="\d{10}" title="Must be a 10-digit number" style={{ fontFamily: "monospace" }} />
                 </label>
 
@@ -182,7 +182,7 @@ export default async function ProviderNewPage({ searchParams }: Props) {
 
             <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: "0.85rem", cursor: "pointer" }}>
               <input type="checkbox" name="accepting_patients" value="true" defaultChecked />
-              Currently accepting patients / clients
+              Currently available for new consultations
             </label>
 
             <div className="guardrail-box">

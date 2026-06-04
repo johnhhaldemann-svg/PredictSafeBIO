@@ -31,7 +31,6 @@ const ROLES = [
   { value: "admin", label: "Admin" },
   { value: "owner", label: "Owner" },
   { value: "provider", label: "Provider" },
-  { value: "patient", label: "Patient" },
   { value: "member", label: "Member" },
 ];
 

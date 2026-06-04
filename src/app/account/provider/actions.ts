@@ -17,8 +17,8 @@ export async function updateProviderProfileAction(formData: FormData) {
   const accepting      = formData.get("accepting_patients") === "true";
   const credentials    = formData.getAll("credentials").map(String);
 
-  if (!specialty || !npi_number) {
-    redirect("/account/provider?error=Specialty+and+NPI+are+required");
+  if (!specialty) {
+    redirect("/account/provider?error=Specialty+is+required");
   }
 
   const admin = getSupabaseAdminClient();
