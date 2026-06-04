@@ -4,7 +4,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Building2, Users, Activity, Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { PlatformConfigError } from "@/components/PlatformConfigError";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isSupabaseServiceConfigured } from "@/lib/supabase/env";
 import { createServerClient } from "@/lib/supabase/server";
 
 /**
@@ -23,6 +25,8 @@ export default async function AdminOrganizationsPage() {
     .single();
 
   if (profile?.role !== "superadmin") redirect("/workbench");
+
+  if (!isSupabaseServiceConfigured()) return <PlatformConfigError feature="Organizations" />;
 
   const admin = getSupabaseAdminClient();
 

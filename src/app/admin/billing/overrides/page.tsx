@@ -4,11 +4,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft, CheckCircle2, ShieldAlert, Zap } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { PlatformConfigError } from "@/components/PlatformConfigError";
 import { createServerClient } from "@/lib/supabase/server";
 import { listManualOverrides } from "@/lib/supabase/billing-service";
 import { canViewPlatform } from "@/lib/role-permissions";
 import { createOverrideAction, revokeOverrideAction } from "../actions";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isSupabaseServiceConfigured } from "@/lib/supabase/env";
 
 /**
  * /admin/billing/overrides — Grant free trials, discounts, extensions.
@@ -34,6 +36,8 @@ export default async function BillingOverridesPage({ searchParams }: Props) {
 
   const access = { signedIn: true, userId: user.id, organizationId: profile?.organization_id, role: profile?.role };
   if (!canViewPlatform(access)) redirect("/");
+
+  if (!isSupabaseServiceConfigured()) return <PlatformConfigError feature="Manual Overrides" />;
 
   const sp = await searchParams;
 
