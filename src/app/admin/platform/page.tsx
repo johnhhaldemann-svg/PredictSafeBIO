@@ -39,25 +39,7 @@ export default async function PlatformOpsPage({ searchParams }: Props) {
 
   // Access gate — require matching key
   if (!adminKey || params.key !== adminKey) {
-    return (
-      <AppShell>
-        <div className="page-stack">
-          <header className="page-header">
-            <p className="section-label">Platform Operations</p>
-            <h1>Access restricted</h1>
-          </header>
-          <section className="panel">
-            <p className="muted">
-              Platform operator access requires the <code>PLATFORM_ADMIN_KEY</code> environment
-              variable to be set and the matching key to be passed as a URL query parameter.
-            </p>
-            <p className="muted">
-              Example: <code>/admin/platform?key=your-secret-key</code>
-            </p>
-          </section>
-        </div>
-      </AppShell>
-    );
+    redirect("/login");
   }
 
   const data = await getPlatformData();
