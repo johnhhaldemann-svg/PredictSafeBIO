@@ -69,6 +69,16 @@ const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true }, // temp: bypasses OneDrive-corrupted stub files
   reactStrictMode: true,
 
+  async redirects() {
+    return [
+      {
+        source: "/assessments",
+        destination: "/workbench?tab=risk-register",
+        permanent: false,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {
