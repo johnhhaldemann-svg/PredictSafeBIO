@@ -330,6 +330,13 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
                 </article>
               ))}
             </div>
+            <div className="guardrail-box">
+              <span>
+                Company operating context (sites, programs, biosafety levels, review owners) is
+                configured in{" "}
+                <Link className="text-link" href="/account/company">Company Settings →</Link>
+              </span>
+            </div>
           </div>
         </section>
 

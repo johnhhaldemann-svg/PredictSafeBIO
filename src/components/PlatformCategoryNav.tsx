@@ -23,7 +23,10 @@ import {
   FlaskConical,
   ChevronDown,
   HardHat,
-  Server
+  Server,
+  Building2,
+  Users,
+  CreditCard
 } from "lucide-react";
 
 type SubItem = { href: string; label: string; icon: React.ElementType; desc: string };
@@ -83,6 +86,16 @@ const categories: Category[] = [
       { href: "/waste-management",            label: "Waste Mgmt",      icon: Wrench,        desc: "Hazardous and biohazard waste tracking" },
       { href: "/permits",                     label: "Work Permits",    icon: Lock,          desc: "Permits for high-hazard work" },
       { href: "/pesticide",                   label: "Pest & Disinfect",icon: ShieldCheck,   desc: "Pest control and disinfection logs" },
+    ]
+  },
+  {
+    title: "Workspace",
+    href: "/account/company",
+    icon: Settings,
+    subItems: [
+      { href: "/account/company", label: "Company Settings", icon: Building2,   desc: "Operating context, programs, review owners" },
+      { href: "/account/team",    label: "Team",             icon: Users,       desc: "Members, roles, and invitations" },
+      { href: "/account/billing", label: "Billing",          icon: CreditCard,  desc: "Plan, invoices, and usage" },
     ]
   },
   {
