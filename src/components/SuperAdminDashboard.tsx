@@ -156,7 +156,7 @@ export function SuperAdminDashboard({
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <header className="page-header">
         <p className="section-label">Super Admin</p>
-        <h1>Platform Command Center</h1>
+        <h1>Platform Overview</h1>
         <p className="muted">
           Cross-platform view · Data as of {new Date(fetchedAt).toLocaleTimeString()}
         </p>
