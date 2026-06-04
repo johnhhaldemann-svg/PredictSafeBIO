@@ -94,7 +94,7 @@ export default async function AssessmentsPage({
             <p className="section-label">Risk Intelligence</p>
             <h1>Risk Register</h1>
           </div>
-          <Link className="button-primary" href="/workbench">New assessment</Link>
+          <Link className="button-primary" href={currentUserId ? "/workbench" : "/login?next=/workbench"}>New assessment</Link>
         </header>
 
         {pendingReviewCount > 0 ? (
