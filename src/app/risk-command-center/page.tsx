@@ -1,6 +1,9 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import { Activity, AlertTriangle, CheckCircle2, ShieldCheck, TrendingUp, Zap } from "lucide-react";
+
+export const metadata: Metadata = { title: "Risk Monitor – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
 import Link from "next/link";
 import { getProfileContext } from "@/lib/supabase/data-helpers";

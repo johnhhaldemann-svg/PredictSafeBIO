@@ -1,6 +1,9 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import { AlertTriangle, Plus, ShieldCheck, Trash2, Truck } from "lucide-react";
+
+export const metadata: Metadata = { title: "Waste Management – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
 import {
   listWasteRecords,

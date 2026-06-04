@@ -1,6 +1,9 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import { AlertTriangle, CheckCircle2, Plus, ShieldCheck, Sprout } from "lucide-react";
+
+export const metadata: Metadata = { title: "Pesticide & Disinfectant – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
 import {
   listPesticideRecords,

@@ -1,6 +1,9 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = { title: "Training Matrix – PredictSafeBIO" };
 import { CheckCircle, ClipboardCheck, FileText, Plus, ShieldCheck, Trash2, TrendingUp } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { formatOwnerRole } from "@/lib/display-labels";

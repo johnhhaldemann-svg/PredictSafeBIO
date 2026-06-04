@@ -1,6 +1,9 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import { AlertTriangle, ClipboardCheck, Lock, Plus, ShieldCheck } from "lucide-react";
+
+export const metadata: Metadata = { title: "Permits – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
 import {
   listPermits,

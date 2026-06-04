@@ -1,6 +1,9 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import { AlertTriangle, FlaskConical, Plus, ShieldCheck, FileWarning, Clock } from "lucide-react";
+
+export const metadata: Metadata = { title: "Chemical & SDS – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
 import { listChemicals, hazardClassLabels, type HazardClass } from "@/lib/supabase/chemical-service";
 import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";

@@ -1,7 +1,10 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle2, PlusCircle, Search, Briefcase, ShieldCheck } from "lucide-react";
+
+export const metadata: Metadata = { title: "Provider Directory – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
