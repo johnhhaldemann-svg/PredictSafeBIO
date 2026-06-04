@@ -25,11 +25,57 @@ export async function AppShell({ children }: { children: ReactNode }) {
   const roleLabel = getRoleLabel(auth.role);
   const roleBadgeClass = getRoleBadgeClass(auth.role);
 
-  const isOwner = tier === "owner" || tier === "platform_staff" || tier === "superadmin";
+  const isSuperAdmin = tier === "superadmin";
+  const isOwner = tier === "owner" || tier === "platform_staff" || isSuperAdmin;
   const pendingCount = isOwner && auth.organizationId
     ? await getKnowledgePendingCount(auth.organizationId)
     : 0;
 
+  // ── Superadmin gets a sidebar-free shell ──────────────────────────────────
+  if (isSuperAdmin) {
+    return (
+      <div className="app-shell superadmin-shell">
+        <a href="#main-content" className="skip-nav">Skip to main content</a>
+        <header className="top-nav" aria-label="Superadmin navigation">
+          <Link href="/admin/organizations" className="logo-area" aria-label="PredictSafeBIO platform admin">
+            <div className="logo-box" style={{ background: "#7c3aed" }}>
+              <ShieldCheck size={16} color="#fff" aria-hidden="true" />
+            </div>
+            <div className="logo-text">
+              <strong>PredictSafeBIO</strong>
+              <small>Platform Admin</small>
+            </div>
+          </Link>
+          <nav className="tnav-admin-links" aria-label="Admin sections">
+            <Link href="/admin/organizations" className="tnav-auth-link">Orgs</Link>
+            <Link href="/admin/users" className="tnav-auth-link">Users</Link>
+            <Link href="/admin/audit" className="tnav-auth-link">Audit</Link>
+            <Link href="/admin/platform" className="tnav-auth-link">Platform</Link>
+          </nav>
+          <div className="tnav-spacer" aria-hidden="true" />
+          <div className="user-area">
+            <span className={`role-chip ${roleBadgeClass}`}>{roleLabel}</span>
+            <div className="u-avatar">{initials}</div>
+            <span className="tnav-auth-link">{auth.userEmail ?? "Admin"}</span>
+            <form action={signOutAction} style={{ display: "inline" }}>
+              <button className="icon-button tnav-icon-btn" type="submit" aria-label="Sign out" title="Sign out">
+                <LogOut size={16} />
+              </button>
+            </form>
+          </div>
+        </header>
+        <div className="app-body superadmin-body">
+          <div className="app-content superadmin-content">
+            <main className="app-main" id="main-content">
+              {children}
+            </main>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Standard shell with sidebar ───────────────────────────────────────────
   return (
     <div className="app-shell">
       {/* ── Skip navigation ── */}
@@ -112,7 +158,6 @@ export async function AppShell({ children }: { children: ReactNode }) {
               </span>
             </div>
           )}
-
 
           <main className="app-main" id="main-content">
             {children}

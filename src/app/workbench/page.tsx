@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { WorkbenchClient } from "@/components/WorkbenchClient";
 import { SuperAdminDashboard } from "@/components/SuperAdminDashboard";
@@ -45,6 +46,7 @@ export default async function WorkbenchPage({
   });
 
   if (auth.role === "superadmin") {
+    redirect("/admin/organizations");
     const fetchedAt = new Date().toISOString();
     const [platform, knowledgePending, pendingBios, pendingReports] = await Promise.all([
       safeSettle(getPlatformData(), {
