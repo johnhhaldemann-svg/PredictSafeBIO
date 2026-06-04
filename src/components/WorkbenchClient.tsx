@@ -128,7 +128,9 @@ export function WorkbenchClient({
   initialInput = starterInput,
   notifications,
   productionVerification,
-  commandCenter
+  commandCenter,
+  assessments = [],
+  initialTab = "command-center",
 }: {
   assignees?: FoundationAssigneeOption[];
   canManageFoundationActions?: boolean;
@@ -137,7 +139,10 @@ export function WorkbenchClient({
   notifications?: FoundationNotificationSummary;
   productionVerification?: FoundationProductionVerificationSummary;
   commandCenter?: CommandCenterSummary;
+  assessments?: Array<{ id: string; workflow: string; area: string; level: string; score: number; humanReviewStatus: string; reviewedAt?: string | null; assignedReviewerName?: string | null; reviewDueDate?: string | null }>;
+  initialTab?: "command-center" | "risk-register";
 }) {
+  const [activeTab, setActiveTab] = useState<"command-center" | "risk-register">(initialTab);
   const [input, setInput] = useState<BioAiInput>(initialInput);
   const [signalType, setSignalType] = useState<BioSignalType>("contamination_event");
   const [signalLabel, setSignalLabel] = useState("Unexpected microbial growth in assay control");
@@ -315,10 +320,66 @@ export function WorkbenchClient({
     }
   }
 
+  if (activeTab === "risk-register") {
+    return (
+      <div className="page-stack">
+        <header className="page-header">
+          <div className="page-header-left">
+            <p className="section-label">Risk Intelligence</p>
+            <h1>Risk Register</h1>
+          </div>
+          <Link className="button-primary" href="/assessments">New assessment</Link>
+        </header>
+        <nav className="command-center-link-strip" aria-label="Risk Intelligence tabs">
+          <button className="button-secondary compact" type="button" onClick={() => setActiveTab("command-center")}>Command Center</button>
+          <button className="button-primary compact" type="button" onClick={() => setActiveTab("risk-register")}>Risk Register</button>
+        </nav>
+        <section className="table-panel">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Workflow</th>
+                <th>Area</th>
+                <th>Level</th>
+                <th>Score</th>
+                <th>Human review</th>
+                <th>Last reviewed</th>
+              </tr>
+            </thead>
+            <tbody>
+              {assessments.map((a) => (
+                <tr key={a.id}>
+                  <td><Link href={"/assessments/" + a.id}>{a.id.slice(0, 8)}{"…"}</Link></td>
+                  <td>{a.workflow}</td>
+                  <td>{a.area}</td>
+                  <td><StatusBadge level={a.level} /></td>
+                  <td>{a.score}</td>
+                  <td>{a.humanReviewStatus.replace(/_/g, " ")}</td>
+                  <td>{a.reviewedAt ? new Date(a.reviewedAt).toLocaleDateString() : "Not reviewed"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {assessments.length === 0 && (
+            <div className="empty-action-state">
+              <strong>No risk assessments saved yet.</strong>
+              <p>Run a BioRisk assessment and save it to start building your risk register.</p>
+            </div>
+          )}
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="page-stack">
       {/* Single page-level H1 for screen readers — visually hidden (WCAG 1.3.1) */}
       <h1 className="sr-only">Workbench</h1>
+      <nav className="command-center-link-strip" style={{ marginBottom: "0" }} aria-label="Risk Intelligence tabs">
+        <button className="button-primary compact" type="button" onClick={() => setActiveTab("command-center")}>Command Center</button>
+        <button className="button-secondary compact" type="button" onClick={() => setActiveTab("risk-register")}>Risk Register</button>
+      </nav>
       <EnterpriseKPIStrip commandSummary={commandSummary} assessment={assessment} />
       <EnterpriseWidgetRow commandSummary={commandSummary} assessment={assessment} foundationActions={foundationActions} />
       <EnterpriseHeatMapRow />

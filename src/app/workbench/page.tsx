@@ -27,7 +27,13 @@ function safeSettle<T>(promise: Promise<T>, fallback: T): Promise<T> {
   return promise.catch(() => fallback);
 }
 
-export default async function WorkbenchPage() {
+export default async function WorkbenchPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ tab?: string }>;
+}) {
+  const params = await searchParams;
+  const initialTab = params?.tab === "risk-register" ? "risk-register" : "command-center";
   const auth = await safeSettle(getAuthSummary(), {
     configured: false,
     signedIn: false,
@@ -171,6 +177,8 @@ export default async function WorkbenchPage() {
           notifications={notifications}
           productionVerification={productionVerification}
           commandCenter={commandCenter}
+          assessments={assessments}
+          initialTab={initialTab}
         />
       </div>
     </AppShell>
