@@ -5947,3 +5947,11 @@ pre {
 .draft-assist-label > label {
   margin-bottom: 0;
 }
+
+/* Superadmin console — spinning refresh icon while a check runs */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spin {
+  animation: spin 0.9s linear infinite;
+}
