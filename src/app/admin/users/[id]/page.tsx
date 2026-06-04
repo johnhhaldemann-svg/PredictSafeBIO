@@ -7,7 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { createServerClient } from "@/lib/supabase/server";
 import { getAdminUserDetail } from "@/lib/supabase/user-admin-service";
 import {
-  isAdminOrAbove,
+  canViewPlatform,
   isSuperAdmin,
   getDbRoleLabel,
   getRoleBadgeClass,
@@ -58,7 +58,7 @@ export default async function UserDetailPage({ params, searchParams }: Props) {
     role: actorProfile?.role,
   };
 
-  if (!isAdminOrAbove(actorAccess)) redirect("/");
+  if (!canViewPlatform(actorAccess)) redirect("/");
 
   const { id } = await params;
   const sp = await searchParams;

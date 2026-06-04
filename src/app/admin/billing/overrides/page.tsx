@@ -6,7 +6,7 @@ import { ArrowLeft, CheckCircle2, ShieldAlert, Zap } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { createServerClient } from "@/lib/supabase/server";
 import { listManualOverrides } from "@/lib/supabase/billing-service";
-import { isAdminOrAbove } from "@/lib/role-permissions";
+import { canViewPlatform } from "@/lib/role-permissions";
 import { createOverrideAction, revokeOverrideAction } from "../actions";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -33,7 +33,7 @@ export default async function BillingOverridesPage({ searchParams }: Props) {
     .from("profiles").select("role, organization_id").eq("id", user.id).single();
 
   const access = { signedIn: true, userId: user.id, organizationId: profile?.organization_id, role: profile?.role };
-  if (!isAdminOrAbove(access)) redirect("/");
+  if (!canViewPlatform(access)) redirect("/");
 
   const sp = await searchParams;
 

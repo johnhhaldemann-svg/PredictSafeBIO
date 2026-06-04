@@ -32,6 +32,8 @@ type Category = {
   href: string;
   icon: React.ElementType;
   subItems: SubItem[];
+  /** Platform Utilities (/admin/*) — only platform_staff/superadmin may see these. */
+  platformOnly?: boolean;
 };
 
 const categories: Category[] = [
@@ -87,6 +89,7 @@ const categories: Category[] = [
     title: "System Reliance",
     href: "/admin/audit",
     icon: Server,
+    platformOnly: true,
     subItems: [
       { href: "/admin/audit",        label: "Reports & Audit", icon: BarChart3 },
       { href: "/admin/ai-knowledge", label: "AI Knowledge",    icon: Brain     },
@@ -112,8 +115,11 @@ function getActiveCategoryTitle(pathname: string): string | null {
   return null;
 }
 
-export function PlatformCategoryNav() {
+export function PlatformCategoryNav({ canViewPlatform = false }: { canViewPlatform?: boolean }) {
   const pathname = usePathname();
+  const visibleCategories = canViewPlatform
+    ? categories
+    : categories.filter((cat) => !cat.platformOnly);
   const activeCategory = getActiveCategoryTitle(pathname);
   const [expanded, setExpanded] = useState<string | null>(activeCategory);
 
@@ -125,7 +131,7 @@ export function PlatformCategoryNav() {
 
   return (
     <nav className="sidebar-nav" aria-label="Platform navigation">
-      {categories.map((cat) => {
+      {visibleCategories.map((cat) => {
         const isCatActive = activeCategory === cat.title;
         const isOpen = expanded === cat.title;
         const CatIcon = cat.icon;

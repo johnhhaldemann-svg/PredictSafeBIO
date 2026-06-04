@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { Flag, Mail, Palette, Settings } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { createServerClient } from "@/lib/supabase/server";
-import { isAdminOrAbove } from "@/lib/role-permissions";
+import { canViewPlatform } from "@/lib/role-permissions";
 import { listFeatureFlags } from "@/lib/supabase/feature-flag-service";
 import { getPlatformBranding } from "@/lib/supabase/platform-config-service";
 
@@ -22,7 +22,7 @@ export default async function ConfigHubPage() {
     .from("profiles").select("role, organization_id").eq("id", user.id).single();
 
   const access = { signedIn: true, userId: user.id, organizationId: profile?.organization_id, role: profile?.role };
-  if (!isAdminOrAbove(access)) redirect("/");
+  if (!canViewPlatform(access)) redirect("/");
 
   const [flags, branding] = await Promise.all([
     listFeatureFlags(),

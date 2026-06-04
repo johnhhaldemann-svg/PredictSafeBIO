@@ -9,7 +9,7 @@ import {
   sendPasswordResetEmail,
   setUserAccountStatus,
 } from "@/lib/supabase/user-admin-service";
-import { isAdminOrAbove, isSuperAdmin } from "@/lib/role-permissions";
+import { canViewPlatform, isSuperAdmin } from "@/lib/role-permissions";
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
 
@@ -26,7 +26,7 @@ async function requireAdminActor() {
 
   const access = { signedIn: true, userId: user.id, organizationId: profile?.organization_id, role: profile?.role };
 
-  if (!isAdminOrAbove(access)) redirect("/");
+  if (!canViewPlatform(access)) redirect("/");
 
   return {
     actorId: user.id,

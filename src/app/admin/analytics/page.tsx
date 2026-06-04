@@ -13,7 +13,7 @@ import {
   getTopViewedProfiles,
   getModerationStats,
 } from "@/lib/supabase/analytics-service";
-import { isAdminOrAbove, getDbRoleLabel } from "@/lib/role-permissions";
+import { canViewPlatform, getDbRoleLabel } from "@/lib/role-permissions";
 
 /**
  * /admin/analytics — Analytics & Metrics Dashboard
@@ -87,7 +87,7 @@ export default async function AnalyticsPage() {
     organizationId: profile?.organization_id,
     role: profile?.role,
   };
-  if (!isAdminOrAbove(access)) redirect("/");
+  if (!canViewPlatform(access)) redirect("/");
 
   const [growth, topProfiles, modStats] = await Promise.all([
     getSignupGrowth(),

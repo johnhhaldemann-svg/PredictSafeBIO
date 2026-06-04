@@ -6,7 +6,7 @@ import { Search, ShieldCheck, Users } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { createServerClient } from "@/lib/supabase/server";
 import { listAdminUsers } from "@/lib/supabase/user-admin-service";
-import { isAdminOrAbove, getDbRoleLabel, getRoleBadgeClass } from "@/lib/role-permissions";
+import { canViewPlatform, getDbRoleLabel, getRoleBadgeClass } from "@/lib/role-permissions";
 
 /**
  * /admin/users — User Management
@@ -67,7 +67,7 @@ export default async function AdminUsersPage({ searchParams }: Props) {
     role: profile?.role,
   };
 
-  if (!isAdminOrAbove(access)) redirect("/");
+  if (!canViewPlatform(access)) redirect("/");
 
   const params = await searchParams;
   const search = params.search ?? "";
