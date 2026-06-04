@@ -55,7 +55,7 @@ export default async function VersionControlPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Document Control</p>
+          <p className="section-label">Plan</p>
           <h1>Version Control</h1>
         </header>
 

@@ -1,14 +1,20 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2, PlusCircle, Search, Stethoscope } from "lucide-react";
+import { CheckCircle2, PlusCircle, Search, Briefcase, ShieldCheck } from "lucide-react";
+
+export const metadata: Metadata = { title: "Provider Directory – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 /**
- * /providers — Public provider directory.
- * Shows all approved (is_public = true) provider profiles.
- * Filterable by specialty. No auth required to browse.
+ * /providers — Provider Directory.
+ * A searchable record of credentialed biosafety / EHS / occupational-health
+ * experts. Supports audit readiness (demonstrating qualified coverage to CDC /
+ * USDA / EPA), fast incident-response access to specialists, personnel
+ * qualification tracking, and credential-gap identification.
+ * Shows all approved (is_public = true) profiles. No auth required to browse.
  */
 
 type Provider = {
@@ -133,13 +139,29 @@ export default async function ProvidersDirectoryPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">PredictSafeBIO</p>
+          <p className="section-label">Personnel qualification</p>
           <h1>Provider Directory</h1>
           <p className="muted">
-            Browse verified biosafety and occupational health providers.
-            All profiles are NPI-verified and reviewed by our moderation team.
+            A searchable record of credentialed biosafety, EHS, and occupational-health experts
+            (CIH, CSP, CBSP, and more). Documents qualified coverage for auditors, and puts the
+            right specialist one click away during a spill, exposure, or incident. All profiles are
+            reviewed by our moderation team.
           </p>
         </header>
+
+        {/* Why this matters — compliance purpose */}
+        <section className="panel inline-action-panel" style={{ alignItems: "flex-start" }}>
+          <div>
+            <p className="section-label">Why this directory matters</p>
+            <ul className="provider-purpose-list">
+              <li><strong>Audit readiness</strong> — show CDC / USDA / EPA reviewers you have qualified biosafety professionals on record.</li>
+              <li><strong>Incident response</strong> — reach a verified specialist fast during a spill or exposure event.</li>
+              <li><strong>Qualification tracking</strong> — document that the people making BSL-2/BSL-3 and IBC decisions hold the credentials to make them.</li>
+              <li><strong>Gap identification</strong> — see where you&apos;re missing coverage (e.g. a CIH) before an auditor does.</li>
+            </ul>
+          </div>
+          <ShieldCheck size={22} aria-hidden="true" />
+        </section>
 
         <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
           <Link href="/providers/new" className="button-primary"
@@ -172,7 +194,7 @@ export default async function ProvidersDirectoryPage({ searchParams }: Props) {
 
         {providers.length === 0 ? (
           <section className="panel" style={{ textAlign: "center", padding: "3rem" }}>
-            <Stethoscope size={32} style={{ color: "var(--muted)", margin: "0 auto 1rem" }} />
+            <Briefcase size={32} style={{ color: "var(--muted)", margin: "0 auto 1rem" }} />
             <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>No providers found</p>
             <p className="muted" style={{ fontSize: "0.85rem" }}>
               {sp.specialty || sp.q ? "Try adjusting your filters." : "Be the first to add your profile."}
@@ -192,7 +214,7 @@ export default async function ProvidersDirectoryPage({ searchParams }: Props) {
                       <p className="muted" style={{ fontSize: "0.8rem", margin: "2px 0" }}>{p.specialty}</p>
                     </div>
                     {p.npi_verified && (
-                      <span title="NPI verified" style={{ flexShrink: 0 }}>
+                      <span title="Verified profile" style={{ flexShrink: 0 }}>
                         <CheckCircle2 size={16} style={{ color: "#16a34a" }} />
                       </span>
                     )}
@@ -210,8 +232,8 @@ export default async function ProvidersDirectoryPage({ searchParams }: Props) {
                     {p.license_state && (
                       <span className="muted">📍 {p.license_state}</span>
                     )}
-                    <span className={p.accepting_patients ? "muted" : "muted"} style={{ color: p.accepting_patients ? "#16a34a" : "#6b7280" }}>
-                      {p.accepting_patients ? "✓ Accepting patients" : "Not accepting"}
+                    <span className="muted" style={{ color: p.accepting_patients ? "#16a34a" : "#6b7280" }}>
+                      {p.accepting_patients ? "✓ Available for consultation" : "Not currently available"}
                     </span>
                   </div>
                 </article>

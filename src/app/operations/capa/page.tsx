@@ -1,6 +1,9 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = { title: "CAPA Records – PredictSafeBIO" };
 import { AlertTriangle, CheckCircle2, CircleDot, Clock, Plus, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { formatOwnerRole } from "@/lib/display-labels";
@@ -11,6 +14,7 @@ import {
   type CapaStatus
 } from "@/lib/supabase/capa-service";
 import { createCapaAction } from "./actions";
+import { DataLoadError } from "@/components/DataLoadError";
 
 const STATUS_ICON: Record<CapaStatus, typeof AlertTriangle> = {
   draft_human_review_required: AlertTriangle,
@@ -42,13 +46,15 @@ export default async function CapaListPage({ searchParams }: Props) {
   const params = await searchParams;
   const filterStatus = (params.filter as CapaStatus | "all") ?? "all";
 
-  const [records, adminAccess] = await Promise.all([
-    listCapaRecords(filterStatus !== "all" ? { status: filterStatus } : undefined).catch(() => []),
+  const [recordsResult, adminAccess] = await Promise.all([
+    listCapaRecords(filterStatus !== "all" ? { status: filterStatus } : undefined).catch(() => null),
     getFoundationAdminAccessSummary().catch(() => ({
       configured: false, signedIn: false, isOwner: false, message: ""
     }))
   ]);
 
+  const loadFailed = recordsResult === null;
+  const records = recordsResult ?? [];
   const openCount = records.filter((r) => PRIORITY_STATUSES.includes(r.status)).length;
   const overdueCount = records.filter(
     (r) => r.dueDate && new Date(r.dueDate) < new Date() && r.status !== "closed" && r.status !== "void"
@@ -58,7 +64,7 @@ export default async function CapaListPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">HSE Management Systems</p>
+          <p className="section-label">Operate</p>
           <h1>CAPA Records</h1>
         </header>
 
@@ -108,7 +114,9 @@ export default async function CapaListPage({ searchParams }: Props) {
               <h2>{records.length} record{records.length !== 1 ? "s" : ""}</h2>
             </div>
           </div>
-          {records.length === 0 ? (
+          {loadFailed ? (
+            <DataLoadError resource="CAPA records" />
+          ) : records.length === 0 ? (
             <p className="muted">No CAPA records found. Create one below.</p>
           ) : (
             <div className="action-list">

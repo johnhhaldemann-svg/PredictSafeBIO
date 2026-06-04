@@ -102,9 +102,9 @@ export async function checkProviderLimit(
   }
 }
 
-// ── Check if a new patient bio can be created ─────────────────────────────────
+// ── Check if a new personnel record can be created ────────────────────────────
 
-export async function checkPatientLimit(
+export async function checkPersonnelLimit(
   organizationId: string
 ): Promise<LimitCheckResult> {
   try {
@@ -120,7 +120,7 @@ export async function checkPatientLimit(
 
     return {
       allowed: false,
-      reason: `Your ${usage.plan_name} plan allows up to ${usage.max_patients} patient bio${usage.max_patients === 1 ? "" : "s"}. You have ${usage.patient_count}.`,
+      reason: `Your ${usage.plan_name} plan allows up to ${usage.max_patients} personnel record${usage.max_patients === 1 ? "" : "s"}. You have ${usage.patient_count}.`,
       current: usage.patient_count,
       limit: usage.max_patients,
       upgradeUrl: "/account/billing",

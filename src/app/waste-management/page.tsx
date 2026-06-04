@@ -1,6 +1,9 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import { AlertTriangle, Plus, ShieldCheck, Trash2, Truck } from "lucide-react";
+
+export const metadata: Metadata = { title: "Waste Management – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
 import {
   listWasteRecords,
@@ -11,6 +14,7 @@ import {
 } from "@/lib/supabase/waste-service";
 import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
 import { createWasteAction, updateFillLevelAction, markPickedUpAction } from "./actions";
+import { DataLoadError } from "@/components/DataLoadError";
 
 const STATUS_CLASS: Record<WasteStatus, string> = {
   accumulating: "status-needs-review",
@@ -28,17 +32,19 @@ export default async function WasteManagementPage({ searchParams }: Props) {
   const params = await searchParams;
   const filter = params.filter ?? "all";
 
-  const [records, adminAccess] = await Promise.all([
+  const [recordsResult, adminAccess] = await Promise.all([
     listWasteRecords(
       filter === "at-risk" ? { atRisk: true } :
       filter === "ready"   ? { status: "ready_for_pickup" } :
       undefined
-    ).catch(() => []),
+    ).catch(() => null),
     getFoundationAdminAccessSummary().catch(() => ({
       configured: false, signedIn: false, isOwner: false, message: ""
     }))
   ]);
 
+  const loadFailed = recordsResult === null;
+  const records = recordsResult ?? [];
   const totalCount    = records.length;
   const criticalCount = records.filter((r) => r.isCritical).length;
   const atRiskCount   = records.filter((r) => r.isAtRisk && !r.isCritical).length;
@@ -48,7 +54,7 @@ export default async function WasteManagementPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">HSE Management Systems</p>
+          <p className="section-label">Operate</p>
           <h1>Waste Management</h1>
         </header>
 
@@ -99,7 +105,9 @@ export default async function WasteManagementPage({ searchParams }: Props) {
             </div>
           </div>
 
-          {records.length === 0 ? (
+          {loadFailed ? (
+            <DataLoadError resource="waste records" />
+          ) : records.length === 0 ? (
             <p className="muted">No waste containers found. Add one below.</p>
           ) : (
             <div className="action-list">

@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "HSE Management – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Operations – PredictSafeBIO" };
 import { AlertTriangle, Boxes, ClipboardList, DatabaseZap, FlaskConical, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { FoundationReviewActionsPanel } from "@/components/FoundationReviewActionsPanel";
@@ -38,7 +38,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">HSE Management Systems</p>
+          <p className="section-label">Operate</p>
           <h1>Incident, CAPA & operating graph</h1>
         </header>
 
@@ -162,7 +162,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
           <div className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Risk Intelligence</p>
+                <p className="section-label">Assess</p>
                 <h2>BioRisk live context</h2>
               </div>
               <FlaskConical size={22} />

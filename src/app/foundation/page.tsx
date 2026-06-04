@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "Compliance – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Compliance Map – PredictSafeBIO" };
 import {
   AlertTriangle,
   BookOpenCheck,
@@ -116,7 +116,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Compliance + System Reliance</p>
+          <p className="section-label">Plan</p>
           <h1>Compliance Map & AI Guardrails</h1>
         </header>
 
@@ -365,7 +365,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           <div className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">HSE Management Systems</p>
+                <p className="section-label">Operate</p>
                 <h2>Draft operating library</h2>
               </div>
               <GitBranch size={22} />

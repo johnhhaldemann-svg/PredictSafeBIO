@@ -3,9 +3,9 @@
 import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import { checkPatientLimit } from "@/lib/supabase/plan-limits-service";
+import { checkPersonnelLimit } from "@/lib/supabase/plan-limits-service";
 
-export async function submitPatientBioAction(formData: FormData) {
+export async function submitPersonnelRecordAction(formData: FormData) {
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/bios/new");
@@ -21,35 +21,21 @@ export async function submitPatientBioAction(formData: FormData) {
   const orgId = profile.organization_id;
 
   // Plan limit check
-  const limitCheck = await checkPatientLimit(orgId);
+  const limitCheck = await checkPersonnelLimit(orgId);
   if (!limitCheck.allowed) {
     redirect(`/bios/new?error=${encodeURIComponent(limitCheck.reason)}`);
   }
 
-  const display_name       = String(formData.get("display_name") ?? "").trim();
-  const date_of_birth_year = formData.get("dob_year") ? parseInt(String(formData.get("dob_year")), 10) : null;
-  const biological_sex     = String(formData.get("biological_sex") ?? "").trim() || null;
-  const conditions         = formData.getAll("conditions").map(String).filter(Boolean);
-  const allergies          = formData.getAll("allergies").map(String).filter(Boolean);
-  const custom_conditions  = String(formData.get("custom_conditions") ?? "").trim();
-  const custom_allergies   = String(formData.get("custom_allergies") ?? "").trim();
+  const display_name = String(formData.get("display_name") ?? "").trim();
 
   if (!display_name) redirect("/bios/new?error=Display+name+is+required");
 
-  // Merge custom entries
-  if (custom_conditions) conditions.push(...custom_conditions.split(",").map(s => s.trim()).filter(Boolean));
-  if (custom_allergies)  allergies.push(...custom_allergies.split(",").map(s => s.trim()).filter(Boolean));
-
   const admin = getSupabaseAdminClient();
-   
+
   const { error } = await (admin as any).from("patient_bios").insert({
     organization_id:   orgId,
     user_id:           user.id,
     display_name,
-    date_of_birth_year,
-    biological_sex,
-    conditions,
-    allergies,
     is_active:  true,
     created_by: user.id,
   });

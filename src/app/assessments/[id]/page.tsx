@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
+
+export const metadata: Metadata = { title: "Assessment – PredictSafeBIO" };
 import { StatusBadge } from "@/components/StatusBadge";
 import { updateAssessmentReviewAction } from "@/app/assessments/actions";
 import { getAssessmentDetail, getCompanyProfile } from "@/lib/supabase/data";
@@ -14,6 +17,7 @@ import {
   humanReviewStatusOptions
 } from "@/lib/review-workflow";
 import { DraftAssistButton } from "@/components/DraftAssistButton";
+import { LoopNext } from "@/components/LoopNext";
 
 export default async function AssessmentDetailPage({
   params,
@@ -55,6 +59,13 @@ export default async function AssessmentDetailPage({
           <h1>{assessment.workflow}</h1>
         </header>
         {query.message ? <p className="form-message">{query.message}</p> : null}
+        <LoopNext
+          stage="Assess"
+          nextStage="Plan"
+          blurb="This risk is scored. Open the Compliance Map to turn it into source-traced compliance tasks."
+          ctaLabel="Open Compliance Map"
+          ctaHref="/foundation"
+        />
         <section className="profile-grid">
           <article className="profile-row">
             <span>Risk level</span>

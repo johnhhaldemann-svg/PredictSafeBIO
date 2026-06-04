@@ -1,6 +1,9 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import { AlertTriangle, ClipboardCheck, Lock, Plus, ShieldCheck } from "lucide-react";
+
+export const metadata: Metadata = { title: "Permits – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
 import {
   listPermits,
@@ -10,6 +13,7 @@ import {
 } from "@/lib/supabase/permits-service";
 import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
 import { createPermitAction, updatePermitStatusAction } from "./actions";
+import { DataLoadError } from "@/components/DataLoadError";
 
 const STATUS_CLASS: Record<CloseoutStatus, string> = {
   draft: "",
@@ -28,18 +32,20 @@ export default async function PermitsPage({ searchParams }: Props) {
   const params = await searchParams;
   const filter = params.filter ?? "all";
 
-  const [permits, adminAccess] = await Promise.all([
+  const [permitsResult, adminAccess] = await Promise.all([
     listPermits(
       filter === "active"  ? { status: "active" } :
       filter === "overdue" ? { overdue: true } :
       filter === "draft"   ? { status: "draft" } :
       undefined
-    ).catch(() => []),
+    ).catch(() => null),
     getFoundationAdminAccessSummary().catch(() => ({
       configured: false, signedIn: false, isOwner: false, message: ""
     }))
   ]);
 
+  const loadFailed = permitsResult === null;
+  const permits = permitsResult ?? [];
   const activeCount  = permits.filter((p) => p.closeoutStatus === "active" || p.closeoutStatus === "approved").length;
   const overdueCount = permits.filter((p) => p.isOverdue).length;
   const draftCount   = permits.filter((p) => p.closeoutStatus === "draft").length;
@@ -48,7 +54,7 @@ export default async function PermitsPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">HSE Management Systems</p>
+          <p className="section-label">Operate</p>
           <h1>Controlled Work / Permit System</h1>
         </header>
 
@@ -95,7 +101,9 @@ export default async function PermitsPage({ searchParams }: Props) {
             </div>
           </div>
 
-          {permits.length === 0 ? (
+          {loadFailed ? (
+            <DataLoadError resource="work permits" />
+          ) : permits.length === 0 ? (
             <p className="muted">No permits found. Create one below.</p>
           ) : (
             <div className="action-list">

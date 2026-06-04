@@ -40,7 +40,7 @@ export default async function InspectionDetailPage({ params, searchParams }: Pro
       <AppShell>
         <div className="page-stack">
           <header className="page-header">
-            <p className="section-label">HSE Management</p>
+            <p className="section-label">Operate</p>
             <h1>Inspection not found</h1>
           </header>
           <Link href="/inspections" className="button-secondary">Back to register</Link>

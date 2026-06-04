@@ -21,7 +21,7 @@ export default async function DocumentDetailPage({
       <AppShell>
         <div className="page-stack">
           <header className="page-header">
-            <p className="section-label">Document Control</p>
+            <p className="section-label">Plan</p>
             <h1>Document not found</h1>
           </header>
           <section className="panel">
@@ -47,7 +47,7 @@ export default async function DocumentDetailPage({
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Document Control Detail</p>
+          <p className="section-label">Document detail</p>
           <h1>{document.title}</h1>
         </header>
         {query.message ? <p className="form-message">{query.message}</p> : null}

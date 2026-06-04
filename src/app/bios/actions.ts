@@ -17,7 +17,7 @@ export async function deactivateBioAction(formData: FormData) {
     .single();
 
   const bioId = String(formData.get("bioId") ?? "");
-  if (!bioId) redirect("/bios?error=Missing+bio+ID");
+  if (!bioId) redirect("/bios?error=Missing+record+ID");
 
   const admin = getSupabaseAdminClient();
    
@@ -29,5 +29,5 @@ export async function deactivateBioAction(formData: FormData) {
 
   if (error) redirect(`/bios?error=${encodeURIComponent(error.message)}`);
   revalidatePath("/bios");
-  redirect("/bios?success=Bio+deactivated");
+  redirect("/bios?success=Record+deactivated");
 }

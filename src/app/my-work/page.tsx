@@ -8,6 +8,7 @@ import { ClipboardList, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { FoundationNotificationCenter } from "@/components/FoundationNotificationCenter";
 import { FoundationReviewActionsPanel } from "@/components/FoundationReviewActionsPanel";
+import { LoopNext } from "@/components/LoopNext";
 import { getFoundationWorkKpis } from "@/lib/foundation/work-kpis";
 import {
   getFoundationAdminAccessSummary,
@@ -61,6 +62,14 @@ export default async function MyWorkPage({
             Source Intelligence
           </Link>
         </nav>
+
+        <LoopNext
+          stage="Plan"
+          nextStage="Operate"
+          blurb="Ready to act on a task? Carry it out in the operational tools — inspections, CAPA, permits, and more."
+          ctaLabel="Go to Operations"
+          ctaHref="/operations"
+        />
 
         <section className={`panel access-banner ${adminAccess.isOwner ? "access-enabled" : "access-readonly"}`}>
           <strong>{adminAccess.isOwner ? "Owner task controls enabled" : "Assigned-member task controls"}</strong>

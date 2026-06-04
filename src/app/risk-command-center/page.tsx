@@ -1,11 +1,15 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import { Activity, AlertTriangle, CheckCircle2, ShieldCheck, TrendingUp, Zap } from "lucide-react";
+
+export const metadata: Metadata = { title: "Risk Monitor – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
 import Link from "next/link";
 import { getProfileContext } from "@/lib/supabase/data-helpers";
 import { ComplianceAssistant } from "@/components/ComplianceAssistant";
 import { RiskCellReviewCard } from "@/components/RiskCellReviewCard";
+import { LoopNext } from "@/components/LoopNext";
 import {
   getRiskSummary,
   cellTypeLabels,
@@ -44,7 +48,7 @@ export default async function RiskCommandCenterPage() {
       <AppShell>
         <div className="page-stack">
           <header className="page-header">
-            <p className="section-label">HSE Management Systems</p>
+            <p className="section-label">Monitor</p>
             <h1>Risk Monitor</h1>
           </header>
           <p className="muted">Could not load risk data. Sign in to view your organization&apos;s risk feed.</p>
@@ -59,9 +63,17 @@ export default async function RiskCommandCenterPage() {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">HSE Management Systems</p>
+          <p className="section-label">Monitor</p>
           <h1>Risk Monitor</h1>
         </header>
+
+        <LoopNext
+          stage="Monitor"
+          nextStage="Assess"
+          blurb="Seeing new signals here? Close the loop — feed them into your next BioRisk assessment. Escalate any cell to CAPA from its card below."
+          ctaLabel="Run an assessment"
+          ctaHref="/workbench"
+        />
 
         {/* Top KPI strip */}
         <section className="command-card-grid" aria-label="Risk summary">

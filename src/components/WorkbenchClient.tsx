@@ -182,19 +182,19 @@ export function WorkbenchClient({
     ownerMode: false
   };
   const cardMetrics: Record<string, { value: string; detail: string }> = {
-    "Document Control": {
+    "Controlled Documents": {
       value: String(commandSummary.documentCount),
       detail: "SOP metadata and draft update records"
     },
-    "Risk Intelligence": {
+    "BioRisk Assessment": {
       value: String(commandSummary.assessmentCount),
       detail: `${commandSummary.criticalRiskCount} critical / ${commandSummary.pendingReviewCount} pending review`
     },
-    Compliance: {
+    "Compliance & Readiness": {
       value: String(commandSummary.readinessScore),
       detail: `Audit readiness / ${commandSummary.readinessTrend.replace(/_/g, " ")}`
     },
-    "HSE Management Systems": {
+    "HSE Operations": {
       value: String(commandSummary.hseSignalCount),
       detail: "Incidents, inspections, training, and CAPA signals"
     },
@@ -329,12 +329,12 @@ export function WorkbenchClient({
       <div className="page-stack">
         <header className="page-header">
           <div className="page-header-left">
-            <p className="section-label">Risk Intelligence</p>
+            <p className="section-label">Assess</p>
             <h1>Risk Register</h1>
           </div>
-          <button className="button-primary" type="button" onClick={() => setActiveTab("command-center")}>New assessment</button>
+          <Link className="button-primary" href="/assessments/new">New assessment</Link>
         </header>
-        <nav className="command-center-link-strip" aria-label="Risk Intelligence tabs">
+        <nav className="command-center-link-strip" aria-label="Assess tabs">
           <button className="button-secondary compact" type="button" onClick={() => setActiveTab("command-center")}>Overview</button>
           <button className="button-primary compact" type="button" onClick={() => setActiveTab("risk-register")}>Risk Register</button>
         </nav>
@@ -380,7 +380,7 @@ export function WorkbenchClient({
     <div className="page-stack">
       {/* Single page-level H1 for screen readers — visually hidden (WCAG 1.3.1) */}
       <h1 className="sr-only">Workbench</h1>
-      <nav className="command-center-link-strip" style={{ marginBottom: "0" }} aria-label="Risk Intelligence tabs">
+      <nav className="command-center-link-strip" style={{ marginBottom: "0" }} aria-label="Assess tabs">
         <button className="button-primary compact" type="button" onClick={() => setActiveTab("command-center")}>Overview</button>
         <button className="button-secondary compact" type="button" onClick={() => setActiveTab("risk-register")}>Risk Register</button>
       </nav>

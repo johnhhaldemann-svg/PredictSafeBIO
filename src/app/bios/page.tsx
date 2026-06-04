@@ -11,8 +11,8 @@ import { getOrgUsage, usagePct } from "@/lib/supabase/plan-limits-service";
 import { deactivateBioAction } from "./actions";
 
 /**
- * /bios — Organization's patient bio list.
- * Visible to admins/owners. Shows all active bios with deactivate controls.
+ * /bios — Organization's personnel record list.
+ * Visible to admins/owners. Shows all active records with deactivate controls.
  */
 
 type Props = { searchParams: Promise<{ success?: string; error?: string }> };
@@ -41,20 +41,16 @@ export default async function BiosListPage({ searchParams }: Props) {
      
     (admin as any)
       .from("patient_bios")
-      .select("id, display_name, date_of_birth_year, biological_sex, conditions, allergies, is_active, created_at")
+      .select("id, display_name, is_active, created_at")
       .eq("organization_id", orgId)
       .order("created_at", { ascending: false }),
     getOrgUsage(orgId),
   ]);
 
-   
+
   const allBios = ((biosResult.data ?? []) as any[]).map((b: any) => ({
     id:                b.id as string,
     display_name:      b.display_name as string,
-    date_of_birth_year: b.date_of_birth_year as number | null,
-    biological_sex:    b.biological_sex as string | null,
-    conditions:        (b.conditions as string[]) ?? [],
-    allergies:         (b.allergies as string[]) ?? [],
     is_active:         b.is_active as boolean,
     created_at:        b.created_at as string,
   }));
@@ -93,7 +89,7 @@ export default async function BiosListPage({ searchParams }: Props) {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Users size={14} style={{ color: atLimit ? "#dc2626" : nearLimit ? "#d97706" : "#6b7280" }} />
             <span style={{ fontSize: "0.82rem", color: atLimit ? "#dc2626" : "var(--muted)" }}>
-              {usage.patient_count}{usage.max_patients !== null ? ` / ${usage.max_patients}` : ""} bios
+              {usage.patient_count}{usage.max_patients !== null ? ` / ${usage.max_patients}` : ""} records
               {atLimit && " — limit reached"}
               {nearLimit && " — nearing limit"}
             </span>
@@ -111,8 +107,8 @@ export default async function BiosListPage({ searchParams }: Props) {
         <div className="verification-pending-box">
           <ShieldCheck size={14} />
           <span style={{ fontSize: "0.78rem" }}>
-            HIPAA: Display names only — no legal names, SSNs, or contact information stored.
-            Records are encrypted at rest. Deactivated bios are soft-deleted and retained for audit purposes.
+            Display names only — no legal names, SSNs, contact information, or health data stored.
+            Records are encrypted at rest. Deactivated records are soft-deleted and retained for audit purposes.
           </span>
         </div>
 
@@ -140,7 +136,7 @@ export default async function BiosListPage({ searchParams }: Props) {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.83rem" }}>
                 <thead>
                   <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                    {["Display name", "Birth year", "Sex", "Conditions", "Allergies", "Added", ""].map(h => (
+                    {["Display name", "Added", ""].map(h => (
                       <th key={h} style={{ padding: "0.5rem 1rem", textAlign: "left", fontWeight: 600, color: "var(--muted)", whiteSpace: "nowrap" }}>{h}</th>
                     ))}
                   </tr>
@@ -149,18 +145,6 @@ export default async function BiosListPage({ searchParams }: Props) {
                   {activeBios.map(bio => (
                     <tr key={bio.id} style={{ borderBottom: "1px solid var(--border)" }}>
                       <td style={{ padding: "0.6rem 1rem", fontWeight: 500 }}>{bio.display_name}</td>
-                      <td style={{ padding: "0.6rem 1rem", color: "var(--muted)" }}>{bio.date_of_birth_year ?? "—"}</td>
-                      <td style={{ padding: "0.6rem 1rem", color: "var(--muted)", textTransform: "capitalize" }}>{bio.biological_sex ?? "—"}</td>
-                      <td style={{ padding: "0.6rem 1rem", maxWidth: 200 }}>
-                        {bio.conditions.length > 0 ? (
-                          <span style={{ fontSize: "0.75rem" }}>{bio.conditions.slice(0, 2).join(", ")}{bio.conditions.length > 2 ? ` +${bio.conditions.length - 2}` : ""}</span>
-                        ) : <span className="muted">None</span>}
-                      </td>
-                      <td style={{ padding: "0.6rem 1rem", maxWidth: 180 }}>
-                        {bio.allergies.length > 0 ? (
-                          <span style={{ fontSize: "0.75rem" }}>{bio.allergies.slice(0, 2).join(", ")}{bio.allergies.length > 2 ? ` +${bio.allergies.length - 2}` : ""}</span>
-                        ) : <span className="muted">None</span>}
-                      </td>
                       <td style={{ padding: "0.6rem 1rem", color: "var(--muted)", whiteSpace: "nowrap", fontSize: "0.75rem" }}>
                         {new Date(bio.created_at).toLocaleDateString()}
                       </td>

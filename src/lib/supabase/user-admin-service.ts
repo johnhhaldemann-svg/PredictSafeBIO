@@ -37,10 +37,6 @@ export type AdminUserDetail = AdminUserRow & {
   } | null;
   patient_bio: {
     display_name: string | null;
-    date_of_birth_year: number | null;
-    biological_sex: string | null;
-    conditions: string[];
-    allergies: string[];
     is_active: boolean;
   } | null;
   recent_audit_events: Array<{
@@ -163,7 +159,7 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
    
   const { data: patientBio } = await (admin as any)
     .from("patient_bios")
-    .select("display_name, date_of_birth_year, biological_sex, conditions, allergies, is_active")
+    .select("display_name, is_active")
     .eq("user_id", userId)
     .maybeSingle();
 

@@ -135,7 +135,7 @@ export default async function BioReviewPage({ params, searchParams }: Props) {
               ["NPI Number",      bio.npi_number ?? "Not provided"],
               ["License",         bio.license_number ? `${bio.license_number} (${bio.license_state ?? "?"})` : "—"],
               ["Credentials",     bio.credentials?.join(", ") || "—"],
-              ["Accepting patients", bio.accepting_patients ? "Yes" : "No"],
+              ["Available for consultation", bio.accepting_patients ? "Yes" : "No"],
               ["Organization",    bio.organization_name ?? "—"],
               ["Submitted",       bio.submitted_at ? new Date(bio.submitted_at).toLocaleString() : "Not yet submitted"],
               ["Last reviewed",   bio.reviewed_at ? new Date(bio.reviewed_at).toLocaleString() : "—"],
@@ -296,7 +296,7 @@ export default async function BioReviewPage({ params, searchParams }: Props) {
           </div>
           <div className="verification-pending-box" style={{ marginBottom: "1rem" }}>
             <EyeOff size={14} />
-            <span>Takedown hides a bio immediately without deleting data. Fully reversible — HIPAA compliant.</span>
+            <span>Takedown hides a profile immediately without deleting data. Fully reversible and audit-safe.</span>
           </div>
           {isTakenDown ? (
             <form action={restoreProfileAction}>

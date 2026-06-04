@@ -98,7 +98,7 @@ export default async function BillingPlansPage({ searchParams }: Props) {
               </label>
 
               <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
-                Max patients (blank = unlimited)
+                Max personnel records (blank = unlimited)
                 <input name="max_patients" type="number" min="1" defaultValue={plan.max_patients ?? ""} style={{ width: "100%" }} />
               </label>
 

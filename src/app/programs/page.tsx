@@ -25,7 +25,7 @@ export default function ProgramsPage() {
       <div className="page-stack">
 
         <header className="page-header">
-          <p className="section-label">HSE Management Systems</p>
+          <p className="section-label">Plan</p>
           <h1>Safety Programs Library</h1>
           <p className="muted">
             All {totalCount} required EHS / biosafety program areas for a biotech or life science facility. Click any program to open its compliance tool — regulatory requirements, biotech guidance, and an inspection checklist.

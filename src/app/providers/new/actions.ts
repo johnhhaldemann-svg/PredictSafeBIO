@@ -35,7 +35,6 @@ export async function submitProviderProfileAction(formData: FormData) {
   const credentialsRaw  = formData.getAll("credentials").map(String);
 
   if (!specialty) redirect("/providers/new?error=Specialty+is+required");
-  if (!npi_number) redirect("/providers/new?error=NPI+number+is+required");
 
   const admin = getSupabaseAdminClient();
 

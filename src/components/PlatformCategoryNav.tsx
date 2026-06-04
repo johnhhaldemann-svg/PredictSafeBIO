@@ -12,7 +12,7 @@ import {
   BookOpen,
   GitBranch,
   BarChart3,
-  Stethoscope,
+  Briefcase,
   AlertCircle,
   GraduationCap,
   ClipboardList,
@@ -41,51 +41,57 @@ type Category = {
 
 const categories: Category[] = [
   {
-    title: "Document Control",
-    href: "/documents",
-    icon: FileText,
-    subItems: [
-      { href: "/documents",                 label: "All Documents",     icon: FileText,   desc: "Controlled SOPs, records, and files" },
-      { href: "/documents/version-control", label: "Version Control",  icon: GitBranch,  desc: "Revisions, approvals, and change history" },
-    ]
-  },
-  {
-    title: "Risk Intelligence",
+    // ── 1. ASSESS — what are my risks? ──────────────────────────────────────
+    title: "Assess",
     href: "/workbench",
     icon: ShieldCheck,
     subItems: [
-      { href: "/workbench",   label: "BioRisk Workbench", icon: Gauge,        desc: "BioRisk score and live risk overview" },
-      { href: "/workbench?tab=risk-register", label: "Risk Register", icon: ShieldCheck, desc: "All assessed risks and their status" },
-      { href: "/providers",   label: "Provider Directory",icon: Stethoscope,  desc: "Personnel and provider records" },
-      { href: "/bios/new",    label: "Add Personnel Record", icon: ClipboardList, desc: "Create a new personnel bio record" },
-      { href: "/my-work",     label: "My Work",           icon: ClipboardList, desc: "Tasks and follow-ups assigned to you" },
+      { href: "/workbench",                   label: "BioRisk Workbench",    icon: Gauge,         desc: "Score and review your biosafety risks" },
+      { href: "/workbench?tab=risk-register", label: "Risk Register",        icon: ShieldCheck,   desc: "All assessed risks and their status" },
+      { href: "/bios",                        label: "Personnel",            icon: Users,         desc: "People records used in risk scoring" },
+      { href: "/bios/new",                    label: "Add Personnel Record", icon: ClipboardList, desc: "Create a new personnel record" },
+      { href: "/providers",                   label: "Provider Directory",   icon: Briefcase,     desc: "Biosafety & EHS consultants and experts" },
     ]
   },
   {
-    title: "Compliance",
+    // ── 2. PLAN — what do I need to do? ─────────────────────────────────────
+    title: "Plan",
     href: "/foundation",
     icon: ClipboardCheck,
     subItems: [
-      { href: "/foundation", label: "Compliance Map", icon: ClipboardCheck, desc: "Coverage, gaps, and readiness by area" },
-      { href: "/change-plan", label: "Change Plan", icon: GitBranch, desc: "Planned changes and their impact" },
-      { href: "/programs",   label: "Programs",       icon: BookOpen,       desc: "Safety program tools and checklists" },
+      { href: "/foundation",                label: "Compliance Map",  icon: ClipboardCheck, desc: "Coverage, gaps, and readiness by area" },
+      { href: "/my-work",                   label: "My Work",         icon: ClipboardList,  desc: "Tasks and follow-ups assigned to you" },
+      { href: "/programs",                  label: "Programs",        icon: BookOpen,       desc: "Safety program tools and checklists" },
+      { href: "/change-plan",               label: "Change Plan",     icon: GitBranch,      desc: "Planned changes and their impact" },
+      { href: "/documents",                 label: "Documents",       icon: FileText,       desc: "Controlled SOPs, records, and files" },
+      { href: "/documents/version-control", label: "Version Control", icon: GitBranch,      desc: "Revisions, approvals, and change history" },
     ]
   },
   {
-    title: "HSE Management",
+    // ── 3. OPERATE — do the work ────────────────────────────────────────────
+    title: "Operate",
     href: "/operations",
     icon: HardHat,
     subItems: [
-      { href: "/risk-command-center",         label: "Risk Monitor",    icon: Gauge,         desc: "Prioritized HSE risk signals" },
       { href: "/operations",                  label: "Operations",      icon: Activity,      desc: "Day-to-day HSE operational records" },
+      { href: "/inspections",                 label: "Inspections",     icon: ClipboardCheck, desc: "Scheduled and completed inspections" },
       { href: "/operations/capa",             label: "CAPA",            icon: AlertCircle,   desc: "Corrective and preventive actions" },
-      { href: "/inspections",                 label: "Inspections",     icon: Stethoscope,   desc: "Scheduled and completed inspections" },
-      { href: "/training-matrix",             label: "Training Matrix", icon: GraduationCap, desc: "Role-based training and expiries" },
-      { href: "/ergonomics/self-assessment",  label: "Ergonomics",      icon: Activity,      desc: "Ergonomic self-assessments" },
+      { href: "/permits",                     label: "Work Permits",    icon: Lock,          desc: "Permits for high-hazard work" },
       { href: "/chemical-inventory",          label: "Chemical & SDS",  icon: FlaskConical,  desc: "Chemical inventory and safety data sheets" },
       { href: "/waste-management",            label: "Waste Mgmt",      icon: Wrench,        desc: "Hazardous and biohazard waste tracking" },
-      { href: "/permits",                     label: "Work Permits",    icon: Lock,          desc: "Permits for high-hazard work" },
+      { href: "/training-matrix",             label: "Training Matrix", icon: GraduationCap, desc: "Role-based training and expiries" },
+      { href: "/ergonomics/self-assessment",  label: "Ergonomics",      icon: Activity,      desc: "Ergonomic self-assessments" },
       { href: "/pesticide",                   label: "Pest & Disinfect",icon: ShieldCheck,   desc: "Pest control and disinfection logs" },
+    ]
+  },
+  {
+    // ── 4. MONITOR — am I on track? ─────────────────────────────────────────
+    title: "Monitor",
+    href: "/",
+    icon: Activity,
+    subItems: [
+      { href: "/",                    label: "Safety Loop",  icon: Gauge,    desc: "Assess → Plan → Operate → Monitor overview" },
+      { href: "/risk-command-center", label: "Risk Monitor", icon: Activity, desc: "Prioritized HSE risk signals" },
     ]
   },
   {

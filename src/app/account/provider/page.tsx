@@ -41,7 +41,7 @@ const CREDENTIALS = [
 
 const STATUS_CONFIG = {
   pending:  { label: "Under Review",  icon: Clock,          chipClass: "status-needs-review", color: "#d97706", message: "Your profile has been submitted and is awaiting review by our moderation team. This typically takes 1–2 business days." },
-  approved: { label: "Approved",      icon: CheckCircle2,   chipClass: "status-current",      color: "#16a34a", message: "Your profile is live in the provider directory. Patients and administrators can view it." },
+  approved: { label: "Approved",      icon: CheckCircle2,   chipClass: "status-current",      color: "#16a34a", message: "Your profile is live in the provider directory. Organizations and administrators can view it." },
   rejected: { label: "Changes Needed",icon: XCircle,        chipClass: "status-critical",     color: "#dc2626", message: "Your profile requires changes before it can be approved. Please review the notes below and resubmit." },
   draft:    { label: "Draft",         icon: Clock,          chipClass: "status-unknown",      color: "#6b7280", message: "Your profile has not been submitted yet." },
 };
@@ -160,9 +160,9 @@ export default async function ProviderAccountPage({ searchParams }: Props) {
                   </label>
 
                   <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
-                    NPI Number <span style={{ color: "#dc2626" }}>*</span>
-                    <input name="npi_number" required defaultValue={profile.npi_number ?? ""}
-                      placeholder="1234567890" style={{ fontFamily: "monospace" }} />
+                    NPI Number <span className="muted" style={{ fontSize: "0.72rem" }}>(if applicable)</span>
+                    <input name="npi_number" defaultValue={profile.npi_number ?? ""}
+                      placeholder="Optional — for clinical/occupational-health providers" style={{ fontFamily: "monospace" }} />
                   </label>
 
                   <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
@@ -195,7 +195,7 @@ export default async function ProviderAccountPage({ searchParams }: Props) {
                 <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: "0.85rem", cursor: "pointer" }}>
                   <input type="checkbox" name="accepting_patients" value="true"
                     defaultChecked={profile.accepting_patients ?? true} />
-                  Currently accepting patients / clients
+                  Currently available for new consultations
                 </label>
 
                 {statusKey === "rejected" && (
@@ -224,7 +224,7 @@ export default async function ProviderAccountPage({ searchParams }: Props) {
                   ["License Number",  profile.license_number],
                   ["License State",   profile.license_state],
                   ["Credentials",     (profile.credentials ?? []).join(", ") || "None"],
-                  ["Accepting patients", profile.accepting_patients ? "Yes" : "No"],
+                  ["Available for consultation", profile.accepting_patients ? "Yes" : "No"],
                 ].map(([label, value]) => value ? (
                   <div key={label as string} style={{ display: "flex", gap: "1rem" }}>
                     <span className="muted" style={{ fontSize: "0.83rem", minWidth: 140 }}>{label}</span>

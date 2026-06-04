@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "Risk Intelligence – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Risk Register – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { listAssessments } from "@/lib/supabase/data";
@@ -91,7 +91,7 @@ export default async function AssessmentsPage({
       <div className="page-stack">
         <header className="page-header">
           <div className="page-header-left">
-            <p className="section-label">Risk Intelligence</p>
+            <p className="section-label">Assess</p>
             <h1>Risk Register</h1>
           </div>
           <Link className="button-primary" href={currentUserId ? "/workbench" : "/login?next=/workbench"}>New assessment</Link>
