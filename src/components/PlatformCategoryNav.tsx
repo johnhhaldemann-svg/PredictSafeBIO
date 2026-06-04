@@ -50,7 +50,7 @@ const categories: Category[] = [
     icon: ShieldCheck,
     subItems: [
       { href: "/workbench",   label: "Command Center",    icon: Gauge        },
-      { href: "/assessments", label: "Assessments",       icon: ShieldCheck  },
+      { href: "/assessments", label: "Risk Register",      icon: ShieldCheck  },
       { href: "/providers",   label: "Provider Directory",icon: Stethoscope  },
       { href: "/bios/new",    label: "Add Personnel Record", icon: ClipboardList},
       { href: "/my-work",     label: "My Work",           icon: ClipboardList},
@@ -182,5 +182,4 @@ export function PlatformCategoryNav() {
         );
       })}
     </nav>
-  );
-}
+  );
