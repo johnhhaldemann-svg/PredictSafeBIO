@@ -6,6 +6,7 @@
 import { createSupabaseServerClient } from "./server";
 import { getProfileContext } from "./data-helpers";
 import { isSupabaseConfigured } from "./env";
+import { scorePermitRecord, resolveRiskCell } from "./continuous-scoring-service";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -260,22 +261,22 @@ export async function createPermit(input: CreatePermitInput): Promise<PermitResu
 
     if (error) return { ok: false, message: error.message };
 
-    // Write control_cell — permit exists but not yet approved
-    await supabase.from("risk_cells").upsert({
-      organization_id: ctx.organizationId,
-      cell_type: "control_cell",
-      label: `Permit: ${permitTypeLabels[input.permitType]} — ${input.location ?? "pending location"}`,
-      severity: "low",
-      linked_record_type: "controlled_work_permits",
-      linked_record_id: data.id,
-      payload: {
-        permit_type: input.permitType,
-        location: input.location,
-        task_description: input.taskDescription
+    // Score via bio-ai — replaces hardcoded control_cell with engine-assessed risk
+    void scorePermitRecord({
+      permit: {
+        id: data.id,
+        permitType: input.permitType,
+        taskDescription: input.taskDescription ?? null,
+        location: input.location ?? null,
+        hazards: input.hazards ?? [],
+        requiredControls: input.requiredControls ?? [],
+        isolationVerified: false,
+        closeoutStatus: "draft",
+        startTime: input.startTime ?? null,
       },
-      status: "active",
-      created_by: ctx.userId
-    }, { onConflict: "linked_record_type,linked_record_id" });
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+    });
 
     return { ok: true, message: "Permit created. Submit for approval before starting work.", id: data.id };
   } catch (e) {
@@ -311,18 +312,41 @@ export async function updatePermitStatus(
 
     if (error) return { ok: false, message: error.message };
 
-    // Update risk cell based on new status
     if (closeoutStatus === "closed" || closeoutStatus === "voided") {
-      await supabase.from("risk_cells")
-        .update({ status: "resolved" })
-        .eq("linked_record_type", "controlled_work_permits")
-        .eq("linked_record_id", id);
-    } else if (closeoutStatus === "active") {
-      // Active permit = control_cell at medium severity; a cron will escalate if > 24 hrs
-      await supabase.from("risk_cells")
-        .update({ cell_type: "control_cell", severity: "medium", status: "active" })
-        .eq("linked_record_type", "controlled_work_permits")
-        .eq("linked_record_id", id);
+      // Permit closed — resolve the risk cell and promote to improvement_cell
+      void resolveRiskCell({
+        organizationId: ctx.organizationId,
+        linkedRecordType: "controlled_work_permits",
+        linkedRecordId: id,
+        resolveLabel: `Permit closed: ${notes ?? closeoutStatus}`,
+      });
+    } else {
+      // Permit status changed (approved → active, etc.) — re-score with current state.
+      // Fetch enough fields to pass to the scorer.
+      const { data: permit } = await supabase
+        .from("controlled_work_permits")
+        .select("permit_type, task_description, location, hazards, required_controls, isolation_verified, start_time")
+        .eq("id", id)
+        .eq("organization_id", ctx.organizationId)
+        .maybeSingle();
+
+      if (permit) {
+        void scorePermitRecord({
+          permit: {
+            id,
+            permitType: permit.permit_type as string,
+            taskDescription: permit.task_description as string | null,
+            location: permit.location as string | null,
+            hazards: (permit.hazards as string[]) ?? [],
+            requiredControls: (permit.required_controls as string[]) ?? [],
+            isolationVerified: (permit.isolation_verified as boolean) ?? false,
+            closeoutStatus,
+            startTime: (permit.start_time as string | null) ?? null,
+          },
+          organizationId: ctx.organizationId,
+          userId: ctx.userId,
+        });
+      }
     }
 
     return { ok: true, message: `Permit ${closeoutStatusLabels[closeoutStatus]}.` };

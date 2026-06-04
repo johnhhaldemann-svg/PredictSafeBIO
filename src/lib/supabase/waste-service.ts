@@ -6,6 +6,7 @@
 import { createSupabaseServerClient } from "./server";
 import { getProfileContext } from "./data-helpers";
 import { isSupabaseConfigured } from "./env";
+import { scoreWasteRecord, resolveRiskCell } from "./continuous-scoring-service";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -277,26 +278,21 @@ export async function createWasteRecord(input: CreateWasteInput): Promise<WasteR
 
     if (error) return { ok: false, message: error.message };
 
-    // Write risk cell based on fill level
-    const fill = input.fillLevel ?? 0;
-    const cellType = fill >= 80 ? "control_cell" : "control_cell";
-    const severity = fill >= 100 ? "high" : fill >= 80 ? "medium" : "low";
-
-    await supabase.from("risk_cells").upsert({
-      organization_id: ctx.organizationId,
-      cell_type: cellType,
-      label: `Waste: ${input.containerLabel ?? input.wasteType} — ${fill}% full`,
-      severity,
-      linked_record_type: "waste_records",
-      linked_record_id: data.id,
-      payload: {
-        waste_type: input.wasteType,
-        fill_level: fill,
-        disposal_vendor: input.disposalVendor
+    // Score via bio-ai — replaces hardcoded severity with engine assessment
+    void scoreWasteRecord({
+      record: {
+        id: data.id,
+        wasteType: input.wasteType,
+        containerLabel: input.containerLabel ?? null,
+        fillLevel: input.fillLevel ?? 0,
+        labelStatus: "unlabeled",      // new containers start unlabeled
+        pickupScheduledDate: input.pickupScheduledDate ?? null,
+        incidentFlag: false,
+        disposalVendor: input.disposalVendor ?? null,
       },
-      status: "active",
-      created_by: ctx.userId
-    }, { onConflict: "linked_record_type,linked_record_id" });
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+    });
 
     return { ok: true, message: "Waste container added to registry.", id: data.id };
   } catch (e) {
@@ -315,7 +311,7 @@ export async function updateFillLevel(id: string, fillLevel: number): Promise<Wa
 
     const { data: record, error: fetchErr } = await supabase
       .from("waste_records")
-      .select("container_label, waste_type")
+      .select("container_label, waste_type, label_status, pickup_scheduled_date, incident_flag, disposal_vendor")
       .eq("id", id)
       .single();
 
@@ -329,21 +325,21 @@ export async function updateFillLevel(id: string, fillLevel: number): Promise<Wa
 
     if (error) return { ok: false, message: error.message };
 
-    // Update risk cell severity based on new fill level
-    const severity = fillLevel >= 100 ? "high" : fillLevel >= 80 ? "medium" : "low";
-    const cellType = fillLevel >= 100 ? "failure_cell" : "control_cell";
-
-    await supabase.from("risk_cells").upsert({
-      organization_id: ctx.organizationId,
-      cell_type: cellType,
-      label: `Waste: ${record.container_label ?? record.waste_type} — ${fillLevel}% full`,
-      severity,
-      linked_record_type: "waste_records",
-      linked_record_id: id,
-      payload: { fill_level: fillLevel },
-      status: "active",
-      created_by: ctx.userId
-    }, { onConflict: "linked_record_type,linked_record_id" });
+    // Re-score with updated fill level — engine recalculates severity + cell type
+    void scoreWasteRecord({
+      record: {
+        id,
+        wasteType: record.waste_type as string,
+        containerLabel: record.container_label as string | null,
+        fillLevel,
+        labelStatus: (record.label_status as string) ?? "labeled",
+        pickupScheduledDate: (record.pickup_scheduled_date as string | null) ?? null,
+        incidentFlag: (record.incident_flag as boolean) ?? false,
+        disposalVendor: (record.disposal_vendor as string | null) ?? null,
+      },
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+    });
 
     return { ok: true, message: `Fill level updated to ${fillLevel}%.` };
   } catch (e) {
@@ -373,12 +369,12 @@ export async function markPickedUp(id: string, manifestNumber?: string): Promise
 
     if (error) return { ok: false, message: error.message };
 
-    // Resolve risk cell
-    await supabase
-      .from("risk_cells")
-      .update({ status: "resolved" })
-      .eq("linked_record_type", "waste_records")
-      .eq("linked_record_id", id);
+    void resolveRiskCell({
+      organizationId: ctx.organizationId,
+      linkedRecordType: "waste_records",
+      linkedRecordId: id,
+      resolveLabel: `Waste disposed: manifest ${manifestNumber ?? "pending"}`,
+    });
 
     return { ok: true, message: "Container marked as picked up. Risk cell resolved." };
   } catch (e) {

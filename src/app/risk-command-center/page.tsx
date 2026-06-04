@@ -1,16 +1,14 @@
 export const dynamic = "force-dynamic";
 
-import Link from "next/link";
-import { Activity, AlertTriangle, Brain, CheckCircle2, ShieldCheck, TrendingUp, Zap } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle2, ShieldCheck, TrendingUp, Zap } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { getProfileContext } from "@/lib/supabase/data-helpers";
 import { ComplianceAssistant } from "@/components/ComplianceAssistant";
+import { RiskCellReviewCard } from "@/components/RiskCellReviewCard";
 import {
   getRiskSummary,
   cellTypeLabels,
   cellTypeDescriptions,
-  severityClass,
-  linkedRecordRoutes,
   type CellType,
   type CellSeverity
 } from "@/lib/supabase/risk-dashboard-service";
@@ -22,12 +20,6 @@ const CELL_TYPE_ORDER: CellType[] = [
 
 const SEVERITY_ORDER: CellSeverity[] = ["critical", "high", "medium", "low"];
 
-const SEVERITY_BADGE: Record<CellSeverity, string> = {
-  critical: "status-overdue",
-  high: "status-overdue",
-  medium: "status-needs-review",
-  low: "status-current"
-};
 
 export default async function RiskCommandCenterPage() {
   const [summary, ctx] = await Promise.all([
@@ -132,44 +124,24 @@ export default async function RiskCommandCenterPage() {
           </div>
         </section>
 
-        {/* Top failures */}
+        {/* Top failures — with AI detail + review actions */}
         {topFailures.length > 0 && (
           <section className="panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Failure cells</p>
+                <p className="section-label">Failure cells — human review required</p>
                 <h2>Control breakdowns requiring action</h2>
               </div>
             </div>
             <div className="action-list">
-              {topFailures.map((cell) => {
-                const route = cell.linkedRecordType ? linkedRecordRoutes[cell.linkedRecordType] : null;
-                return (
-                  <article className="action-row" key={cell.id}>
-                    <div>
-                      <strong>
-                        {route && cell.linkedRecordId ? (
-                          <Link href={route}>{cell.label}</Link>
-                        ) : (
-                          cell.label
-                        )}
-                      </strong>
-                      <span className={SEVERITY_BADGE[cell.severity]}>{cell.severity}</span>
-                      {cell.linkedRecordType && (
-                        <span className="muted" style={{ fontSize: "0.78em" }}>
-                          {cell.linkedRecordType.replace(/_/g, " ")}
-                        </span>
-                      )}
-                    </div>
-                    <p>{cell.createdAt ? new Date(cell.createdAt).toLocaleDateString() : ""}</p>
-                  </article>
-                );
-              })}
+              {topFailures.map((cell) => (
+                <RiskCellReviewCard key={cell.id} cell={cell} returnTo="/risk-command-center" />
+              ))}
             </div>
           </section>
         )}
 
-        {/* Top precursors */}
+        {/* Top precursors — with AI detail + review actions */}
         {topPrecursors.length > 0 && (
           <section className="panel">
             <div className="panel-heading">
@@ -179,25 +151,14 @@ export default async function RiskCommandCenterPage() {
               </div>
             </div>
             <div className="action-list">
-              {topPrecursors.map((cell) => {
-                const route = cell.linkedRecordType ? linkedRecordRoutes[cell.linkedRecordType] : null;
-                return (
-                  <article className="action-row" key={cell.id}>
-                    <div>
-                      <strong>
-                        {route ? <Link href={route}>{cell.label}</Link> : cell.label}
-                      </strong>
-                      <span className={SEVERITY_BADGE[cell.severity]}>{cell.severity}</span>
-                    </div>
-                    <p>{cell.createdAt ? new Date(cell.createdAt).toLocaleDateString() : ""}</p>
-                  </article>
-                );
-              })}
+              {topPrecursors.map((cell) => (
+                <RiskCellReviewCard key={cell.id} cell={cell} returnTo="/risk-command-center" />
+              ))}
             </div>
           </section>
         )}
 
-        {/* Full live feed */}
+        {/* Full live feed — AI detail + review actions on every cell */}
         <section className="panel">
           <div className="panel-heading">
             <div>
@@ -212,30 +173,9 @@ export default async function RiskCommandCenterPage() {
             </div>
           ) : (
             <div className="action-list">
-              {recentCells.map((cell) => {
-                const route = cell.linkedRecordType ? linkedRecordRoutes[cell.linkedRecordType] : null;
-                return (
-                  <article className="action-row" key={cell.id}>
-                    <div>
-                      <strong>
-                        {route && cell.linkedRecordId ? (
-                          <Link href={`${route}`}>{cell.label}</Link>
-                        ) : (
-                          cell.label
-                        )}
-                      </strong>
-                      <span className={SEVERITY_BADGE[cell.severity]}>{cell.severity}</span>
-                      <span style={{ fontSize: "0.78em", opacity: 0.7 }}>
-                        {cellTypeLabels[cell.cellType]}
-                      </span>
-                    </div>
-                    <p>
-                      {cell.linkedRecordType?.replace(/_/g, " ") ?? ""}
-                      {cell.createdAt ? ` · ${new Date(cell.createdAt).toLocaleDateString()}` : ""}
-                    </p>
-                  </article>
-                );
-              })}
+              {recentCells.map((cell) => (
+                <RiskCellReviewCard key={cell.id} cell={cell} returnTo="/risk-command-center" />
+              ))}
             </div>
           )}
         </section>

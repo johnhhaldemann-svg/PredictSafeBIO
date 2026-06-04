@@ -182,4 +182,5 @@ export function PlatformCategoryNav() {
         );
       })}
     </nav>
-  );
+  );
+}
