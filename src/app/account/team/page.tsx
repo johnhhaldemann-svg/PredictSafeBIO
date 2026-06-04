@@ -47,7 +47,7 @@ function X() {
   return <span style={{ color: "var(--border-color)", fontWeight: 400 }}>—</span>;
 }
 
-export default async function TeamPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
+export default async function TeamPage({ searchParams }: { searchParams: Promise<{ message?: string; inviteLink?: string }> }) {
   const params = await searchParams;
   const [adminAccess, auth, invitations] = await Promise.all([
     getFoundationAdminAccessSummary().catch(() => ({ configured: false, signedIn: false, isOwner: false, message: "" })),
@@ -79,6 +79,30 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         </section>
 
         {params.message ? <p className="form-message">{params.message}</p> : null}
+
+        {/* Invite link display — shown after generating an invite */}
+        {params.inviteLink && (
+          <section className="panel" style={{ borderLeft: "3px solid var(--color-green, #16a34a)" }}>
+            <div className="panel-heading">
+              <div>
+                <p className="section-label">Invite Link Ready</p>
+                <h2 style={{ fontSize: "1rem" }}>Copy and share this link directly</h2>
+              </div>
+              <UserPlus size={18} />
+            </div>
+            <p className="muted" style={{ fontSize: "0.85rem", marginBottom: "0.5rem" }}>
+              This one-time link authenticates the invited user and brings them to onboarding.
+              Share it via Slack, email, or any channel. It expires after 7 days.
+            </p>
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <input
+                readOnly
+                value={decodeURIComponent(params.inviteLink)}
+                style={{ flex: 1, fontFamily: "monospace", fontSize: "0.78rem", padding: "0.5rem 0.75rem", borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)" }}
+              />
+            </div>
+          </section>
+        )}
 
         {/* Role capabilities matrix */}
         <section className="panel">
@@ -126,13 +150,13 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
             <div className="panel-heading">
               <div>
                 <p className="section-label">Invite a team member</p>
-                <h2>Send an invite link</h2>
+                <h2>Generate an invite link</h2>
               </div>
               <UserPlus size={22} />
             </div>
             <p className="muted">
-              Enter an email address and role. The recipient receives an invitation email with a link to join your workspace.
-              Invites expire after 7 days and require custom SMTP to be configured.
+              Enter an email address and role. A one-time invite link is generated — copy it and share it directly via Slack, email, or any channel.
+              No SMTP required. Links expire after 7 days.
             </p>
             <form action={createInviteAction} className="stacked-form">
               <label>
@@ -148,7 +172,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
               </label>
               <button className="button-primary" type="submit">
                 <UserPlus size={15} />
-                Send invitation
+                Generate invite link
               </button>
             </form>
           </section>

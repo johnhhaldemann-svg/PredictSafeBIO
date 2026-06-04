@@ -13,7 +13,7 @@ import { getSupabaseAdminClient } from "./admin";
 export type SubscriptionPlan = {
   id: string;
   name: string;
-  tier: "free" | "basic" | "pro" | "enterprise";
+  tier: "small_lab" | "growth" | "enterprise" | "strategic";
   price_cents: number;
   currency: string;
   stripe_price_id: string | null;

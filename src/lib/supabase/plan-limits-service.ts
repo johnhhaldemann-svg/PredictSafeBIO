@@ -6,9 +6,10 @@
  * Checks an organization's current usage against their subscription plan limits.
  * Call checkPlanLimits() before inserting a new provider profile or patient bio.
  *
- * Free:  1 provider,   5 patients
- * Basic: 10 providers, 50 patients
- * Pro:   unlimited
+ * Small Lab:  10 users, 20 assessments
+ * Growth:     50 users, unlimited assessments
+ * Enterprise: 200 users, unlimited assessments
+ * Strategic:  unlimited
  *
  * Design:
  * - Returns { allowed: true } when under limit OR when org has no subscription (defaults to Free).

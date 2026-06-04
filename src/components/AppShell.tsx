@@ -25,7 +25,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
   const roleLabel = getRoleLabel(auth.role);
   const roleBadgeClass = getRoleBadgeClass(auth.role);
 
-  const isOwner = tier === "admin" || tier === "superadmin";
+  const isOwner = tier === "owner" || tier === "platform_staff" || tier === "superadmin";
   const pendingCount = isOwner && auth.organizationId
     ? await getKnowledgePendingCount(auth.organizationId)
     : 0;

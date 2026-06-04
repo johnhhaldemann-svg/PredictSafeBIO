@@ -28,7 +28,7 @@ export type WorkspaceInvitation = {
 };
 
 export type InviteResult =
-  | { ok: true; message: string }
+  | { ok: true; message: string; inviteLink?: string }
   | { ok: false; message: string };
 
 // ---------------------------------------------------------------------------
@@ -175,47 +175,46 @@ export async function createWorkspaceInvitation(input: {
     };
   }
 
-  // Send Supabase Auth invite email (requires service role)
+  // Generate a one-time invite link via the admin client — no email required.
+  // The owner copies this link and sends it however they prefer (Slack, email, etc.).
+  // This avoids Supabase SMTP rate limits entirely.
+  let inviteLink: string | undefined;
   try {
     const adminClient = getSupabaseAdminClient();
     const redirectTo =
       input.redirectTo ??
-      `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/auth/confirm?next=/onboarding`;
+      `${process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? ""}/auth/confirm?next=/onboarding`;
 
-    const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-      redirectTo,
-      data: {
-        invited_to_org: context.organizationId,
-        invited_role: input.role,
-        invite_token: invite.token
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: linkData, error: linkError } = await (adminClient as any).auth.admin.generateLink({
+      type: "invite",
+      email,
+      options: {
+        redirectTo,
+        data: {
+          invited_to_org: context.organizationId,
+          invited_role: input.role,
+          invite_token: invite.token
+        }
       }
     });
 
-    if (inviteError) {
-      // Roll back the invite record
-      await supabase
-        .from("workspace_invitations")
-        .update({ status: "revoked" })
-        .eq("id", invite.id);
-      return {
-        ok: false,
-        message: `Invitation record created but email could not be sent: ${inviteError.message}. Configure custom SMTP in Supabase Auth settings.`
-      };
+    if (linkError) {
+      // Non-fatal — the invite record exists; owner can regenerate
+      console.warn("generateLink failed:", linkError.message);
+    } else {
+      inviteLink = linkData?.properties?.action_link as string | undefined;
     }
-  } catch {
-    return {
-      ok: false,
-      message:
-        "Auth invite email requires SUPABASE_SERVICE_ROLE_KEY. Configure it in .env.local."
-    };
+  } catch (e) {
+    console.warn("generateLink exception:", e);
   }
 
   // Audit event
   await supabase.from("audit_events").insert({
     organization_id: context.organizationId,
     actor_id: context.userId,
-    event_type: "demo_seed_created", // closest existing type; extend later
-    summary: `Workspace invitation sent to ${email} with role ${input.role}.`,
+    event_type: "demo_seed_created",
+    summary: `Workspace invite link generated for ${email} with role ${input.role}.`,
     payload: {
       inviteId: invite.id,
       email,
@@ -225,7 +224,13 @@ export async function createWorkspaceInvitation(input: {
     }
   });
 
-  return { ok: true, message: `Invitation sent to ${email}.` };
+  return {
+    ok: true,
+    message: inviteLink
+      ? `Invite link generated for ${email}. Copy it below and share directly.`
+      : `Invitation record created for ${email}. Configure SUPABASE_SERVICE_ROLE_KEY to generate the invite link.`,
+    inviteLink
+  };
 }
 
 // ---------------------------------------------------------------------------

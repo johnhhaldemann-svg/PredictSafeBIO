@@ -410,4 +410,16 @@ function nextStepIcon(level: string) {
 }
 
 function riskLabel(level: string) {
-  if (level 
+  if (level === "low") return "Low Risk";
+  if (level === "moderate") return "Moderate Risk";
+  if (level === "high") return "High Risk";
+  if (level === "severe") return "Severe Risk";
+  return ergonomicLabel("task", level);
+}
+
+function riskClass(level: string) {
+  if (level === "low") return "status-low";
+  if (level === "moderate") return "status-moderate";
+  if (level === "high") return "status-high";
+  return "status-critical";
+}

@@ -106,11 +106,11 @@ export default async function BillingPage() {
           <div style={{ marginTop: "1.25rem" }}>
             <p className="section-label" style={{ marginBottom: "0.4rem" }}>Active subscriptions by tier</p>
             <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-              {(["free", "basic", "pro", "enterprise"] as const).map(tier => {
+              {(["small_lab", "growth", "enterprise", "strategic"] as const).map(tier => {
                 const d = summary.by_tier[tier];
                 return (
                   <div key={tier} style={{ padding: "0.75rem 1.25rem", borderRadius: 8, border: "1px solid var(--border)", minWidth: 110 }}>
-                    <p style={{ fontWeight: 600, textTransform: "capitalize", margin: 0 }}>{tier}</p>
+                    <p style={{ fontWeight: 600, margin: 0 }}>{{ small_lab: "Small Lab", growth: "Growth", enterprise: "Enterprise", strategic: "Strategic" }[tier]}</p>
                     <p style={{ fontSize: "1.4rem", fontWeight: 700, margin: "0.25rem 0" }}>{d?.count ?? 0}</p>
                     <p className="muted" style={{ fontSize: "0.78rem", margin: 0 }}>{formatCents(d?.mrr_cents ?? 0)}/mo</p>
                   </div>
