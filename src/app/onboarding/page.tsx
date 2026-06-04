@@ -3,7 +3,6 @@ import { BookOpen, ClipboardCheck, HeartPulse, LayoutDashboard, ShieldAlert, Shi
 import { completeOnboardingAction } from "@/app/auth/actions";
 import { demoCompanyProfile } from "@/lib/demo-data";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { hasValidInviteForCurrentUser } from "@/lib/supabase/invite-service";
 
 type OnboardingPageProps = {
   searchParams: Promise<{ message?: string }>;
@@ -41,10 +40,24 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
     redirect("/workbench");
   }
 
-  const inviteValid = await hasValidInviteForCurrentUser();
-  // If invite-only is enabled and invite is valid, user is joining as a member.
-  // Otherwise they are setting up a new org as an owner.
-  const isJoiningAsInvitee = Boolean(process.env.NEXT_PUBLIC_INVITE_ONLY === "true" && inviteValid);
+  // A pending invitation addressed to this user's email means they JOIN an
+  // existing company (RLS lets a user read invites for their own email). With no
+  // invite they set up a new company as owner. completeOnboardingAction makes the
+  // same determination server-side from the email match.
+  const { data: pendingInvite } = await supabase
+    .from("workspace_invitations")
+    .select("id, role")
+    .eq("email", (user.email ?? "").toLowerCase())
+    .eq("status", "pending")
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const isJoiningAsInvitee = Boolean(pendingInvite);
+  // Invite-only mode blocks self-serve company creation: no invite + flag on = blocked.
+  const inviteOnly = process.env.NEXT_PUBLIC_INVITE_ONLY === "true";
+  const blockedNoInvite = inviteOnly && !isJoiningAsInvitee;
 
   return (
     <main className="onboarding-page">
@@ -103,7 +116,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
 
         {params.message ? <p className="form-message">{params.message}</p> : null}
 
-        {!inviteValid && (
+        {blockedNoInvite && (
           <div className="auth-hardening-warning" role="alert">
             <ShieldAlert size={15} />
             <span>
@@ -119,56 +132,64 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
           </div>
           <div className="form-grid">
             <label>
-              Organization name
-              <input name="organizationName" placeholder={demoCompanyProfile.companyName} required autoComplete="organization" />
-            </label>
-            <label>
               Your full name
               <input name="fullName" placeholder="e.g. Dr. Jane Smith" defaultValue="" required autoComplete="name" />
             </label>
-            <label>
-              Company name
-              <input name="companyName" placeholder={demoCompanyProfile.companyName} required autoComplete="organization" />
-            </label>
-            <label>
-              Primary site
-              <input name="primarySite" placeholder={demoCompanyProfile.primarySite} autoComplete="off" />
-            </label>
+            {!isJoiningAsInvitee && (
+              <>
+                <label>
+                  Organization name
+                  <input name="organizationName" placeholder={demoCompanyProfile.companyName} required autoComplete="organization" />
+                </label>
+                <label>
+                  Company name
+                  <input name="companyName" placeholder={demoCompanyProfile.companyName} required autoComplete="organization" />
+                </label>
+                <label>
+                  Primary site
+                  <input name="primarySite" placeholder={demoCompanyProfile.primarySite} autoComplete="off" />
+                </label>
+              </>
+            )}
           </div>
 
-          <div className="onboarding-section-divider">
-            <p className="section-label">Operating context — optional, helps personalize your workspace</p>
-          </div>
+          {!isJoiningAsInvitee && (
+            <>
+              <div className="onboarding-section-divider">
+                <p className="section-label">Operating context — optional, helps personalize your workspace</p>
+              </div>
 
-          <div className="form-grid wide-fields">
-            <label>
-              Operating areas
-              <textarea name="operatingAreas" placeholder={demoCompanyProfile.operatingAreas.join("\n")} rows={4} />
-            </label>
-            <label>
-              Programs
-              <textarea name="programs" placeholder={demoCompanyProfile.programs.join("\n")} rows={4} />
-            </label>
-            <label>
-              Quality scope
-              <textarea name="qualityScope" placeholder={demoCompanyProfile.qualitySystemScope.join("\n")} rows={4} />
-            </label>
-            <label>
-              Biosafety levels
-              <textarea name="biosafetyLevels" placeholder={demoCompanyProfile.biosafetyLevels.join("\n")} rows={4} />
-            </label>
-            <label>
-              Review owner roles
-              <textarea name="reviewOwnerRoles" placeholder={demoCompanyProfile.reviewOwnerRoles.join("\n")} rows={4} />
-            </label>
-            <label>
-              Document families
-              <textarea name="documentFamilies" placeholder={demoCompanyProfile.documentFamilies.join("\n")} rows={4} />
-            </label>
-          </div>
+              <div className="form-grid wide-fields">
+                <label>
+                  Operating areas
+                  <textarea name="operatingAreas" placeholder={demoCompanyProfile.operatingAreas.join("\n")} rows={4} />
+                </label>
+                <label>
+                  Programs
+                  <textarea name="programs" placeholder={demoCompanyProfile.programs.join("\n")} rows={4} />
+                </label>
+                <label>
+                  Quality scope
+                  <textarea name="qualityScope" placeholder={demoCompanyProfile.qualitySystemScope.join("\n")} rows={4} />
+                </label>
+                <label>
+                  Biosafety levels
+                  <textarea name="biosafetyLevels" placeholder={demoCompanyProfile.biosafetyLevels.join("\n")} rows={4} />
+                </label>
+                <label>
+                  Review owner roles
+                  <textarea name="reviewOwnerRoles" placeholder={demoCompanyProfile.reviewOwnerRoles.join("\n")} rows={4} />
+                </label>
+                <label>
+                  Document families
+                  <textarea name="documentFamilies" placeholder={demoCompanyProfile.documentFamilies.join("\n")} rows={4} />
+                </label>
+              </div>
+            </>
+          )}
 
           <div className="onboarding-actions">
-            <button className="button-primary" type="submit">
+            <button className="button-primary" type="submit" disabled={blockedNoInvite}>
               {isJoiningAsInvitee ? "Join workspace" : "Create workspace"}
             </button>
           </div>

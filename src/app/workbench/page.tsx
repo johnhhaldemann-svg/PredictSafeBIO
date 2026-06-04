@@ -18,6 +18,7 @@ import {
   listDocuments,
 } from "@/lib/supabase/data";
 import { getAuthSummary } from "@/lib/supabase/account-service";
+import { isPlatformRole } from "@/lib/role-permissions";
 import { getPlatformData } from "@/lib/supabase/platform-service";
 import { getKnowledgePendingCount } from "@/lib/supabase/knowledge-service";
 import { listProviderBiosByStatus, listBioReports } from "@/lib/supabase/moderation-service";
@@ -44,6 +45,14 @@ export default async function WorkbenchPage({
     organizationId: undefined,
     role: undefined,
   });
+
+  // A signed-in user who is not platform staff must belong to a company to see
+  // the workspace. No company → send them to onboarding (create or accept an
+  // invite) rather than showing sample data. Platform staff are exempt. Logged-
+  // out visitors still get the sample-data preview (auth.signedIn is false).
+  if (auth.configured && auth.signedIn && !auth.organizationId && !isPlatformRole(auth.role)) {
+    redirect("/onboarding");
+  }
 
   if (auth.role === "superadmin") {
     redirect("/admin/organizations");
