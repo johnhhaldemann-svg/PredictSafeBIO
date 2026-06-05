@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { WorkbenchClient } from "@/components/WorkbenchClient";
-import { SuperAdminDashboard } from "@/components/SuperAdminDashboard";
 import {
   getAuditReadinessConsoleSummary,
   getFoundationAdminAccessSummary,
@@ -19,9 +18,6 @@ import {
 } from "@/lib/supabase/data";
 import { getAuthSummary } from "@/lib/supabase/account-service";
 import { isPlatformRole } from "@/lib/role-permissions";
-import { getPlatformData } from "@/lib/supabase/platform-service";
-import { getKnowledgePendingCount } from "@/lib/supabase/knowledge-service";
-import { listProviderBiosByStatus, listBioReports } from "@/lib/supabase/moderation-service";
 
 export const metadata: Metadata = { title: "Workbench – PredictSafeBIO" };
 
@@ -54,43 +50,9 @@ export default async function WorkbenchPage({
     redirect("/onboarding");
   }
 
+  // Superadmins manage the platform from /admin, not the workbench.
   if (auth.role === "superadmin") {
     redirect("/admin/organizations");
-    const fetchedAt = new Date().toISOString();
-    const [platform, knowledgePending, pendingBios, pendingReports] = await Promise.all([
-      safeSettle(getPlatformData(), {
-        metrics: {
-          totalOrgs: 0, totalUsers: 0, onboardedUsers: 0,
-          totalAssessments: 0, totalDocuments: 0, totalAuditEvents: 0,
-          totalTasks: 0, totalTrainingRecords: 0, totalCapaRecords: 0,
-          totalInspections: 0, tablesWithRls: 0, tablesWithoutRls: 0, rlsTablesListed: [],
-        },
-        security: {
-          leakedPasswordProtection: "unknown" as const,
-          smtpConfigured: false,
-          serviceRolePresent: false,
-          supabaseConfigured: false,
-        },
-        orgs: [],
-        recentAuditEvents: [],
-        checklist: [],
-      }),
-      safeSettle(getKnowledgePendingCount(auth.organizationId ?? ""), 0),
-      safeSettle(listProviderBiosByStatus("pending"), []),
-      safeSettle(listBioReports(auth.organizationId ?? "", "pending"), []),
-    ]);
-
-    return (
-      <AppShell>
-        <SuperAdminDashboard
-          platform={platform}
-          knowledgePending={knowledgePending}
-          moderationPending={pendingBios.length}
-          moderationReports={pendingReports.length}
-          fetchedAt={fetchedAt}
-        />
-      </AppShell>
-    );
   }
 
   // Standard workbench for all other roles

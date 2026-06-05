@@ -197,7 +197,11 @@ export async function changeUserRole(
 ): Promise<{ error: string | null }> {
   const admin = getSupabaseAdminClient();
 
-   
+  // Resolve the target's org so the audit trail is attributed to the affected
+  // organization (this is a platform-wide tool; the actor's org may differ).
+  const { data: target } = await (admin as any)
+    .from("profiles").select("organization_id").eq("id", targetUserId).maybeSingle();
+
   const { error } = await (admin as any)
     .from("profiles")
     .update({ role: newRole, updated_at: new Date().toISOString() })
@@ -205,9 +209,9 @@ export async function changeUserRole(
 
   if (error) return { error: (error as { message: string }).message };
 
-   
+
   await (admin as any).from("audit_events").insert({
-    organization_id: organizationId,
+    organization_id: (target as any)?.organization_id ?? organizationId,
     actor_id: actorId,
     event_type: "admin_user_role_changed",
     summary: `User role changed to "${newRole}"`,
@@ -225,7 +229,11 @@ export async function setUserAccountStatus(
 ): Promise<{ error: string | null }> {
   const admin = getSupabaseAdminClient();
 
-   
+  // Resolve the target's org so the audit trail is attributed to the affected
+  // organization (platform-wide tool; actor's org may differ).
+  const { data: target } = await (admin as any)
+    .from("profiles").select("organization_id").eq("id", targetUserId).maybeSingle();
+
   const { error } = await (admin as any)
     .from("profiles")
     .update({ account_status: status, updated_at: new Date().toISOString() })
@@ -242,7 +250,7 @@ export async function setUserAccountStatus(
 
    
   await (admin as any).from("audit_events").insert({
-    organization_id: organizationId,
+    organization_id: (target as any)?.organization_id ?? organizationId,
     actor_id: actorId,
     event_type: status === 'suspended' ? 'admin_user_suspended' : 'admin_user_activated',
     summary: `User account ${status === 'suspended' ? 'suspended' : 'reactivated'}`,

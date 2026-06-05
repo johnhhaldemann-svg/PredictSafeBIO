@@ -240,7 +240,11 @@ export async function listWasteRecords(filters?: {
       query = query.eq("status", filters.status);
     }
     if (filters?.atRisk) {
-      query = query.gte("fill_level", 80);
+      // Mirror deriveRiskFlags.isAtRisk: fill >= 80 OR label damaged OR pickup overdue.
+      const nowIso = new Date().toISOString();
+      query = query.or(
+        `fill_level.gte.80,label_status.eq.damaged,pickup_scheduled_date.lt.${nowIso}`
+      );
     }
 
     const { data, error } = await query;

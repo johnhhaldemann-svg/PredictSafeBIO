@@ -1,6 +1,15 @@
 import { getDocument, persistDocumentRecommendations } from "@/lib/supabase/data";
+import { createServerClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
+  // Auth gate — do not expose the recommendation engine (or demo fallback) to
+  // anonymous callers.
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return Response.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+  }
+
   const { documentId } = (await request.json()) as { documentId?: string };
 
   if (!documentId) {

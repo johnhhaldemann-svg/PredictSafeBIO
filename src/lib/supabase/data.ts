@@ -2865,6 +2865,7 @@ export async function saveErgonomicSelfAssessment(
       supabase.from("ergonomic_risk_signals").insert({
         organization_id: context.organizationId,
         self_assessment_id: assessment.id,
+        signal_type: "ergonomic_level_1_screening",
         payload: signalPayload,
         risk_score: result.riskScore,
         risk_level: result.riskLevel,
@@ -5158,7 +5159,7 @@ function demoAssessmentSummary(id: string, input: BioAiInput): SavedAssessmentSu
     level: assessment.level,
     confidence: assessment.confidence,
     humanReviewRequired: assessment.humanReviewRequired,
-    humanReviewStatus: assessment.humanReviewRequired ? "draft_human_review_required" : "reviewed_monitoring",
+    humanReviewStatus: assessment.humanReviewRequired ? "draft_human_review_required" : "routine_monitoring",
     reviewedAt: null
   };
 }

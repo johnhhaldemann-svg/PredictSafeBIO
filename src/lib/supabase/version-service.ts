@@ -241,7 +241,7 @@ export async function recordApprovalDecision(input: {
     .update({
       approval_status: input.decision,
       notes: input.notes?.trim() || null,
-      updated_at: new Date().toISOString()
+      reviewed_at: new Date().toISOString()
     })
     .eq("id", input.approvalId)
     .eq("organization_id", context.organizationId);

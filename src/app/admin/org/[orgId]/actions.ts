@@ -125,19 +125,30 @@ export async function inviteUserToOrgAction(formData: FormData) {
 
   const admin = getSupabaseAdminClient();
 
-  // Check if user already exists
-  const { data: existingProfile } = await admin
-    .from("profiles")
-    .select("id, organization_id")
-    .eq("email", email)
-    .maybeSingle();
+  // Email lives in auth.users, not profiles — look the user up there.
+  const { data: authList } = await admin.auth.admin.listUsers();
+  const existingAuthUser = (authList?.users ?? []).find(
+    (u: any) => (u.email ?? "").toLowerCase() === email
+  );
 
-  if (existingProfile) {
-    if (existingProfile.organization_id && existingProfile.organization_id !== orgId) {
+  if (existingAuthUser) {
+    const { data: existingProfile } = await admin
+      .from("profiles")
+      .select("id, organization_id")
+      .eq("id", existingAuthUser.id)
+      .maybeSingle();
+
+    if (existingProfile?.organization_id && existingProfile.organization_id !== orgId) {
       redirect(`/admin/org/${orgId}?tab=users&error=User+already+belongs+to+another+org`);
     }
-    // Re-assign to this org
-    await admin.from("profiles").update({ organization_id: orgId, role, full_name: fullName ?? undefined }).eq("id", existingProfile.id);
+    // Re-assign / ensure profile in this org
+    await admin.from("profiles").upsert({
+      id: existingAuthUser.id,
+      organization_id: orgId,
+      role,
+      full_name: fullName ?? undefined,
+      account_status: "active",
+    }, { onConflict: "id" });
     await auditLog(actorId, orgId, "superadmin_user_added", `Existing user ${email} added to org with role "${role}"`, { email, role });
     redirect(`/admin/org/${orgId}?tab=users&success=User+added`);
   }
@@ -151,10 +162,9 @@ export async function inviteUserToOrgAction(formData: FormData) {
     redirect(`/admin/org/${orgId}?tab=users&error=${encodeURIComponent(inviteError?.message ?? "Invite failed")}`);
   }
 
-  // Ensure profile row exists
+  // Ensure profile row exists (email is not stored on profiles)
   await admin.from("profiles").upsert({
     id: invited.user.id,
-    email,
     full_name: fullName,
     role,
     organization_id: orgId,

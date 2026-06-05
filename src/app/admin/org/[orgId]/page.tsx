@@ -96,12 +96,26 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
 
   if (!org) redirect("/admin/organizations");
 
-  // Fetch members
-  const { data: members } = await admin
+  // Fetch members. Email and last-sign-in live in auth.users (not profiles),
+  // so enrich the profile rows from the admin auth API.
+  const { data: rawMembers } = await admin
     .from("profiles")
-    .select("id, email, full_name, role, account_status, created_at, last_sign_in")
+    .select("id, full_name, role, account_status, created_at")
     .eq("organization_id", orgId)
     .order("created_at", { ascending: false });
+
+  const { data: authList } = await admin.auth.admin.listUsers();
+  const authById = new Map(
+    (authList?.users ?? []).map((u: any) => [u.id, u])
+  );
+  const members = (rawMembers ?? []).map((m: any) => {
+    const authUser = authById.get(m.id);
+    return {
+      ...m,
+      email: authUser?.email ?? null,
+      last_sign_in: authUser?.last_sign_in_at ?? null,
+    };
+  });
 
   // Fetch org-scoped stats
   const [

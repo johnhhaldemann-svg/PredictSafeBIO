@@ -97,7 +97,7 @@ export async function scoreAndWriteRiskCell(params: {
         status: "active",
         created_by: params.createdBy ?? null,
       },
-      { onConflict: "organization_id,linked_record_type,linked_record_id" }
+      { onConflict: "linked_record_type,linked_record_id" }
     );
   } catch {
     // Never block the parent write operation — scoring is best-effort

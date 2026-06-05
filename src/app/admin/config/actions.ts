@@ -60,19 +60,20 @@ export async function saveBrandingAction(formData: FormData) {
 // ── Email templates ───────────────────────────────────────────────────────────
 
 export async function saveEmailTemplateAction(formData: FormData) {
-  await requireAdmin();
+  const { actorId } = await requireAdmin();
   const key       = String(formData.get("key") ?? "");
   const subject   = String(formData.get("subject") ?? "").trim();
   const body_html = String(formData.get("body_html") ?? "").trim();
   const body_text = String(formData.get("body_text") ?? "").trim();
-  const is_active = formData.get("is_active") !== "false";
+  // An unchecked checkbox submits no value, so treat presence of "true" as active.
+  const is_active = formData.get("is_active") === "true";
 
   if (!key || !subject || !body_html) {
     redirect(`/admin/config/emails?error=Key%2C+subject%2C+and+HTML+body+are+required`);
   }
 
   const admin = getSupabaseAdminClient();
-   
+
   const { error } = await (admin as any)
     .from("email_templates")
     .update({
@@ -80,6 +81,7 @@ export async function saveEmailTemplateAction(formData: FormData) {
       body_html,
       body_text,
       is_active,
+      updated_by: actorId,
       updated_at: new Date().toISOString(),
     })
     .eq("key", key);

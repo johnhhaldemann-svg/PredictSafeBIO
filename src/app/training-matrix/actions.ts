@@ -33,8 +33,7 @@ export async function createTrainingRequirementAction(formData: FormData) {
       role_key: roleKey,
       frequency_months: frequencyMonths,
       document_id: documentId,
-      required_for: {},
-      created_by: context.userId
+      required_for: {}
     })
     .select("id")
     .single();

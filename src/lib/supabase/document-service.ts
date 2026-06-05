@@ -162,6 +162,17 @@ export async function saveDocumentMetadata(input: SaveDocumentMetadataInput) {
 
   const supabase = await createSupabaseServerClient();
   const uploadFile = input.file && input.file.size > 0 ? input.file : null;
+
+  // Reject oversized uploads before buffering the whole file into memory
+  // (prevents memory-exhaustion DoS and runaway storage cost).
+  const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25 MB
+  if (uploadFile && uploadFile.size > MAX_UPLOAD_BYTES) {
+    return {
+      ok: false,
+      status: 413,
+      message: "File exceeds the 25 MB upload limit."
+    };
+  }
   const { data, error } = await supabase
     .from("document_metadata")
     .insert({

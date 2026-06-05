@@ -174,10 +174,6 @@ export default async function EmailTemplatesPage({ searchParams }: Props) {
                   name="is_active"
                   value="true"
                   defaultChecked={activeTemplate.is_active}
-                  onChange={e => {
-                    const hiddenInput = e.target.form?.querySelector('input[name="is_active_val"]') as HTMLInputElement | null;
-                    if (hiddenInput) hiddenInput.value = e.target.checked ? "true" : "false";
-                  }}
                 />
                 Template active (send this email when triggered)
               </label>

@@ -49,6 +49,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.redirect(new URL("/account/billing?billing=error", req.url));
   }
 
+  // Tenant boundary: only allow checkout for the caller's own organization.
+  if (organizationId !== profile?.organization_id) {
+    return NextResponse.redirect(new URL("/account/billing?billing=error", req.url));
+  }
+
   // Call our JSON checkout API
   const origin = req.headers.get("origin") ?? new URL(req.url).origin;
   const checkoutRes = await fetch(`${origin}/api/stripe/checkout`, {
