@@ -36,7 +36,7 @@ export type ChemicalRecord = {
   expirationDate?: string | null;
   sdsStoragePath?: string | null;
   sdsStorageBucket?: string | null;
-  gghsPictograms?: string[] | null;
+  ghsPictograms?: string[] | null;
   ppeRequired?: string[] | null;
   spillResponseNotes?: string | null;
   wasteRoute?: string | null;
@@ -199,7 +199,7 @@ function mapRow(row: Record<string, unknown>): ChemicalRecord {
     expirationDate: row.expiration_date as string | null,
     sdsStoragePath: row.sds_storage_path as string | null,
     sdsStorageBucket: row.sds_storage_bucket as string | null,
-    gghsPictograms: row.ghs_pictograms as string[] | null,
+    ghsPictograms: row.ghs_pictograms as string[] | null,
     ppeRequired: row.ppe_required as string[] | null,
     spillResponseNotes: row.spill_response_notes as string | null,
     wasteRoute: row.waste_route as string | null,

@@ -81,7 +81,9 @@ export default async function AssessmentsPage({
   });
 
   const needsActionCount = assessments.filter((a) => a.humanReviewStatus === "reviewed_needs_action").length;
-  const monitoringCount = assessments.filter((a) => a.humanReviewStatus === "reviewed_monitoring").length;
+  const monitoringCount = assessments.filter(
+    (a) => a.humanReviewStatus === "reviewed_monitoring" || a.humanReviewStatus === "routine_monitoring"
+  ).length;
   const pendingReviewCount = assessments.filter((a) => a.humanReviewStatus === "draft_human_review_required").length;
   const overdueCount = assessments.filter((a) => isDueOverdue(a.reviewDueDate)).length;
   const assignedToMeCount = assessments.filter((a) => a.assignedReviewerId === currentUserId).length;
