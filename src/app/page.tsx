@@ -161,10 +161,10 @@ export default async function HomePage() {
       tone: latestScore === null ? "neutral" : criticalCount > 0 || pendingReview > 0 ? "alert" : "ok",
       ctaLabel: latestScore === null ? "Run an assessment" : "Open BioRisk Workbench",
       ctaHref: "/workbench",
-      secondaryLabel: "Risk Register",
-      secondaryHref: "/workbench?tab=risk-register",
+      secondaryLabel: "Hazard Register",
+      secondaryHref: "/hazards",
       subStages: [
-        { number: 3, label: "Hazard identification", soon: true },
+        { number: 3, label: "Hazard identification" },
         { number: 4, label: "Risk assessment & prioritization" },
       ],
     },
@@ -189,8 +189,8 @@ export default async function HomePage() {
       secondaryHref: "/my-work",
       subStages: [
         { number: 1, label: "Governance & requirements" },
-        { number: 2, label: "Work & exposure mapping", soon: true },
-        { number: 5, label: "Control selection & planning", soon: true },
+        { number: 2, label: "Work & exposure mapping" },
+        { number: 5, label: "Control selection & planning" },
       ],
     },
     {
@@ -223,6 +223,8 @@ export default async function HomePage() {
       tone: risk.criticalCount > 0 ? "alert" : risk.highCount > 0 ? "warn" : "ok",
       ctaLabel: "Open Risk Monitor",
       ctaHref: "/risk-command-center",
+      secondaryLabel: "Predictive Engine",
+      secondaryHref: "/predictive-engine",
       subStages: [
         { number: 7, label: "Monitoring, inspections & event response" },
         { number: 8, label: "CAPA, reporting & continuous learning" },
@@ -257,7 +259,7 @@ export default async function HomePage() {
 
           <div className="loopmap-rail loopmap-rail--engine">
             <span className="loopmap-rail-label">AI engine</span>
-            <span className="loopmap-rail-title">Biotech Safety &amp; Compliance Engine</span>
+            <span className="loopmap-rail-title">Predictive AI Safety Engine</span>
             <span className="loopmap-rail-sub">
               Ingests your data, scores risk, triggers actions, tracks closure, and learns from
               outcomes across the eight-stage cycle below.
