@@ -180,6 +180,17 @@ export async function completeOnboardingAction(formData: FormData) {
     redirect(authMessage("/login?next=%2Fonboarding", "Sign in before completing onboarding."));
   }
 
+  // Already onboarded? Never re-bind an existing account to a different org
+  // (defense-in-depth against direct action invocation moving a user's org).
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (existingProfile?.organization_id) {
+    redirect("/workbench");
+  }
+
   const fullNameInput = field(formData, "fullName") || user.email || "PredictSafeBIO user";
 
   // ── Invite path ───────────────────────────────────────────────────────────

@@ -126,6 +126,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing type or context" }, { status: 400 });
   }
 
+  // Cap context size to limit prompt cost / abuse of the metered Claude endpoint.
+  if (JSON.stringify(context).length > 10_000) {
+    return NextResponse.json({ error: "Context too large (max 10KB)." }, { status: 413 });
+  }
+
   let prompt: string;
   try {
     prompt = getPrompt(type, context);

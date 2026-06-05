@@ -61,6 +61,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "planId and organizationId are required" }, { status: 400 });
   }
 
+  // Tenant boundary: a caller may only start checkout for their OWN organization.
+  // Without this, an org admin could pass another org's id and (via the webhook)
+  // hijack that org's subscription.
+  if (organizationId !== profile?.organization_id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   // Look up the Stripe price ID for this plan
   const { data: plan } = await supabase
     .from("subscription_plans" as never)
