@@ -6743,6 +6743,21 @@ pre {
   color: var(--c-dim);
 }
 
+/* kpi-card cards (e.g. /admin/ai-knowledge review queue) — hardcoded #fff
+ * baseline overridden here so the KPI value/label are legible on the dark
+ * console instead of near-white-on-white. */
+.psb-console .kpi-card {
+  background: var(--panel);
+  border-color: var(--line);
+  color: var(--c-text);
+}
+.psb-console .kpi-card .kpi-value {
+  color: var(--c-text);
+}
+.psb-console .kpi-card .kpi-label {
+  color: var(--c-dim);
+}
+
 /* Inputs / selects inside the console. */
 .psb-console input,
 .psb-console select,
