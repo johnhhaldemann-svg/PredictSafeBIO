@@ -339,6 +339,67 @@ export async function exportFlags(): Promise<FlagExportRow[]> {
   }));
 }
 
+// ── Platform-wide exports (superadmin) ─────────────────────────────────────────
+
+// Org roster. Company names are not PHI.
+export type OrgExportRow = {
+  id: string; name: string; status: string; environment: string;
+  plan_tier: string; members: number; created_at: string;
+};
+export async function exportOrgs(): Promise<OrgExportRow[]> {
+  const admin = getSupabaseAdminClient();
+
+  const { data: orgs } = await (admin as any)
+    .from("organizations")
+    .select("id, name, status, environment, plan_tier, created_at")
+    .order("created_at");
+
+  const { data: profs } = await (admin as any)
+    .from("profiles")
+    .select("organization_id")
+    .not("organization_id", "is", null);
+  const counts = new Map<string, number>();
+  for (const p of (profs ?? []) as { organization_id: string }[]) {
+    counts.set(p.organization_id, (counts.get(p.organization_id) ?? 0) + 1);
+  }
+
+
+  return ((orgs ?? []) as any[]).map((o: any) => ({
+    id:          o.id as string,
+    name:        (o.name as string) ?? "",
+    status:      (o.status as string) ?? "active",
+    environment: (o.environment as string) ?? "production",
+    plan_tier:   (o.plan_tier as string) ?? "",
+    members:     counts.get(o.id as string) ?? 0,
+    created_at:  o.created_at as string,
+  }));
+}
+
+// Regulatory deadlines.
+export type DeadlineExportRow = {
+  id: string; title: string; regulation_ref: string;
+  site_label: string; due_date: string; status: string;
+};
+export async function exportDeadlines(): Promise<DeadlineExportRow[]> {
+  const admin = getSupabaseAdminClient();
+
+
+  const { data } = await (admin as any)
+    .from("regulatory_deadlines")
+    .select("id, title, regulation_ref, site_label, due_date, status")
+    .order("due_date");
+
+
+  return ((data ?? []) as any[]).map((d: any) => ({
+    id:             d.id as string,
+    title:          d.title as string,
+    regulation_ref: (d.regulation_ref as string) ?? "",
+    site_label:     (d.site_label as string) ?? "",
+    due_date:       d.due_date as string,
+    status:         d.status as string,
+  }));
+}
+
 // ── CSV serialiser ────────────────────────────────────────────────────────────
 
 export function rowsToCsv<T extends Record<string, unknown>>(rows: T[]): string {

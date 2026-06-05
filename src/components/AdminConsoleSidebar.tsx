@@ -50,7 +50,7 @@ const SECTIONS: NavSection[] = [
     title: "Security & Tools",
     items: [
       { href: "/admin/superadmin", label: "AI Engine & Diagnostics", icon: Brain },
-      { href: "/admin/platform", label: "Security Audits", icon: ShieldCheck },
+      { href: "/admin/security", label: "Security Audits", icon: ShieldCheck },
     ],
   },
   {
