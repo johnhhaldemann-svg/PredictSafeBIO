@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PredictSafe — AI Engine Console (Mockup)</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --panel:#0e1424; --panel2:#111a2e; --line:#1c2740;
+    --line2:#26344f; --text:#e6edf7; --muted:#8493ad; --dim:#5d6b85;
+    --cyan:#22d3ee; --cyan2:#38bdf8; --red:#f4544f; --orange:#f59e42;
+    --purple:#a78bfa; --green:#4ade80; --amber:#fbbf24;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-size:14px;}
+  .mono{font-family:"JetBrains Mono","SF Mono",Consolas,monospace;}
+  .layout{display:grid; grid-template-columns:230px 1fr; min-height:100vh;}
+
+  .sidebar{background:#080c16; border-right:1px solid var(--line); padding:18px 0; position:sticky; top:0; height:100vh; overflow-y:auto;}
+  .brand{padding:0 20px 18px; border-bottom:1px solid var(--line); margin-bottom:14px;}
+  .brand .logo{font-weight:800; font-size:18px; letter-spacing:1px; color:var(--cyan); font-family:"JetBrains Mono",monospace;}
+  .brand .sub{font-size:10px; letter-spacing:2px; color:var(--dim); text-transform:uppercase; margin-top:2px;}
+  .badge-sa{display:inline-flex; align-items:center; gap:5px; margin-top:12px; padding:4px 10px; border:1px solid var(--purple); border-radius:20px; font-size:10px; letter-spacing:1.5px; color:var(--purple); text-transform:uppercase;}
+  .navsec{font-size:10px; letter-spacing:1.5px; color:var(--dim); text-transform:uppercase; padding:14px 20px 6px;}
+  .navitem{display:flex; align-items:center; gap:11px; padding:9px 20px; color:var(--muted); cursor:pointer; border-left:2px solid transparent; font-size:13.5px;}
+  .navitem:hover{background:var(--panel); color:var(--text);}
+  .navitem.active{background:linear-gradient(90deg,rgba(34,211,238,.10),transparent); color:var(--cyan); border-left-color:var(--cyan);}
+  .navitem .ic{width:17px; text-align:center; font-size:15px;}
+  .pill{margin-left:auto; background:var(--orange); color:#1a1206; font-size:10px; font-weight:700; border-radius:10px; min-width:18px; height:18px; display:flex; align-items:center; justify-content:center; padding:0 5px;}
+  .pill.red{background:var(--red); color:#2a0a09;}
+
+  .main{padding:22px 26px 40px;}
+  .topbar{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;}
+  h1{font-size:26px; font-weight:800; letter-spacing:.3px;}
+  h1 span{color:var(--cyan);}
+  .crumb{font-size:12px; color:var(--muted); margin-top:5px; letter-spacing:.4px;}
+  .topright{display:flex; align-items:center; gap:10px;}
+  .btn{background:var(--cyan); color:#06121a; border:none; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; letter-spacing:.3px;}
+  .btn.ghost{background:transparent; color:var(--cyan); border:1px solid var(--line2);}
+  .iconbtn{width:38px; height:38px; border:1px solid var(--line2); border-radius:8px; background:var(--cyan); color:#0a0e1a; font-weight:700; display:flex; align-items:center; justify-content:center;}
+  .verchip{display:inline-flex;align-items:center;gap:7px;background:rgba(167,139,250,.12);color:var(--purple);border:1px solid rgba(167,139,250,.3);border-radius:20px;padding:5px 12px;font-size:12px;}
+
+  .kpis{display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin:18px 0 20px;}
+  .kpi{background:var(--panel); border:1px solid var(--line); border-top:2px solid var(--cyan); border-radius:10px; padding:15px;}
+  .kpi .k-label{font-size:10px; letter-spacing:1.2px; color:var(--muted); text-transform:uppercase;}
+  .kpi .k-val{font-size:28px; font-weight:800; margin:6px 0 4px; line-height:1;}
+  .kpi .k-foot{font-size:11px; color:var(--dim);}
+  .kpi.c-cyan .k-val{color:var(--cyan);} .kpi.c-cyan{border-top-color:var(--cyan);}
+  .kpi.c-purple .k-val{color:var(--purple);} .kpi.c-purple{border-top-color:var(--purple);}
+  .kpi.c-green .k-val{color:var(--green);} .kpi.c-green{border-top-color:var(--green);}
+  .kpi.c-orange .k-val{color:var(--orange);} .kpi.c-orange{border-top-color:var(--orange);}
+  .kpi.c-amber .k-val{color:var(--amber);} .kpi.c-amber{border-top-color:var(--amber);}
+
+  .row{display:grid; gap:16px; margin-bottom:16px;}
+  .row.r1{grid-template-columns:1fr 1.1fr;}
+  .row.r2{grid-template-columns:1.4fr 1fr;}
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px 20px;}
+  .panel-h{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .panel-h h2{font-size:16px; font-weight:700;}
+  .panel-h .sub{font-size:11px; color:var(--dim); margin-top:2px;}
+  .panel-h .ts{font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:700;padding:3px 9px;border-radius:5px;}
+  .ts.ok{background:rgba(74,222,128,.12);color:var(--green);} .ts.warn{background:rgba(251,191,36,.12);color:var(--amber);}
+
+  /* Smoke test */
+  .smoke{display:flex; gap:20px; align-items:center;}
+  .gauge{width:120px;height:120px;border-radius:50%;flex-shrink:0;position:relative;background:conic-gradient(var(--green) 0 88%, var(--line2) 88% 100%);}
+  .gauge::after{content:"";position:absolute;inset:13px;border-radius:50%;background:var(--panel);}
+  .gauge .gc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .gauge .gc b{font-size:30px;font-weight:800;color:var(--green);} .gauge .gc span{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;}
+  .smoke-meta{flex:1;}
+  .sm-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-top:1px solid var(--line);}
+  .sm-row:first-child{border-top:none;} .sm-row span{color:var(--muted);} .sm-row b{font-weight:600;}
+  .smoke-btns{display:flex;gap:9px;margin-top:12px;}
+  .minibtn{background:var(--cyan); color:#06121a; border:none; border-radius:7px; padding:8px 14px; font-size:12px; font-weight:700; cursor:pointer;}
+  .minibtn.ghost{background:transparent; color:var(--cyan); border:1px solid var(--line2);}
+
+  /* Ad-hoc assessment */
+  .field{margin-bottom:11px;}
+  .field label{display:block;font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--dim);margin-bottom:5px;}
+  .field select,.field input,.field textarea{width:100%;background:var(--panel2);border:1px solid var(--line2);border-radius:7px;color:var(--text);padding:9px 11px;font-size:13px;font-family:inherit;}
+  .field textarea{resize:vertical;min-height:60px;}
+  .result{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:14px;margin-top:6px;}
+  .result-top{display:flex;align-items:center;gap:14px;margin-bottom:10px;}
+  .scorebadge{width:58px;height:58px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
+  .scorebadge.high{background:rgba(244,84,79,.15);color:var(--red);} .scorebadge b{font-size:22px;font-weight:800;} .scorebadge span{font-size:8px;letter-spacing:1px;text-transform:uppercase;}
+  .result .rl b{font-size:15px;font-weight:700;} .result .rl span{font-size:12px;color:var(--muted);}
+  .guard{font-size:11.5px;color:var(--amber);background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:7px;padding:9px 11px;margin-top:8px;display:flex;gap:8px;}
+  .guard .gi{flex-shrink:0;}
+
+  /* Risk families table */
+  table{width:100%;border-collapse:collapse;}
+  th{font-size:10px;letter-spacing:1px;color:var(--dim);text-transform:uppercase;text-align:left;padding:0 8px 9px;font-weight:600;}
+  td{padding:10px 8px;border-top:1px solid var(--line);font-size:12.5px;vertical-align:middle;}
+  .ffam{font-weight:600;} .fsig{font-size:11px;color:var(--dim);}
+  .rtag{font-size:9px;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:rgba(34,211,238,.12);color:var(--cyan);margin-right:4px;display:inline-block;}
+  .owner{font-size:11px;color:var(--muted);}
+
+  /* Guardrails / do-not-claim */
+  .dnc{display:flex;gap:9px;padding:9px 0;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);}
+  .dnc:first-of-type{border-top:none;} .dnc .x{color:var(--red);flex-shrink:0;}
+
+  /* drift bars */
+  .drift{display:flex;align-items:flex-end;gap:7px;height:70px;margin-top:8px;}
+  .drift .dc{flex:1;background:var(--line2);border-radius:3px 3px 0 0;}
+  .drift .dc.now{background:var(--cyan);}
+
+  .note{max-width:1180px; margin:0 auto; padding:14px 26px; font-size:12px; color:var(--dim); border-top:1px solid var(--line);}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">PREDICTSAFE</div>
+      <div class="sub">Platform Console v2.4</div>
+      <div class="badge-sa">◆ Super Admin</div>
+    </div>
+
+    <div class="navsec">Overview</div>
+    <div class="navitem"><span class="ic">◎</span> Command Center</div>
+    <div class="navitem"><span class="ic">▤</span> Platform Analytics</div>
+
+    <div class="navsec">Tenants &amp; Users</div>
+    <div class="navitem"><span class="ic">▣</span> Organizations</div>
+    <div class="navitem"><span class="ic">🏢</span> Company Management</div>
+    <div class="navitem"><span class="ic">👥</span> User Management <span class="pill">3</span></div>
+    <div class="navitem"><span class="ic">▦</span> Site Management</div>
+
+    <div class="navsec">Compliance</div>
+    <div class="navitem"><span class="ic">⚠</span> Escalations <span class="pill red">5</span></div>
+    <div class="navitem"><span class="ic">▥</span> Audit Logs</div>
+    <div class="navitem"><span class="ic">▤</span> Reg. Deadlines</div>
+
+    <div class="navsec">Security &amp; Tools</div>
+    <div class="navitem active"><span class="ic">🧠</span> AI Engine</div>
+    <div class="navitem"><span class="ic">🛡</span> Security Audits</div>
+    <div class="navitem"><span class="ic">🧪</span> Platform Test Tools</div>
+    <div class="navitem"><span class="ic">▤</span> Data Collection</div>
+
+    <div class="navsec">Platform</div>
+    <div class="navitem"><span class="ic">🔗</span> Integrations <span class="pill">1</span></div>
+    <div class="navitem"><span class="ic">⚙</span> Configuration</div>
+    <div class="navitem"><span class="ic">▦</span> Billing &amp; Usage</div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>AI <span>Engine</span></h1>
+        <div class="crumb mono">BioRisk scoring engine · diagnostics, guardrails & model governance</div>
+      </div>
+      <div class="topright">
+        <span class="verchip mono">● Engine v2.4.1 · healthy</span>
+        <button class="btn ghost">Version history</button>
+        <button class="btn">▶ Run smoke test</button>
+        <div class="iconbtn">JH</div>
+      </div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi c-cyan"><div class="k-label">Engine Version</div><div class="k-val">v2.4.1</div><div class="k-foot">Deployed Jun 1</div></div>
+      <div class="kpi c-purple"><div class="k-label">Risk Families</div><div class="k-val">18</div><div class="k-foot">Loaded &amp; active</div></div>
+      <div class="kpi c-green"><div class="k-label">Signal Types</div><div class="k-val">37</div><div class="k-foot">Supported inputs</div></div>
+      <div class="kpi c-amber"><div class="k-label">Guardrails</div><div class="k-val">9</div><div class="k-foot">Active · enforced</div></div>
+      <div class="kpi c-orange"><div class="k-label">Source Artifacts</div><div class="k-val">126</div><div class="k-foot">Linked references</div></div>
+    </div>
+
+    <!-- Smoke test + Ad-hoc assessment -->
+    <div class="row r1">
+      <div class="panel">
+        <div class="panel-h"><div><h2>Smoke Test</h2><div class="sub">End-to-end scoring check against a known fixture</div></div><span class="ts ok">Pass</span></div>
+        <div class="smoke">
+          <div class="gauge"><div class="gc"><b>88</b><span>score</span></div></div>
+          <div class="smoke-meta">
+            <div class="sm-row"><span>Result</span><b style="color:var(--green)">Pass</b></div>
+            <div class="sm-row"><span>Risk level</span><b>Elevated</b></div>
+            <div class="sm-row"><span>Confidence</span><b>High (0.91)</b></div>
+            <div class="sm-row"><span>Latency</span><b>380 ms</b></div>
+            <div class="sm-row"><span>Last run</span><b class="mono">2h ago</b></div>
+            <div class="smoke-btns"><button class="minibtn">Re-run</button><button class="minibtn ghost">View trace</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-h"><div><h2>Ad-hoc Assessment</h2><div class="sub">Feed a signal and inspect the engine's scored output</div></div></div>
+        <div class="field"><label>Signal type</label><select><option>Pathogen exposure — aerosolizable</option><option>Chemical — corrosive</option><option>Ergonomic — repetitive strain</option></select></div>
+        <div class="field"><label>Context</label><textarea>BSL-3 lab, centrifuge without sealed rotor, 4 personnel, no respiratory PPE logged</textarea></div>
+        <button class="minibtn" style="margin-bottom:12px;">▶ Run assessment</button>
+        <div class="result">
+          <div class="result-top">
+            <div class="scorebadge high"><b>79</b><span>score</span></div>
+            <div class="rl"><b>Elevated risk · containment gap</b><br><span>Confidence: High (0.88) · 3 source artifacts</span></div>
+          </div>
+          <div class="guard"><span class="gi">⚠</span><span><b>Guardrail:</b> Draft only — AI recommendation requires human review. Engine does not claim regulatory compliance or clinical determination.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Risk families + guardrails -->
+    <div class="row r2">
+      <div class="panel">
+        <div class="panel-h"><div><h2>Risk Families</h2><div class="sub">18 loaded · signal mappings &amp; review ownership</div></div><span class="mono" style="font-size:12px;color:var(--muted)">View all →</span></div>
+        <table>
+          <thead><tr><th>Family</th><th>Signal types</th><th>Review owner</th></tr></thead>
+          <tbody>
+            <tr><td><div class="ffam">Biological — pathogen</div><div class="fsig mono">BSL-2 · BSL-3 · aerosol</div></td><td><span class="rtag">exposure</span><span class="rtag">containment</span></td><td class="owner">Biosafety Officer</td></tr>
+            <tr><td><div class="ffam">Chemical hazard</div><div class="fsig mono">corrosive · flammable · toxic</div></td><td><span class="rtag">SDS</span><span class="rtag">storage</span></td><td class="owner">EHS Manager</td></tr>
+            <tr><td><div class="ffam">Ergonomic</div><div class="fsig mono">repetitive · posture · lifting</div></td><td><span class="rtag">task</span></td><td class="owner">Safety Manager</td></tr>
+            <tr><td><div class="ffam">Radiological</div><div class="fsig mono">sealed · unsealed source</div></td><td><span class="rtag">dose</span><span class="rtag">shielding</span></td><td class="owner">RSO</td></tr>
+            <tr><td><div class="ffam">Mechanical / equipment</div><div class="fsig mono">rotating · pressure · electrical</div></td><td><span class="rtag">LOTO</span></td><td class="owner">Facilities</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="panel-h"><div><h2>Guardrails &amp; “Do Not Claim”</h2><div class="sub">Enforced on every assessment</div></div></div>
+        <div class="dnc"><span class="x">✕</span> Does not claim regulatory or legal compliance</div>
+        <div class="dnc"><span class="x">✕</span> Does not provide clinical or medical diagnosis</div>
+        <div class="dnc"><span class="x">✕</span> Does not replace required human review / sign-off</div>
+        <div class="dnc"><span class="x">✕</span> Does not certify lab accreditation status</div>
+        <div class="dnc"><span class="x">✕</span> All outputs labelled “Draft — human review required”</div>
+        <div style="border-top:1px solid var(--line);margin-top:10px;padding-top:12px;">
+          <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-bottom:6px;">Score drift — 14d (avg confidence)</div>
+          <div class="drift">
+            <div class="dc" style="height:60%"></div><div class="dc" style="height:64%"></div><div class="dc" style="height:62%"></div>
+            <div class="dc" style="height:70%"></div><div class="dc" style="height:66%"></div><div class="dc" style="height:72%"></div>
+            <div class="dc" style="height:75%"></div><div class="dc" style="height:71%"></div><div class="dc" style="height:78%"></div>
+            <div class="dc" style="height:80%"></div><div class="dc" style="height:77%"></div><div class="dc" style="height:82%"></div>
+            <div class="dc" style="height:85%"></div><div class="dc now" style="height:91%"></div>
+          </div>
+          <div style="font-size:11px;color:var(--green);margin-top:6px;">Stable · no anomalous drift detected</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="note mono">MOCKUP · Static placeholder data · Superadmin (platform owner) tier — AI Engine console</div>
+</body>
+</html>

@@ -58,7 +58,7 @@ export default async function HomePage() {
     redirect("/onboarding");
   }
   if (auth.role === "superadmin") {
-    redirect("/admin/organizations");
+    redirect("/admin/dashboard");
   }
 
   const [assessments, readiness, foundationActions, risk, inspectionRecs, capaRecords] =

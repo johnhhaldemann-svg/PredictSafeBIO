@@ -1,15 +1,20 @@
 import Link from "next/link";
 import {
+  Bell,
   Brain,
   LogOut,
   ShieldCheck
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { signOutAction } from "@/app/auth/actions";
 import { getAuthSummary } from "@/lib/supabase/data";
 import { getKnowledgePendingCount } from "@/lib/supabase/knowledge-service";
 import { getNavTier, getRoleLabel, getRoleBadgeClass } from "@/lib/role-permissions";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isSupabaseServiceConfigured } from "@/lib/supabase/env";
 import { PlatformCategoryNav } from "./PlatformCategoryNav";
+import { AdminConsoleSidebar } from "./AdminConsoleSidebar";
+import { TenantSwitcher } from "./TenantSwitcher";
 
 function getInitials(email: string | null | undefined): string {
   if (!email) return "JH";
@@ -31,41 +36,65 @@ export async function AppShell({ children }: { children: ReactNode }) {
     ? await getKnowledgePendingCount(auth.organizationId)
     : 0;
 
-  // ── Superadmin gets a sidebar-free shell ──────────────────────────────────
+  // ── Superadmin: dark "Platform Console v2.4" shell ────────────────────────
   if (isSuperAdmin) {
+    // Customer list for the tenant switcher (cheap id+name query).
+    let orgs: { id: string; name: string }[] = [];
+    if (isSupabaseServiceConfigured()) {
+      try {
+        const admin = getSupabaseAdminClient();
+        const { data } = await admin.from("organizations").select("id, name").order("name");
+        orgs = (data ?? []) as { id: string; name: string }[];
+      } catch {
+        /* switcher is best-effort */
+      }
+    }
+
     return (
-      <div className="app-shell superadmin-shell">
+      <div className="app-shell psb-console psb-shell">
         <a href="#main-content" className="skip-nav">Skip to main content</a>
-        <header className="top-nav" aria-label="Superadmin navigation">
-          <Link href="/admin/organizations" className="logo-area" aria-label="PredictSafeBIO platform admin">
-            <div className="logo-box" style={{ background: "#7c3aed" }}>
-              <ShieldCheck size={16} color="#fff" aria-hidden="true" />
+        <div className="psb-layout">
+          {/* Left rail: brand block + grouped console nav */}
+          <aside className="psb-aside" aria-label="Superadmin navigation">
+            <div className="psb-brand">
+              <Link href="/admin/dashboard" className="psb-logo" aria-label="PredictSafeBIO platform console">
+                PREDICTSAFE
+              </Link>
+              <div className="psb-sub">Platform Console v2.4</div>
+              <div className="psb-badge-sa">◆ Super Admin</div>
             </div>
-            <div className="logo-text">
-              <strong>PredictSafeBIO</strong>
-              <small>Platform Admin</small>
+            <AdminConsoleSidebar />
+          </aside>
+
+          {/* Right: topbar + page content */}
+          <div>
+            <div className="psb-console-main" style={{ paddingBottom: 0 }}>
+              <div className="psb-topbar">
+                <Link href="/admin/dashboard" className="psb-logo" style={{ fontSize: 15 }} aria-label="Home">
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <ShieldCheck size={16} aria-hidden="true" /> Console
+                  </span>
+                </Link>
+                <div className="psb-topright">
+                  <Suspense fallback={null}>
+                    <TenantSwitcher orgs={orgs} />
+                  </Suspense>
+                  <Link className="psb-iconbtn" href="/admin/escalations" aria-label="Escalations inbox" title="Escalations inbox">
+                    <Bell size={16} />
+                  </Link>
+                  <span className="psb-role-chip">{roleLabel}</span>
+                  <span className="psb-iconbtn avatar" aria-label={`User: ${auth.userEmail ?? "Admin"}`} title={auth.userEmail ?? "Admin"}>
+                    {initials}
+                  </span>
+                  <form action={signOutAction} style={{ display: "inline" }}>
+                    <button className="psb-iconbtn" type="submit" aria-label="Sign out" title="Sign out">
+                      <LogOut size={16} />
+                    </button>
+                  </form>
+                </div>
+              </div>
             </div>
-          </Link>
-          <nav className="tnav-admin-links" aria-label="Admin sections">
-            <Link href="/admin/organizations" className="tnav-auth-link">Orgs</Link>
-            <Link href="/admin/users" className="tnav-auth-link">Users</Link>
-            <Link href="/admin/audit" className="tnav-auth-link">Audit</Link>
-          </nav>
-          <div className="tnav-spacer" aria-hidden="true" />
-          <div className="user-area">
-            <span className={`role-chip ${roleBadgeClass}`}>{roleLabel}</span>
-            <div className="u-avatar">{initials}</div>
-            <span className="tnav-auth-link">{auth.userEmail ?? "Admin"}</span>
-            <form action={signOutAction} style={{ display: "inline" }}>
-              <button className="icon-button tnav-icon-btn" type="submit" aria-label="Sign out" title="Sign out">
-                <LogOut size={16} />
-              </button>
-            </form>
-          </div>
-        </header>
-        <div className="app-body superadmin-body">
-          <div className="app-content superadmin-content">
-            <main className="app-main" id="main-content">
+            <main className="psb-console-main" id="main-content" style={{ paddingTop: 6 }}>
               {children}
             </main>
           </div>

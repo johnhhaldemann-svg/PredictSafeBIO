@@ -6195,3 +6195,556 @@ pre {
   color: #b45309;
   line-height: 1.45;
 }
+
+/* ===========================================================================
+   PLATFORM CONSOLE v2.4 — scoped dark theme for the superadmin experience.
+   EVERYTHING below is namespaced under .psb-console so it can never leak into
+   the owner/member light app. Ported from docs/mockup-superadmin-*.html.
+   Component classes are prefixed `psb-`; "bridge" rules at the end restyle the
+   legacy admin-page classes (.panel, .command-card, table, …) so every existing
+   /admin/* page adopts the dark chrome without per-page edits.
+   =========================================================================== */
+.psb-console {
+  --bg: #0a0e1a; --panel: #0e1424; --panel2: #111a2e; --line: #1c2740;
+  --line2: #26344f; --c-text: #e6edf7; --c-muted: #8493ad; --c-dim: #5d6b85;
+  --cyan: #22d3ee; --cyan2: #38bdf8; --red: #f4544f; --orange: #f59e42;
+  --purple: #a78bfa; --green: #4ade80; --amber: #fbbf24;
+  /* Remap the light-app semantic vars so every bridged /admin page (and any
+     component using inline var() colors) renders correctly on the dark surface. */
+  --bg-soft: #0e1424;
+  --panel-soft: #111a2e;
+  --text: #e6edf7;
+  --text2: #b4c0d6;
+  --muted: #5d6b85;
+  --bdr: #1c2740;
+  --teal: #2dd4bf;
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --red-bg: rgba(244, 84, 79, 0.12); --red-dk: #f4544f;
+  --amber-bg: rgba(251, 191, 36, 0.12); --amber-dk: #fbbf24;
+  --green-bg: rgba(74, 222, 128, 0.12); --green-dk: #4ade80;
+  background: var(--bg);
+  color: var(--c-text);
+  min-height: 100vh;
+}
+.psb-console .psb-mono {
+  font-family: "JetBrains Mono", "SF Mono", Consolas, monospace;
+}
+
+/* ── Shell layout ─────────────────────────────────────────────────────────── */
+.psb-console.psb-shell { display: block; }
+.psb-console .psb-layout {
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  min-height: 100vh;
+}
+.psb-console .psb-aside {
+  background: #080c16;
+  border-right: 1px solid var(--line);
+  padding: 18px 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.psb-console .psb-brand {
+  padding: 0 20px 18px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 14px;
+}
+.psb-console .psb-brand .psb-logo {
+  display: flex;
+  flex-direction: column;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 1px;
+  color: var(--cyan);
+  font-family: "JetBrains Mono", monospace;
+  text-decoration: none;
+}
+.psb-console .psb-brand .psb-sub {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--c-dim);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.psb-console .psb-badge-sa {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 12px;
+  padding: 4px 10px;
+  border: 1px solid var(--purple);
+  border-radius: 20px;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--purple);
+  text-transform: uppercase;
+}
+.psb-console .psb-navsec {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--c-dim);
+  text-transform: uppercase;
+  padding: 14px 20px 6px;
+}
+.psb-console .psb-navitem {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 20px;
+  color: var(--c-muted);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  font-size: 13.5px;
+  text-decoration: none;
+}
+.psb-console .psb-navitem:hover { background: var(--panel); color: var(--c-text); }
+.psb-console .psb-navitem.active {
+  background: linear-gradient(90deg, rgba(34, 211, 238, 0.1), transparent);
+  color: var(--cyan);
+  border-left-color: var(--cyan);
+}
+.psb-console .psb-navitem .psb-ic {
+  width: 17px;
+  text-align: center;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.psb-console .psb-pill {
+  margin-left: auto;
+  background: var(--orange);
+  color: #1a1206;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+}
+.psb-console .psb-pill.red { background: var(--red); color: #2a0a09; }
+
+/* ── Main + topbar ────────────────────────────────────────────────────────── */
+.psb-console .psb-console-main { padding: 22px 26px 40px; }
+.psb-console .psb-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.psb-console .psb-topright { display: flex; align-items: center; gap: 10px; }
+.psb-console .psb-org-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel);
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--c-text);
+}
+.psb-console .psb-org-switch .lbl { color: var(--c-dim); font-size: 10px; letter-spacing: 1px; }
+.psb-console .psb-org-switch .sw { color: var(--cyan); cursor: pointer; }
+.psb-console .psb-iconbtn {
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  background: var(--panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-muted);
+  position: relative;
+  cursor: pointer;
+}
+.psb-console .psb-iconbtn.avatar { background: var(--cyan); color: #0a0e1a; font-weight: 700; }
+.psb-console .psb-iconbtn .dot {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--red);
+}
+.psb-console .psb-role-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid var(--purple);
+  border-radius: 20px;
+  font-size: 11px;
+  letter-spacing: .5px;
+  color: var(--purple);
+}
+
+/* ── Page header (Command / Center) ───────────────────────────────────────── */
+.psb-console .psb-h1 { font-size: 26px; font-weight: 800; letter-spacing: .3px; color: var(--c-text); }
+.psb-console .psb-h1 span { color: var(--cyan); }
+.psb-console .psb-crumb {
+  font-size: 12px;
+  color: var(--c-muted);
+  margin-top: 5px;
+  letter-spacing: .4px;
+}
+
+/* ── Alert banner ─────────────────────────────────────────────────────────── */
+.psb-console .psb-alert {
+  margin: 18px 0 20px;
+  background: rgba(244, 84, 79, 0.08);
+  border: 1px solid rgba(244, 84, 79, 0.4);
+  border-left: 3px solid var(--red);
+  border-radius: 8px;
+  padding: 13px 16px;
+  font-size: 13.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.psb-console .psb-alert .tag { color: var(--red); font-weight: 700; }
+
+/* ── KPI cards ────────────────────────────────────────────────────────────── */
+.psb-console .psb-kpis {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.psb-console .psb-kpi {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--cyan);
+  border-radius: 10px;
+  padding: 16px 16px 14px;
+}
+.psb-console .psb-kpi .k-label {
+  font-size: 10px;
+  letter-spacing: 1.3px;
+  color: var(--c-muted);
+  text-transform: uppercase;
+}
+.psb-console .psb-kpi .k-val { font-size: 32px; font-weight: 800; margin: 6px 0 4px; line-height: 1; }
+.psb-console .psb-kpi .k-foot { font-size: 11.5px; color: var(--c-dim); }
+.psb-console .psb-kpi .k-foot .up { color: var(--green); }
+.psb-console .psb-kpi .k-foot .down { color: var(--red); }
+.psb-console .psb-kpi .k-foot .flat { color: var(--c-muted); }
+.psb-console .psb-kpi.c-cyan { border-top-color: var(--cyan); }
+.psb-console .psb-kpi.c-cyan .k-val { color: var(--cyan); }
+.psb-console .psb-kpi.c-red { border-top-color: var(--red); }
+.psb-console .psb-kpi.c-red .k-val { color: var(--red); }
+.psb-console .psb-kpi.c-orange { border-top-color: var(--orange); }
+.psb-console .psb-kpi.c-orange .k-val { color: var(--orange); }
+.psb-console .psb-kpi.c-purple { border-top-color: var(--purple); }
+.psb-console .psb-kpi.c-purple .k-val { color: var(--purple); }
+.psb-console .psb-kpi.c-green { border-top-color: var(--green); }
+.psb-console .psb-kpi.c-green .k-val { color: var(--green); }
+
+/* ── Grid rows + panels ───────────────────────────────────────────────────── */
+.psb-console .psb-row { display: grid; gap: 16px; margin-bottom: 16px; }
+.psb-console .psb-row.r1 { grid-template-columns: 1.9fr 1fr; }
+.psb-console .psb-row.r2 { grid-template-columns: 1.25fr 1fr 1.1fr; }
+.psb-console .psb-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+.psb-console .psb-panel-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.psb-console .psb-panel-h h2 { font-size: 16px; font-weight: 700; color: var(--c-text); }
+.psb-console .psb-panel-h a {
+  font-size: 12px;
+  color: var(--cyan2);
+  text-decoration: none;
+  letter-spacing: .3px;
+}
+
+/* ── Site table ───────────────────────────────────────────────────────────── */
+.psb-console .psb-table { width: 100%; border-collapse: collapse; }
+.psb-console .psb-table th {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--c-dim);
+  text-transform: uppercase;
+  text-align: left;
+  padding: 0 8px 10px;
+  font-weight: 600;
+}
+.psb-console .psb-table td {
+  padding: 12px 8px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  vertical-align: middle;
+}
+.psb-console .psb-site-name { font-weight: 600; }
+.psb-console .psb-site-meta { font-size: 11px; color: var(--c-dim); margin-top: 2px; }
+.psb-console .psb-bar {
+  height: 6px;
+  border-radius: 4px;
+  background: var(--line2);
+  position: relative;
+  width: 170px;
+  overflow: hidden;
+}
+.psb-console .psb-bar > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; }
+.psb-console .psb-bar.b-green > i { background: var(--green); }
+.psb-console .psb-bar.b-amber > i { background: var(--amber); }
+.psb-console .psb-bar.b-red > i { background: var(--red); }
+.psb-console .psb-statline { display: flex; align-items: center; gap: 10px; }
+.psb-console .psb-stat { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+.psb-console .psb-stat::before { content: ""; width: 7px; height: 7px; border-radius: 50%; }
+.psb-console .psb-stat.s-active { color: var(--green); }
+.psb-console .psb-stat.s-active::before { background: var(--green); }
+.psb-console .psb-stat.s-review { color: var(--amber); }
+.psb-console .psb-stat.s-review::before { background: var(--amber); }
+.psb-console .psb-stat.s-critical { color: var(--red); }
+.psb-console .psb-stat.s-critical::before { background: var(--red); }
+.psb-console .psb-num-red { color: var(--red); font-weight: 600; }
+
+/* ── Regulatory deadlines ─────────────────────────────────────────────────── */
+.psb-console .psb-deadline {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
+}
+.psb-console .psb-deadline:first-of-type { border-top: none; }
+.psb-console .psb-datebox {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: var(--panel2);
+  border: 1px solid var(--line2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.psb-console .psb-datebox .m { font-size: 9px; letter-spacing: 1px; color: var(--red); text-transform: uppercase; }
+.psb-console .psb-datebox .d { font-size: 16px; font-weight: 800; line-height: 1; }
+.psb-console .psb-dl-title { font-size: 13px; font-weight: 600; }
+.psb-console .psb-dl-meta { font-size: 11px; color: var(--c-dim); margin-top: 2px; }
+
+/* ── Activity feed ────────────────────────────────────────────────────────── */
+.psb-console .psb-act {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
+}
+.psb-console .psb-act:first-of-type { border-top: none; }
+.psb-console .psb-av {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  color: #0a0e1a;
+}
+.psb-console .psb-av.cy { background: var(--cyan); }
+.psb-console .psb-av.pu { background: var(--purple); }
+.psb-console .psb-av.gn { background: var(--green); }
+.psb-console .psb-av.rd { background: var(--red); }
+.psb-console .psb-av.am { background: var(--amber); }
+.psb-console .psb-act-txt { font-size: 13px; line-height: 1.45; }
+.psb-console .psb-act-txt b { font-weight: 600; }
+.psb-console .psb-act-meta { font-size: 11px; color: var(--c-dim); margin-top: 2px; }
+.psb-console .psb-chip {
+  font-size: 9px;
+  letter-spacing: .5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.psb-console .psb-chip.capa { background: rgba(34, 211, 238, 0.15); color: var(--cyan); }
+.psb-console .psb-chip.audit { background: rgba(167, 139, 250, 0.15); color: var(--purple); }
+.psb-console .psb-chip.escal { background: rgba(244, 84, 79, 0.15); color: var(--red); }
+.psb-console .psb-chip.obs { background: rgba(74, 222, 128, 0.15); color: var(--green); }
+.psb-console .psb-chip.user { background: rgba(245, 158, 66, 0.15); color: var(--orange); }
+
+/* ── Donut + bars ─────────────────────────────────────────────────────────── */
+.psb-console .psb-donut-wrap { display: flex; align-items: center; gap: 18px; }
+.psb-console .psb-donut {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+}
+.psb-console .psb-donut::after {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border-radius: 50%;
+  background: var(--panel);
+}
+.psb-console .psb-donut .ctr {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+.psb-console .psb-donut .ctr b { font-size: 26px; font-weight: 800; }
+.psb-console .psb-donut .ctr span { font-size: 10px; color: var(--c-dim); }
+.psb-console .psb-legend { font-size: 12.5px; }
+.psb-console .psb-legend div { display: flex; align-items: center; gap: 8px; padding: 3px 0; color: var(--c-muted); }
+.psb-console .psb-legend i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+.psb-console .psb-legend b { margin-left: auto; color: var(--c-text); font-weight: 600; }
+.psb-console .psb-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 80px;
+  margin-top: 18px;
+  padding-top: 8px;
+}
+.psb-console .psb-bars .bcol { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.psb-console .psb-bars .bcol > i { width: 100%; border-radius: 4px 4px 0 0; background: var(--line2); }
+.psb-console .psb-bars .bcol.hi > i { background: var(--cyan); }
+.psb-console .psb-bars .bcol.wk > i { background: var(--orange); }
+.psb-console .psb-bars .bcol span { font-size: 10px; color: var(--c-dim); }
+.psb-console .psb-sublabel {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--c-dim);
+  text-transform: uppercase;
+  margin-top: 16px;
+}
+
+/* ── System health + integrations ─────────────────────────────────────────── */
+.psb-console .psb-health { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.psb-console .psb-hc {
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 11px 13px;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+.psb-console .psb-hc .hdot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.psb-console .psb-hc .hdot.ok { background: var(--green); }
+.psb-console .psb-hc .hdot.warn { background: var(--amber); }
+.psb-console .psb-hc .hdot.err { background: var(--red); }
+.psb-console .psb-hc .ht { font-size: 13px; font-weight: 600; }
+.psb-console .psb-hc .hm { font-size: 11px; color: var(--c-dim); margin-top: 2px; }
+.psb-console .psb-integ {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+.psb-console .psb-integ .ix {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: var(--panel2);
+  border: 1px solid var(--line2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cyan);
+}
+
+/* ===========================================================================
+   BRIDGE RULES — restyle the legacy light-app classes when they appear inside
+   the console, so existing /admin/* pages adopt the dark chrome untouched.
+   =========================================================================== */
+.psb-console .page-stack { color: var(--c-text); }
+.psb-console .page-header h1,
+.psb-console h1,
+.psb-console h2,
+.psb-console h3 { color: var(--c-text); }
+.psb-console .section-label { color: var(--cyan); }
+.psb-console .muted,
+.psb-console .lifecycle-caption,
+.psb-console .lifecycle-question { color: var(--c-dim); }
+
+.psb-console .panel,
+.psb-console .table-panel,
+.psb-console .command-card,
+.psb-console .lifecycle-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--c-text);
+  border-radius: 10px;
+}
+.psb-console .command-card small,
+.psb-console .lifecycle-value { color: var(--c-text); }
+.psb-console .command-card em,
+.psb-console .command-card strong { color: var(--c-muted); }
+
+.psb-console table { color: var(--c-text); }
+.psb-console table th { color: var(--c-dim); border-color: var(--line); }
+.psb-console table td { border-color: var(--line); color: var(--c-text); }
+.psb-console table thead tr { border-color: var(--line); }
+.psb-console table tbody tr:hover { background: var(--panel2); }
+
+.psb-console a { color: var(--cyan2); }
+.psb-console .button-primary {
+  background: var(--cyan);
+  color: #06121a;
+  border: none;
+}
+.psb-console .button-secondary {
+  background: transparent;
+  color: var(--cyan);
+  border: 1px solid var(--line2);
+}
+
+/* Status pills keep their semantic hue but adapt to the dark surface. */
+.psb-console .status-current,
+.psb-console .status-overdue,
+.psb-console .status-needs-review,
+.psb-console .status-critical,
+.psb-console .status-unknown {
+  background: var(--panel2);
+  border: 1px solid var(--line2);
+}
+
+/* Inputs / selects inside the console. */
+.psb-console input,
+.psb-console select,
+.psb-console textarea {
+  background: var(--panel2);
+  border: 1px solid var(--line2);
+  color: var(--c-text);
+}
+
+/* Responsive: collapse the 5-up KPIs and multi-column rows on narrow screens. */
+@media (max-width: 1100px) {
+  .psb-console .psb-kpis { grid-template-columns: repeat(2, 1fr); }
+  .psb-console .psb-row.r1,
+  .psb-console .psb-row.r2 { grid-template-columns: 1fr; }
+}
+@media (max-width: 820px) {
+  .psb-console .psb-layout { grid-template-columns: 1fr; }
+  .psb-console .psb-aside { position: static; height: auto; }
+}

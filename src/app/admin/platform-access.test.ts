@@ -40,6 +40,18 @@ describe("platform utility access control", () => {
     }
   });
 
+  it("lands superadmins on the Command Center, not the org list", () => {
+    const home = read("src/app/page.tsx");
+    const workbench = read("src/app/workbench/page.tsx");
+    // Both superadmin-landing redirects must target the new dark Command Center.
+    expect(home).toContain('redirect("/admin/dashboard")');
+    expect(workbench).toContain('redirect("/admin/dashboard")');
+    // The Command Center page must exist and be gated to superadmin.
+    const dashboard = read("src/app/admin/dashboard/page.tsx");
+    expect(dashboard).toContain("isSuperAdmin");
+    expect(dashboard).toContain('redirect("/workbench")');
+  });
+
   it("gates mutating admin actions to platform staff", () => {
     for (const p of [
       "src/app/admin/config/actions.ts",

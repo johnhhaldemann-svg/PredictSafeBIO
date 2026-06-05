@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PredictSafe — Security &amp; Platform Tools (Mockup)</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --panel:#0e1424; --panel2:#111a2e; --line:#1c2740;
+    --line2:#26344f; --text:#e6edf7; --muted:#8493ad; --dim:#5d6b85;
+    --cyan:#22d3ee; --cyan2:#38bdf8; --red:#f4544f; --orange:#f59e42;
+    --purple:#a78bfa; --green:#4ade80; --amber:#fbbf24;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-size:14px;}
+  .mono{font-family:"JetBrains Mono","SF Mono",Consolas,monospace;}
+  .layout{display:grid; grid-template-columns:230px 1fr; min-height:100vh;}
+
+  .sidebar{background:#080c16; border-right:1px solid var(--line); padding:18px 0; position:sticky; top:0; height:100vh; overflow-y:auto;}
+  .brand{padding:0 20px 18px; border-bottom:1px solid var(--line); margin-bottom:14px;}
+  .brand .logo{font-weight:800; font-size:18px; letter-spacing:1px; color:var(--cyan); font-family:"JetBrains Mono",monospace;}
+  .brand .sub{font-size:10px; letter-spacing:2px; color:var(--dim); text-transform:uppercase; margin-top:2px;}
+  .badge-sa{display:inline-flex; align-items:center; gap:5px; margin-top:12px; padding:4px 10px; border:1px solid var(--purple); border-radius:20px; font-size:10px; letter-spacing:1.5px; color:var(--purple); text-transform:uppercase;}
+  .navsec{font-size:10px; letter-spacing:1.5px; color:var(--dim); text-transform:uppercase; padding:14px 20px 6px;}
+  .navitem{display:flex; align-items:center; gap:11px; padding:9px 20px; color:var(--muted); cursor:pointer; border-left:2px solid transparent; font-size:13.5px;}
+  .navitem:hover{background:var(--panel); color:var(--text);}
+  .navitem.active{background:linear-gradient(90deg,rgba(34,211,238,.10),transparent); color:var(--cyan); border-left-color:var(--cyan);}
+  .navitem .ic{width:17px; text-align:center; font-size:15px;}
+  .pill{margin-left:auto; background:var(--orange); color:#1a1206; font-size:10px; font-weight:700; border-radius:10px; min-width:18px; height:18px; display:flex; align-items:center; justify-content:center; padding:0 5px;}
+  .pill.red{background:var(--red); color:#2a0a09;}
+
+  .main{padding:22px 26px 40px;}
+  .topbar{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;}
+  h1{font-size:26px; font-weight:800; letter-spacing:.3px;}
+  h1 span{color:var(--cyan);}
+  .crumb{font-size:12px; color:var(--muted); margin-top:5px; letter-spacing:.4px;}
+  .topright{display:flex; align-items:center; gap:10px;}
+  .btn{background:var(--cyan); color:#06121a; border:none; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; letter-spacing:.3px;}
+  .btn.ghost{background:transparent; color:var(--cyan); border:1px solid var(--line2);}
+  .iconbtn{width:38px; height:38px; border:1px solid var(--line2); border-radius:8px; background:var(--cyan); color:#0a0e1a; font-weight:700; display:flex; align-items:center; justify-content:center;}
+
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:18px 0 20px;}
+  .kpi{background:var(--panel); border:1px solid var(--line); border-top:2px solid var(--cyan); border-radius:10px; padding:16px;}
+  .kpi .k-label{font-size:10px; letter-spacing:1.3px; color:var(--muted); text-transform:uppercase;}
+  .kpi .k-val{font-size:30px; font-weight:800; margin:6px 0 4px; line-height:1;}
+  .kpi .k-foot{font-size:11.5px; color:var(--dim);}
+  .kpi.c-green{border-top-color:var(--green);} .kpi.c-green .k-val{color:var(--green);}
+  .kpi.c-cyan{border-top-color:var(--cyan);} .kpi.c-cyan .k-val{color:var(--cyan);}
+  .kpi.c-amber{border-top-color:var(--amber);} .kpi.c-amber .k-val{color:var(--amber);}
+  .kpi.c-purple{border-top-color:var(--purple);} .kpi.c-purple .k-val{color:var(--purple);}
+
+  .row{display:grid; gap:16px; margin-bottom:16px;}
+  .row.r1{grid-template-columns:1.3fr 1fr;}
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px 20px;}
+  .panel-h{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .panel-h h2{font-size:16px; font-weight:700;}
+  .panel-h .sub{font-size:11px; color:var(--dim); margin-top:2px;}
+
+  /* Security checklist */
+  .chk{display:flex; align-items:center; gap:12px; padding:12px 0; border-top:1px solid var(--line);}
+  .chk:first-of-type{border-top:none;}
+  .chk .ci{width:22px; height:22px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex-shrink:0;}
+  .ci.pass{background:rgba(74,222,128,.15); color:var(--green);}
+  .ci.warn{background:rgba(251,191,36,.15); color:var(--amber);}
+  .ci.fail{background:rgba(244,84,79,.15); color:var(--red);}
+  .chk .ct{font-size:13.5px; font-weight:600;}
+  .chk .cm{font-size:11.5px; color:var(--dim); margin-top:2px;}
+  .chk .cs{margin-left:auto; font-size:10px; letter-spacing:1px; text-transform:uppercase; font-weight:700; padding:3px 9px; border-radius:5px;}
+  .cs.pass{background:rgba(74,222,128,.12); color:var(--green);}
+  .cs.warn{background:rgba(251,191,36,.12); color:var(--amber);}
+  .cs.fail{background:rgba(244,84,79,.12); color:var(--red);}
+
+  .ring-wrap{display:flex; flex-direction:column; align-items:center; justify-content:center; padding:6px 0 14px;}
+  .ring{width:140px; height:140px; border-radius:50%; position:relative;
+    background:conic-gradient(var(--green) 0 82%, var(--line2) 82% 100%);}
+  .ring::after{content:""; position:absolute; inset:14px; border-radius:50%; background:var(--panel);}
+  .ring .rc{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .ring .rc b{font-size:34px; font-weight:800; color:var(--green);} .ring .rc span{font-size:11px; color:var(--dim); letter-spacing:1px; text-transform:uppercase;}
+  .ring-meta{font-size:12px; color:var(--muted); margin-top:14px; text-align:center;}
+  .ring-meta b{color:var(--text);}
+
+  /* Test tool cards */
+  .tool{background:var(--panel2); border:1px solid var(--line); border-radius:9px; padding:14px 15px; margin-bottom:11px;}
+  .tool-h{display:flex; align-items:center; gap:9px; margin-bottom:8px;}
+  .tool-h .tic{width:30px; height:30px; border-radius:7px; background:rgba(34,211,238,.12); color:var(--cyan); display:flex; align-items:center; justify-content:center; font-size:15px;}
+  .tool-h .tt{font-size:14px; font-weight:700;}
+  .tool-h .ts{margin-left:auto; font-size:10px; letter-spacing:1px; text-transform:uppercase; font-weight:700; padding:3px 9px; border-radius:5px;}
+  .ts.ok{background:rgba(74,222,128,.12); color:var(--green);}
+  .ts.warn{background:rgba(251,191,36,.12); color:var(--amber);}
+  .tool .stats{display:flex; gap:18px; margin:10px 0 12px; flex-wrap:wrap;}
+  .tool .stat b{display:block; font-size:18px; font-weight:800;}
+  .tool .stat span{font-size:10px; letter-spacing:.8px; color:var(--dim); text-transform:uppercase;}
+  .tool .row-btns{display:flex; gap:9px;}
+  .minibtn{background:var(--cyan); color:#06121a; border:none; border-radius:7px; padding:7px 13px; font-size:12px; font-weight:700; cursor:pointer;}
+  .minibtn.ghost{background:transparent; color:var(--cyan); border:1px solid var(--line2);}
+
+  /* DB table distribution */
+  .dbrow{display:flex; align-items:center; gap:12px; padding:9px 0; border-top:1px solid var(--line); font-size:13px;}
+  .dbrow:first-of-type{border-top:none;}
+  .dbrow .dbname{width:150px; font-weight:600;}
+  .dbrow .dbbar{flex:1; height:8px; border-radius:4px; background:var(--line2); overflow:hidden; position:relative;}
+  .dbrow .dbbar > i{position:absolute; left:0; top:0; bottom:0; border-radius:4px;}
+  .dbrow .dbcount{width:70px; text-align:right; color:var(--muted);}
+  .cat-core > i{background:var(--cyan);} .cat-comp > i{background:var(--purple);} .cat-ai > i{background:var(--green);} .cat-ops > i{background:var(--orange);}
+  .dbtag{font-size:9px; letter-spacing:.5px; text-transform:uppercase; padding:2px 7px; border-radius:4px; width:54px; text-align:center;}
+  .dbtag.core{background:rgba(34,211,238,.12); color:var(--cyan);}
+  .dbtag.comp{background:rgba(167,139,250,.12); color:var(--purple);}
+  .dbtag.ai{background:rgba(74,222,128,.12); color:var(--green);}
+  .dbtag.ops{background:rgba(245,158,66,.12); color:var(--orange);}
+
+  .export-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px;}
+  .exp{background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:12px 13px; display:flex; align-items:center; gap:10px; cursor:pointer;}
+  .exp:hover{border-color:var(--line2);}
+  .exp .ei{color:var(--cyan); font-size:16px;}
+  .exp .et{font-size:13px; font-weight:600;} .exp .em{font-size:11px; color:var(--dim);}
+
+  .note{max-width:1180px; margin:0 auto; padding:14px 26px; font-size:12px; color:var(--dim); border-top:1px solid var(--line);}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">PREDICTSAFE</div>
+      <div class="sub">Platform Console v2.4</div>
+      <div class="badge-sa">◆ Super Admin</div>
+    </div>
+
+    <div class="navsec">Overview</div>
+    <div class="navitem"><span class="ic">◎</span> Command Center</div>
+    <div class="navitem"><span class="ic">▤</span> Platform Analytics</div>
+
+    <div class="navsec">Tenants &amp; Users</div>
+    <div class="navitem"><span class="ic">▣</span> Organizations</div>
+    <div class="navitem"><span class="ic">🏢</span> Company Management</div>
+    <div class="navitem"><span class="ic">👥</span> User Management <span class="pill">3</span></div>
+    <div class="navitem"><span class="ic">▦</span> Site Management</div>
+
+    <div class="navsec">Compliance</div>
+    <div class="navitem"><span class="ic">⚠</span> Escalations <span class="pill red">5</span></div>
+    <div class="navitem"><span class="ic">▥</span> Audit Logs</div>
+    <div class="navitem"><span class="ic">▤</span> Reg. Deadlines</div>
+
+    <div class="navsec">Security &amp; Tools</div>
+    <div class="navitem"><span class="ic">🧠</span> AI Engine</div>
+    <div class="navitem active"><span class="ic">🛡</span> Security Audits</div>
+    <div class="navitem"><span class="ic">🧪</span> Platform Test Tools</div>
+    <div class="navitem"><span class="ic">▤</span> Data Collection</div>
+
+    <div class="navsec">Platform</div>
+    <div class="navitem"><span class="ic">🔗</span> Integrations <span class="pill">1</span></div>
+    <div class="navitem"><span class="ic">⚙</span> Configuration</div>
+    <div class="navitem"><span class="ic">▦</span> Billing &amp; Usage</div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>Security &amp; Platform <span>Tools</span></h1>
+        <div class="crumb mono">Platform integrity · diagnostics · data collection — all 14 tenants</div>
+      </div>
+      <div class="topright">
+        <button class="btn ghost">Schedule audit</button>
+        <button class="btn">▶ Run full audit</button>
+        <div class="iconbtn">JH</div>
+      </div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi c-green"><div class="k-label">Security Score</div><div class="k-val">82</div><div class="k-foot">Last full audit · Jun 4, 02:00</div></div>
+      <div class="kpi c-cyan"><div class="k-label">Checks Passing</div><div class="k-val">11/14</div><div class="k-foot">2 warnings · 1 failure</div></div>
+      <div class="kpi c-amber"><div class="k-label">RLS Coverage</div><div class="k-val">96%</div><div class="k-foot">1 table missing policy</div></div>
+      <div class="kpi c-purple"><div class="k-label">AI Engine</div><div class="k-val">v2.4.1</div><div class="k-foot">Smoke test: pass · 380ms</div></div>
+    </div>
+
+    <!-- Security audit + score -->
+    <div class="row r1">
+      <div class="panel">
+        <div class="panel-h"><div><h2>Security Audit</h2><div class="sub">Server-side checks · re-run on demand · every run written to audit log</div></div><button class="minibtn ghost">Re-run</button></div>
+        <div class="chk"><div class="ci pass">✓</div><div><div class="ct">Row-Level Security enforced</div><div class="cm mono">42 of 44 tables · 2 service-only tables exempt</div></div><span class="cs pass">Pass</span></div>
+        <div class="chk"><div class="ci pass">✓</div><div><div class="ct">Service-role key server-only</div><div class="cm mono">No service key referenced in client bundles</div></div><span class="cs pass">Pass</span></div>
+        <div class="chk"><div class="ci pass">✓</div><div><div class="ct">Auth & session config</div><div class="cm mono">JWT expiry 1h · refresh rotation on · email confirm required</div></div><span class="cs pass">Pass</span></div>
+        <div class="chk"><div class="ci warn">!</div><div><div class="ct">Rate limiting on auth endpoints</div><div class="cm mono">Supabase default only — custom SMTP throttle recommended</div></div><span class="cs warn">Warn</span></div>
+        <div class="chk"><div class="ci fail">✕</div><div><div class="ct">RLS policy: <span class="mono">document_versions</span></div><div class="cm mono">Table exposed without org-scoped policy — fix before launch</div></div><span class="cs fail">Fail</span></div>
+        <div class="chk"><div class="ci pass">✓</div><div><div class="ct">Environment variables present</div><div class="cm mono">All required keys set in production · no secrets in repo</div></div><span class="cs pass">Pass</span></div>
+        <div class="chk"><div class="ci warn">!</div><div><div class="ct">Backup & point-in-time recovery</div><div class="cm mono">Daily backups on · PITR not enabled on current plan</div></div><span class="cs warn">Warn</span></div>
+        <div class="chk"><div class="ci pass">✓</div><div><div class="ct">Audit logging active</div><div class="cm mono">12,408 events captured across all tenants (30d)</div></div><span class="cs pass">Pass</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-h"><h2>Overall posture</h2></div>
+        <div class="ring-wrap">
+          <div class="ring"><div class="rc"><b>82</b><span>secure</span></div></div>
+          <div class="ring-meta"><b>11 passing</b> · 2 warnings · <span style="color:var(--red)">1 failure</span><br>1 blocker before customer launch</div>
+        </div>
+        <div style="border-top:1px solid var(--line); padding-top:12px; margin-top:4px;">
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0;color:var(--muted)"><span>Penetration test</span><span class="mono">Scheduled Jun 12</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0;color:var(--muted)"><span>SOC 2 readiness</span><span style="color:var(--amber)">In progress</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0;color:var(--muted)"><span>Last incident</span><span class="mono">None (90d)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Platform test tools -->
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="panel-h"><div><h2>Platform Test Tools</h2><div class="sub">Diagnostics for the AI engine, environment, and end-to-end flows</div></div></div>
+      <div class="row" style="grid-template-columns:1fr 1fr 1fr; margin:0;">
+        <div class="tool">
+          <div class="tool-h"><div class="tic">🧠</div><div class="tt">AI Engine Smoke Test</div><span class="ts ok">Pass</span></div>
+          <div class="stats">
+            <div class="stat"><b>18</b><span>Risk families</span></div>
+            <div class="stat"><b>9</b><span>Guardrails</span></div>
+            <div class="stat"><b>380ms</b><span>Latency</span></div>
+          </div>
+          <div class="row-btns"><button class="minibtn">Run smoke test</button><button class="minibtn ghost">Ad-hoc assessment</button></div>
+        </div>
+        <div class="tool">
+          <div class="tool-h"><div class="tic">⚙</div><div class="tt">Environment Status</div><span class="ts warn">1 warn</span></div>
+          <div class="stats">
+            <div class="stat"><b>Prod</b><span>Branch</span></div>
+            <div class="stat"><b>24/25</b><span>Env vars</span></div>
+            <div class="stat"><b>OK</b><span>Stripe / DB</span></div>
+          </div>
+          <div class="row-btns"><button class="minibtn">Re-check env</button><button class="minibtn ghost">View flags</button></div>
+        </div>
+        <div class="tool">
+          <div class="tool-h"><div class="tic">🔁</div><div class="tt">End-to-End Flow Test</div><span class="ts ok">Pass</span></div>
+          <div class="stats">
+            <div class="stat"><b>7/7</b><span>Flows</span></div>
+            <div class="stat"><b>0</b><span>Failures</span></div>
+            <div class="stat"><b>2h</b><span>Since run</span></div>
+          </div>
+          <div class="row-btns"><button class="minibtn">Run suite</button><button class="minibtn ghost">View report</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data collection -->
+    <div class="row r1">
+      <div class="panel">
+        <div class="panel-h"><div><h2>Data Collection</h2><div class="sub">Live record distribution across the platform database</div></div><span class="mono" style="font-size:12px;color:var(--muted)">48,210 rows</span></div>
+        <div class="dbrow"><span class="dbname">organizations</span><span class="dbtag core">Core</span><div class="dbbar cat-core"><i style="width:8%"></i></div><span class="dbcount mono">14</span></div>
+        <div class="dbrow"><span class="dbname">profiles</span><span class="dbtag core">Core</span><div class="dbbar cat-core"><i style="width:22%"></i></div><span class="dbcount mono">358</span></div>
+        <div class="dbrow"><span class="dbname">assessments</span><span class="dbtag comp">Comp</span><div class="dbbar cat-comp"><i style="width:64%"></i></div><span class="dbcount mono">2,140</span></div>
+        <div class="dbrow"><span class="dbname">inspections</span><span class="dbtag comp">Comp</span><div class="dbbar cat-comp"><i style="width:48%"></i></div><span class="dbcount mono">1,604</span></div>
+        <div class="dbrow"><span class="dbname">capa_records</span><span class="dbtag comp">Comp</span><div class="dbbar cat-comp"><i style="width:30%"></i></div><span class="dbcount mono">812</span></div>
+        <div class="dbrow"><span class="dbname">documents</span><span class="dbtag ops">Ops</span><div class="dbbar cat-ops"><i style="width:55%"></i></div><span class="dbcount mono">1,890</span></div>
+        <div class="dbrow"><span class="dbname">audit_events</span><span class="dbtag ai">Log</span><div class="dbbar cat-ai"><i style="width:100%"></i></div><span class="dbcount mono">12,408</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-h"><div><h2>Export &amp; Reports</h2><div class="sub">Generate platform-wide data extracts</div></div></div>
+        <div class="export-grid">
+          <div class="exp"><span class="ei">▤</span><div><div class="et">Compliance export</div><div class="em mono">CSV · all tenants</div></div></div>
+          <div class="exp"><span class="ei">▥</span><div><div class="et">Audit log export</div><div class="em mono">JSON · date range</div></div></div>
+          <div class="exp"><span class="ei">👥</span><div><div class="et">User roster</div><div class="em mono">CSV · by org</div></div></div>
+          <div class="exp"><span class="ei">📦</span><div><div class="et">Full tenant backup</div><div class="em mono">Encrypted archive</div></div></div>
+          <div class="exp"><span class="ei">💳</span><div><div class="et">Billing / usage</div><div class="em mono">CSV · monthly</div></div></div>
+          <div class="exp"><span class="ei">🧾</span><div><div class="et">Regulatory report</div><div class="em mono">PDF · per site</div></div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="note mono">MOCKUP · Static placeholder data · Superadmin (platform owner) tier — Security, diagnostics & data tools</div>
+</body>
+</html>

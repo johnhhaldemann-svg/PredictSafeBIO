@@ -56,6 +56,15 @@ export type PlatformChecklistItem = {
   actionUrl?: string;
 };
 
+export type RegulatoryDeadline = {
+  id: string;
+  title: string;
+  regulationRef: string;
+  siteLabel: string;
+  dueDate: string; // ISO date (YYYY-MM-DD)
+  status: string;
+};
+
 // ---------------------------------------------------------------------------
 // Main entry point
 // ---------------------------------------------------------------------------
@@ -125,6 +134,151 @@ export async function getPlatformData(): Promise<PlatformData> {
   const checklist = buildChecklist(metrics, security);
 
   return { metrics, security, orgs, recentAuditEvents, checklist };
+}
+
+// ---------------------------------------------------------------------------
+// Regulatory deadlines (cross-tenant compliance calendar)
+// ---------------------------------------------------------------------------
+
+/**
+ * Upcoming regulatory deadlines, soonest first. Uses the service-role client
+ * (RLS bypassed) so the Command Center sees both platform-wide and org-scoped
+ * obligations. Returns [] if the table/env is unavailable — callers fall back.
+ */
+export async function getUpcomingRegulatoryDeadlines(
+  limit = 6,
+  organizationId?: string
+): Promise<RegulatoryDeadline[]> {
+  if (!isSupabaseConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) return [];
+  try {
+    const admin = getSupabaseAdminClient();
+    const today = new Date().toISOString().slice(0, 10);
+    let query = admin
+      .from("regulatory_deadlines")
+      .select("id, title, regulation_ref, site_label, due_date, status")
+      .neq("status", "complete")
+      .gte("due_date", today);
+    // Per-tenant view: platform-wide (NULL) obligations plus this org's own.
+    if (organizationId) query = query.or(`organization_id.is.null,organization_id.eq.${organizationId}`);
+    const { data } = await query
+      .order("due_date", { ascending: true })
+      .limit(limit);
+    return ((data ?? []) as {
+      id: string; title: string; regulation_ref: string;
+      site_label: string; due_date: string; status: string;
+    }[]).map((d) => ({
+      id: d.id,
+      title: d.title,
+      regulationRef: d.regulation_ref,
+      siteLabel: d.site_label,
+      dueDate: d.due_date,
+      status: d.status,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export type OrgDashboardData = {
+  orgId: string;
+  name: string;
+  status: string | null;
+  members: number;
+  assessments: number;
+  documents: number;
+  capa: number;
+  inspections: number;
+  recentActivity: { eventType: string; summary: string; createdAt: string }[];
+};
+
+/**
+ * Per-tenant dashboard rollup for the filtered Command Center view. Service-role
+ * counts scoped to a single org. Returns null if the org can't be found.
+ */
+export async function getOrgDashboardData(orgId: string): Promise<OrgDashboardData | null> {
+  if (!isSupabaseConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) return null;
+  try {
+    const admin = getSupabaseAdminClient();
+
+    const { data: org } = await admin
+      .from("organizations")
+      .select("id, name, status")
+      .eq("id", orgId)
+      .single();
+    if (!org) return null;
+
+    const countScoped = async (table: string): Promise<number> => {
+      try {
+        const { count } = await admin
+          .from(table as never)
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", orgId);
+        return count ?? 0;
+      } catch {
+        return 0;
+      }
+    };
+
+    const [members, assessments, documents, capa, inspections, activityRes] = await Promise.all([
+      countScoped("profiles"),
+      countScoped("biosafety_risk_assessments"),
+      countScoped("document_metadata"),
+      countScoped("capa_records"),
+      countScoped("inspection_records"),
+      admin
+        .from("audit_events")
+        .select("event_type, summary, created_at")
+        .eq("organization_id", orgId)
+        .order("created_at", { ascending: false })
+        .limit(6),
+    ]);
+
+    const recentActivity = ((activityRes.data ?? []) as {
+      event_type: string; summary: string; created_at: string;
+    }[]).map((e) => ({ eventType: e.event_type, summary: e.summary, createdAt: e.created_at }));
+
+    return {
+      orgId: org.id,
+      name: org.name,
+      status: org.status ?? null,
+      members,
+      assessments,
+      documents,
+      capa,
+      inspections,
+      recentActivity,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * All regulatory deadlines (including past and completed), newest due date
+ * first, for the management screen. Service-role read; [] on failure.
+ */
+export async function listAllRegulatoryDeadlines(): Promise<RegulatoryDeadline[]> {
+  if (!isSupabaseConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) return [];
+  try {
+    const admin = getSupabaseAdminClient();
+    const { data } = await admin
+      .from("regulatory_deadlines")
+      .select("id, title, regulation_ref, site_label, due_date, status")
+      .order("due_date", { ascending: true });
+    return ((data ?? []) as {
+      id: string; title: string; regulation_ref: string;
+      site_label: string; due_date: string; status: string;
+    }[]).map((d) => ({
+      id: d.id,
+      title: d.title,
+      regulationRef: d.regulation_ref,
+      siteLabel: d.site_label,
+      dueDate: d.due_date,
+      status: d.status,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 // ---------------------------------------------------------------------------
