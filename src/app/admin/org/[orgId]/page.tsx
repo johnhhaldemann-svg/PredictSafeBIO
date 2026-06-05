@@ -286,7 +286,7 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                 Download a CSV archive of this organization&apos;s records for compliance audits or offboarding.
                 Export actions are recorded in the audit log.
               </p>
-              <form method="GET" action={`/api/admin/export/${orgId}`} style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "flex-end" }}>
+              <form method="GET" action={`/api/admin/export/org/${orgId}`} style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "flex-end" }}>
                 <fieldset style={{ border: "none", padding: 0, margin: 0 }}>
                   <legend className="section-label" style={{ marginBottom: "0.4rem" }}>Select data to include</legend>
                   <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap" }}>
