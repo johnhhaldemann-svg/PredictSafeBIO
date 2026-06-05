@@ -125,7 +125,71 @@ export async function getPlatformEscalations(opts: Options = {}): Promise<Escala
     /* ignore */
   }
 
-  // 4. Failing / at-risk platform readiness checks (platform-wide only).
+  // 4. Organization health — pending onboarding, no members, or gone quiet.
+  try {
+    let orgQ = admin.from("organizations").select("id, name, status, is_archived");
+    if (organizationId) orgQ = orgQ.eq("id", organizationId);
+    const { data: orgRows } = await orgQ;
+    const allOrgs = ((orgRows ?? []) as { id: string; name: string; status: string | null; is_archived: boolean | null }[])
+      .filter((o) => !o.is_archived);
+
+    if (allOrgs.length > 0) {
+      // Member counts per org.
+      const { data: profs } = await admin
+        .from("profiles")
+        .select("organization_id")
+        .not("organization_id", "is", null);
+      const memberCount = new Map<string, number>();
+      for (const p of (profs ?? []) as { organization_id: string }[]) {
+        memberCount.set(p.organization_id, (memberCount.get(p.organization_id) ?? 0) + 1);
+      }
+
+      // Orgs with any audit activity in the last 30 days.
+      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: act } = await admin
+        .from("audit_events")
+        .select("organization_id")
+        .gte("created_at", since)
+        .not("organization_id", "is", null);
+      const activeOrgs = new Set((act ?? []).map((a: { organization_id: string }) => a.organization_id));
+
+      for (const o of allOrgs) {
+        if (o.status === "suspended") continue; // already raised above
+        if (o.status === "pending") {
+          out.push({
+            id: `pending-${o.id}`,
+            severity: "warning",
+            title: `Onboarding pending: ${o.name}`,
+            detail: "Organization is marked pending — finish setup or activate it.",
+            source: "Organization",
+            href: `/admin/org/${o.id}`,
+          });
+        } else if ((memberCount.get(o.id) ?? 0) === 0) {
+          out.push({
+            id: `empty-${o.id}`,
+            severity: "warning",
+            title: `No users yet: ${o.name}`,
+            detail: "Organization has no members — invite the first user.",
+            source: "Organization",
+            href: `/admin/org/${o.id}?tab=users`,
+          });
+        } else if (!activeOrgs.has(o.id)) {
+          out.push({
+            id: `stale-${o.id}`,
+            severity: "info",
+            title: `No recent activity: ${o.name}`,
+            detail: "No audit activity recorded in the last 30 days.",
+            source: "Organization",
+            href: `/admin/org/${o.id}`,
+          });
+        }
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+
+  // 5. Failing / at-risk platform readiness checks (platform-wide only).
   if (!organizationId) {
     try {
       const checklist = opts.checklist ?? (await getPlatformData()).checklist;

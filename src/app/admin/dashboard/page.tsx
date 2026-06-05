@@ -26,6 +26,7 @@ import {
 } from "@/lib/supabase/platform-service";
 import { getAiEngineStatus } from "@/lib/supabase/superadmin-service";
 import { getPlatformEscalations, type EscalationSeverity } from "@/lib/supabase/escalations-service";
+import { setOrgStatusAction } from "@/app/admin/org/[orgId]/actions";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -210,6 +211,31 @@ export default async function CommandCenterPage({
               <div className="k-label">Inspections</div>
               <div className="k-val">{orgData.inspections.toLocaleString()}</div>
               <div className="k-foot">{orgData.capa.toLocaleString()} CAPA records</div>
+            </div>
+          </div>
+
+          {/* Quick controls */}
+          <div className="psb-panel">
+            <div className="psb-panel-h"><h2>Quick controls</h2></div>
+            <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", alignItems: "center" }}>
+              {orgData.status === "suspended" ? (
+                <form action={setOrgStatusAction}>
+                  <input type="hidden" name="orgId" value={orgData.orgId} />
+                  <input type="hidden" name="status" value="active" />
+                  <button className="button-primary compact" type="submit">Reinstate org</button>
+                </form>
+              ) : (
+                <form action={setOrgStatusAction}>
+                  <input type="hidden" name="orgId" value={orgData.orgId} />
+                  <input type="hidden" name="status" value="suspended" />
+                  <button className="button-secondary compact" type="submit" style={{ color: "var(--red)", borderColor: "var(--red)" }}>
+                    Suspend org
+                  </button>
+                </form>
+              )}
+              <Link href={`/admin/org/${orgData.orgId}?tab=users`} className="button-secondary compact">Manage users →</Link>
+              <Link href={`/admin/org/${orgData.orgId}?tab=controls`} className="button-secondary compact">Plan &amp; limits →</Link>
+              <span className="muted" style={{ fontSize: 12 }}>Suspending blocks all member logins (data is preserved).</span>
             </div>
           </div>
 

@@ -6729,6 +6729,20 @@ pre {
   border: 1px solid var(--line2);
 }
 
+/* action-row / action-list cards — hardcoded #fff baseline overridden here. */
+.psb-console .action-row {
+  background: var(--panel);
+  border-color: var(--line);
+  color: var(--c-text);
+}
+.psb-console .action-row strong {
+  color: var(--c-text);
+}
+.psb-console .action-row span,
+.psb-console .action-row p {
+  color: var(--c-dim);
+}
+
 /* Inputs / selects inside the console. */
 .psb-console input,
 .psb-console select,

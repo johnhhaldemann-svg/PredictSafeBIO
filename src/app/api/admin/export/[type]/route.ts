@@ -14,12 +14,17 @@ import {
   exportUsers,
   exportBios,
   exportFlags,
+  exportOrgs,
+  exportDeadlines,
   rowsToCsv,
 } from "@/lib/supabase/analytics-service";
-import { isAdminOrAbove } from "@/lib/role-permissions";
+import { isAdminOrAbove, canViewPlatform } from "@/lib/role-permissions";
 
-const ALLOWED_TYPES = ["users", "bios", "flags"] as const;
+const ALLOWED_TYPES = ["users", "bios", "flags", "orgs", "deadlines"] as const;
 type ExportType = (typeof ALLOWED_TYPES)[number];
+
+// Cross-tenant exports — restricted to platform staff / superadmin.
+const PLATFORM_ONLY: ReadonlySet<string> = new Set(["orgs", "deadlines"]);
 
 export async function GET(
   _req: NextRequest,
@@ -45,10 +50,6 @@ export async function GET(
     role: profile?.role,
   };
 
-  if (!isAdminOrAbove(access)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
   const { type } = await params;
 
   if (!ALLOWED_TYPES.includes(type as ExportType)) {
@@ -56,6 +57,12 @@ export async function GET(
       { error: `Unknown export type "${type}". Allowed: ${ALLOWED_TYPES.join(", ")}` },
       { status: 400 }
     );
+  }
+
+  // Cross-tenant exports require platform staff; others allow org admins.
+  const authorized = PLATFORM_ONLY.has(type) ? canViewPlatform(access) : isAdminOrAbove(access);
+  if (!authorized) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const timestamp = new Date().toISOString().slice(0, 10);
@@ -71,6 +78,12 @@ export async function GET(
       break;
     case "flags":
       csv = rowsToCsv(await exportFlags());
+      break;
+    case "orgs":
+      csv = rowsToCsv(await exportOrgs());
+      break;
+    case "deadlines":
+      csv = rowsToCsv(await exportDeadlines());
       break;
   }
 
