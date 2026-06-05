@@ -40,13 +40,23 @@ async function auditLog(actorId: string, orgId: string, eventType: string, summa
 
 export async function updateOrgProfileAction(formData: FormData) {
   const { actorId } = await requireSuperAdmin();
-  const orgId   = String(formData.get("orgId") ?? "").trim();
-  const name    = String(formData.get("name") ?? "").trim();
-  const status  = String(formData.get("status") ?? "active").trim();
+  const orgId       = String(formData.get("orgId") ?? "").trim();
+  const name        = String(formData.get("name") ?? "").trim();
+  const status      = String(formData.get("status") ?? "active").trim();
   const environment = String(formData.get("environment") ?? "production").trim();
-  const returnTo = `/admin/org/${orgId}?tab=profile`;
+  const confirmName = String(formData.get("confirmName") ?? "").trim();
+  const returnTo    = `/admin/org/${orgId}?tab=profile`;
 
   if (!orgId || !name) redirect(`${returnTo}&error=Name+is+required`);
+
+  // Require typed org-name confirmation for sensitive status transitions
+  if (status === "suspended" || status === "archived") {
+    const admin = getSupabaseAdminClient();
+    const { data: existing } = await admin.from("organizations").select("name").eq("id", orgId).single();
+    if (confirmName !== existing?.name) {
+      redirect(`${returnTo}&error=${encodeURIComponent("Type the exact organization name to confirm Suspended or Archived status")}`);
+    }
+  }
 
   const admin = getSupabaseAdminClient();
   const { error } = await admin
@@ -251,4 +261,93 @@ export async function updateOrgControlsAction(formData: FormData) {
 
   await auditLog(actorId, orgId, "superadmin_org_controls_updated", `Controls updated: seatLimit=${seatLimit}, planTier="${planTier}", demoMode=${demoMode}`, { seatLimit, planTier, demoMode });
   redirect(`/admin/org/${orgId}?tab=controls&success=Controls+saved`);
+}
+
+// ---------------------------------------------------------------------------
+// Controls: per-module on/off flags
+// ---------------------------------------------------------------------------
+
+const ALL_MODULES = [
+  "assessments", "documents", "capas", "biosafety", "chemical_sds",
+  "capa_tracker", "inspection_audit", "ergonomics", "waste_management", "pesticide_control",
+] as const;
+
+export async function updateModuleFlagsAction(formData: FormData) {
+  const { actorId } = await requireSuperAdmin();
+  const orgId = String(formData.get("orgId") ?? "").trim();
+  if (!orgId) redirect(`/admin/org/${orgId}?tab=controls&error=Missing+orgId`);
+
+  const enabled = formData.getAll("enabledModules") as string[];
+  const flags: Record<string, boolean> = {};
+  for (const m of ALL_MODULES) {
+    flags[m] = enabled.includes(m);
+  }
+
+  const admin = getSupabaseAdminClient();
+  const { error } = await admin
+    .from("organizations")
+    .update({ module_flags: flags, updated_at: new Date().toISOString() })
+    .eq("id", orgId);
+
+  if (error) redirect(`/admin/org/${orgId}?tab=controls&error=${encodeURIComponent(error.message)}`);
+
+  const enabledList = Object.entries(flags).filter(([, v]) => v).map(([k]) => k).join(", ") || "none";
+  await auditLog(actorId, orgId, "superadmin_module_flags_updated", `Module flags updated — enabled: ${enabledList}`, { flags });
+  redirect(`/admin/org/${orgId}?tab=controls&success=Module+flags+saved`);
+}
+
+// ---------------------------------------------------------------------------
+// Profile: archive org (reversible — sets status to archived)
+// ---------------------------------------------------------------------------
+
+export async function archiveOrgAction(formData: FormData) {
+  const { actorId } = await requireSuperAdmin();
+  const orgId       = String(formData.get("orgId") ?? "").trim();
+  const confirmName = String(formData.get("confirmName") ?? "").trim();
+  const returnTo    = `/admin/org/${orgId}?tab=profile`;
+
+  const admin = getSupabaseAdminClient();
+  const { data: org } = await admin.from("organizations").select("name").eq("id", orgId).single();
+  if (!org) redirect("/admin/organizations?error=Org+not+found");
+
+  if (confirmName !== org.name) {
+    redirect(`${returnTo}&error=${encodeURIComponent("Name confirmation did not match — type the exact organization name")}`);
+  }
+
+  const { error } = await admin
+    .from("organizations")
+    .update({ status: "archived", updated_at: new Date().toISOString() })
+    .eq("id", orgId);
+
+  if (error) redirect(`${returnTo}&error=${encodeURIComponent(error.message)}`);
+
+  await auditLog(actorId, orgId, "superadmin_org_archived", `Org "${org.name}" archived`, { orgName: org.name });
+  redirect(`${returnTo}&success=Org+archived`);
+}
+
+// ---------------------------------------------------------------------------
+// Profile: delete org (irreversible — cascades all data)
+// ---------------------------------------------------------------------------
+
+export async function deleteOrgAction(formData: FormData) {
+  const { actorId } = await requireSuperAdmin();
+  const orgId       = String(formData.get("orgId") ?? "").trim();
+  const confirmName = String(formData.get("confirmName") ?? "").trim();
+  const returnTo    = `/admin/org/${orgId}?tab=profile`;
+
+  const admin = getSupabaseAdminClient();
+  const { data: org } = await admin.from("organizations").select("name").eq("id", orgId).single();
+  if (!org) redirect("/admin/organizations?error=Org+not+found");
+
+  if (confirmName !== org.name) {
+    redirect(`${returnTo}&error=${encodeURIComponent("Name confirmation did not match — type the exact organization name")}`);
+  }
+
+  // Log intent before deletion (cascade will remove audit_events rows with the org)
+  await auditLog(actorId, orgId, "superadmin_org_deleted", `Org "${org.name}" permanently deleted`, { orgId, orgName: org.name });
+
+  const { error } = await admin.from("organizations").delete().eq("id", orgId);
+  if (error) redirect(`${returnTo}&error=${encodeURIComponent(error.message)}`);
+
+  redirect(`/admin/organizations?success=${encodeURIComponent(`Org "${org.name}" permanently deleted`)}`);
 }
