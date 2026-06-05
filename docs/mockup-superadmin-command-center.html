@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PredictSafe — Super Admin Command Center (Mockup)</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --panel:#0e1424; --panel2:#111a2e; --line:#1c2740;
+    --line2:#26344f; --text:#e6edf7; --muted:#8493ad; --dim:#5d6b85;
+    --cyan:#22d3ee; --cyan2:#38bdf8; --red:#f4544f; --orange:#f59e42;
+    --purple:#a78bfa; --green:#4ade80; --amber:#fbbf24;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-size:14px;}
+  .mono{font-family:"JetBrains Mono","SF Mono",Consolas,monospace;}
+  .layout{display:grid; grid-template-columns:230px 1fr; min-height:100vh;}
+
+  /* Sidebar */
+  .sidebar{background:#080c16; border-right:1px solid var(--line); padding:18px 0; position:sticky; top:0; height:100vh; overflow-y:auto;}
+  .brand{padding:0 20px 18px; border-bottom:1px solid var(--line); margin-bottom:14px;}
+  .brand .logo{font-weight:800; font-size:18px; letter-spacing:1px; color:var(--cyan); font-family:"JetBrains Mono",monospace;}
+  .brand .sub{font-size:10px; letter-spacing:2px; color:var(--dim); text-transform:uppercase; margin-top:2px;}
+  .badge-sa{display:inline-flex; align-items:center; gap:5px; margin-top:12px; padding:4px 10px; border:1px solid var(--purple); border-radius:20px; font-size:10px; letter-spacing:1.5px; color:var(--purple); text-transform:uppercase;}
+  .navsec{font-size:10px; letter-spacing:1.5px; color:var(--dim); text-transform:uppercase; padding:14px 20px 6px;}
+  .navitem{display:flex; align-items:center; gap:11px; padding:9px 20px; color:var(--muted); cursor:pointer; border-left:2px solid transparent; font-size:13.5px;}
+  .navitem:hover{background:var(--panel); color:var(--text);}
+  .navitem.active{background:linear-gradient(90deg,rgba(34,211,238,.10),transparent); color:var(--cyan); border-left-color:var(--cyan);}
+  .navitem .ic{width:17px; text-align:center; font-size:15px;}
+  .pill{margin-left:auto; background:var(--orange); color:#1a1206; font-size:10px; font-weight:700; border-radius:10px; min-width:18px; height:18px; display:flex; align-items:center; justify-content:center; padding:0 5px;}
+  .pill.red{background:var(--red); color:#2a0a09;}
+
+  /* Main */
+  .main{padding:22px 26px 40px;}
+  .topbar{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;}
+  h1{font-size:26px; font-weight:800; letter-spacing:.3px;}
+  h1 span{color:var(--cyan);}
+  .crumb{font-size:12px; color:var(--muted); margin-top:5px; letter-spacing:.4px;}
+  .topright{display:flex; align-items:center; gap:10px;}
+  .org-switch{display:flex; align-items:center; gap:8px; background:var(--panel); border:1px solid var(--line2); border-radius:8px; padding:8px 12px; font-size:13px;}
+  .org-switch .lbl{color:var(--dim); font-size:10px; letter-spacing:1px;}
+  .org-switch .sw{color:var(--cyan); cursor:pointer;}
+  .iconbtn{width:38px; height:38px; border:1px solid var(--line2); border-radius:8px; background:var(--panel); display:flex; align-items:center; justify-content:center; color:var(--muted); position:relative;}
+  .iconbtn .dot{position:absolute; top:7px; right:8px; width:7px; height:7px; border-radius:50%; background:var(--red);}
+
+  /* Alert */
+  .alert{margin:18px 0 20px; background:rgba(244,84,79,.08); border:1px solid rgba(244,84,79,.4); border-left:3px solid var(--red); border-radius:8px; padding:13px 16px; font-size:13.5px; display:flex; align-items:center; gap:10px;}
+  .alert .tag{color:var(--red); font-weight:700;}
+
+  /* KPI */
+  .kpis{display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:20px;}
+  .kpi{background:var(--panel); border:1px solid var(--line); border-top:2px solid var(--cyan); border-radius:10px; padding:16px 16px 14px;}
+  .kpi .k-label{font-size:10px; letter-spacing:1.3px; color:var(--muted); text-transform:uppercase;}
+  .kpi .k-val{font-size:32px; font-weight:800; margin:6px 0 4px; line-height:1;}
+  .kpi .k-foot{font-size:11.5px; color:var(--dim);}
+  .kpi .k-foot .up{color:var(--green);} .kpi .k-foot .down{color:var(--red);} .kpi .k-foot .flat{color:var(--muted);}
+  .kpi.c-cyan{border-top-color:var(--cyan);} .kpi.c-cyan .k-val{color:var(--cyan);}
+  .kpi.c-red{border-top-color:var(--red);} .kpi.c-red .k-val{color:var(--red);}
+  .kpi.c-orange{border-top-color:var(--orange);} .kpi.c-orange .k-val{color:var(--orange);}
+  .kpi.c-purple{border-top-color:var(--purple);} .kpi.c-purple .k-val{color:var(--purple);}
+  .kpi.c-green{border-top-color:var(--green);} .kpi.c-green .k-val{color:var(--green);}
+
+  /* Grid rows */
+  .row{display:grid; gap:16px; margin-bottom:16px;}
+  .row.r1{grid-template-columns:1.9fr 1fr;}
+  .row.r2{grid-template-columns:1.25fr 1fr 1.1fr;}
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px 20px;}
+  .panel-h{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .panel-h h2{font-size:16px; font-weight:700;}
+  .panel-h a{font-size:12px; color:var(--cyan2); text-decoration:none; letter-spacing:.3px;}
+
+  /* Site table */
+  table{width:100%; border-collapse:collapse;}
+  th{font-size:10px; letter-spacing:1px; color:var(--dim); text-transform:uppercase; text-align:left; padding:0 8px 10px; font-weight:600;}
+  td{padding:12px 8px; border-top:1px solid var(--line); font-size:13px; vertical-align:middle;}
+  .site-name{font-weight:600;} .site-meta{font-size:11px; color:var(--dim); margin-top:2px;}
+  .bar{height:6px; border-radius:4px; background:var(--line2); position:relative; width:170px; overflow:hidden;}
+  .bar > i{position:absolute; left:0; top:0; bottom:0; border-radius:4px;}
+  .b-green > i{background:var(--green);} .b-amber > i{background:var(--amber);} .b-red > i{background:var(--red);}
+  .stat{display:inline-flex; align-items:center; gap:6px; font-size:12px;}
+  .stat::before{content:""; width:7px; height:7px; border-radius:50%;}
+  .s-active{color:var(--green);} .s-active::before{background:var(--green);}
+  .s-review{color:var(--amber);} .s-review::before{background:var(--amber);}
+  .s-critical{color:var(--red);} .s-critical::before{background:var(--red);}
+  .num-red{color:var(--red); font-weight:600;}
+
+  /* Reg deadlines */
+  .deadline{display:flex; align-items:center; gap:13px; padding:11px 0; border-top:1px solid var(--line);}
+  .deadline:first-of-type{border-top:none;}
+  .datebox{width:42px; height:42px; border-radius:8px; background:var(--panel2); border:1px solid var(--line2); display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;}
+  .datebox .m{font-size:9px; letter-spacing:1px; color:var(--red); text-transform:uppercase;}
+  .datebox .d{font-size:16px; font-weight:800; line-height:1;}
+  .deadline .dl-title{font-size:13px; font-weight:600;}
+  .deadline .dl-meta{font-size:11px; color:var(--dim); margin-top:2px;}
+
+  /* Activity */
+  .act{display:flex; align-items:flex-start; gap:11px; padding:11px 0; border-top:1px solid var(--line);}
+  .act:first-of-type{border-top:none;}
+  .av{width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; color:#0a0e1a;}
+  .av.cy{background:var(--cyan);} .av.pu{background:var(--purple);} .av.gn{background:var(--green);} .av.rd{background:var(--red);} .av.am{background:var(--amber);}
+  .act-txt{font-size:13px; line-height:1.45;}
+  .act-txt b{font-weight:600;}
+  .act-meta{font-size:11px; color:var(--dim); margin-top:2px;}
+  .chip{font-size:9px; letter-spacing:.5px; padding:2px 6px; border-radius:4px; margin-left:6px; text-transform:uppercase; font-weight:600;}
+  .chip.capa{background:rgba(34,211,238,.15); color:var(--cyan);}
+  .chip.audit{background:rgba(167,139,250,.15); color:var(--purple);}
+  .chip.escal{background:rgba(244,84,79,.15); color:var(--red);}
+  .chip.obs{background:rgba(74,222,128,.15); color:var(--green);}
+  .chip.user{background:rgba(245,158,66,.15); color:var(--orange);}
+
+  /* Donut */
+  .donut-wrap{display:flex; align-items:center; gap:18px;}
+  .donut{width:120px; height:120px; border-radius:50%; flex-shrink:0; position:relative;
+    background:conic-gradient(var(--cyan) 0 35%, var(--orange) 35% 62%, var(--green) 62% 81%, var(--purple) 81% 92%, var(--dim) 92% 100%);}
+  .donut::after{content:""; position:absolute; inset:18px; border-radius:50%; background:var(--panel);}
+  .donut .ctr{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1;}
+  .donut .ctr b{font-size:26px; font-weight:800;} .donut .ctr span{font-size:10px; color:var(--dim);}
+  .legend{font-size:12.5px;}
+  .legend div{display:flex; align-items:center; gap:8px; padding:3px 0; color:var(--muted);}
+  .legend i{width:9px; height:9px; border-radius:2px; display:inline-block;}
+  .legend b{margin-left:auto; color:var(--text); font-weight:600;}
+
+  /* Bar chart */
+  .bars{display:flex; align-items:flex-end; gap:10px; height:80px; margin-top:18px; padding-top:8px;}
+  .bars .bcol{flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;}
+  .bars .bcol > i{width:100%; border-radius:4px 4px 0 0; background:var(--line2);}
+  .bars .bcol.hi > i{background:var(--cyan);}
+  .bars .bcol.wk > i{background:var(--orange);}
+  .bars .bcol span{font-size:10px; color:var(--dim);}
+  .sublabel{font-size:10px; letter-spacing:1px; color:var(--dim); text-transform:uppercase; margin-top:16px;}
+
+  /* System health */
+  .health{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .hc{background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:11px 13px; display:flex; align-items:flex-start; gap:9px;}
+  .hc .hdot{width:8px; height:8px; border-radius:50%; margin-top:4px; flex-shrink:0;}
+  .hdot.ok{background:var(--green);} .hdot.warn{background:var(--amber);} .hdot.err{background:var(--red);}
+  .hc .ht{font-size:13px; font-weight:600;} .hc .hm{font-size:11px; color:var(--dim); margin-top:2px;}
+  .integ{display:flex; align-items:center; gap:10px; padding:11px 0; border-top:1px solid var(--line); font-size:13px;}
+  .integ .ix{width:30px; height:30px; border-radius:7px; background:var(--panel2); border:1px solid var(--line2); display:flex; align-items:center; justify-content:center; color:var(--cyan);}
+
+  .note{max-width:1180px; margin:0 auto; padding:14px 26px; font-size:12px; color:var(--dim); border-top:1px solid var(--line);}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">PREDICTSAFE</div>
+      <div class="sub">Platform Console v2.4</div>
+      <div class="badge-sa">◆ Super Admin</div>
+    </div>
+
+    <div class="navsec">Overview</div>
+    <div class="navitem active"><span class="ic">◎</span> Command Center</div>
+    <div class="navitem"><span class="ic">▤</span> Platform Analytics</div>
+
+    <div class="navsec">Tenants &amp; Users</div>
+    <div class="navitem"><span class="ic">▣</span> Organizations</div>
+    <div class="navitem"><span class="ic">🏢</span> Company Management</div>
+    <div class="navitem"><span class="ic">👥</span> User Management <span class="pill">3</span></div>
+    <div class="navitem"><span class="ic">▦</span> Site Management</div>
+
+    <div class="navsec">Compliance</div>
+    <div class="navitem"><span class="ic">⚠</span> Escalations <span class="pill red">5</span></div>
+    <div class="navitem"><span class="ic">▥</span> Audit Logs</div>
+    <div class="navitem"><span class="ic">▤</span> Reg. Deadlines</div>
+
+    <div class="navsec">Security &amp; Tools</div>
+    <div class="navitem"><span class="ic">🧠</span> AI Engine</div>
+    <div class="navitem"><span class="ic">🛡</span> Security Audits</div>
+    <div class="navitem"><span class="ic">🧪</span> Platform Test Tools</div>
+    <div class="navitem"><span class="ic">▤</span> Data Collection</div>
+
+    <div class="navsec">Platform</div>
+    <div class="navitem"><span class="ic">🔗</span> Integrations <span class="pill">1</span></div>
+    <div class="navitem"><span class="ic">⚙</span> Configuration</div>
+    <div class="navitem"><span class="ic">▦</span> Billing &amp; Usage</div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>Command <span>Center</span></h1>
+        <div class="crumb mono">Friday, June 5, 2026 · 09:41 EST · All Organizations</div>
+      </div>
+      <div class="topright">
+        <div class="org-switch">
+          <span class="lbl mono">ORG</span> All Tenants (14) <span class="sw">Switch ↓</span>
+        </div>
+        <div class="iconbtn">🔔<span class="dot"></span></div>
+        <div class="iconbtn" style="background:var(--cyan); color:#0a0e1a; font-weight:700;">JH</div>
+      </div>
+    </div>
+
+    <div class="alert">
+      <span class="tag">🔺 Critical:</span>
+      <span>Gulf Coast Facility (Site 07) has 3 overdue CAPA items exceeding 30-day threshold. Escalated from Safety Manager on Jun 4.</span>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpis">
+      <div class="kpi c-cyan"><div class="k-label">Platform Compliance</div><div class="k-val">87%</div><div class="k-foot"><span class="up">↑ 3.2%</span> vs last month</div></div>
+      <div class="kpi c-red"><div class="k-label">Open Escalations</div><div class="k-val">5</div><div class="k-foot"><span class="up">↑ 2</span> since last week</div></div>
+      <div class="kpi c-orange"><div class="k-label">Active Users (30d)</div><div class="k-val">312</div><div class="k-foot"><span class="up">↑ 18</span> new this month</div></div>
+      <div class="kpi c-purple"><div class="k-label">Total Organizations</div><div class="k-val">14</div><div class="k-foot"><span class="flat">→ 1</span> pending onboard</div></div>
+      <div class="kpi c-green"><div class="k-label">Inspections (MTD)</div><div class="k-val">148</div><div class="k-foot"><span class="up">↑ 22%</span> vs prior MTD</div></div>
+    </div>
+
+    <!-- Row 1: Sites + Reg deadlines -->
+    <div class="row r1">
+      <div class="panel">
+        <div class="panel-h"><h2>Site Compliance Overview</h2><a href="#">View All Sites →</a></div>
+        <table>
+          <thead><tr><th>Site</th><th>Compliance Score</th><th>Status</th><th>Open Items</th><th>Last Insp.</th></tr></thead>
+          <tbody>
+            <tr><td><div class="site-name">Northeast Hub</div><div class="site-meta">Newark, NJ · Bio-Level 2</div></td><td><div style="display:flex;align-items:center;gap:10px;"><div class="bar b-green"><i style="width:94%"></i></div><span>94%</span></div></td><td><span class="stat s-active">Active</span></td><td>2</td><td class="mono">Jun 3</td></tr>
+            <tr><td><div class="site-name">Gulf Coast Facility</div><div class="site-meta">Houston, TX · BSL-3</div></td><td><div style="display:flex;align-items:center;gap:10px;"><div class="bar b-red"><i style="width:61%"></i></div><span>61%</span></div></td><td><span class="stat s-critical">Critical</span></td><td class="num-red">11</td><td class="mono">May 28</td></tr>
+            <tr><td><div class="site-name">Pacific Research Ctr</div><div class="site-meta">San Diego, CA · BSL-2</div></td><td><div style="display:flex;align-items:center;gap:10px;"><div class="bar b-amber"><i style="width:78%"></i></div><span>78%</span></div></td><td><span class="stat s-review">Review</span></td><td>6</td><td class="mono">Jun 1</td></tr>
+            <tr><td><div class="site-name">Midwest Campus</div><div class="site-meta">Chicago, IL · Bio-Level 2</div></td><td><div style="display:flex;align-items:center;gap:10px;"><div class="bar b-green"><i style="width:91%"></i></div><span>91%</span></div></td><td><span class="stat s-active">Active</span></td><td>3</td><td class="mono">Jun 4</td></tr>
+            <tr><td><div class="site-name">Southeast Lab</div><div class="site-meta">Atlanta, GA · BSL-1</div></td><td><div style="display:flex;align-items:center;gap:10px;"><div class="bar b-green"><i style="width:88%"></i></div><span>88%</span></div></td><td><span class="stat s-active">Active</span></td><td>4</td><td class="mono">Jun 2</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="panel-h"><h2>Regulatory Deadlines</h2></div>
+        <div class="deadline"><div class="datebox"><span class="m">Jun</span><span class="d">08</span></div><div><div class="dl-title">OSHA 300A Posting Deadline</div><div class="dl-meta mono">Gulf Coast · OSHA 29 CFR 1904</div></div></div>
+        <div class="deadline"><div class="datebox"><span class="m">Jun</span><span class="d">15</span></div><div><div class="dl-title">BSL-3 Annual IBC Review</div><div class="dl-meta mono">Gulf Coast · NIH Guidelines §III-D</div></div></div>
+        <div class="deadline"><div class="datebox"><span class="m">Jun</span><span class="d">22</span></div><div><div class="dl-title">Chemical Inventory Report</div><div class="dl-meta mono">All Sites · EPCRA Tier II</div></div></div>
+        <div class="deadline"><div class="datebox"><span class="m">Jul</span><span class="d">01</span></div><div><div class="dl-title">Waste Manifest Reconciliation</div><div class="dl-meta mono">Northeast + Midwest · EPA 40 CFR 262</div></div></div>
+      </div>
+    </div>
+
+    <!-- Row 2: Activity + Findings + Health -->
+    <div class="row r2">
+      <div class="panel">
+        <div class="panel-h"><h2>Platform Activity</h2><a href="#">Audit Log →</a></div>
+        <div class="act"><div class="av cy">JH</div><div><div class="act-txt"><b>John H.</b> closed CAPA #C-1142 <span class="chip capa">CAPA</span></div><div class="act-meta mono">Gulf Coast · 12 min ago</div></div></div>
+        <div class="act"><div class="av pu">SR</div><div><div class="act-txt"><b>S. Rivera</b> submitted inspection #I-0084 <span class="chip audit">AUDIT</span></div><div class="act-meta mono">Pacific Research · 41 min ago</div></div></div>
+        <div class="act"><div class="av rd">⚠</div><div><div class="act-txt">New escalation — BSL-3 decon lapse <span class="chip escal">ESCAL</span></div><div class="act-meta mono">Gulf Coast · 1 hr ago</div></div></div>
+        <div class="act"><div class="av am">TK</div><div><div class="act-txt"><b>T. Kim</b> filed chemical exposure obs. <span class="chip obs">OBS</span></div><div class="act-meta mono">Midwest Campus · 2 hr ago</div></div></div>
+        <div class="act"><div class="av gn">+</div><div><div class="act-txt">New user provisioned: <b>L. Chen</b> (Safety Mgr) <span class="chip user">USER</span></div><div class="act-meta mono">Northeast Hub · 3 hr ago</div></div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-h"><h2>Open Findings by Type</h2><a href="#">Breakdown →</a></div>
+        <div class="donut-wrap">
+          <div class="donut"><div class="ctr"><b>26</b><span>open</span></div></div>
+          <div class="legend" style="flex:1;">
+            <div><i style="background:var(--cyan)"></i> CAPA <b>9</b></div>
+            <div><i style="background:var(--orange)"></i> Inspection <b>7</b></div>
+            <div><i style="background:var(--green)"></i> Observation <b>5</b></div>
+            <div><i style="background:var(--purple)"></i> Chemical <b>3</b></div>
+            <div><i style="background:var(--dim)"></i> Other <b>2</b></div>
+          </div>
+        </div>
+        <div class="sublabel">Submissions this week</div>
+        <div class="bars">
+          <div class="bcol"><i style="height:30%"></i><span class="mono">M</span></div>
+          <div class="bcol"><i style="height:48%"></i><span class="mono">T</span></div>
+          <div class="bcol"><i style="height:40%"></i><span class="mono">W</span></div>
+          <div class="bcol hi"><i style="height:90%"></i><span class="mono">Th</span></div>
+          <div class="bcol"><i style="height:55%"></i><span class="mono">F</span></div>
+          <div class="bcol"><i style="height:22%"></i><span class="mono">Sa</span></div>
+          <div class="bcol wk"><i style="height:62%"></i><span class="mono">Su</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-h"><h2>System Health</h2></div>
+        <div class="health">
+          <div class="hc"><span class="hdot ok"></span><div><div class="ht">API Gateway</div><div class="hm">99.9% uptime</div></div></div>
+          <div class="hc"><span class="hdot ok"></span><div><div class="ht">Database</div><div class="hm">12ms avg query</div></div></div>
+          <div class="hc"><span class="hdot warn"></span><div><div class="ht">AI Engine</div><div class="hm">Degraded · 380ms</div></div></div>
+          <div class="hc"><span class="hdot ok"></span><div><div class="ht">Auth Service</div><div class="hm">Operational</div></div></div>
+          <div class="hc"><span class="hdot ok"></span><div><div class="ht">File Storage</div><div class="hm">62% capacity</div></div></div>
+          <div class="hc"><span class="hdot err"></span><div><div class="ht">Email Service</div><div class="hm">Outage · 14min</div></div></div>
+        </div>
+        <div class="sublabel">Integrations</div>
+        <div class="integ"><div class="ix">⬡</div><div><div style="font-weight:600;">Veeva Vault</div><div class="hm" style="font-size:11px;color:var(--dim);">Last sync: 6 min ago</div></div><span style="margin-left:auto;color:var(--green);font-size:11px;">● Live</span></div>
+        <div class="integ"><div class="ix">⬡</div><div><div style="font-weight:600;">Slack Alerts</div><div class="hm" style="font-size:11px;color:var(--dim);">Connected · #ehs-ops</div></div><span style="margin-left:auto;color:var(--green);font-size:11px;">● Live</span></div>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="note mono">MOCKUP · Static placeholder data · Superadmin (platform owner) tier — cross-tenant Command Center</div>
+</body>
+</html>

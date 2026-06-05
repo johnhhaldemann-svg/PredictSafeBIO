@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import {
-  Activity, AlertTriangle, BarChart2, Brain, CheckCircle2, Clock, Cpu,
-  Database, FileCheck, FlaskConical, Lock, Play, RefreshCw, ShieldCheck, XCircle, Zap,
+  Activity, AlertTriangle, BarChart2, CheckCircle2, Clock, Cpu,
+  Database, FileCheck, FlaskConical, Lock, Play, RefreshCw, XCircle,
 } from "lucide-react";
 import {
   refreshDbStatsAction,
@@ -228,18 +228,32 @@ export function SuperadminConsole({ initialPlatform, initialAiEngine, initialDbS
           </button>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.75rem", marginBottom: "1.25rem" }}>
-          {[
-            { icon: <Brain size={14} />, label: "Risk Families", value: aiEngine.riskFamiliesLoaded },
-            { icon: <Zap size={14} />, label: "Signal Types", value: aiEngine.signalTypesSupported },
-            { icon: <ShieldCheck size={14} />, label: "Guardrails Active", value: aiEngine.guardrailsActive },
-            { icon: <FileCheck size={14} />, label: "Source Artifacts", value: aiEngine.sourceArtifactsLinked },
-          ].map((kpi) => (
-            <div key={kpi.label} style={{ background: "var(--panel-soft)", borderRadius: 8, padding: "0.75rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-              <span style={{ color: "var(--text-muted)", display: "flex", gap: "0.35rem", alignItems: "center", fontSize: "0.72rem" }}>{kpi.icon} {kpi.label}</span>
-              <strong style={{ fontSize: "1.4rem", lineHeight: 1 }}>{kpi.value}</strong>
-            </div>
-          ))}
+        <div className="psb-kpis" style={{ marginBottom: "1.25rem" }}>
+          <div className="psb-kpi c-cyan">
+            <div className="k-label">Engine Version</div>
+            <div className="k-val" style={{ fontSize: 22 }}>{aiEngine.engineVersion.split("—")[0].trim()}</div>
+            <div className="k-foot">deterministic engine</div>
+          </div>
+          <div className="psb-kpi c-purple">
+            <div className="k-label">Risk Families</div>
+            <div className="k-val">{aiEngine.riskFamiliesLoaded}</div>
+            <div className="k-foot">loaded &amp; active</div>
+          </div>
+          <div className="psb-kpi c-green">
+            <div className="k-label">Signal Types</div>
+            <div className="k-val">{aiEngine.signalTypesSupported}</div>
+            <div className="k-foot">supported inputs</div>
+          </div>
+          <div className="psb-kpi c-amber">
+            <div className="k-label">Guardrails</div>
+            <div className="k-val">{aiEngine.guardrailsActive}</div>
+            <div className="k-foot">active · enforced</div>
+          </div>
+          <div className="psb-kpi c-orange">
+            <div className="k-label">Source Artifacts</div>
+            <div className="k-val">{aiEngine.sourceArtifactsLinked}</div>
+            <div className="k-foot">linked references</div>
+          </div>
         </div>
 
         <div className={aiEngine.smokeTestResult === "pass" ? "verification-pass-box" : "verification-pending-box"} style={{ marginBottom: "1.25rem" }}>

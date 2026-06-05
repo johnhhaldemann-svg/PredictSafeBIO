@@ -52,7 +52,7 @@ export default async function WorkbenchPage({
 
   // Superadmins manage the platform from /admin, not the workbench.
   if (auth.role === "superadmin") {
-    redirect("/admin/organizations");
+    redirect("/admin/dashboard");
   }
 
   // Standard workbench for all other roles
