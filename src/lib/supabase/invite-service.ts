@@ -59,6 +59,7 @@ export async function hasValidInviteForCurrentUser(): Promise<boolean> {
   const { data, error } = await supabase
     .from("workspace_invitations")
     .select("id, status, expires_at")
+    .eq("email", user.email.toLowerCase())
     .eq("status", "pending")
     .gt("expires_at", new Date().toISOString())
     .maybeSingle();
@@ -85,6 +86,7 @@ export async function acceptInviteForCurrentUser(): Promise<void> {
   await supabase
     .from("workspace_invitations")
     .update({ status: "accepted", accepted_at: new Date().toISOString() })
+    .eq("email", user.email.toLowerCase())
     .eq("status", "pending")
     .gt("expires_at", new Date().toISOString());
 }
@@ -145,6 +147,7 @@ export async function createWorkspaceInvitation(input: {
     .from("workspace_invitations")
     .select("id, status, expires_at")
     .eq("organization_id", context.organizationId)
+    .eq("email", email)
     .eq("status", "pending")
     .gt("expires_at", new Date().toISOString())
     .maybeSingle();

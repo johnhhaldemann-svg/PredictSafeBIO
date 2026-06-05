@@ -40,10 +40,10 @@ export async function getAssessmentReportData(id: string): Promise<AssessmentRep
   const { data: assessment } = await supabase
     .from("assessments")
     .select(`
-      id, workflow, area, score, level, confidence,
+      id, input_snapshot, output_snapshot, score, level, confidence,
       human_review_status, reviewed_at, reviewer_notes,
       assigned_reviewer_id, review_due_date,
-      output, organization_id
+      organization_id
     `)
     .eq("id", id)
     .eq("organization_id", profile.organization_id)
@@ -54,13 +54,13 @@ export async function getAssessmentReportData(id: string): Promise<AssessmentRep
   const [signalsResult, eventsResult, reviewerResult] = await Promise.all([
     supabase
       .from("assessment_signals")
-      .select("label, type, evidence")
+      .select("label, signal_type, payload")
       .eq("assessment_id", id),
     supabase
       .from("audit_events")
-      .select("created_at, event_type, metadata")
+      .select("created_at, event_type, summary, payload")
       .eq("organization_id", profile.organization_id)
-      .contains("metadata", { assessmentId: id })
+      .contains("payload", { assessmentId: id })
       .order("created_at", { ascending: false })
       .limit(20),
     (assessment as any).assigned_reviewer_id
@@ -74,12 +74,13 @@ export async function getAssessmentReportData(id: string): Promise<AssessmentRep
 
   const companyName = await getOrgName(supabase, profile.organization_id);
   const a = assessment as any;
-  const output = a.output ?? {};
+  const input = a.input_snapshot ?? {};
+  const output = a.output_snapshot ?? {};
 
   return {
     id: a.id,
-    workflow: a.workflow ?? "Untitled",
-    area: a.area ?? "—",
+    workflow: input.workflow ?? "Untitled",
+    area: input.area ?? "—",
     score: a.score ?? 0,
     level: a.level ?? "unknown",
     confidence: a.confidence ?? "—",
@@ -95,11 +96,20 @@ export async function getAssessmentReportData(id: string): Promise<AssessmentRep
       missingInformation: output.missingInformation ?? [],
       recommendedActions: output.recommendedActions ?? [],
     },
-    signals: (signalsResult.data ?? []) as any[],
+    signals: ((signalsResult.data ?? []) as any[]).map((sig: any) => {
+      const p = sig.payload ?? {};
+      return {
+        label: sig.label ?? undefined,
+        type: sig.signal_type ?? p.type ?? "signal",
+        evidence:
+          [p.area, p.program, p.assay, p.equipmentId].filter(Boolean).join(" · ") ||
+          (p.status ?? undefined),
+      };
+    }),
     auditEvents: (eventsResult.data ?? []).map((e: any) => ({
       createdAt: e.created_at,
       eventType: e.event_type,
-      summary: e.metadata?.summary ?? e.event_type.replace(/_/g, " "),
+      summary: e.summary ?? e.event_type.replace(/_/g, " "),
     })),
     companyName,
     generatedAt: new Date().toISOString(),
@@ -135,7 +145,7 @@ export async function getIncidentReportData(id: string): Promise<IncidentReportD
   const [stepsResult, capasResult, eventsResult, labResult, reporterResult] = await Promise.all([
     supabase
       .from("incident_investigation_steps")
-      .select("id, step_type, description, completed_at, completed_by")
+      .select("id, step_type, notes, completed_at, owner_id")
       .eq("incident_id", id)
       .order("created_at", { ascending: true }),
     supabase
@@ -147,9 +157,9 @@ export async function getIncidentReportData(id: string): Promise<IncidentReportD
       .eq("source_incident_id", id),
     supabase
       .from("audit_events")
-      .select("created_at, event_type, metadata")
+      .select("created_at, event_type, summary, payload")
       .eq("organization_id", (profile as any).organization_id)
-      .contains("metadata", { incidentId: id })
+      .contains("payload", { incidentId: id })
       .order("created_at", { ascending: false })
       .limit(15),
     inc.lab_id
@@ -172,7 +182,13 @@ export async function getIncidentReportData(id: string): Promise<IncidentReportD
     summary: inc.summary,
     labName: (labResult.data as any)?.name ?? null,
     reportedByName: (reporterResult.data as any)?.full_name ?? null,
-    investigationSteps: (stepsResult.data ?? []) as any[],
+    investigationSteps: ((stepsResult.data ?? []) as any[]).map((step: any) => ({
+      id: step.id,
+      step_type: step.step_type,
+      description: step.notes ?? "",
+      completed_at: step.completed_at ?? null,
+      completed_by: step.owner_id ?? null,
+    })),
     linkedCapas: (capasResult.data ?? []).map((c: any) => ({
       id: c.id,
       title: c.title,
@@ -191,7 +207,7 @@ export async function getIncidentReportData(id: string): Promise<IncidentReportD
     auditEvents: (eventsResult.data ?? []).map((e: any) => ({
       createdAt: e.created_at,
       eventType: e.event_type,
-      summary: e.metadata?.summary ?? e.event_type.replace(/_/g, " "),
+      summary: e.summary ?? e.event_type.replace(/_/g, " "),
     })),
     companyName,
     generatedAt: new Date().toISOString(),
