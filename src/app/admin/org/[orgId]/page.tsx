@@ -283,7 +283,7 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                 <Download size={20} />
               </div>
               <p className="muted" style={{ marginBottom: "1rem", fontSize: "0.85rem" }}>
-                Download a CSV archive of this organization's records for compliance audits or offboarding.
+                Download a CSV archive of this organization&apos;s records for compliance audits or offboarding.
                 Export actions are recorded in the audit log.
               </p>
               <form method="GET" action={`/api/admin/export/${orgId}`} style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "flex-end" }}>
