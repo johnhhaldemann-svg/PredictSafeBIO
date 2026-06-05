@@ -17,6 +17,7 @@ import { isSupabaseConfigured } from "./env";
 import { createSupabaseServerClient } from "./server";
 import { getProfileContext, mapAuditEvent } from "./data-helpers";
 import { logAssessmentKnowledgeEntry } from "./knowledge-service";
+import { runAssessmentTriggers } from "./assessment-triggers";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -379,6 +380,14 @@ export async function saveAssessment(input: BioAiInput) {
       }
     )
   });
+
+  // Fire risk-tier triggers (CAPA creation, review scheduling, risk cells, audit events).
+  // Best-effort — trigger failure must never block the save.
+  try {
+    await runAssessmentTriggers(supabase, { organizationId: context.organizationId, userId: context.userId }, data.id, assessment, input);
+  } catch {
+    // intentionally swallowed
+  }
 
   // Log to AI knowledge review queue (non-blocking).
   void logAssessmentKnowledgeEntry(input, assessment, context.organizationId).catch(() => {});

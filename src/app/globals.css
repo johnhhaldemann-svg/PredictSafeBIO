@@ -6777,3 +6777,139 @@ pre {
   .psb-console .psb-layout { grid-template-columns: 1fr; }
   .psb-console .psb-aside { position: static; height: auto; }
 }
+
+/* ── Phase 0: closed-loop system framing (home page) ──────────────────────── */
+.loopmap-band {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr 1fr;
+  gap: 16px;
+  align-items: stretch;
+  margin-bottom: 4px;
+}
+
+.loopmap-rail {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel-soft);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.loopmap-rail--engine {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #ffffff;
+  align-items: flex-start;
+}
+
+.loopmap-rail-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+.loopmap-rail--engine .loopmap-rail-label { color: var(--blue-lt); }
+
+.loopmap-rail-title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text);
+}
+.loopmap-rail--engine .loopmap-rail-title { color: #ffffff; }
+
+.loopmap-rail-sub {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.loopmap-rail--engine .loopmap-rail-sub { color: var(--blue-lt); }
+
+.loopmap-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.loopmap-list li {
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--text);
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+
+.loopmap-engine-note {
+  font-size: 11px;
+  color: var(--blue-lt);
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+@media (max-width: 860px) {
+  .loopmap-band { grid-template-columns: 1fr; }
+}
+
+/* 8-stage sub-stage chips inside the live lifecycle cards */
+.lifecycle-substages {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0 0;
+  border-top: 1px dashed var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.lifecycle-substage {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  line-height: 1.25;
+  color: var(--text);
+}
+.lifecycle-substage-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  border-radius: 999px;
+  background: var(--blue-bg);
+  color: var(--blue);
+  font-size: 9px;
+  font-weight: 700;
+}
+.lifecycle-substage--soon { color: var(--muted); }
+.lifecycle-substage--soon .lifecycle-substage-num {
+  background: transparent;
+  border: 1px dashed var(--muted);
+  color: var(--muted);
+}
+.lifecycle-substage-soon-tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--amber-dk);
+  background: var(--amber-bg);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: auto;
+}
+
+/* ── Risk Trigger Framework page ── */
+.framework-tier-card { transition: box-shadow 0.2s ease, transform 0.15s ease; }
+.framework-tier-card[data-tier="low"]:hover     { box-shadow: 0 8px 32px rgba(99,153,34,0.18);  transform: translateY(-2px); }
+.framework-tier-card[data-tier="moderate"]:hover { box-shadow: 0 8px 32px rgba(239,159,39,0.2); transform: translateY(-2px); }
+.framework-tier-card[data-tier="high"]:hover    { box-shadow: 0 8px 32px rgba(226,75,74,0.2);   transform: translateY(-2px); }
+.framework-tier-card[data-tier="critical"]:hover { box-shadow: 0 8px 32px rgba(124,58,237,0.2); transform: translateY(-2px); }

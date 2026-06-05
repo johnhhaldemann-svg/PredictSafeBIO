@@ -96,7 +96,10 @@ export default async function AssessmentsPage({
             <p className="section-label">Assess</p>
             <h1>Risk Register</h1>
           </div>
-          <Link className="button-primary" href={currentUserId ? "/workbench" : "/login?next=/workbench"}>New assessment</Link>
+          <div style={{ display: "flex", gap: 8 }}>
+            <Link className="button-secondary" href="/assessments/framework">Trigger logic</Link>
+            <Link className="button-primary" href={currentUserId ? "/workbench" : "/login?next=/workbench"}>New assessment</Link>
+          </div>
         </header>
 
         {pendingReviewCount > 0 ? (
