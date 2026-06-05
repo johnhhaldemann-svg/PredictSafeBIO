@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { normalizeWorkspaceRole, getRoleTier } from "@/lib/role-permissions";
 
 const read = (p: string) => readFileSync(join(process.cwd(), p), "utf8");
 
@@ -22,6 +23,28 @@ describe("role assignment security", () => {
     expect(userDetailPage).toContain("ASSIGNABLE_PLATFORM_ROLES");
     // Owners/members are never assignable platform roles from the org-role list.
     expect(userDetailPage).toContain("ASSIGNABLE_ORG_ROLES");
+  });
+});
+
+describe("new supervisor + viewer roles", () => {
+  it("auditor normalizes to viewer (read-only), not owner", () => {
+    expect(normalizeWorkspaceRole("auditor")).toBe("viewer");
+    expect(normalizeWorkspaceRole("read_only_viewer")).toBe("viewer");
+    expect(normalizeWorkspaceRole("client_reviewer")).toBe("viewer");
+  });
+
+  it("supervisor tier DB strings all resolve correctly", () => {
+    for (const r of ["supervisor", "project_admin", "foreman", "lab_manager", "pi"]) {
+      expect(normalizeWorkspaceRole(r), `${r} should normalize to supervisor`).toBe("supervisor");
+    }
+  });
+
+  it("tier ordering is strictly viewer < member < supervisor < owner < platform_staff < superadmin", () => {
+    expect(getRoleTier("viewer")).toBeLessThan(getRoleTier("member"));
+    expect(getRoleTier("member")).toBeLessThan(getRoleTier("supervisor"));
+    expect(getRoleTier("supervisor")).toBeLessThan(getRoleTier("owner"));
+    expect(getRoleTier("owner")).toBeLessThan(getRoleTier("platform_staff"));
+    expect(getRoleTier("platform_staff")).toBeLessThan(getRoleTier("superadmin"));
   });
 });
 

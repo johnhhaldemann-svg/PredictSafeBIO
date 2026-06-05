@@ -24,6 +24,15 @@ function safeSettle<T>(promise: Promise<T>, fallback: T): Promise<T> {
 
 type Tone = "ok" | "warn" | "alert" | "neutral";
 
+/** One of the diagram's eight cycle stages, mapped under a live loop stage. */
+type SubStage = {
+  /** Stage number from the Risk Reduction Cycle diagram (1-8). */
+  number: number;
+  label: string;
+  /** True until the dedicated module ships — shown honestly as "Soon". */
+  soon?: boolean;
+};
+
 type Stage = {
   number: number;
   key: string;
@@ -39,7 +48,33 @@ type Stage = {
   ctaHref: string;
   secondaryLabel?: string;
   secondaryHref?: string;
+  /** The diagram stages this live stage covers (8 stages mapped across 4). */
+  subStages: SubStage[];
 };
+
+/** Data that feeds the engine — the diagram's "Key Data Inputs" rail. */
+const DATA_INPUTS = [
+  "SOPs & policies",
+  "SDS & agents",
+  "Audit findings",
+  "Incidents & near-misses",
+  "Training records",
+  "Calibration logs",
+  "Waste logs",
+  "Permits & change control",
+];
+
+/** What the engine produces — the diagram's "Automated Outputs" rail. */
+const AUTOMATED_OUTPUTS = [
+  "Risk & exposure alerts",
+  "Control recommendations",
+  "Inspection schedules",
+  "Training reminders",
+  "CAPA assignments",
+  "Dashboards & trends",
+  "Compliance evidence",
+  "Executive visibility",
+];
 
 export default async function HomePage() {
   const auth = await safeSettle(getAuthSummary(), {
@@ -128,6 +163,10 @@ export default async function HomePage() {
       ctaHref: "/workbench",
       secondaryLabel: "Risk Register",
       secondaryHref: "/workbench?tab=risk-register",
+      subStages: [
+        { number: 3, label: "Hazard identification", soon: true },
+        { number: 4, label: "Risk assessment & prioritization" },
+      ],
     },
     {
       number: 2,
@@ -148,6 +187,11 @@ export default async function HomePage() {
       ctaHref: "/foundation",
       secondaryLabel: "My Work",
       secondaryHref: "/my-work",
+      subStages: [
+        { number: 1, label: "Governance & requirements" },
+        { number: 2, label: "Work & exposure mapping", soon: true },
+        { number: 5, label: "Control selection & planning", soon: true },
+      ],
     },
     {
       number: 3,
@@ -163,6 +207,9 @@ export default async function HomePage() {
       ctaHref: operateHref,
       secondaryLabel: "Work Permits",
       secondaryHref: "/permits",
+      subStages: [
+        { number: 6, label: "Training, authorization & execution" },
+      ],
     },
     {
       number: 4,
@@ -176,6 +223,10 @@ export default async function HomePage() {
       tone: risk.criticalCount > 0 ? "alert" : risk.highCount > 0 ? "warn" : "ok",
       ctaLabel: "Open Risk Monitor",
       ctaHref: "/risk-command-center",
+      subStages: [
+        { number: 7, label: "Monitoring, inspections & event response" },
+        { number: 8, label: "CAPA, reporting & continuous learning" },
+      ],
     },
   ];
 
@@ -184,13 +235,48 @@ export default async function HomePage() {
       <div className="page-stack">
         <header className="page-header">
           <p className="section-label">PredictSafeBIO</p>
-          <h1>Safety loop</h1>
+          <h1>Safety &amp; compliance loop</h1>
           <p className="muted">
-            Your biosafety program runs as a loop: <strong>Assess</strong> your risks, <strong>plan</strong> the
-            work, <strong>operate</strong> day to day, then <strong>monitor</strong> and feed what you learn back
-            into the next assessment. Each stage below shows where you stand and your next step.
+            One closed-loop system: your safety <strong>data inputs</strong> feed an{" "}
+            <strong>AI engine</strong> that scores risk and drafts actions, which flow through an
+            eight-stage cycle and come back out as <strong>automated outputs</strong> — alerts,
+            schedules, CAPA, and audit-ready evidence. People stay accountable for every decision.
           </p>
         </header>
+
+        <section className="loopmap-band" aria-label="How the system works">
+          <div className="loopmap-rail">
+            <span className="loopmap-rail-label">Key data inputs</span>
+            <span className="loopmap-rail-title">What you already track</span>
+            <ul className="loopmap-list">
+              {DATA_INPUTS.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="loopmap-rail loopmap-rail--engine">
+            <span className="loopmap-rail-label">AI engine</span>
+            <span className="loopmap-rail-title">Biotech Safety &amp; Compliance Engine</span>
+            <span className="loopmap-rail-sub">
+              Ingests your data, scores risk, triggers actions, tracks closure, and learns from
+              outcomes across the eight-stage cycle below.
+            </span>
+            <span className="loopmap-engine-note">
+              Supports decisions — your team remains accountable.
+            </span>
+          </div>
+
+          <div className="loopmap-rail">
+            <span className="loopmap-rail-label">Automated outputs</span>
+            <span className="loopmap-rail-title">What the engine returns</span>
+            <ul className="loopmap-list">
+              {AUTOMATED_OUTPUTS.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        </section>
 
         <ol className="lifecycle-grid" aria-label="Safety lifecycle stages">
           {stages.map((stage, i) => {
@@ -214,6 +300,19 @@ export default async function HomePage() {
                 </div>
 
                 <p className="lifecycle-detail">{stage.detail}</p>
+
+                <ul className="lifecycle-substages" aria-label={`${stage.title} cycle stages`}>
+                  {stage.subStages.map((sub) => (
+                    <li
+                      key={sub.number}
+                      className={`lifecycle-substage${sub.soon ? " lifecycle-substage--soon" : ""}`}
+                    >
+                      <span className="lifecycle-substage-num" aria-hidden="true">{sub.number}</span>
+                      <span>{sub.label}</span>
+                      {sub.soon && <span className="lifecycle-substage-soon-tag">Soon</span>}
+                    </li>
+                  ))}
+                </ul>
 
                 <div className="lifecycle-actions">
                   <Link href={stage.ctaHref} className="button-primary compact">

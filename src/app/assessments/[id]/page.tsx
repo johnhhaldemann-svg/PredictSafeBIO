@@ -19,6 +19,215 @@ import {
 import { DraftAssistButton } from "@/components/DraftAssistButton";
 import { LoopNext } from "@/components/LoopNext";
 
+// ── Work-stop banner ─────────────────────────────────────────────────────────
+
+function WorkStopBanner({
+  level,
+  createdAt,
+}: {
+  level: "high" | "critical";
+  createdAt?: string;
+}) {
+  const isHigh = level === "high";
+
+  // Compute deadline and overdue state from assessment creation time
+  const deadlineHours = isHigh ? 48 : 24;
+  const escalationHours = isHigh ? 24 : 0;
+  const createdMs = createdAt ? new Date(createdAt).getTime() : null;
+  const capaDeadline = createdMs ? new Date(createdMs + deadlineHours * 3600 * 1000) : null;
+  const escalationDeadline = createdMs && escalationHours > 0
+    ? new Date(createdMs + escalationHours * 3600 * 1000)
+    : null;
+  const now = new Date();
+  const capaOverdue = capaDeadline ? now > capaDeadline : false;
+  const escalated = escalationDeadline ? now > escalationDeadline : false;
+
+  const regulatoryItems = [
+    { key: "OSHA", label: "Occupational Safety and Health Administration" },
+    { key: "CDC", label: "Centers for Disease Control and Prevention" },
+    { key: "IBC", label: "Institutional Biosafety Committee" },
+  ];
+
+  if (isHigh) {
+    return (
+      <div
+        style={{
+          background: "#FCEBEB",
+          border: "2px solid #E24B4A",
+          borderRadius: 10,
+          padding: "16px 20px",
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 14,
+        }}
+      >
+        <span style={{ fontSize: 24, marginTop: 1 }}>🛑</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 800, fontSize: 15, color: "#A32D2D", letterSpacing: "-0.01em", marginBottom: 6 }}>
+            WORK STOP RECOMMENDED
+          </div>
+          <div style={{ fontSize: 13, color: "#7f1d1d", lineHeight: 1.6, marginBottom: 10 }}>
+            High risk assessment requires immediate supervisor review. Work should pause pending
+            CAPA acknowledgment. A CAPA has been auto-created with a {deadlineHours}-hour deadline.
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 8,
+              marginBottom: 12,
+              fontSize: 12,
+              fontFamily: "monospace",
+            }}
+          >
+            {capaDeadline && (
+              <span
+                style={{
+                  padding: "3px 10px",
+                  borderRadius: 5,
+                  background: capaOverdue ? "#A32D2D" : "#fecaca",
+                  color: capaOverdue ? "#fff" : "#7f1d1d",
+                  fontWeight: 700,
+                  border: "1px solid rgba(162,45,45,0.3)",
+                }}
+              >
+                CAPA deadline: {capaDeadline.toLocaleDateString()}{capaOverdue ? " — OVERDUE" : ""}
+              </span>
+            )}
+            {escalationDeadline && (
+              <span
+                style={{
+                  padding: "3px 10px",
+                  borderRadius: 5,
+                  background: escalated ? "#7f1d1d" : "#fef2f2",
+                  color: escalated ? "#fff" : "#991b1b",
+                  fontWeight: 700,
+                  border: "1px solid rgba(127,29,29,0.25)",
+                }}
+              >
+                {escalated ? "⬆ Escalated to dept head" : `Escalates to dept head: ${escalationDeadline.toLocaleDateString()}`}
+              </span>
+            )}
+          </div>
+          <Link className="button-secondary" href="/operations/capa" style={{ fontSize: 13 }}>
+            View CAPA records →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Critical
+  return (
+    <div
+      style={{
+        background: "#f3effe",
+        border: "2px solid #7c3aed",
+        borderRadius: 10,
+        padding: "18px 20px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14 }}>
+        <span style={{ fontSize: 26, marginTop: 1 }}>🆘</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 800, fontSize: 16, color: "#5b21b6", letterSpacing: "-0.01em", marginBottom: 6 }}>
+            WORK STOP REQUIRED — IMMINENT HAZARD
+          </div>
+          <div style={{ fontSize: 13, color: "#4c1d95", lineHeight: 1.6 }}>
+            Executive sign-off required before work resumes. Incident record initiated.
+            Mandatory investigation must be completed within 72 hours. Immutable audit trail is active.
+          </div>
+        </div>
+      </div>
+
+      {/* Deadline chips */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14, fontSize: 12, fontFamily: "monospace" }}>
+        {capaDeadline && (
+          <span
+            style={{
+              padding: "3px 10px",
+              borderRadius: 5,
+              background: capaOverdue ? "#5b21b6" : "#ede9fe",
+              color: capaOverdue ? "#fff" : "#4c1d95",
+              fontWeight: 700,
+              border: "1px solid rgba(91,33,182,0.3)",
+            }}
+          >
+            CAPA deadline: {capaDeadline.toLocaleDateString()}{capaOverdue ? " — OVERDUE" : ""}
+          </span>
+        )}
+        <span style={{ padding: "3px 10px", borderRadius: 5, background: "#ede9fe", color: "#4c1d95", fontWeight: 700, border: "1px solid rgba(91,33,182,0.3)" }}>
+          🔐 Executive sign-off required to resume
+        </span>
+        <span style={{ padding: "3px 10px", borderRadius: 5, background: "#ede9fe", color: "#4c1d95", fontWeight: 700, border: "1px solid rgba(91,33,182,0.3)" }}>
+          🛡 Audit trail locked — immutable
+        </span>
+      </div>
+
+      {/* Regulatory notification checklist */}
+      <div
+        style={{
+          background: "rgba(255,255,255,0.6)",
+          border: "1px solid rgba(124,58,237,0.25)",
+          borderRadius: 8,
+          padding: "12px 16px",
+          marginBottom: 12,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "#7c3aed",
+            marginBottom: 10,
+          }}
+        >
+          Regulatory Notification Checklist
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {regulatoryItems.map((item) => (
+            <div
+              key={item.key}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                fontSize: 13,
+                color: "#4c1d95",
+              }}
+            >
+              <input
+                type="checkbox"
+                disabled
+                style={{ width: 15, height: 15, accentColor: "#7c3aed", flexShrink: 0 }}
+              />
+              <span>
+                <strong style={{ marginRight: 6 }}>{item.key}</strong>
+                <span style={{ color: "#6d28d9" }}>{item.label}</span>
+                <span style={{ color: "#7c3aed", opacity: 0.7 }}> — pending confirmation</span>
+              </span>
+            </div>
+          ))}
+        </div>
+        <p style={{ fontSize: 11, color: "#7c3aed", marginTop: 10, opacity: 0.7 }}>
+          Mark notifications complete in your incident record once confirmed with each agency.
+        </p>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <Link className="button-secondary" href="/operations/capa" style={{ fontSize: 13 }}>
+          View CAPA records →
+        </Link>
+        <Link className="button-secondary" href="/risk-command-center" style={{ fontSize: 13 }}>
+          Risk Monitor →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default async function AssessmentDetailPage({
   params,
   searchParams
@@ -59,6 +268,15 @@ export default async function AssessmentDetailPage({
           <h1>{assessment.workflow}</h1>
         </header>
         {query.message ? <p className="form-message">{query.message}</p> : null}
+
+        {/* ── Work-stop banners ───────────────────────────────────────────── */}
+        {assessment.level === "high" && (
+          <WorkStopBanner level="high" createdAt={assessment.createdAt} />
+        )}
+        {assessment.level === "critical" && (
+          <WorkStopBanner level="critical" createdAt={assessment.createdAt} />
+        )}
+
         <LoopNext
           stage="Assess"
           nextStage="Plan"
