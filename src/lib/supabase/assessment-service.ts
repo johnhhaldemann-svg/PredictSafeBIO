@@ -65,7 +65,7 @@ function demoAssessmentSummary(id: string, input: BioAiInput): SavedAssessmentSu
     humanReviewRequired: assessment.humanReviewRequired,
     humanReviewStatus: assessment.humanReviewRequired
       ? "draft_human_review_required"
-      : "reviewed_monitoring",
+      : "routine_monitoring",
     reviewedAt: null
   };
 }
