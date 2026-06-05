@@ -14,6 +14,7 @@ import {
 import type { PlatformChecklistItem, PlatformData } from "@/lib/supabase/platform-service";
 import type { AdHocAssessmentInput, AiEngineStatus, DbTableStat } from "@/lib/supabase/superadmin-service";
 import type { BioAiAssessment } from "@/lib/bio-ai/types";
+import { AiEngineMemoryExplorer } from "@/components/AiEngineMemoryExplorer";
 
 type Props = {
   initialPlatform: PlatformData;
@@ -372,6 +373,22 @@ export function SuperadminConsole({ initialPlatform, initialAiEngine, initialDbS
             );
           })}
         </div>
+      </section>
+
+      {/* Section 4: Engine memory explorer */}
+      <section className="panel">
+        <div className="panel-heading">
+          <div>
+            <p className="section-label">AI Engine</p>
+            <h2>Engine memory explorer</h2>
+            <p className="muted" style={{ fontSize: "0.72rem", margin: "0.25rem 0 0" }}>
+              Live read-only view of the engine built-in knowledge: risk model, families,
+              guardrails, and core rules. Sourced directly from engine TypeScript files.
+            </p>
+          </div>
+          <FileCheck size={22} />
+        </div>
+        <AiEngineMemoryExplorer />
       </section>
 
       <section className="panel">

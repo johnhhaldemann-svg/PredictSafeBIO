@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
  *   1. Platform ops & security checks — run on demand
  *   2. AI Engine diagnostics — smoke test, risk families, ad-hoc assessment
  *   3. Database visual — live record distribution map
+ *   4. Engine memory explorer — risk model, families, guardrails, core rules
  *
  * Access: signed-in superadmin (session role). PLATFORM_ADMIN_KEY remains a
  * break-glass fallback (?key=…) for use before a superadmin profile exists.
