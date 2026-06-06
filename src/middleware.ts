@@ -38,6 +38,8 @@ const rateLimitStore = new Map<string, number[]>();
 const WINDOW_MS   = 60_000; // 1 minute
 const MAX_AUTH    = 10;     // max auth attempts per minute per IP
 const MAX_API     = 60;     // max API calls per minute per IP
+const MAX_AI      = 20;     // max AI/report generation requests per minute per IP
+let   cleanupCounter = 0;   // sampled cleanup — only sweep every N calls
 
 function getClientIp(req: NextRequest): string {
   return (
@@ -59,8 +61,10 @@ function checkRateLimit(key: string, max: number): { allowed: boolean; remaining
   timestamps.push(now);
   rateLimitStore.set(key, timestamps);
 
-  // Cleanup: remove old entries every 1000 requests to prevent memory leak
-  if (rateLimitStore.size > 10000) {
+  // Sampled cleanup: sweep stale entries roughly every 500 calls, not on every
+  // request. Avoids iterating the entire map on every hot-path invocation.
+  cleanupCounter++;
+  if (cleanupCounter % 500 === 0 && rateLimitStore.size > 500) {
     for (const [k, v] of rateLimitStore) {
       if (v.every(t => now - t > WINDOW_MS)) rateLimitStore.delete(k);
     }
@@ -69,7 +73,8 @@ function checkRateLimit(key: string, max: number): { allowed: boolean; remaining
   return { allowed: true, remaining: max - timestamps.length };
 }
 
-function rateLimitedResponse(remaining: number): NextResponse {
+// Accept the actual limit so the header is accurate for every route group.
+function rateLimitedResponse(remaining: number, limit = MAX_AUTH): NextResponse {
   return new NextResponse(
     JSON.stringify({ error: "Too many requests. Please wait a moment and try again." }),
     {
@@ -77,7 +82,7 @@ function rateLimitedResponse(remaining: number): NextResponse {
       headers: {
         "Content-Type": "application/json",
         "Retry-After": "60",
-        "X-RateLimit-Limit": String(MAX_AUTH),
+        "X-RateLimit-Limit": String(limit),
         "X-RateLimit-Remaining": String(remaining),
         "X-RateLimit-Reset": String(Math.ceil((Date.now() + WINDOW_MS) / 1000)),
       },
@@ -119,7 +124,14 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
 
     // IMPORTANT: do not add logic between createServerClient and getUser().
     // getUser() is what actually triggers the token refresh.
-    await supabase.auth.getUser();
+    // Wrapped in try/catch: a Supabase network error must not take down the
+    // entire middleware and make every page return 500.
+    try {
+      await supabase.auth.getUser();
+    } catch {
+      // Best-effort — session refresh failed (Supabase unreachable?).
+      // Continue serving the request with the existing cookies as-is.
+    }
   }
 
   // ── 2. Auth route rate limiting ─────────────────────────────────────────────
@@ -160,8 +172,8 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
 
   // ── 4. Stripe API routes ────────────────────────────────────────────────────
   if (pathname.startsWith("/api/stripe/")) {
-    const { allowed } = checkRateLimit(`stripe:${ip}`, MAX_API);
-    if (!allowed) return rateLimitedResponse(0);
+    const { allowed, remaining } = checkRateLimit(`stripe:${ip}`, MAX_API);
+    if (!allowed) return rateLimitedResponse(remaining, MAX_API);
 
     // Webhook: must be POST, signature verified in handler — allow through
     if (pathname === "/api/stripe/webhook") {
@@ -169,7 +181,7 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
       return response;
     }
 
-    // Checkout/portal/redirect: must be POST from same origin
+    // Checkout/portal/redirect: must be POST
     if (
       pathname === "/api/stripe/checkout" ||
       pathname === "/api/stripe/checkout-redirect" ||
@@ -185,8 +197,23 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
   // ── 5. Admin export API ─────────────────────────────────────────────────────
   if (pathname.startsWith("/api/admin/")) {
     if (method !== "GET") return new NextResponse(null, { status: 405 });
-    const { allowed } = checkRateLimit(`admin:${ip}`, MAX_API);
-    if (!allowed) return rateLimitedResponse(0);
+    const { allowed, remaining } = checkRateLimit(`admin:${ip}`, MAX_API);
+    if (!allowed) return rateLimitedResponse(remaining, MAX_API);
+    return response;
+  }
+
+  // ── 6. AI generation + report routes ───────────────────────────────────────
+  // These are expensive server-side operations — rate limit tightly to prevent
+  // abuse. Auth is enforced inside each handler; here we just throttle volume.
+  if (
+    pathname.startsWith("/api/ai/") ||
+    pathname.startsWith("/api/reports/") ||
+    pathname.startsWith("/api/assessments") ||
+    pathname.startsWith("/api/document-recommendations") ||
+    pathname.startsWith("/api/inspections/")
+  ) {
+    const { allowed, remaining } = checkRateLimit(`app-api:${ip}`, MAX_AI);
+    if (!allowed) return rateLimitedResponse(remaining, MAX_AI);
     return response;
   }
 
