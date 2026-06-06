@@ -19,6 +19,7 @@
  */
 
 import { getSupabaseAdminClient } from "./admin";
+import { isSupabaseServiceConfigured } from "./env";
 
 export type LimitCheckResult =
   | { allowed: true; current: number; limit: number | null }
@@ -35,7 +36,18 @@ export type OrgUsage = {
 
 // ── Get current usage + limits for an org ────────────────────────────────────
 
+/** Safe fallback returned when the admin client is unavailable (e.g. preview env). */
+const UNMETERED_USAGE: OrgUsage = {
+  provider_count: 0,
+  patient_count:  0,
+  plan_tier:      "free",
+  plan_name:      "Free",
+  max_providers:  null,
+  max_patients:   null,
+};
+
 export async function getOrgUsage(organizationId: string): Promise<OrgUsage> {
+  if (!isSupabaseServiceConfigured()) return UNMETERED_USAGE;
   const admin = getSupabaseAdminClient();
 
   const [providerRes, patientRes, subRes] = await Promise.all([

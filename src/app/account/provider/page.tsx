@@ -6,6 +6,8 @@ import { ArrowLeft, CheckCircle2, Clock, PlusCircle, ShieldAlert, ShieldCheck, X
 import { AppShell } from "@/components/AppShell";
 import { createServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isSupabaseServiceConfigured } from "@/lib/supabase/env";
+import { DataLoadError } from "@/components/DataLoadError";
 import { updateProviderProfileAction, withdrawProviderProfileAction } from "./actions";
 
 /**
@@ -52,14 +54,25 @@ export default async function ProviderAccountPage({ searchParams }: Props) {
   if (!user) redirect("/login?next=/account/provider");
 
   const sp = await searchParams;
-  const admin = getSupabaseAdminClient();
 
-   
+  if (!isSupabaseServiceConfigured()) {
+    return (
+      <AppShell>
+        <div className="page-stack">
+          <Link href="/account" className="text-link">← Account</Link>
+          <DataLoadError resource="provider profile" />
+        </div>
+      </AppShell>
+    );
+  }
+
+  const admin = getSupabaseAdminClient();
   const { data } = await (admin as any)
     .from("provider_profiles")
     .select("*")
     .eq("user_id", user.id)
-    .maybeSingle();
+    .maybeSingle()
+    .catch(() => ({ data: null }));
 
    
   const profile = data as any | null;

@@ -7,6 +7,7 @@ import { CheckCircle2, PlusCircle, Search, Briefcase, ShieldCheck } from "lucide
 export const metadata: Metadata = { title: "Provider Directory – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isSupabaseServiceConfigured } from "@/lib/supabase/env";
 
 /**
  * /providers — Provider Directory.
@@ -80,6 +81,7 @@ function filterProviders(providers: Provider[], filters: { specialty?: string; q
 }
 
 async function listApprovedProviders(filters: { specialty?: string; q?: string }): Promise<Provider[]> {
+  if (!isSupabaseServiceConfigured()) return [];
   const admin = getSupabaseAdminClient();
    
   let query = (admin as any)
@@ -113,6 +115,7 @@ async function listApprovedProviders(filters: { specialty?: string; q?: string }
 }
 
 async function getSpecialties(): Promise<string[]> {
+  if (!isSupabaseServiceConfigured()) return DEMO_PROVIDERS.map((p) => p.specialty).filter((v, i, a) => a.indexOf(v) === i).sort();
   const admin = getSupabaseAdminClient();
    
   const { data } = await (admin as any)
