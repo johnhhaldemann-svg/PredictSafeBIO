@@ -35,10 +35,10 @@ const STRENGTH_WIDTH: Record<Strength, string> = {
 
 const STRENGTH_COLOR: Record<Strength, string> = {
   empty:  "transparent",
-  weak:   "#C00000",
-  fair:   "#E26B0A",
-  good:   "#1F6B2E",
-  strong: "#375623",
+  weak:   "var(--red-dk)",
+  fair:   "var(--orange)",
+  good:   "var(--green-dk)",
+  strong: "var(--green-dk)",
 };
 
 type Props = {

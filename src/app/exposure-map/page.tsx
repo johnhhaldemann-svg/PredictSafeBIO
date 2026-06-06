@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { Map as MapIcon, Plus, Brain, Wind, Building2 } from "lucide-react";
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import {
   listExposures,
@@ -102,13 +103,13 @@ export default async function ExposureMapPage({ searchParams }: Props) {
         {/* Filter strip */}
         <nav className="command-center-link-strip" aria-label="Exposure filter">
           {(["all", "high-route"] as const).map((f) => (
-            <a
+            <Link
               key={f}
               href={f === "all" ? "/exposure-map" : `/exposure-map?filter=${f}`}
               className={`button-secondary compact ${filter === f ? "active-filter" : ""}`}
             >
               {f === "all" ? "All pathways" : "High-route only"}
-            </a>
+            </Link>
           ))}
         </nav>
 

@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { AlertTriangle, Plus, ShieldCheck, Activity, Brain } from "lucide-react";
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import {
   listHazards,
@@ -26,7 +27,7 @@ const STATUS_CLASS: Record<HazardStatus, string> = {
 };
 
 type Props = {
-  searchParams: Promise<{ message?: string; filter?: string }>;
+  searchParams: Promise<{ message?: string; success?: string; filter?: string }>;
 };
 
 export default async function HazardRegisterPage({ searchParams }: Props) {
@@ -84,18 +85,19 @@ export default async function HazardRegisterPage({ searchParams }: Props) {
           </article>
         </section>
 
+        {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message && <p className="form-message">{params.message}</p>}
 
         {/* Filter strip */}
         <nav className="command-center-link-strip" aria-label="Hazard filter">
           {(["all", "identified", "controlled"] as const).map((f) => (
-            <a
+            <Link
               key={f}
               href={f === "all" ? "/hazards" : `/hazards?filter=${f}`}
               className={`button-secondary compact ${filter === f ? "active-filter" : ""}`}
             >
               {f === "all" ? "All hazards" : f === "identified" ? "Identified (uncontrolled)" : "Controlled"}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -111,7 +113,10 @@ export default async function HazardRegisterPage({ searchParams }: Props) {
           {loadFailed ? (
             <DataLoadError resource="hazard register" />
           ) : hazards.length === 0 ? (
-            <p className="muted">No hazards yet. Identify your first hazard below.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No hazards registered yet</p>
+              <p className="muted">Add your first hazard below to begin tracking risk controls.</p>
+            </div>
           ) : (
             <div className="action-list">
               {hazards.map((hz) => (

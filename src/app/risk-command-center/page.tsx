@@ -111,16 +111,14 @@ export default async function RiskCommandCenterPage() {
               <h2>Active cells by type</h2>
             </div>
           </div>
-          <div className="command-card-grid" style={{ gap: "0.75rem" }}>
+          <div className="command-card-grid command-card-grid--tight">
             {CELL_TYPE_ORDER.map((type) => (
-              <article key={type} className="command-card platform-blue" style={{ minHeight: "auto", padding: "0.9rem 1rem" }}>
+              <article key={type} className="command-card platform-blue command-card--compact">
                 <div>
-                  <strong style={{ fontSize: "0.82em", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                    {cellTypeLabels[type]}
-                  </strong>
+                  <strong>{cellTypeLabels[type]}</strong>
                 </div>
-                <small style={{ fontSize: "1.6rem" }}>{byType[type]}</small>
-                <em style={{ fontSize: "0.75em" }}>{cellTypeDescriptions[type]}</em>
+                <small>{byType[type]}</small>
+                <em>{cellTypeDescriptions[type]}</em>
               </article>
             ))}
           </div>
@@ -136,13 +134,11 @@ export default async function RiskCommandCenterPage() {
           </div>
           <div className="action-list">
             {SEVERITY_ORDER.map((sev) => (
-              <article className="action-row" key={sev} style={{ alignItems: "center" }}>
+              <article className="action-row severity-row" key={sev}>
                 <div>
-                  <span className={SEVERITY_BADGE[sev]} style={{ textTransform: "capitalize" }}>{sev}</span>
+                  <span className={`${SEVERITY_BADGE[sev]} severity-badge--capitalize`}>{sev}</span>
                 </div>
-                <p style={{ fontVariantNumeric: "tabular-nums", fontWeight: 600, fontSize: "1.1rem" }}>
-                  {bySeverity[sev]}
-                </p>
+                <p className="severity-count">{bySeverity[sev]}</p>
               </article>
             ))}
           </div>
@@ -191,8 +187,8 @@ export default async function RiskCommandCenterPage() {
             </div>
           </div>
           {recentCells.length === 0 ? (
-            <div style={{ padding: "2rem 0", textAlign: "center" }}>
-              <CheckCircle2 size={32} style={{ margin: "0 auto 0.75rem", opacity: 0.4 }} />
+            <div className="risk-feed-empty">
+              <CheckCircle2 size={32} />
               <p className="muted">No active risk signals. All tools are in good standing.</p>
             </div>
           ) : (
@@ -212,7 +208,7 @@ export default async function RiskCommandCenterPage() {
               <h2>Go to source</h2>
             </div>
           </div>
-          <nav className="command-center-link-strip" style={{ flexWrap: "wrap" }}>
+          <nav className="command-center-link-strip">
             {[
               { href: "/chemical-inventory", label: "Chemical & SDS" },
               { href: "/waste-management", label: "Waste Management" },

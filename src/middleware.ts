@@ -2,9 +2,13 @@
  * middleware.ts — Edge middleware for PredictSafeBIO
  *
  * Responsibilities:
- *  1. Rate limiting — auth routes (login, signup, forgot-password) are limited
+ *  1. Session refresh — calls supabase.auth.getUser() on every request so that
+ *     expiring access tokens are refreshed and auth cookies are updated.
+ *     Without this, Supabase SSR can't rotate tokens and users get kicked to
+ *     /login mid-session ("Invalid refresh token" / "AuthApiError").
+ *  2. Rate limiting — auth routes (login, signup, forgot-password) are limited
  *     to 10 requests per IP per minute. Exceeding returns 429.
- *  2. API route protection — Stripe and cron endpoints get basic origin + method checks.
+ *  3. API route protection — Stripe and cron endpoints get basic origin + method checks.
  *
  * Implementation uses the Web Crypto API available in the Edge runtime.
  * No Redis required — uses an in-memory sliding window per edge instance.
@@ -15,18 +19,16 @@
  * that could expose access to PHI.
  */
 
+import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 
 export const config = {
   matcher: [
-    // Auth routes — rate limit
-    "/login",
-    "/signup",
-    "/forgot-password",
-    // API routes — method + origin checks
-    "/api/stripe/:path*",
-    "/api/cron/:path*",
-    "/api/admin/:path*",
+    /*
+     * Run on every route EXCEPT Next.js internals and static assets.
+     * Session refresh must cover all pages — not just auth routes.
+     */
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
 
@@ -36,6 +38,8 @@ const rateLimitStore = new Map<string, number[]>();
 const WINDOW_MS   = 60_000; // 1 minute
 const MAX_AUTH    = 10;     // max auth attempts per minute per IP
 const MAX_API     = 60;     // max API calls per minute per IP
+const MAX_AI      = 20;     // max AI/report generation requests per minute per IP
+let   cleanupCounter = 0;   // sampled cleanup — only sweep every N calls
 
 function getClientIp(req: NextRequest): string {
   return (
@@ -57,8 +61,10 @@ function checkRateLimit(key: string, max: number): { allowed: boolean; remaining
   timestamps.push(now);
   rateLimitStore.set(key, timestamps);
 
-  // Cleanup: remove old entries every 1000 requests to prevent memory leak
-  if (rateLimitStore.size > 10000) {
+  // Sampled cleanup: sweep stale entries roughly every 500 calls, not on every
+  // request. Avoids iterating the entire map on every hot-path invocation.
+  cleanupCounter++;
+  if (cleanupCounter % 500 === 0 && rateLimitStore.size > 500) {
     for (const [k, v] of rateLimitStore) {
       if (v.every(t => now - t > WINDOW_MS)) rateLimitStore.delete(k);
     }
@@ -67,7 +73,8 @@ function checkRateLimit(key: string, max: number): { allowed: boolean; remaining
   return { allowed: true, remaining: max - timestamps.length };
 }
 
-function rateLimitedResponse(remaining: number): NextResponse {
+// Accept the actual limit so the header is accurate for every route group.
+function rateLimitedResponse(remaining: number, limit = MAX_AUTH): NextResponse {
   return new NextResponse(
     JSON.stringify({ error: "Too many requests. Please wait a moment and try again." }),
     {
@@ -75,7 +82,7 @@ function rateLimitedResponse(remaining: number): NextResponse {
       headers: {
         "Content-Type": "application/json",
         "Retry-After": "60",
-        "X-RateLimit-Limit": String(MAX_AUTH),
+        "X-RateLimit-Limit": String(limit),
         "X-RateLimit-Remaining": String(remaining),
         "X-RateLimit-Reset": String(Math.ceil((Date.now() + WINDOW_MS) / 1000)),
       },
@@ -83,12 +90,51 @@ function rateLimitedResponse(remaining: number): NextResponse {
   );
 }
 
-export function middleware(req: NextRequest): NextResponse {
+export async function middleware(req: NextRequest): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
   const ip = getClientIp(req);
   const method = req.method;
 
-  // ── 1. Auth route rate limiting ─────────────────────────────────────────────
+  // ── 1. Supabase session refresh ─────────────────────────────────────────────
+  // @supabase/ssr requires middleware to call auth.getUser() on every request
+  // so that expiring JWTs are refreshed and the new tokens are written back to
+  // cookies. Skipping this causes "Invalid refresh token" / mid-session logouts.
+  let response = NextResponse.next({ request: req });
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  if (supabaseUrl && supabaseKey) {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          // Write updated cookies into both the request (for downstream
+          // Server Components) and the response (sent back to the browser).
+          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
+          response = NextResponse.next({ request: req });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    });
+
+    // IMPORTANT: do not add logic between createServerClient and getUser().
+    // getUser() is what actually triggers the token refresh.
+    // Wrapped in try/catch: a Supabase network error must not take down the
+    // entire middleware and make every page return 500.
+    try {
+      await supabase.auth.getUser();
+    } catch {
+      // Best-effort — session refresh failed (Supabase unreachable?).
+      // Continue serving the request with the existing cookies as-is.
+    }
+  }
+
+  // ── 2. Auth route rate limiting ─────────────────────────────────────────────
   if (
     pathname === "/login" ||
     pathname === "/signup" ||
@@ -103,10 +149,10 @@ export function middleware(req: NextRequest): NextResponse {
         return rateLimitedResponse(remaining);
       }
     }
-    return NextResponse.next();
+    return response;
   }
 
-  // ── 2. Cron endpoint — require CRON_SECRET ──────────────────────────────────
+  // ── 3. Cron endpoint — require CRON_SECRET ──────────────────────────────────
   if (pathname.startsWith("/api/cron/")) {
     if (method !== "GET") {
       return new NextResponse(null, { status: 405 });
@@ -121,21 +167,21 @@ export function middleware(req: NextRequest): NextResponse {
         return new NextResponse(null, { status: 401 });
       }
     }
-    return NextResponse.next();
+    return response;
   }
 
-  // ── 3. Stripe API routes ────────────────────────────────────────────────────
+  // ── 4. Stripe API routes ────────────────────────────────────────────────────
   if (pathname.startsWith("/api/stripe/")) {
-    const { allowed } = checkRateLimit(`stripe:${ip}`, MAX_API);
-    if (!allowed) return rateLimitedResponse(0);
+    const { allowed, remaining } = checkRateLimit(`stripe:${ip}`, MAX_API);
+    if (!allowed) return rateLimitedResponse(remaining, MAX_API);
 
     // Webhook: must be POST, signature verified in handler — allow through
     if (pathname === "/api/stripe/webhook") {
       if (method !== "POST") return new NextResponse(null, { status: 405 });
-      return NextResponse.next();
+      return response;
     }
 
-    // Checkout/portal/redirect: must be POST from same origin
+    // Checkout/portal/redirect: must be POST
     if (
       pathname === "/api/stripe/checkout" ||
       pathname === "/api/stripe/checkout-redirect" ||
@@ -145,16 +191,31 @@ export function middleware(req: NextRequest): NextResponse {
       if (method !== "POST") return new NextResponse(null, { status: 405 });
     }
 
-    return NextResponse.next();
+    return response;
   }
 
-  // ── 4. Admin export API ─────────────────────────────────────────────────────
+  // ── 5. Admin export API ─────────────────────────────────────────────────────
   if (pathname.startsWith("/api/admin/")) {
     if (method !== "GET") return new NextResponse(null, { status: 405 });
-    const { allowed } = checkRateLimit(`admin:${ip}`, MAX_API);
-    if (!allowed) return rateLimitedResponse(0);
-    return NextResponse.next();
+    const { allowed, remaining } = checkRateLimit(`admin:${ip}`, MAX_API);
+    if (!allowed) return rateLimitedResponse(remaining, MAX_API);
+    return response;
   }
 
-  return NextResponse.next();
+  // ── 6. AI generation + report routes ───────────────────────────────────────
+  // These are expensive server-side operations — rate limit tightly to prevent
+  // abuse. Auth is enforced inside each handler; here we just throttle volume.
+  if (
+    pathname.startsWith("/api/ai/") ||
+    pathname.startsWith("/api/reports/") ||
+    pathname.startsWith("/api/assessments") ||
+    pathname.startsWith("/api/document-recommendations") ||
+    pathname.startsWith("/api/inspections/")
+  ) {
+    const { allowed, remaining } = checkRateLimit(`app-api:${ip}`, MAX_AI);
+    if (!allowed) return rateLimitedResponse(remaining, MAX_AI);
+    return response;
+  }
+
+  return response;
 }

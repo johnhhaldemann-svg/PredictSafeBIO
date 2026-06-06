@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { AlertTriangle, Plus, ShieldCheck, Trash2, Truck } from "lucide-react";
+import Link from "next/link";
 
 export const metadata: Metadata = { title: "Waste Management – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
@@ -25,7 +26,7 @@ const STATUS_CLASS: Record<WasteStatus, string> = {
 };
 
 type Props = {
-  searchParams: Promise<{ message?: string; filter?: string }>;
+  searchParams: Promise<{ message?: string; success?: string; filter?: string }>;
 };
 
 export default async function WasteManagementPage({ searchParams }: Props) {
@@ -81,18 +82,19 @@ export default async function WasteManagementPage({ searchParams }: Props) {
           </article>
         </section>
 
+        {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message && <p className="form-message">{params.message}</p>}
 
         {/* Filter strip */}
         <nav className="command-center-link-strip" aria-label="Waste filter">
           {(["all", "at-risk", "ready"] as const).map((f) => (
-            <a
+            <Link
               key={f}
               href={f === "all" ? "/waste-management" : `/waste-management?filter=${f}`}
               className={`button-secondary compact ${filter === f ? "active-filter" : ""}`}
             >
               {f === "all" ? "All containers" : f === "at-risk" ? "At risk (≥80%)" : "Ready for pickup"}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -135,9 +137,9 @@ export default async function WasteManagementPage({ searchParams }: Props) {
                   </p>
 
                   {adminAccess.signedIn && rec.status !== "picked_up" && rec.status !== "disposed" && (
-                    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.4rem" }}>
+                    <div className="waste-actions-row">
                       {/* Update fill level */}
-                      <form action={updateFillLevelAction} style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+                      <form action={updateFillLevelAction} className="inline-form">
                         <input type="hidden" name="id" value={rec.id} />
                         <input
                           name="fillLevel"
@@ -145,20 +147,20 @@ export default async function WasteManagementPage({ searchParams }: Props) {
                           min={0}
                           max={100}
                           defaultValue={rec.fillLevel ?? 0}
-                          style={{ width: "70px" }}
+                          className="input-narrow"
                           aria-label="Fill level %"
                         />
                         <button className="button-secondary compact" type="submit">Update fill</button>
                       </form>
 
                       {/* Mark picked up */}
-                      <form action={markPickedUpAction} style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+                      <form action={markPickedUpAction} className="inline-form">
                         <input type="hidden" name="id" value={rec.id} />
                         <input
                           name="manifestNumber"
                           type="text"
                           placeholder="Manifest # (optional)"
-                          style={{ width: "160px" }}
+                          className="input-medium"
                         />
                         <button className="button-secondary compact" type="submit">Mark picked up</button>
                       </form>

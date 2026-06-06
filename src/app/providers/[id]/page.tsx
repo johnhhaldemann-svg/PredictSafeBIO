@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CheckCircle2, ShieldCheck, Stethoscope } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isSupabaseServiceConfigured } from "@/lib/supabase/env";
 
 /**
  * /providers/[id] — Public provider profile page.
@@ -16,6 +17,7 @@ type Props = { params: Promise<{ id: string }> };
 
 export default async function ProviderProfilePage({ params }: Props) {
   const { id } = await params;
+  if (!isSupabaseServiceConfigured()) notFound();
   const admin = getSupabaseAdminClient();
 
    

@@ -11,10 +11,16 @@ import { generateDocumentGapRecommendations } from "@/lib/documents/recommendati
 import { formatDocumentStatus, formatDocumentType } from "@/lib/display-labels";
 import { getAuthSummary, listDocuments } from "@/lib/supabase/data";
 import { canCreateWorkspaceRecord } from "@/lib/role-permissions";
+import { DataLoadError } from "@/components/DataLoadError";
 
 export default async function DocumentsPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const params = await searchParams;
-  const [documents, auth] = await Promise.all([listDocuments(), getAuthSummary()]);
+  const [documentsResult, auth] = await Promise.all([
+    listDocuments().catch(() => null),
+    getAuthSummary(),
+  ]);
+  const loadFailed = documentsResult === null;
+  const documents = documentsResult ?? [];
   const canCreateDocuments = canCreateWorkspaceRecord(auth);
   const totalDocumentGaps = documents.reduce((sum, doc) => sum + generateDocumentGapRecommendations(doc).length, 0);
 
@@ -136,8 +142,9 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
             </p>
           )}
         </section>
+        {loadFailed && <DataLoadError resource="documents" />}
         <section className="document-grid">
-          {documents.length === 0 ? (
+          {!loadFailed && documents.length === 0 ? (
             <article className="document-card">
               <strong>No document metadata saved yet</strong>
               <p>Create a controlled metadata record above to generate draft gap and AI-assisted update recommendations.</p>

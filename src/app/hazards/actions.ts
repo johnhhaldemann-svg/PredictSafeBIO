@@ -7,7 +7,7 @@ import {
   type HazardType,
   type HazardStatus,
 } from "@/lib/supabase/hazard-service";
-import { authMessage } from "@/lib/auth-routing";
+import { authMessage, authSuccess } from "@/lib/auth-routing";
 
 export async function createHazardAction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
@@ -37,7 +37,7 @@ export async function createHazardAction(formData: FormData) {
     description,
   });
 
-  redirect(authMessage("/hazards", result.message));
+  redirect(result.ok ? authSuccess("/hazards", result.message) : authMessage("/hazards", result.message));
 }
 
 export async function archiveHazardAction(formData: FormData) {
@@ -45,5 +45,5 @@ export async function archiveHazardAction(formData: FormData) {
   if (!id) redirect("/hazards");
 
   const result = await archiveHazard(id);
-  redirect(authMessage("/hazards", result.message));
+  redirect(result.ok ? authSuccess("/hazards", result.message) : authMessage("/hazards", result.message));
 }

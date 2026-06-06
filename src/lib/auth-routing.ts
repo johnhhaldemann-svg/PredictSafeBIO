@@ -9,6 +9,14 @@ export function authMessage(path: string, message: string) {
   return `${pathname}?${params.toString()}`;
 }
 
+/** Like authMessage but uses ?success= so pages can render a green confirmation. */
+export function authSuccess(path: string, message: string) {
+  const [pathname, query = ""] = path.split("?");
+  const params = new URLSearchParams(query);
+  params.set("success", message);
+  return `${pathname}?${params.toString()}`;
+}
+
 export function friendlyAuthError(message: string) {
   const normalized = message.toLowerCase();
   if (normalized.includes("email rate limit")) {

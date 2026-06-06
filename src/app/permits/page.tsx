@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { AlertTriangle, ClipboardCheck, Lock, Plus, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 
 export const metadata: Metadata = { title: "Permits – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
@@ -25,7 +26,7 @@ const STATUS_CLASS: Record<CloseoutStatus, string> = {
 };
 
 type Props = {
-  searchParams: Promise<{ message?: string; filter?: string }>;
+  searchParams: Promise<{ message?: string; success?: string; filter?: string }>;
 };
 
 export default async function PermitsPage({ searchParams }: Props) {
@@ -77,18 +78,19 @@ export default async function PermitsPage({ searchParams }: Props) {
           </article>
         </section>
 
+        {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message && <p className="form-message">{params.message}</p>}
 
         {/* Filter strip */}
         <nav className="command-center-link-strip" aria-label="Permit filter">
           {(["all", "active", "overdue", "draft"] as const).map((f) => (
-            <a
+            <Link
               key={f}
               href={f === "all" ? "/permits" : `/permits?filter=${f}`}
               className={`button-secondary compact ${filter === f ? "active-filter" : ""}`}
             >
               {f === "all" ? "All permits" : f === "active" ? "Active" : f === "overdue" ? "Overdue" : "Drafts"}
-            </a>
+            </Link>
           ))}
         </nav>
 

@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { SlidersHorizontal, Plus, ShieldCheck, Brain, Clock, AlertTriangle } from "lucide-react";
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import {
   listControls,
@@ -29,7 +30,7 @@ const STATUS_CLASS: Record<ControlStatus, string> = {
 const TIER_ORDER: ControlTier[] = ["elimination", "substitution", "engineering", "administrative", "ppe"];
 
 type Props = {
-  searchParams: Promise<{ message?: string; filter?: string }>;
+  searchParams: Promise<{ message?: string; success?: string; filter?: string }>;
 };
 
 export default async function ControlRegisterPage({ searchParams }: Props) {
@@ -90,18 +91,19 @@ export default async function ControlRegisterPage({ searchParams }: Props) {
           </article>
         </section>
 
+        {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message && <p className="form-message">{params.message}</p>}
 
         {/* Filter strip */}
         <nav className="command-center-link-strip" aria-label="Control filter">
           {(["all", "overdue"] as const).map((f) => (
-            <a
+            <Link
               key={f}
               href={f === "all" ? "/controls" : `/controls?filter=${f}`}
               className={`button-secondary compact ${filter === f ? "active-filter" : ""}`}
             >
               {f === "all" ? "All controls" : "Verification overdue"}
-            </a>
+            </Link>
           ))}
         </nav>
 

@@ -69,29 +69,11 @@ function ScoreBar({ score }: { score: number }) {
     "#27ae60";
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.78rem" }}>
-      <div
-        style={{
-          flex: 1,
-          height: 6,
-          background: "var(--border, #e0e0e0)",
-          borderRadius: 3,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            width: `${pct}%`,
-            height: "100%",
-            background: color,
-            borderRadius: 3,
-            transition: "width 0.3s ease",
-          }}
-        />
+    <div className="score-bar">
+      <div className="score-bar-track">
+        <div className="score-bar-fill" style={{ width: `${pct}%`, background: color }} />
       </div>
-      <span style={{ fontVariantNumeric: "tabular-nums", fontWeight: 600, color }}>
-        {pct}
-      </span>
+      <span className="severity-count" style={{ color }}>{pct}</span>
     </div>
   );
 }
@@ -127,37 +109,34 @@ export function RiskCellReviewCard({
     : null;
 
   return (
-    <article
-      className="action-row risk-cell-review-card"
-      style={{ gap: "0.6rem", flexDirection: "column", alignItems: "stretch" }}
-    >
+    <article className="action-row risk-cell-review-card risk-cell-card">
       {/* ── Header row ── */}
-      <div style={{ display: "flex", alignItems: "flex-start", gap: "0.75rem" }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.4rem", marginBottom: "0.2rem" }}>
-            <strong style={{ fontSize: "0.9rem" }}>
+      <div className="risk-cell-header">
+        <div className="risk-cell-main">
+          <div className="risk-cell-meta">
+            <strong className="risk-cell-title">
               {route && cell.linkedRecordId ? (
                 <Link href={route}>{cell.label}</Link>
               ) : (
                 cell.label
               )}
             </strong>
-            <span className={SEVERITY_BADGE[cell.severity] ?? "status-needs-review"} style={{ textTransform: "capitalize" }}>
+            <span className={`${SEVERITY_BADGE[cell.severity] ?? "status-needs-review"} severity-badge--capitalize`}>
               {cell.severity}
             </span>
             {payload.ai_human_review_required && (
-              <span className="status-overdue" style={{ display: "flex", alignItems: "center", gap: 3, fontSize: "0.72rem" }}>
+              <span className="status-overdue risk-cell-flag">
                 <ShieldAlert size={11} /> Review required
               </span>
             )}
             {payload.ai_escalation_required && (
-              <span className="status-overdue" style={{ display: "flex", alignItems: "center", gap: 3, fontSize: "0.72rem" }}>
+              <span className="status-overdue risk-cell-flag">
                 <Zap size={11} /> Escalation required
               </span>
             )}
           </div>
           {cell.linkedRecordType && (
-            <span className="muted" style={{ fontSize: "0.75rem" }}>
+            <span className="muted risk-cell-record-type">
               {cell.linkedRecordType.replace(/_/g, " ")}
               {cell.createdAt ? ` · ${new Date(cell.createdAt).toLocaleDateString()}` : ""}
             </span>
@@ -166,14 +145,11 @@ export function RiskCellReviewCard({
 
         {/* AI score */}
         {hasAi && (
-          <div style={{ textAlign: "right", flexShrink: 0, minWidth: 80 }}>
-            <div style={{ fontSize: "0.68rem", color: "var(--muted, #888)", marginBottom: 2 }}>AI RISK SCORE</div>
+          <div className="risk-cell-score">
+            <div className="risk-cell-score-label">AI RISK SCORE</div>
             <ScoreBar score={payload.ai_score!} />
             {payload.ai_confidence && (
-              <span
-                className={CONFIDENCE_CLASS[payload.ai_confidence] ?? "status-needs-review"}
-                style={{ fontSize: "0.68rem", marginTop: 3, display: "inline-block" }}
-              >
+              <span className={`${CONFIDENCE_CLASS[payload.ai_confidence] ?? "status-needs-review"} risk-cell-confidence`}>
                 {payload.ai_confidence} confidence
               </span>
             )}
@@ -183,8 +159,8 @@ export function RiskCellReviewCard({
 
       {/* Timeframe pill */}
       {timeframe && (
-        <div style={{ fontSize: "0.75rem" }}>
-          <AlertTriangle size={11} style={{ verticalAlign: "middle", marginRight: 4 }} />
+        <div className="risk-cell-timeframe">
+          <AlertTriangle size={11} className="inline-icon" />
           <strong>{timeframe}</strong>
         </div>
       )}
@@ -192,10 +168,9 @@ export function RiskCellReviewCard({
       {/* ── Expand/collapse toggle ── */}
       {hasAi && (
         <button
-          className="button-secondary compact"
+          className="button-secondary compact risk-cell-toggle"
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 4 }}
         >
           {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
           {expanded ? "Hide AI detail" : "Show AI detail"}
@@ -204,81 +179,55 @@ export function RiskCellReviewCard({
 
       {/* ── Expanded AI detail ── */}
       {expanded && hasAi && (
-        <div
-          style={{
-            background: "var(--surface, #fafafa)",
-            border: "1px solid var(--border, #e0e0e0)",
-            borderRadius: 8,
-            padding: "0.9rem 1rem",
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.75rem",
-            fontSize: "0.82rem",
-          }}
-        >
-          {/* Explanation */}
+        <div className="risk-cell-detail">
           {payload.ai_explanation && (
             <div>
-              <strong style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.04em", opacity: 0.6 }}>
-                AI Assessment
-              </strong>
-              <p style={{ marginTop: 4, lineHeight: 1.55 }}>{payload.ai_explanation}</p>
+              <strong className="risk-cell-detail-label">AI Assessment</strong>
+              <p className="risk-cell-detail-body">{payload.ai_explanation}</p>
             </div>
           )}
 
-          {/* Human review reason */}
           {payload.ai_human_review_reason && (
-            <div style={{ borderLeft: "3px solid var(--border, #e0e0e0)", paddingLeft: "0.75rem" }}>
-              <strong style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.04em", opacity: 0.6 }}>
-                Review Reason
-              </strong>
-              <p style={{ marginTop: 4, lineHeight: 1.5 }}>{payload.ai_human_review_reason}</p>
+            <div className="risk-cell-review-reason">
+              <strong className="risk-cell-detail-label">Review Reason</strong>
+              <p className="risk-cell-detail-body">{payload.ai_human_review_reason}</p>
             </div>
           )}
 
-          {/* Top drivers */}
           {drivers.length > 0 && (
             <div>
-              <strong style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.04em", opacity: 0.6 }}>
-                Risk Drivers
-              </strong>
-              <ul style={{ margin: "4px 0 0 0", padding: "0 0 0 1.1rem", lineHeight: 1.6 }}>
+              <strong className="risk-cell-detail-label">Risk Drivers</strong>
+              <ul className="risk-cell-list">
                 {drivers.map((d) => <li key={d}>{d}</li>)}
               </ul>
             </div>
           )}
 
-          {/* Recommended actions */}
           {actions.length > 0 && (
             <div>
-              <strong style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.04em", opacity: 0.6 }}>
-                Recommended Actions
-              </strong>
-              <ul style={{ margin: "4px 0 0 0", padding: "0 0 0 1.1rem", lineHeight: 1.6 }}>
+              <strong className="risk-cell-detail-label">Recommended Actions</strong>
+              <ul className="risk-cell-list">
                 {actions.map((a) => (
                   <li key={a.title}>
                     {a.title}
-                    <span className="muted" style={{ fontSize: "0.78em" }}> · {a.owner.replace(/_/g, " ")}</span>
+                    <span className="muted risk-cell-list-owner"> · {a.owner.replace(/_/g, " ")}</span>
                   </li>
                 ))}
               </ul>
             </div>
           )}
 
-          {/* Control gaps */}
           {gaps.length > 0 && (
             <div>
-              <strong style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--red, #c0392b)" }}>
-                Critical Control Gaps
-              </strong>
-              <ul style={{ margin: "4px 0 0 0", padding: "0 0 0 1.1rem", lineHeight: 1.6 }}>
-                {gaps.map((g) => <li key={g} style={{ color: "var(--red, #c0392b)" }}>{g}</li>)}
+              <strong className="risk-cell-detail-label--alert">Critical Control Gaps</strong>
+              <ul className="risk-cell-list risk-cell-gaps-list">
+                {gaps.map((g) => <li key={g}>{g}</li>)}
               </ul>
             </div>
           )}
 
           {payload.scored_at && (
-            <p className="muted" style={{ fontSize: "0.7rem" }}>
+            <p className="muted risk-cell-score-note">
               Scored {new Date(payload.scored_at).toLocaleString()} · Draft — human review required
             </p>
           )}
@@ -286,17 +235,12 @@ export function RiskCellReviewCard({
       )}
 
       {/* ── Action buttons ── */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginTop: "0.1rem" }}>
-        {/* Acknowledge */}
+      <div className="risk-cell-actions">
         <form action={acknowledgeRiskCellAction}>
           <input type="hidden" name="cellId" value={cell.id} />
           <input type="hidden" name="returnTo" value={returnTo} />
-          <button className="button-secondary compact" type="submit">
-            Acknowledge
-          </button>
+          <button className="button-secondary compact" type="submit">Acknowledge</button>
         </form>
-
-        {/* Dismiss toggle */}
         <button
           className="button-secondary compact"
           type="button"
@@ -304,8 +248,6 @@ export function RiskCellReviewCard({
         >
           Dismiss
         </button>
-
-        {/* Escalate to CAPA toggle */}
         <button
           className="button-primary compact"
           type="button"
@@ -313,45 +255,31 @@ export function RiskCellReviewCard({
         >
           Escalate to CAPA
         </button>
-
         {route && cell.linkedRecordId && (
-          <Link className="button-secondary compact" href={route}>
-            Open source
-          </Link>
+          <Link className="button-secondary compact" href={route}>Open source</Link>
         )}
       </div>
 
       {/* ── Dismiss form ── */}
       {activeForm === "dismiss" && (
-        <form
-          action={dismissRiskCellAction}
-          style={{
-            background: "var(--surface, #fafafa)",
-            border: "1px solid var(--border, #e0e0e0)",
-            borderRadius: 8,
-            padding: "0.9rem 1rem",
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
+        <form action={dismissRiskCellAction} className="risk-cell-action-form">
           <input type="hidden" name="cellId" value={cell.id} />
           <input type="hidden" name="returnTo" value={returnTo} />
-          <strong style={{ fontSize: "0.82rem" }}>Dismiss this risk cell</strong>
-          <p className="muted" style={{ fontSize: "0.78rem" }}>
+          <strong className="risk-cell-form-label">Dismiss this risk cell</strong>
+          <p className="muted risk-cell-form-hint">
             Provide a reason — this is logged to the audit trail and cannot be undone.
           </p>
-          <label style={{ fontSize: "0.82rem" }}>
+          <label className="risk-cell-form-label">
             Dismissal reason (required)
             <textarea
               name="reason"
               placeholder="e.g. False positive — investigated and confirmed no hazard present."
               rows={2}
               required
-              style={{ marginTop: "0.3rem", width: "100%" }}
+              className="risk-cell-form-input-mt"
             />
           </label>
-          <div style={{ display: "flex", gap: "0.4rem" }}>
+          <div className="risk-cell-form-buttons">
             <button className="button-secondary compact" type="submit">Confirm dismiss</button>
             <button className="button-secondary compact" type="button" onClick={() => setActiveForm(null)}>Cancel</button>
           </div>
@@ -360,30 +288,19 @@ export function RiskCellReviewCard({
 
       {/* ── Escalate to CAPA form ── */}
       {activeForm === "escalate" && (
-        <form
-          action={escalateToCapaAction}
-          style={{
-            background: "var(--surface, #fafafa)",
-            border: "1px solid var(--border, #e0e0e0)",
-            borderRadius: 8,
-            padding: "0.9rem 1rem",
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
+        <form action={escalateToCapaAction} className="risk-cell-action-form">
           <input type="hidden" name="cellId" value={cell.id} />
           <input type="hidden" name="cellLabel" value={cell.label} />
           <input type="hidden" name="severity" value={cell.severity} />
           <input type="hidden" name="returnTo" value={returnTo} />
-          <strong style={{ fontSize: "0.82rem" }}>Escalate to CAPA</strong>
-          <p className="muted" style={{ fontSize: "0.78rem" }}>
+          <strong className="risk-cell-form-label">Escalate to CAPA</strong>
+          <p className="muted risk-cell-form-hint">
             Creates a CAPA record linked to this cell. The cell will be resolved and the CAPA becomes
             the tracked corrective action.
           </p>
-          <label style={{ fontSize: "0.82rem" }}>
+          <label className="risk-cell-form-label">
             Assign owner role
-            <select name="ownerRole" defaultValue={payload.ai_recommended_actions?.[0]?.owner ?? "qa"} style={{ marginTop: "0.3rem" }}>
+            <select name="ownerRole" defaultValue={payload.ai_recommended_actions?.[0]?.owner ?? "qa"} className="risk-cell-form-input-mt">
               <option value="qa">QA</option>
               <option value="quality_unit">Quality Unit</option>
               <option value="biosafety_officer">Biosafety Officer</option>
@@ -392,16 +309,16 @@ export function RiskCellReviewCard({
               <option value="responsible_scientist">Responsible Scientist</option>
             </select>
           </label>
-          <label style={{ fontSize: "0.82rem" }}>
+          <label className="risk-cell-form-label">
             Initial investigation note (optional)
             <textarea
               name="note"
               placeholder="Describe the issue and initial findings for the CAPA record."
               rows={2}
-              style={{ marginTop: "0.3rem", width: "100%" }}
+              className="risk-cell-form-input-mt"
             />
           </label>
-          <div style={{ display: "flex", gap: "0.4rem" }}>
+          <div className="risk-cell-form-buttons">
             <button className="button-primary compact" type="submit">Create CAPA</button>
             <button className="button-secondary compact" type="button" onClick={() => setActiveForm(null)}>Cancel</button>
           </div>

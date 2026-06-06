@@ -90,7 +90,7 @@ export default async function TrainingMatrixPage({ searchParams }: { searchParam
             <tbody>
               {summary.rows.length === 0 && (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: "center", color: "var(--muted)", padding: "20px" }}>
+                  <td colSpan={8} className="table-empty-cell">
                     No training requirements yet. Add one below.
                   </td>
                 </tr>

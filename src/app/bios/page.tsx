@@ -6,7 +6,9 @@ import { CheckCircle2, PlusCircle, ShieldAlert, ShieldCheck, Users } from "lucid
 import { AppShell } from "@/components/AppShell";
 import { createServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isSupabaseServiceConfigured } from "@/lib/supabase/env";
 import { isAdminOrAbove } from "@/lib/role-permissions";
+import { DataLoadError } from "@/components/DataLoadError";
 import { getOrgUsage, usagePct } from "@/lib/supabase/plan-limits-service";
 import { deactivateBioAction } from "./actions";
 
@@ -35,20 +37,36 @@ export default async function BiosListPage({ searchParams }: Props) {
   if (!orgId) redirect("/onboarding");
 
   const sp = await searchParams;
-  const admin = getSupabaseAdminClient();
 
+  // Admin client requires SUPABASE_SERVICE_ROLE_KEY — not always set on preview.
+  // Degrade gracefully rather than crashing the entire page.
+  if (!isSupabaseServiceConfigured()) {
+    return (
+      <AppShell>
+        <div className="page-stack">
+          <header className="page-header">
+            <p className="section-label">Personnel Records</p>
+            <h1>Personnel records</h1>
+          </header>
+          <DataLoadError resource="personnel records" />
+        </div>
+      </AppShell>
+    );
+  }
+
+  const admin = getSupabaseAdminClient();
   const [biosResult, usage] = await Promise.all([
-     
     (admin as any)
       .from("patient_bios")
       .select("id, display_name, is_active, created_at")
       .eq("organization_id", orgId)
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .catch(() => ({ data: null })),
     getOrgUsage(orgId),
   ]);
 
 
-  const allBios = ((biosResult.data ?? []) as any[]).map((b: any) => ({
+  const allBios = ((biosResult?.data ?? []) as any[]).map((b: any) => ({
     id:                b.id as string,
     display_name:      b.display_name as string,
     is_active:         b.is_active as boolean,

@@ -7,7 +7,7 @@ import {
   markPickedUp,
   type WasteType
 } from "@/lib/supabase/waste-service";
-import { authMessage } from "@/lib/auth-routing";
+import { authMessage, authSuccess } from "@/lib/auth-routing";
 
 export async function createWasteAction(formData: FormData) {
   const wasteType = String(formData.get("wasteType") ?? "other") as WasteType;
@@ -27,7 +27,7 @@ export async function createWasteAction(formData: FormData) {
     pickupScheduledDate
   });
 
-  redirect(authMessage("/waste-management", result.message));
+  redirect(result.ok ? authSuccess("/waste-management", result.message) : authMessage("/waste-management", result.message));
 }
 
 export async function updateFillLevelAction(formData: FormData) {
@@ -37,7 +37,7 @@ export async function updateFillLevelAction(formData: FormData) {
   if (!id) redirect("/waste-management");
 
   const result = await updateFillLevel(id, Math.min(100, Math.max(0, fillLevel)));
-  redirect(authMessage("/waste-management", result.message));
+  redirect(result.ok ? authSuccess("/waste-management", result.message) : authMessage("/waste-management", result.message));
 }
 
 export async function markPickedUpAction(formData: FormData) {
@@ -47,5 +47,5 @@ export async function markPickedUpAction(formData: FormData) {
   if (!id) redirect("/waste-management");
 
   const result = await markPickedUp(id, manifestNumber);
-  redirect(authMessage("/waste-management", result.message));
+  redirect(result.ok ? authSuccess("/waste-management", result.message) : authMessage("/waste-management", result.message));
 }

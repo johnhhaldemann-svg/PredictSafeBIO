@@ -8,7 +8,7 @@ import {
   type ControlTier,
   type ControlStatus,
 } from "@/lib/supabase/control-service";
-import { authMessage } from "@/lib/auth-routing";
+import { authMessage, authSuccess } from "@/lib/auth-routing";
 
 export async function createControlAction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
@@ -33,7 +33,7 @@ export async function createControlAction(formData: FormData) {
     verificationDue,
   });
 
-  redirect(authMessage("/controls", result.message));
+  redirect(result.ok ? authSuccess("/controls", result.message) : authMessage("/controls", result.message));
 }
 
 export async function updateControlStatusAction(formData: FormData) {
@@ -42,7 +42,7 @@ export async function updateControlStatusAction(formData: FormData) {
   if (!id) redirect("/controls");
 
   const result = await setControlStatus(id, status);
-  redirect(authMessage("/controls", result.message));
+  redirect(result.ok ? authSuccess("/controls", result.message) : authMessage("/controls", result.message));
 }
 
 export async function archiveControlAction(formData: FormData) {
@@ -50,5 +50,5 @@ export async function archiveControlAction(formData: FormData) {
   if (!id) redirect("/controls");
 
   const result = await archiveControl(id);
-  redirect(authMessage("/controls", result.message));
+  redirect(result.ok ? authSuccess("/controls", result.message) : authMessage("/controls", result.message));
 }

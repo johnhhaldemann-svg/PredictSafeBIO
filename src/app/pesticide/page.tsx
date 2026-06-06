@@ -2,6 +2,8 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { AlertTriangle, CheckCircle2, Plus, ShieldCheck, Sprout } from "lucide-react";
+import Link from "next/link";
+import { DataLoadError } from "@/components/DataLoadError";
 
 export const metadata: Metadata = { title: "Pesticide & Disinfectant – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
@@ -21,19 +23,21 @@ export default async function PesticidePage({ searchParams }: Props) {
   const params = await searchParams;
   const filter = params.filter ?? "all";
 
-  const [records, adminAccess] = await Promise.all([
+  const [recordsResult, adminAccess] = await Promise.all([
     listPesticideRecords(
       filter === "deviations"    ? { deviationOnly: true } :
       filter === "missing-label" ? { missingLabel: true } :
       filter === "pesticide"     ? { productType: "pesticide" as ProductType } :
       filter === "disinfectant"  ? { productType: "disinfectant" as ProductType } :
       undefined
-    ).catch(() => []),
+    ).catch(() => null),
     getFoundationAdminAccessSummary().catch(() => ({
       configured: false, signedIn: false, isOwner: false, message: ""
     }))
   ]);
 
+  const loadFailed     = recordsResult === null;
+  const records        = recordsResult ?? [];
   const totalCount      = records.length;
   const deviationCount  = records.filter((r) => r.deviationNoted).length;
   const missingLabel    = records.filter((r) => !r.hasLabel).length;
@@ -71,7 +75,7 @@ export default async function PesticidePage({ searchParams }: Props) {
         {/* Filter strip */}
         <nav className="command-center-link-strip" aria-label="Pesticide filter">
           {(["all", "deviations", "missing-label", "pesticide", "disinfectant"] as const).map((f) => (
-            <a
+            <Link
               key={f}
               href={f === "all" ? "/pesticide" : `/pesticide?filter=${f}`}
               className={`button-secondary compact ${filter === f ? "active-filter" : ""}`}
@@ -80,7 +84,7 @@ export default async function PesticidePage({ searchParams }: Props) {
                f === "deviations" ? "Deviations" :
                f === "missing-label" ? "Missing label" :
                f === "pesticide" ? "Pesticides" : "Disinfectants"}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -93,8 +97,13 @@ export default async function PesticidePage({ searchParams }: Props) {
             </div>
           </div>
 
-          {records.length === 0 ? (
-            <p className="muted">No records found. Log an application below.</p>
+          {loadFailed ? (
+            <DataLoadError resource="pesticide records" />
+          ) : records.length === 0 ? (
+            <div className="empty-state-card">
+              <p className="empty-state-title">No records found</p>
+              <p className="muted">Log your first application below.</p>
+            </div>
           ) : (
             <div className="action-list">
               {records.map((rec) => (

@@ -31,6 +31,7 @@
   --amber-dk: #854F0B;
   --green-bg: #EAF3DE;
   --green-dk: #3B6D11;
+  --orange: #d8661f;
 }
 
 * {
@@ -4272,11 +4273,29 @@ textarea {
 }
 
 .status-high {
-  background: #d8661f;
+  background: var(--orange);
 }
 
 .status-critical {
   background: var(--red);
+}
+
+/* ── Standalone status pills – used across all regular-user pages ──
+   These were missing outside .psb-console scope, leaving badges unstyled. */
+.status-current      { display:inline-flex; align-items:center; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; background:var(--green-bg);  color:var(--green-dk); }
+.status-ok           { display:inline-flex; align-items:center; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; background:var(--green-bg);  color:var(--green-dk); }
+.status-needs-review { display:inline-flex; align-items:center; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; background:var(--amber-bg);  color:var(--amber-dk); }
+.status-overdue      { display:inline-flex; align-items:center; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; background:var(--red-bg);    color:var(--red-dk); }
+.status-missing      { display:inline-flex; align-items:center; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; background:var(--red-bg);    color:var(--red-dk); }
+.status-chip,
+.status-pill         { display:inline-flex; align-items:center; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; background:var(--bg-soft);  color:var(--text2); }
+
+/* ── Active filter highlight on .command-center-link-strip ── */
+.button-secondary.active-filter,
+a.button-secondary.active-filter {
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
 }
 
 .score-wrap {
@@ -5535,6 +5554,10 @@ pre {
   .ergonomic-side-rail {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .kpi-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 820px) {
@@ -5731,6 +5754,188 @@ pre {
     flex-direction: column;
   }
 }
+
+@media (max-width: 640px) {
+  .kpi-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .kpi-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Empty state card (used when a list has no items) ── */
+.empty-state-card {
+  padding: 32px 20px;
+  text-align: center;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  background: var(--panel-soft);
+}
+.empty-state-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+/* ── Table empty cell (reusable, replaces inline styles) ── */
+.table-empty-cell {
+  text-align: center;
+  color: var(--muted);
+  padding: 20px;
+}
+
+/* ── Compact command card (risk-command-center signal type breakdown) ── */
+.command-card--compact {
+  min-height: auto;
+  padding: 0.9rem 1rem;
+}
+.command-card--compact strong {
+  font-size: 0.82em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.command-card--compact small {
+  font-size: 1.6rem;
+}
+.command-card--compact em {
+  font-size: 0.75em;
+}
+
+/* ── Tighter command-card-grid gap variant ── */
+.command-card-grid--tight {
+  gap: 0.75rem;
+}
+
+/* ── Severity row (action-row with centered alignment) ── */
+.severity-row {
+  align-items: center;
+}
+.severity-badge--capitalize {
+  text-transform: capitalize;
+}
+.severity-count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* ── Empty feed state (risk-command-center live feed when clear) ── */
+.risk-feed-empty {
+  padding: 2rem 0;
+  text-align: center;
+}
+.risk-feed-empty svg {
+  display: block;
+  margin: 0 auto 0.75rem;
+  opacity: 0.4;
+}
+
+/* ── account/team — role capabilities matrix & invite panel ── */
+.check-mark { color: var(--green-dk); font-weight: 700; }
+.dash-mark  { color: var(--muted);    font-weight: 400; }
+.role-status-msg { margin-left: 0.75rem; }
+.panel--invite-ready { border-left: 3px solid var(--green-dk); }
+.panel-subhead { font-size: 1rem; font-weight: 600; }
+.invite-hint { font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--text2); }
+.inline-action-row { display: flex; gap: 0.5rem; align-items: center; }
+.invite-link-input {
+  flex: 1;
+  font-family: monospace;
+  font-size: 0.78rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--bdr);
+  background: var(--panel-soft);
+  color: var(--text);
+  min-width: 0;
+}
+.table-scroll { overflow-x: auto; }
+.role-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875em;
+}
+.role-matrix-table thead tr { border-bottom: 2px solid var(--line); }
+.role-matrix-table th {
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  text-align: center;
+}
+.role-matrix-table th:first-child { text-align: left; }
+.role-matrix-table tbody tr { border-bottom: 1px solid var(--line); }
+.role-matrix-table tbody tr:nth-child(even) { background: var(--panel-soft); }
+.role-matrix-table td { padding: 0.45rem 0.75rem; text-align: center; }
+.role-matrix-table td:first-child { text-align: left; }
+
+/* ── programs page — program listing ── */
+.program-subtitle  { font-weight: 400; margin-left: 0.4rem; font-size: 0.85em; font-style: italic; color: var(--text2); }
+.program-regulation { font-size: 0.85em; color: var(--muted); }
+.program-actions   { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* ── inspections detail page ── */
+.status-action-row  { display: flex; gap: 10px; flex-wrap: wrap; }
+.finding-close-form { margin-top: 6px; }
+.findings-add       { margin-top: 18px; }
+.details-summary    { cursor: pointer; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 4px; }
+.inline-icon        { display: inline; vertical-align: middle; margin-right: 4px; }
+
+/* ── RoleAccessBanner ── */
+.panel--compact     { padding: 0.75rem 1rem; }
+.role-badge-sm      { font-weight: 600; font-size: 0.82em; }
+.flex-shrink-0      { flex-shrink: 0; }
+
+/* ── waste-management action forms ── */
+.waste-actions-row  { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.4rem; }
+.inline-form        { display: flex; gap: 0.4rem; align-items: center; }
+.input-narrow       { width: 70px; }
+.input-medium       { width: 160px; }
+
+/* ── RiskCellReviewCard ── */
+.risk-cell-card          { gap: 0.6rem; flex-direction: column; align-items: stretch; }
+.risk-cell-header        { display: flex; align-items: flex-start; gap: 0.75rem; }
+.risk-cell-main          { flex: 1; min-width: 0; }
+.risk-cell-meta          { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem; }
+.risk-cell-title         { font-size: 0.9rem; }
+.risk-cell-flag          { display: flex; align-items: center; gap: 3px; font-size: 0.72rem; }
+.risk-cell-record-type   { font-size: 0.75rem; }
+.risk-cell-score         { text-align: right; flex-shrink: 0; min-width: 80px; }
+.risk-cell-score-label   { font-size: 0.68rem; color: var(--muted); margin-bottom: 2px; }
+.risk-cell-confidence    { font-size: 0.68rem; margin-top: 3px; display: inline-block; }
+.risk-cell-timeframe     { font-size: 0.75rem; }
+.risk-cell-toggle        { align-self: flex-start; display: flex; align-items: center; gap: 4px; }
+.risk-cell-detail        { background: var(--panel-soft); border: 1px solid var(--line); border-radius: 8px; padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.82rem; }
+.risk-cell-detail-label  { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.6; }
+.risk-cell-detail-label--alert { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--red-dk); }
+.risk-cell-review-reason { border-left: 3px solid var(--line); padding-left: 0.75rem; }
+.risk-cell-detail-body   { margin-top: 4px; line-height: 1.55; }
+.risk-cell-list          { margin: 4px 0 0 0; padding: 0 0 0 1.1rem; line-height: 1.6; }
+.risk-cell-list-owner    { font-size: 0.78em; }
+.risk-cell-gaps-list li  { color: var(--red-dk); }
+.risk-cell-score-note    { font-size: 0.7rem; }
+.risk-cell-actions       { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.1rem; }
+.risk-cell-action-form   { background: var(--panel-soft); border: 1px solid var(--line); border-radius: 8px; padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.risk-cell-form-label    { font-size: 0.82rem; }
+.risk-cell-form-hint     { font-size: 0.78rem; }
+.risk-cell-form-input-mt { margin-top: 0.3rem; width: 100%; }
+.risk-cell-form-buttons  { display: flex; gap: 0.4rem; }
+
+/* ScoreBar */
+.score-bar         { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; }
+.score-bar-track   { flex: 1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.score-bar-fill    { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
+
+/* ── ComplianceAssistant ── */
+.btn-with-icon   { display: flex; align-items: center; gap: 0.5rem; }
+.ai-answer-block { margin-top: 1.25rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+.ai-answer-header{ display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.ai-answer-icon  { opacity: 0.5; }
+.ai-answer-draft { font-size: 0.78em; }
+.ai-answer-body  { white-space: pre-wrap; line-height: 1.6; font-size: 0.9rem; }
 
 /* ══════════════════════════════════════════════
    Visual polish — missing & improved styles

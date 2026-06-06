@@ -38,6 +38,8 @@ type CommandCenterSummary = {
   ownerMode: boolean;
 };
 
+/** Demo scenario — only shown on the public/logged-out preview. Never used
+ *  as a default when a real initialInput is passed from the server. */
 const starterInput: BioAiInput = {
   siteName: "Demo Biotech Site",
   area: "QC Microbiology Lab",
@@ -72,6 +74,9 @@ const starterInput: BioAiInput = {
   ]
 };
 
+/** Blank input for authenticated users who have no assessments yet. */
+const blankInput: BioAiInput = { signals: [] };
+
 const signalTypes: BioSignalType[] = [
   "contamination_event",
   "biosafety_event",
@@ -104,6 +109,15 @@ const signalTypeLabels: Partial<Record<BioSignalType, string>> = {
   regulatory_commitment: "Regulatory Commitment",
 };
 
+/** Returns a trend string with a directional arrow prefix. */
+function trendLabel(trend: string): string {
+  const t = trend.toLowerCase().replace(/_/g, " ");
+  if (t.includes("increas") || t.includes("rising") || t.includes("up"))   return `↑ ${trend.replace(/_/g, " ")}`;
+  if (t.includes("decreas") || t.includes("falling") || t.includes("down")) return `↓ ${trend.replace(/_/g, " ")}`;
+  if (t.includes("steady") || t.includes("stable") || t.includes("clear")) return `→ ${trend.replace(/_/g, " ")}`;
+  return trend.replace(/_/g, " ");
+}
+
 function getSignalTypeLabel(type: BioSignalType): string {
   return signalTypeLabels[type] ?? type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -125,7 +139,7 @@ export function WorkbenchClient({
   assignees = [],
   canManageFoundationActions = false,
   foundationActions = [],
-  initialInput = starterInput,
+  initialInput = blankInput,
   notifications,
   productionVerification,
   commandCenter,
@@ -577,15 +591,15 @@ export function WorkbenchClient({
           <div className="trend-list">
             <article>
               <span>BioRisk trend</span>
-              <strong>{commandSummary.bioRiskTrend}</strong>
+              <strong>{trendLabel(commandSummary.bioRiskTrend)}</strong>
             </article>
             <article>
               <span>Readiness trend</span>
-              <strong>{commandSummary.readinessTrend.replace(/_/g, " ")}</strong>
+              <strong>{trendLabel(commandSummary.readinessTrend)}</strong>
             </article>
             <article>
               <span>Open actions</span>
-              <strong>{commandSummary.openActionTrend}</strong>
+              <strong>{trendLabel(commandSummary.openActionTrend)}</strong>
             </article>
           </div>
           <div className="critical-signal-list">
