@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { AlertTriangle, Plus, ShieldCheck, Activity, Brain } from "lucide-react";
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import {
   listHazards,
@@ -89,13 +90,13 @@ export default async function HazardRegisterPage({ searchParams }: Props) {
         {/* Filter strip */}
         <nav className="command-center-link-strip" aria-label="Hazard filter">
           {(["all", "identified", "controlled"] as const).map((f) => (
-            <a
+            <Link
               key={f}
               href={f === "all" ? "/hazards" : `/hazards?filter=${f}`}
               className={`button-secondary compact ${filter === f ? "active-filter" : ""}`}
             >
               {f === "all" ? "All hazards" : f === "identified" ? "Identified (uncontrolled)" : "Controlled"}
-            </a>
+            </Link>
           ))}
         </nav>
 

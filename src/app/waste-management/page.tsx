@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { AlertTriangle, Plus, ShieldCheck, Trash2, Truck } from "lucide-react";
+import Link from "next/link";
 
 export const metadata: Metadata = { title: "Waste Management – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
@@ -86,13 +87,13 @@ export default async function WasteManagementPage({ searchParams }: Props) {
         {/* Filter strip */}
         <nav className="command-center-link-strip" aria-label="Waste filter">
           {(["all", "at-risk", "ready"] as const).map((f) => (
-            <a
+            <Link
               key={f}
               href={f === "all" ? "/waste-management" : `/waste-management?filter=${f}`}
               className={`button-secondary compact ${filter === f ? "active-filter" : ""}`}
             >
               {f === "all" ? "All containers" : f === "at-risk" ? "At risk (≥80%)" : "Ready for pickup"}
-            </a>
+            </Link>
           ))}
         </nav>
 

@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { AlertTriangle, FlaskConical, Plus, ShieldCheck, FileWarning, Clock } from "lucide-react";
+import Link from "next/link";
 
 export const metadata: Metadata = { title: "Chemical & SDS – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
@@ -85,13 +86,13 @@ export default async function ChemicalInventoryPage({ searchParams }: Props) {
         {/* Filter strip */}
         <nav className="command-center-link-strip" aria-label="Chemical filter">
           {(["all", "expiring", "no-sds"] as const).map((f) => (
-            <a
+            <Link
               key={f}
               href={f === "all" ? "/chemical-inventory" : `/chemical-inventory?filter=${f}`}
               className={`button-secondary compact ${filter === f ? "active-filter" : ""}`}
             >
               {f === "all" ? "All chemicals" : f === "expiring" ? "Expiring soon" : "Missing SDS"}
-            </a>
+            </Link>
           ))}
         </nav>
 

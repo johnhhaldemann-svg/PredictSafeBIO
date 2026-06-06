@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { SlidersHorizontal, Plus, ShieldCheck, Brain, Clock, AlertTriangle } from "lucide-react";
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import {
   listControls,
@@ -95,13 +96,13 @@ export default async function ControlRegisterPage({ searchParams }: Props) {
         {/* Filter strip */}
         <nav className="command-center-link-strip" aria-label="Control filter">
           {(["all", "overdue"] as const).map((f) => (
-            <a
+            <Link
               key={f}
               href={f === "all" ? "/controls" : `/controls?filter=${f}`}
               className={`button-secondary compact ${filter === f ? "active-filter" : ""}`}
             >
               {f === "all" ? "All controls" : "Verification overdue"}
-            </a>
+            </Link>
           ))}
         </nav>
 
