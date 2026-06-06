@@ -43,10 +43,10 @@ const statusBg: Record<string, string> = {
 };
 
 function Check() {
-  return <span style={{ color: "var(--color-green)", fontWeight: 700 }}>✓</span>;
+  return <span className="check-mark">✓</span>;
 }
 function X() {
-  return <span style={{ color: "var(--border-color)", fontWeight: 400 }}>—</span>;
+  return <span className="dash-mark">—</span>;
 }
 
 export default async function TeamPage({ searchParams }: { searchParams: Promise<{ message?: string; inviteLink?: string }> }) {
@@ -75,7 +75,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         <section className={`panel access-banner ${adminAccess.isOwner ? "access-enabled" : "access-readonly"}`}>
           <div>
             <strong>Your role: <span className={currentBadgeClass}>{currentRoleLabel}</span></strong>
-            <span style={{ marginLeft: "0.75rem" }}>{adminAccess.message}</span>
+            <span className="role-status-msg">{adminAccess.message}</span>
           </div>
           <ShieldCheck size={18} />
         </section>
@@ -84,23 +84,23 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
 
         {/* Invite link display — shown after generating an invite */}
         {params.inviteLink && (
-          <section className="panel" style={{ borderLeft: "3px solid var(--color-green, #16a34a)" }}>
+          <section className="panel panel--invite-ready">
             <div className="panel-heading">
               <div>
                 <p className="section-label">Invite Link Ready</p>
-                <h2 style={{ fontSize: "1rem" }}>Copy and share this link directly</h2>
+                <h2 className="panel-subhead">Copy and share this link directly</h2>
               </div>
               <UserPlus size={18} />
             </div>
-            <p className="muted" style={{ fontSize: "0.85rem", marginBottom: "0.5rem" }}>
+            <p className="invite-hint">
               This one-time link authenticates the invited user and brings them to onboarding.
               Share it via Slack, email, or any channel. It expires after 7 days.
             </p>
-            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            <div className="inline-action-row">
               <input
                 readOnly
                 value={decodeURIComponent(params.inviteLink)}
-                style={{ flex: 1, fontFamily: "monospace", fontSize: "0.78rem", padding: "0.5rem 0.75rem", borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)" }}
+                className="invite-link-input"
               />
             </div>
           </section>
@@ -116,25 +116,21 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
             </div>
             <Users size={22} />
           </div>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875em" }}>
+          <div className="table-scroll">
+            <table className="role-matrix-table">
               <thead>
-                <tr style={{ borderBottom: "2px solid var(--border-color)" }}>
-                  <th style={{ textAlign: "left", padding: "0.5rem 0.75rem", fontWeight: 600 }}>Feature</th>
-                  <th style={{ textAlign: "center", padding: "0.5rem 0.75rem", fontWeight: 600 }}>
-                    <span className="status-needs-review">Member</span>
-                  </th>
-                  <th style={{ textAlign: "center", padding: "0.5rem 0.75rem", fontWeight: 600 }}>
-                    <span className="status-current">Owner</span>
-                  </th>
+                <tr>
+                  <th>Feature</th>
+                  <th><span className="status-needs-review">Member</span></th>
+                  <th><span className="status-current">Owner</span></th>
                 </tr>
               </thead>
               <tbody>
-                {roleMatrix.map((row, i) => (
-                  <tr key={row.feature} style={{ borderBottom: "1px solid var(--border-color)", background: i % 2 === 0 ? "var(--surface-subtle, transparent)" : "transparent" }}>
-                    <td style={{ padding: "0.45rem 0.75rem" }}>{row.feature}</td>
-                    <td style={{ textAlign: "center", padding: "0.45rem 0.75rem" }}>{row.member ? <Check /> : <X />}</td>
-                    <td style={{ textAlign: "center", padding: "0.45rem 0.75rem" }}>{row.owner ? <Check /> : <X />}</td>
+                {roleMatrix.map((row) => (
+                  <tr key={row.feature}>
+                    <td>{row.feature}</td>
+                    <td>{row.member ? <Check /> : <X />}</td>
+                    <td>{row.owner ? <Check /> : <X />}</td>
                   </tr>
                 ))}
               </tbody>
@@ -179,7 +175,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
             <Lock size={18} />
             <div>
               <strong>Team invitations require Owner access.</strong>
-              <span className="muted" style={{ marginLeft: "0.5rem" }}>Contact your workspace owner to invite additional team members or change your role.</span>
+              <span className="muted role-status-msg">Contact your workspace owner to invite additional team members or change your role.</span>
             </div>
           </section>
         )}

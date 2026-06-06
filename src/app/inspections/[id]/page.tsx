@@ -111,7 +111,7 @@ export default async function InspectionDetailPage({ params, searchParams }: Pro
               <p className="section-label">Move inspection forward</p>
               <h2>Update status</h2>
             </div>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div className="status-action-row">
               {nextStatuses.map((ns) => (
                 <form key={ns.value} action={updateInspectionStatusAction}>
                   <input type="hidden" name="inspectionId" value={inspection.id} />
@@ -156,7 +156,7 @@ export default async function InspectionDetailPage({ params, searchParams }: Pro
                   </div>
                   <p>{finding.createdAt ? new Date(finding.createdAt).toLocaleDateString() : "—"}</p>
                   {adminAccess.signedIn && finding.status !== "closed" && (
-                    <form action={closeFindingAction} style={{ marginTop: 6 }}>
+                    <form action={closeFindingAction} className="finding-close-form">
                       <input type="hidden" name="findingId" value={finding.id} />
                       <input type="hidden" name="inspectionId" value={inspection.id} />
                       <button className="button-secondary compact" type="submit">
@@ -171,9 +171,9 @@ export default async function InspectionDetailPage({ params, searchParams }: Pro
 
           {/* Add finding */}
           {adminAccess.signedIn && isActive && (
-            <details className="stacked-form" style={{ marginTop: 18 }}>
-              <summary style={{ cursor: "pointer", fontWeight: 600, marginBottom: 12 }}>
-                <Plus size={14} style={{ display: "inline", marginRight: 4 }} />
+            <details className="stacked-form findings-add">
+              <summary className="details-summary">
+                <Plus size={14} className="inline-icon" />
                 Record a finding
               </summary>
               <form action={addFindingAction} className="stacked-form">

@@ -72,13 +72,13 @@ export default function ProgramsPage() {
                         <strong>
                           <Link href={`/programs/${program.id}`}>{program.title}</Link>
                           {program.subtitle
-                            ? <em className="muted" style={{ fontWeight: 400, marginLeft: "0.4rem", fontSize: "0.85em" }}>— {program.subtitle}</em>
+                            ? <em className="program-subtitle">— {program.subtitle}</em>
                             : null}
                         </strong>
                         <span className={freq.className}>{freq.label} · {program.owner}</span>
                       </div>
-                      <p className="muted" style={{ fontSize: "0.85em" }}>{program.regulation}</p>
-                      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                      <p className="program-regulation">{program.regulation}</p>
+                      <div className="program-actions">
                         <Link className="button-primary compact" href={`/programs/${program.id}`}>
                           Open tool
                         </Link>

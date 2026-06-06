@@ -5835,6 +5835,55 @@ pre {
   opacity: 0.4;
 }
 
+/* ── account/team — role capabilities matrix & invite panel ── */
+.check-mark { color: var(--green-dk); font-weight: 700; }
+.dash-mark  { color: var(--muted);    font-weight: 400; }
+.role-status-msg { margin-left: 0.75rem; }
+.panel--invite-ready { border-left: 3px solid var(--green-dk); }
+.panel-subhead { font-size: 1rem; font-weight: 600; }
+.invite-hint { font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--text2); }
+.inline-action-row { display: flex; gap: 0.5rem; align-items: center; }
+.invite-link-input {
+  flex: 1;
+  font-family: monospace;
+  font-size: 0.78rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--bdr);
+  background: var(--panel-soft);
+  color: var(--text);
+  min-width: 0;
+}
+.table-scroll { overflow-x: auto; }
+.role-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875em;
+}
+.role-matrix-table thead tr { border-bottom: 2px solid var(--line); }
+.role-matrix-table th {
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  text-align: center;
+}
+.role-matrix-table th:first-child { text-align: left; }
+.role-matrix-table tbody tr { border-bottom: 1px solid var(--line); }
+.role-matrix-table tbody tr:nth-child(even) { background: var(--panel-soft); }
+.role-matrix-table td { padding: 0.45rem 0.75rem; text-align: center; }
+.role-matrix-table td:first-child { text-align: left; }
+
+/* ── programs page — program listing ── */
+.program-subtitle  { font-weight: 400; margin-left: 0.4rem; font-size: 0.85em; font-style: italic; color: var(--text2); }
+.program-regulation { font-size: 0.85em; color: var(--muted); }
+.program-actions   { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* ── inspections detail page ── */
+.status-action-row  { display: flex; gap: 10px; flex-wrap: wrap; }
+.finding-close-form { margin-top: 6px; }
+.findings-add       { margin-top: 18px; }
+.details-summary    { cursor: pointer; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 4px; }
+.inline-icon        { display: inline; vertical-align: middle; margin-right: 4px; }
+
 /* ══════════════════════════════════════════════
    Visual polish — missing & improved styles
    ══════════════════════════════════════════════ */
