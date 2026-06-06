@@ -136,9 +136,9 @@ export default async function WasteManagementPage({ searchParams }: Props) {
                   </p>
 
                   {adminAccess.signedIn && rec.status !== "picked_up" && rec.status !== "disposed" && (
-                    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.4rem" }}>
+                    <div className="waste-actions-row">
                       {/* Update fill level */}
-                      <form action={updateFillLevelAction} style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+                      <form action={updateFillLevelAction} className="inline-form">
                         <input type="hidden" name="id" value={rec.id} />
                         <input
                           name="fillLevel"
@@ -146,20 +146,20 @@ export default async function WasteManagementPage({ searchParams }: Props) {
                           min={0}
                           max={100}
                           defaultValue={rec.fillLevel ?? 0}
-                          style={{ width: "70px" }}
+                          className="input-narrow"
                           aria-label="Fill level %"
                         />
                         <button className="button-secondary compact" type="submit">Update fill</button>
                       </form>
 
                       {/* Mark picked up */}
-                      <form action={markPickedUpAction} style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+                      <form action={markPickedUpAction} className="inline-form">
                         <input type="hidden" name="id" value={rec.id} />
                         <input
                           name="manifestNumber"
                           type="text"
                           placeholder="Manifest # (optional)"
-                          style={{ width: "160px" }}
+                          className="input-medium"
                         />
                         <button className="button-secondary compact" type="submit">Mark picked up</button>
                       </form>

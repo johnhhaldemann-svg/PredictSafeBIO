@@ -34,9 +34,9 @@ export function RoleAccessBanner({ currentRole, requiredRole, blockedMessage, al
 
   if (hasAccess) {
     return allowedMessage ? (
-      <div className="panel inline-action-panel" style={{ padding: "0.75rem 1rem" }}>
+      <div className="panel inline-action-panel panel--compact">
         <div>
-          <span className={badgeClass} style={{ fontWeight: 600, fontSize: "0.82em" }}>{currentLabel}</span>
+          <span className={`${badgeClass} role-badge-sm`}>{currentLabel}</span>
           {" — "}{allowedMessage}
         </div>
         <ShieldCheck size={18} />
@@ -45,15 +45,15 @@ export function RoleAccessBanner({ currentRole, requiredRole, blockedMessage, al
   }
 
   return (
-    <div className="panel access-banner access-readonly" role="alert" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-      <Lock size={18} style={{ flexShrink: 0 }} />
+    <div className="panel access-banner access-readonly" role="alert">
+      <Lock size={18} className="flex-shrink-0" />
       <div>
         <strong>
           <span className={badgeClass}>{currentLabel}</span> access
         </strong>
         {" — "}
         {blockedMessage ?? `This action requires ${requiredLabel} access.`}
-        <span className="muted" style={{ marginLeft: "0.5rem", fontSize: "0.85em" }}>
+        <span className="muted role-status-msg">
           Contact your workspace admin to have your role upgraded.
         </span>
       </div>

@@ -5884,6 +5884,17 @@ pre {
 .details-summary    { cursor: pointer; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 4px; }
 .inline-icon        { display: inline; vertical-align: middle; margin-right: 4px; }
 
+/* ── RoleAccessBanner ── */
+.panel--compact     { padding: 0.75rem 1rem; }
+.role-badge-sm      { font-weight: 600; font-size: 0.82em; }
+.flex-shrink-0      { flex-shrink: 0; }
+
+/* ── waste-management action forms ── */
+.waste-actions-row  { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.4rem; }
+.inline-form        { display: flex; gap: 0.4rem; align-items: center; }
+.input-narrow       { width: 70px; }
+.input-medium       { width: 160px; }
+
 /* ══════════════════════════════════════════════
    Visual polish — missing & improved styles
    ══════════════════════════════════════════════ */
