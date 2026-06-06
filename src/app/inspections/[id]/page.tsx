@@ -21,7 +21,7 @@ const FINDING_CLASS: Record<FindingLevel, string> = {
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ message?: string }>;
+  searchParams: Promise<{ message?: string; success?: string }>;
 };
 
 export default async function InspectionDetailPage({ params, searchParams }: Props) {
@@ -69,6 +69,7 @@ export default async function InspectionDetailPage({ params, searchParams }: Pro
           <h1>{inspection.title}</h1>
         </header>
 
+        {sp.success && <div className="verification-pass-box"><span>✓ {sp.success}</span></div>}
         {sp.message && <p className="form-message">{sp.message}</p>}
 
         {/* Status banner */}

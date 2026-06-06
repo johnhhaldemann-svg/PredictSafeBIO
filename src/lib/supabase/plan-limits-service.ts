@@ -48,41 +48,42 @@ const UNMETERED_USAGE: OrgUsage = {
 
 export async function getOrgUsage(organizationId: string): Promise<OrgUsage> {
   if (!isSupabaseServiceConfigured()) return UNMETERED_USAGE;
-  const admin = getSupabaseAdminClient();
+  try {
+    const admin = getSupabaseAdminClient();
 
-  const [providerRes, patientRes, subRes] = await Promise.all([
-     
-    (admin as any)
-      .from("provider_profiles")
-      .select("id", { count: "exact", head: true })
-      .eq("organization_id", organizationId),
+    const [providerRes, patientRes, subRes] = await Promise.all([
 
-     
-    (admin as any)
-      .from("patient_bios")
-      .select("id", { count: "exact", head: true })
-      .eq("organization_id", organizationId),
+      (admin as any)
+        .from("provider_profiles")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", organizationId),
 
-     
-    (admin as any)
-      .from("subscriptions")
-      .select("plan_id, subscription_plans ( name, tier, max_providers, max_patients )")
-      .eq("organization_id", organizationId)
-      .in("status", ["active", "trialing"])
-      .maybeSingle(),
-  ]);
+      (admin as any)
+        .from("patient_bios")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", organizationId),
 
-   
-  const plan = (subRes.data as any)?.subscription_plans ?? null;
+      (admin as any)
+        .from("subscriptions")
+        .select("plan_id, subscription_plans ( name, tier, max_providers, max_patients )")
+        .eq("organization_id", organizationId)
+        .in("status", ["active", "trialing"])
+        .maybeSingle(),
+    ]);
 
-  return {
-    provider_count: providerRes.count ?? 0,
-    patient_count:  patientRes.count ?? 0,
-    plan_tier:      plan?.tier      ?? "free",
-    plan_name:      plan?.name      ?? "Free",
-    max_providers:  plan?.max_providers ?? 1,   // default to Free tier limits
-    max_patients:   plan?.max_patients  ?? 5,
-  };
+    const plan = (subRes.data as any)?.subscription_plans ?? null;
+
+    return {
+      provider_count: providerRes.count ?? 0,
+      patient_count:  patientRes.count ?? 0,
+      plan_tier:      plan?.tier      ?? "free",
+      plan_name:      plan?.name      ?? "Free",
+      max_providers:  plan?.max_providers ?? 1,
+      max_patients:   plan?.max_patients  ?? 5,
+    };
+  } catch {
+    return UNMETERED_USAGE;
+  }
 }
 
 // ── Check if a new provider can be created ────────────────────────────────────

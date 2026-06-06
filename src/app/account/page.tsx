@@ -9,12 +9,12 @@ import { updateAccountProfileAction } from "./actions";
 import { getAccountSummary } from "@/lib/supabase/data";
 
 type AccountPageProps = {
-  searchParams: Promise<{ message?: string }>;
+  searchParams: Promise<{ message?: string; success?: string }>;
 };
 
 export default async function AccountPage({ searchParams }: AccountPageProps) {
   const params = await searchParams;
-  const account = await getAccountSummary();
+  const account = await getAccountSummary().catch(() => ({ signedIn: false as const, needsOnboarding: false, userEmail: undefined, fullName: undefined, role: undefined, organizationId: undefined, companyProfile: undefined }));
 
   if (!account.signedIn) {
     redirect("/login?next=/account");
@@ -28,6 +28,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           <h1>Account & workspace settings</h1>
         </header>
 
+        {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message ? <p className="form-message">{params.message}</p> : null}
 
         <section className="profile-grid">

@@ -1,15 +1,16 @@
 export const dynamic = "force-dynamic";
 
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { FileText } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { createServerClient } from "@/lib/supabase/server";
+import { formatDocumentStatus, formatDocumentType } from "@/lib/display-labels";
 
 /**
  * Project → Documents — /project/[projectId]/documents
- * Project-scoped document list. Delegates to the existing document_metadata table
- * filtered by project_id once project_id is wired to document_metadata.
- *
- * TODO: Add project_id column to document_metadata and filter here.
+ * Shows documents belonging to this project (project_id match) plus
+ * org-level documents (project_id = NULL) that apply to all projects.
  */
 type Props = { params: Promise<{ projectId: string }> };
 
@@ -27,52 +28,117 @@ export default async function ProjectDocumentsPage({ params }: Props) {
 
   if (!project) redirect("/");
 
-  // Org-scoped documents for now; narrow to project_id when column is added.
+  // Fetch project-scoped docs AND org-level docs (project_id IS NULL)
   const { data: docs } = await supabase
     .from("document_metadata")
-    .select("id, title, document_type, status, revision, updated_at")
+    .select("id, title, document_type, status, revision, updated_at, project_id")
     .eq("organization_id", project.organization_id)
     .is("deleted_at", null)
+    .or(`project_id.eq.${projectId},project_id.is.null`)
     .order("updated_at", { ascending: false })
-    .limit(50);
+    .limit(100);
+
+  const projectDocs = (docs ?? []).filter((d) => d.project_id === projectId);
+  const orgDocs     = (docs ?? []).filter((d) => d.project_id === null);
 
   return (
     <AppShell>
-      <div className="max-w-4xl mx-auto p-6">
-        <h1 className="text-2xl font-semibold mb-2">Documents</h1>
-        <p className="text-sm text-gray-500 mb-6">
-          Compliance documents for <span className="font-medium">{project.name}</span>.
-        </p>
+      <div className="page-stack">
+        <header className="page-header">
+          <div>
+            <p className="section-label">
+              <Link href={`/project/${projectId}/dashboard`}>{project.name}</Link> / Documents
+            </p>
+            <h1>Documents</h1>
+          </div>
+          <Link href="/documents" className="button-primary btn-with-icon">
+            <FileText size={14} /> Manage all documents
+          </Link>
+        </header>
 
-        {!docs?.length ? (
-          <p className="text-sm text-gray-400">No documents yet. Upload or create one from the Documents module.</p>
-        ) : (
-          <table className="w-full text-sm border rounded-lg overflow-hidden">
-            <thead className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">
-              <tr>
-                <th className="px-4 py-3">Title</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Rev</th>
-                <th className="px-4 py-3">Updated</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {docs.map((d) => (
-                <tr key={d.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium">
-                    <a href={`/documents/${d.id}`} className="hover:underline">{d.title}</a>
-                  </td>
-                  <td className="px-4 py-3 capitalize">{d.document_type}</td>
-                  <td className="px-4 py-3 capitalize">{d.status}</td>
-                  <td className="px-4 py-3">{d.revision ?? "—"}</td>
-                  <td className="px-4 py-3 text-gray-400">
-                    {d.updated_at ? new Date(d.updated_at).toLocaleDateString() : "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Project-scoped documents */}
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Project documents</p>
+              <h2>{projectDocs.length} document{projectDocs.length !== 1 ? "s" : ""} for {project.name}</h2>
+            </div>
+          </div>
+          {projectDocs.length === 0 ? (
+            <div className="empty-state-card">
+              <p className="empty-state-title">No project-specific documents yet</p>
+              <p className="muted">
+                Documents linked to this project will appear here.{" "}
+                <Link href="/documents" className="text-link">Create one in Documents →</Link>
+              </p>
+            </div>
+          ) : (
+            <div className="table-scroll">
+              <table className="role-matrix-table">
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: "left" }}>Title</th>
+                    <th style={{ textAlign: "left" }}>Type</th>
+                    <th style={{ textAlign: "left" }}>Status</th>
+                    <th style={{ textAlign: "left" }}>Rev</th>
+                    <th style={{ textAlign: "left" }}>Updated</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projectDocs.map((d) => (
+                    <tr key={d.id}>
+                      <td style={{ textAlign: "left" }}>
+                        <Link href={`/documents/${d.id}`} className="text-link">{d.title}</Link>
+                      </td>
+                      <td style={{ textAlign: "left" }}>{formatDocumentType(d.document_type)}</td>
+                      <td style={{ textAlign: "left" }}>{formatDocumentStatus(d.status)}</td>
+                      <td style={{ textAlign: "left" }}>{d.revision ?? "—"}</td>
+                      <td style={{ textAlign: "left" }} className="muted">
+                        {d.updated_at ? new Date(d.updated_at).toLocaleDateString() : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        {/* Org-level documents */}
+        {orgDocs.length > 0 && (
+          <section className="panel">
+            <div className="panel-heading">
+              <div>
+                <p className="section-label">Organization documents</p>
+                <h2>{orgDocs.length} org-level document{orgDocs.length !== 1 ? "s" : ""}</h2>
+                <p className="muted">These apply across all projects in your organization.</p>
+              </div>
+            </div>
+            <div className="table-scroll">
+              <table className="role-matrix-table">
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: "left" }}>Title</th>
+                    <th style={{ textAlign: "left" }}>Type</th>
+                    <th style={{ textAlign: "left" }}>Status</th>
+                    <th style={{ textAlign: "left" }}>Rev</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orgDocs.map((d) => (
+                    <tr key={d.id}>
+                      <td style={{ textAlign: "left" }}>
+                        <Link href={`/documents/${d.id}`} className="text-link">{d.title}</Link>
+                      </td>
+                      <td style={{ textAlign: "left" }}>{formatDocumentType(d.document_type)}</td>
+                      <td style={{ textAlign: "left" }}>{formatDocumentStatus(d.status)}</td>
+                      <td style={{ textAlign: "left" }}>{d.revision ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
         )}
       </div>
     </AppShell>

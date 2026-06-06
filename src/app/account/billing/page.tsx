@@ -25,7 +25,7 @@ function formatAnnual(cents: number): string {
 export default async function BillingPage() {
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/login?next=/account/billing");
 
   const { data: profile } = await supabase
     .from("profiles")

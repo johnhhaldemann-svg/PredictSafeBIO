@@ -15,7 +15,7 @@ import {
 } from "./actions";
 import { DataLoadError } from "@/components/DataLoadError";
 
-export default async function TrainingMatrixPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
+export default async function TrainingMatrixPage({ searchParams }: { searchParams: Promise<{ message?: string; success?: string }> }) {
   const params = await searchParams;
   const [summaryResult, adminAccess] = await Promise.all([
     getTrainingMatrixSummary().catch(() => null),
@@ -187,6 +187,7 @@ export default async function TrainingMatrixPage({ searchParams }: { searchParam
           </div>
         </section>
 
+        {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message ? <p className="form-message">{params.message}</p> : null}
 
         {adminAccess.isOwner && (
