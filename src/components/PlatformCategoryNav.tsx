@@ -48,6 +48,7 @@ const categories: Category[] = [
     subItems: [
       { href: "/workbench",                   label: "BioRisk Workbench",    icon: Gauge,         desc: "Score and review your biosafety risks" },
       { href: "/workbench?tab=risk-register", label: "Risk Register",        icon: ShieldCheck,   desc: "All assessed risks and their status" },
+      { href: "/hazards",                     label: "Hazard Register",      icon: AlertCircle,   desc: "Identify hazards; feeds the Predictive Engine" },
       { href: "/bios",                        label: "Personnel",            icon: Users,         desc: "People records used in risk scoring" },
       { href: "/bios/new",                    label: "Add Personnel Record", icon: ClipboardList, desc: "Create a new personnel record" },
       { href: "/providers",                   label: "Provider Directory",   icon: Briefcase,     desc: "Biosafety & EHS consultants and experts" },
@@ -60,6 +61,8 @@ const categories: Category[] = [
     icon: ClipboardCheck,
     subItems: [
       { href: "/foundation",                label: "Compliance Map",  icon: ClipboardCheck, desc: "Coverage, gaps, and readiness by area" },
+      { href: "/controls",                  label: "Control Register",icon: Wrench,         desc: "Controls by hierarchy; residual-risk forecast" },
+      { href: "/exposure-map",              label: "Exposure Map",    icon: Building2,      desc: "People, labs, materials & exposure routes" },
       { href: "/my-work",                   label: "My Work",         icon: ClipboardList,  desc: "Tasks and follow-ups assigned to you" },
       { href: "/programs",                  label: "Programs",        icon: BookOpen,       desc: "Safety program tools and checklists" },
       { href: "/change-plan",               label: "Change Plan",     icon: GitBranch,      desc: "Planned changes and their impact" },
@@ -90,8 +93,9 @@ const categories: Category[] = [
     href: "/",
     icon: Activity,
     subItems: [
-      { href: "/",                    label: "Safety Loop",  icon: Gauge,    desc: "Assess → Plan → Operate → Monitor overview" },
-      { href: "/risk-command-center", label: "Risk Monitor", icon: Activity, desc: "Prioritized HSE risk signals" },
+      { href: "/",                    label: "Safety Loop",       icon: Gauge,    desc: "Assess → Plan → Operate → Monitor overview" },
+      { href: "/predictive-engine",   label: "Predictive Engine", icon: Brain,    desc: "Forward-looking risk forecast & early warnings" },
+      { href: "/risk-command-center", label: "Risk Monitor",      icon: Activity, desc: "Prioritized HSE risk signals" },
     ]
   },
   {
