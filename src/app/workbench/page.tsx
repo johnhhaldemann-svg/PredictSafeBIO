@@ -137,6 +137,7 @@ export default async function WorkbenchPage({
       .slice(0, 3)
       .map((a) => `${a.workflow} / ${a.level}`),
     ownerMode: adminAccess.isOwner,
+    categoryScores: auditReadiness.categoryScores,
   };
 
   return (

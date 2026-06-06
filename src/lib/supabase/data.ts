@@ -516,6 +516,15 @@ export type FoundationSourceDrilldownSummary = {
   }>;
 };
 
+export type CategoryScores = {
+  biosafety: number;
+  documents: number;
+  training: number;
+  evidence: number;
+  capa: number;
+  incidents: number;
+};
+
 export type AuditReadinessConsoleSummary = {
   latestScore: number;
   trend: "improving" | "declining" | "steady" | "not_enough_data";
@@ -525,6 +534,7 @@ export type AuditReadinessConsoleSummary = {
   notes: Array<{ id: string; note: string; noteType: string; createdAt?: string }>;
   humanReviewStatus: string;
   draftOnly: boolean;
+  categoryScores?: CategoryScores;
 };
 
 export async function listAuditEvents(filters?: { eventType?: string; sourceModule?: string }): Promise<AuditEvent[]> {
@@ -1511,7 +1521,7 @@ export async function getAuditReadinessConsoleSummary(): Promise<AuditReadinessC
     const [scoreResult, evidenceRows, noteRows, generatedActions] = await Promise.all([
       supabase
         .from("audit_readiness_scores")
-        .select("id,overall_score,top_gaps,generated_at")
+        .select("id,overall_score,documents_score,training_score,capa_score,incidents_score,evidence_score,top_gaps,generated_at")
         .eq("organization_id", context.organizationId)
         .order("generated_at", { ascending: false })
         .limit(5),
@@ -1541,6 +1551,7 @@ export async function getAuditReadinessConsoleSummary(): Promise<AuditReadinessC
       sourceHref: getFoundationSourceTarget("audit_readiness").href
     }));
 
+    const latestScoreRow = (scoreResult.data?.[0] as Record<string, any> | undefined);
     return {
       latestScore: latest,
       trend: getReadinessTrend(latest, previous),
@@ -1554,7 +1565,15 @@ export async function getAuditReadinessConsoleSummary(): Promise<AuditReadinessC
         createdAt: row.created_at
       })),
       humanReviewStatus: "Draft - human review required",
-      draftOnly: true
+      draftOnly: true,
+      categoryScores: latestScoreRow ? {
+        biosafety: Number(latestScoreRow.overall_score ?? 0),
+        documents: Number(latestScoreRow.documents_score ?? 0),
+        training:  Number(latestScoreRow.training_score  ?? 0),
+        evidence:  Number(latestScoreRow.evidence_score  ?? 0),
+        capa:      Number(latestScoreRow.capa_score      ?? 0),
+        incidents: Number(latestScoreRow.incidents_score ?? 0),
+      } : undefined
     };
   } catch {
     return demoAuditReadinessConsoleSummary();
@@ -4681,7 +4700,15 @@ function demoAuditReadinessConsoleSummary(): AuditReadinessConsoleSummary {
     generatedActions: [],
     notes: [],
     humanReviewStatus: "Draft - human review required",
-    draftOnly: true
+    draftOnly: true,
+    categoryScores: {
+      biosafety: demo.readiness.overallScore,
+      documents: 62,
+      training:  55,
+      evidence:  48,
+      capa:      70,
+      incidents: 80,
+    }
   };
 }
 
