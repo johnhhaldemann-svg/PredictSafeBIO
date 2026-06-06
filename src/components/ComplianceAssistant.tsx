@@ -83,33 +83,26 @@ export function ComplianceAssistant({ orgId, defaultContext = "general" }: Props
         </label>
 
         <button
-          className="button-primary"
+          className="button-primary btn-with-icon"
           type="submit"
           disabled={loading || !question.trim()}
-          style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
         >
           <Send size={15} />
           {loading ? "Asking…" : "Ask compliance assistant"}
         </button>
       </form>
 
-      {error && (
-        <p className="form-message" style={{ marginTop: "1rem" }}>
-          {error}
-        </p>
-      )}
+      {error && <p className="form-message ai-answer-block">{error}</p>}
 
       {answer && (
-        <div style={{ marginTop: "1.25rem", borderTop: "1px solid var(--border)", paddingTop: "1rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-            <ShieldCheck size={14} style={{ opacity: 0.5 }} />
-            <span className="muted" style={{ fontSize: "0.78em" }}>
+        <div className="ai-answer-block">
+          <div className="ai-answer-header">
+            <ShieldCheck size={14} className="ai-answer-icon" />
+            <span className="muted ai-answer-draft">
               Draft — Human Review Required · {contextTypeLabels[context]}
             </span>
           </div>
-          <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: "0.9rem" }}>
-            {answer}
-          </div>
+          <div className="ai-answer-body">{answer}</div>
         </div>
       )}
     </section>

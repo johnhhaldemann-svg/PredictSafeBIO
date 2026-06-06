@@ -5895,6 +5895,48 @@ pre {
 .input-narrow       { width: 70px; }
 .input-medium       { width: 160px; }
 
+/* ── RiskCellReviewCard ── */
+.risk-cell-card          { gap: 0.6rem; flex-direction: column; align-items: stretch; }
+.risk-cell-header        { display: flex; align-items: flex-start; gap: 0.75rem; }
+.risk-cell-main          { flex: 1; min-width: 0; }
+.risk-cell-meta          { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem; }
+.risk-cell-title         { font-size: 0.9rem; }
+.risk-cell-flag          { display: flex; align-items: center; gap: 3px; font-size: 0.72rem; }
+.risk-cell-record-type   { font-size: 0.75rem; }
+.risk-cell-score         { text-align: right; flex-shrink: 0; min-width: 80px; }
+.risk-cell-score-label   { font-size: 0.68rem; color: var(--muted); margin-bottom: 2px; }
+.risk-cell-confidence    { font-size: 0.68rem; margin-top: 3px; display: inline-block; }
+.risk-cell-timeframe     { font-size: 0.75rem; }
+.risk-cell-toggle        { align-self: flex-start; display: flex; align-items: center; gap: 4px; }
+.risk-cell-detail        { background: var(--panel-soft); border: 1px solid var(--line); border-radius: 8px; padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.82rem; }
+.risk-cell-detail-label  { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.6; }
+.risk-cell-detail-label--alert { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--red-dk); }
+.risk-cell-review-reason { border-left: 3px solid var(--line); padding-left: 0.75rem; }
+.risk-cell-detail-body   { margin-top: 4px; line-height: 1.55; }
+.risk-cell-list          { margin: 4px 0 0 0; padding: 0 0 0 1.1rem; line-height: 1.6; }
+.risk-cell-list-owner    { font-size: 0.78em; }
+.risk-cell-gaps-list li  { color: var(--red-dk); }
+.risk-cell-score-note    { font-size: 0.7rem; }
+.risk-cell-actions       { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.1rem; }
+.risk-cell-action-form   { background: var(--panel-soft); border: 1px solid var(--line); border-radius: 8px; padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.risk-cell-form-label    { font-size: 0.82rem; }
+.risk-cell-form-hint     { font-size: 0.78rem; }
+.risk-cell-form-input-mt { margin-top: 0.3rem; width: 100%; }
+.risk-cell-form-buttons  { display: flex; gap: 0.4rem; }
+
+/* ScoreBar */
+.score-bar         { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; }
+.score-bar-track   { flex: 1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.score-bar-fill    { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
+
+/* ── ComplianceAssistant ── */
+.btn-with-icon   { display: flex; align-items: center; gap: 0.5rem; }
+.ai-answer-block { margin-top: 1.25rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+.ai-answer-header{ display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.ai-answer-icon  { opacity: 0.5; }
+.ai-answer-draft { font-size: 0.78em; }
+.ai-answer-body  { white-space: pre-wrap; line-height: 1.6; font-size: 0.9rem; }
+
 /* ══════════════════════════════════════════════
    Visual polish — missing & improved styles
    ══════════════════════════════════════════════ */
