@@ -7,7 +7,7 @@ import {
   type CloseoutStatus,
   type PermitType
 } from "@/lib/supabase/permits-service";
-import { authMessage } from "@/lib/auth-routing";
+import { authMessage, authSuccess } from "@/lib/auth-routing";
 
 export async function createPermitAction(formData: FormData) {
   const permitType = String(formData.get("permitType") ?? "contractor") as PermitType;
@@ -19,7 +19,7 @@ export async function createPermitAction(formData: FormData) {
   const hazards = hazardsRaw ? hazardsRaw.split(",").map((h) => h.trim()).filter(Boolean) : [];
 
   const result = await createPermit({ permitType, taskDescription, location, startTime, stopTime, hazards });
-  redirect(authMessage("/permits", result.message));
+  redirect(result.ok ? authSuccess("/permits", result.message) : authMessage("/permits", result.message));
 }
 
 export async function updatePermitStatusAction(formData: FormData) {
@@ -30,5 +30,5 @@ export async function updatePermitStatusAction(formData: FormData) {
   if (!id || !closeoutStatus) redirect("/permits");
 
   const result = await updatePermitStatus(id, closeoutStatus, notes);
-  redirect(authMessage("/permits", result.message));
+  redirect(result.ok ? authSuccess("/permits", result.message) : authMessage("/permits", result.message));
 }

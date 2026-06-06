@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { archiveChemical, createChemical, type HazardClass } from "@/lib/supabase/chemical-service";
-import { authMessage } from "@/lib/auth-routing";
+import { authMessage, authSuccess } from "@/lib/auth-routing";
 
 export async function createChemicalAction(formData: FormData) {
   const chemicalName = String(formData.get("chemicalName") ?? "").trim();
@@ -33,7 +33,7 @@ export async function createChemicalAction(formData: FormData) {
     restricted
   });
 
-  redirect(authMessage("/chemical-inventory", result.message));
+  redirect(result.ok ? authSuccess("/chemical-inventory", result.message) : authMessage("/chemical-inventory", result.message));
 }
 
 export async function archiveChemicalAction(formData: FormData) {
@@ -41,5 +41,5 @@ export async function archiveChemicalAction(formData: FormData) {
   if (!id) redirect("/chemical-inventory");
 
   const result = await archiveChemical(id);
-  redirect(authMessage("/chemical-inventory", result.message));
+  redirect(result.ok ? authSuccess("/chemical-inventory", result.message) : authMessage("/chemical-inventory", result.message));
 }
