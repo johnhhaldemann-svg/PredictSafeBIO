@@ -8,7 +8,7 @@ import {
   type ExposureFrequency,
   type ExposureStatus,
 } from "@/lib/supabase/exposure-service";
-import { authMessage } from "@/lib/auth-routing";
+import { authMessage, authSuccess } from "@/lib/auth-routing";
 
 export async function createExposureAction(formData: FormData) {
   const labId = String(formData.get("labId") ?? "").trim() || null;
@@ -35,7 +35,7 @@ export async function createExposureAction(formData: FormData) {
     notes,
   });
 
-  redirect(authMessage("/exposure-map", result.message));
+  redirect(result.ok ? authSuccess("/exposure-map", result.message) : authMessage("/exposure-map", result.message));
 }
 
 export async function updateExposureStatusAction(formData: FormData) {
@@ -44,5 +44,5 @@ export async function updateExposureStatusAction(formData: FormData) {
   if (!id) redirect("/exposure-map");
 
   const result = await setExposureStatus(id, status);
-  redirect(authMessage("/exposure-map", result.message));
+  redirect(result.ok ? authSuccess("/exposure-map", result.message) : authMessage("/exposure-map", result.message));
 }

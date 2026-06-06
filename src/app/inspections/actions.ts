@@ -10,7 +10,7 @@ import {
   type InspectionStatus,
   type InspectionType
 } from "@/lib/supabase/inspection-service";
-import { authMessage } from "@/lib/auth-routing";
+import { authMessage, authSuccess } from "@/lib/auth-routing";
 
 export async function createInspectionAction(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
@@ -22,7 +22,7 @@ export async function createInspectionAction(formData: FormData) {
   const result = await createInspection({ title, auditType, scheduledFor });
 
   if (result.ok && result.id) {
-    redirect(`/inspections/${result.id}?message=${encodeURIComponent(result.message)}`);
+    redirect(authSuccess(`/inspections/${result.id}`, result.message));
   }
   redirect(authMessage("/inspections", result.message));
 }
@@ -35,7 +35,7 @@ export async function updateInspectionStatusAction(formData: FormData) {
   if (!inspectionId) redirect("/inspections");
 
   const result = await updateInspectionStatus({ inspectionId, status });
-  redirect(authMessage(returnTo, result.message));
+  redirect(result.ok ? authSuccess(returnTo, result.message) : authMessage(returnTo, result.message));
 }
 
 export async function addFindingAction(formData: FormData) {
@@ -48,7 +48,7 @@ export async function addFindingAction(formData: FormData) {
   }
 
   const result = await addInspectionFinding({ inspectionId, findingLevel, title });
-  redirect(authMessage(`/inspections/${inspectionId}`, result.message));
+  redirect(result.ok ? authSuccess(`/inspections/${inspectionId}`, result.message) : authMessage(`/inspections/${inspectionId}`, result.message));
 }
 
 export async function closeFindingAction(formData: FormData) {
@@ -58,5 +58,5 @@ export async function closeFindingAction(formData: FormData) {
   if (!findingId || !inspectionId) redirect("/inspections");
 
   const result = await closeInspectionFinding({ findingId, inspectionId });
-  redirect(authMessage(`/inspections/${inspectionId}`, result.message));
+  redirect(result.ok ? authSuccess(`/inspections/${inspectionId}`, result.message) : authMessage(`/inspections/${inspectionId}`, result.message));
 }

@@ -28,7 +28,7 @@ const STATUS_CLASS: Record<ExposureStatus, string> = {
 };
 
 type Props = {
-  searchParams: Promise<{ message?: string; filter?: string }>;
+  searchParams: Promise<{ message?: string; success?: string; filter?: string }>;
 };
 
 export default async function ExposureMapPage({ searchParams }: Props) {
@@ -98,6 +98,7 @@ export default async function ExposureMapPage({ searchParams }: Props) {
           </article>
         </section>
 
+        {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message && <p className="form-message">{params.message}</p>}
 
         {/* Filter strip */}

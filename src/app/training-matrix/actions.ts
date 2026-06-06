@@ -5,7 +5,7 @@ import { withAuditTrace } from "@/lib/audit-trace";
 import { canManageWorkspace } from "@/lib/role-permissions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getProfileContext } from "@/lib/supabase/data-helpers";
-import { authMessage } from "@/lib/auth-routing";
+import { authMessage, authSuccess } from "@/lib/auth-routing";
 import { scoreTrainingGap, resolveRiskCell } from "@/lib/supabase/continuous-scoring-service";
 
 // ---------------------------------------------------------------------------
@@ -80,7 +80,7 @@ export async function createTrainingRequirementAction(formData: FormData) {
     )
   });
 
-  redirect(authMessage("/training-matrix", `Training requirement "${title}" created.`));
+  redirect(authSuccess("/training-matrix", `Training requirement "${title}" created.`));
 }
 
 // ---------------------------------------------------------------------------
@@ -161,7 +161,7 @@ export async function markTrainingCompleteAction(formData: FormData) {
     )
   });
 
-  redirect(authMessage("/training-matrix", "Training marked complete."));
+  redirect(authSuccess("/training-matrix", "Training marked complete."));
 }
 
 // ---------------------------------------------------------------------------
@@ -183,5 +183,5 @@ export async function deleteTrainingRequirementAction(formData: FormData) {
     .eq("id", requirementId)
     .eq("organization_id", context.organizationId);
 
-  redirect(authMessage("/training-matrix", "Training requirement deleted."));
+  redirect(authSuccess("/training-matrix", "Training requirement deleted."));
 }

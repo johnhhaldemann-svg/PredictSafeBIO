@@ -41,7 +41,7 @@ const STATUS_CLASS: Record<InspectionStatus, string> = {
 function PriorityBadge({ rec }: { rec: AiInspectionRecommendation }) {
   if (rec.priority === "overdue") {
     return (
-      <span className="status-overdue" style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+      <span className="status-overdue risk-cell-flag">
         <AlertTriangle size={12} />
         Overdue {Math.abs(rec.daysUntilDue)} day{Math.abs(rec.daysUntilDue) !== 1 ? "s" : ""}
       </span>
@@ -49,14 +49,14 @@ function PriorityBadge({ rec }: { rec: AiInspectionRecommendation }) {
   }
   if (rec.priority === "due_soon") {
     return (
-      <span className="status-needs-review" style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+      <span className="status-needs-review risk-cell-flag">
         <BellRing size={12} />
         Due in {rec.daysUntilDue} day{rec.daysUntilDue !== 1 ? "s" : ""}
       </span>
     );
   }
   return (
-    <span className="status-current" style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+    <span className="status-current risk-cell-flag">
       <Clock size={12} />
       Due in {rec.daysUntilDue} days
     </span>
@@ -64,7 +64,7 @@ function PriorityBadge({ rec }: { rec: AiInspectionRecommendation }) {
 }
 
 type Props = {
-  searchParams: Promise<{ message?: string; filter?: string }>;
+  searchParams: Promise<{ message?: string; success?: string; filter?: string }>;
 };
 
 export default async function InspectionsPage({ searchParams }: Props) {
@@ -122,21 +122,20 @@ export default async function InspectionsPage({ searchParams }: Props) {
           </article>
         </section>
 
+        {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message && <p className="form-message">{params.message}</p>}
 
         {aiRecommendations.length > 0 && (
           <section className="panel" aria-label="AI-required inspections">
             <div className="panel-heading">
               <div>
-                <p className="section-label" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <p className="section-label section-label-icon">
                   <Sparkles size={13} /> AI Inspection Scheduler
                 </p>
                 <h2>
                   Required inspections
                   {overdueCount > 0 && (
-                    <span style={{ marginLeft: "10px", fontSize: "0.75rem", fontWeight: 600, color: "var(--color-red, #c0392b)" }}>
-                      {overdueCount} overdue
-                    </span>
+                    <span className="overdue-count">{overdueCount} overdue</span>
                   )}
                 </h2>
                 <p className="muted">
@@ -155,43 +154,33 @@ export default async function InspectionsPage({ searchParams }: Props) {
                 const lastFmt = rec.lastCompletedDate
                   ? new Date(rec.lastCompletedDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
                   : null;
-                const borderColor = rec.priority === "overdue"
-                  ? "var(--color-red, #c0392b)"
-                  : rec.priority === "due_soon"
-                    ? "var(--color-warning, #e67e22)"
-                    : "var(--color-green, #27ae60)";
-
                 return (
                   <article
                     key={rec.inspectionType}
-                    className="action-row"
-                    style={{ borderLeft: `3px solid ${borderColor}`, paddingLeft: "12px" }}
+                    className={`action-row ${rec.priority === "overdue" ? "insp-rec--overdue" : rec.priority === "due_soon" ? "insp-rec--soon" : "insp-rec--ok"}`}
                   >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <strong style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    <div className="rec-card-body">
+                      <strong className="rec-card-title">
                         {rec.label}
                         <PriorityBadge rec={rec} />
                       </strong>
-                      <span style={{ fontSize: "0.8rem", color: "var(--color-muted)" }}>
+                      <span className="rec-card-meta">
                         {rec.category} &middot; {rec.frequencyLabel}
                         {lastFmt ? ` · Last completed ${lastFmt}` : " · Never completed"}
                       </span>
-                      <p style={{ fontSize: "0.78rem", marginTop: "4px", color: "var(--color-muted)" }}>
-                        {rec.rationale}
-                      </p>
+                      <p className="rec-card-rationale">{rec.rationale}</p>
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px", flexShrink: 0 }}>
-                      <span style={{ fontSize: "0.75rem", fontWeight: 600 }}>Due {dueDateFmt}</span>
+                    <div className="rec-card-actions">
+                      <span className="rec-card-due">Due {dueDateFmt}</span>
                       {adminAccess.signedIn && (
                         <Link
                           href={`/inspections#schedule-form`}
-                          className={rec.priority === "overdue" ? "button-primary" : "button-secondary"}
-                          style={{ fontSize: "0.8rem", padding: "4px 12px" }}
+                          className={`${rec.priority === "overdue" ? "button-primary" : "button-secondary"} compact`}
                         >
                           Schedule now
                         </Link>
                       )}
-                      <span style={{ fontSize: "10px", color: "#7c3aed", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                      <span className="ai-badge">
                         <Sparkles size={9} /> Auto-assigns daily
                       </span>
                     </div>
@@ -203,7 +192,7 @@ export default async function InspectionsPage({ searchParams }: Props) {
         )}
 
         {/* Status filter + calendar / refresh actions */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
+        <div className="filter-action-bar">
           <nav className="command-center-link-strip" aria-label="Inspection status filter">
             {(["all", "planned", "in_progress", "completed", "cancelled"] as const).map((s) => (
               <Link
@@ -215,21 +204,13 @@ export default async function InspectionsPage({ searchParams }: Props) {
               </Link>
             ))}
           </nav>
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <Link
-              href="/inspections/calendar"
-              className="button-secondary compact"
-              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
-            >
+          <div className="btn-group">
+            <Link href="/inspections/calendar" className="button-secondary compact btn-with-icon">
               <Calendar size={13} /> Compliance Calendar
             </Link>
             {adminAccess.isOwner && (
               <form action="/api/inspections/auto-schedule" method="POST">
-                <button
-                  type="submit"
-                  className="button-secondary compact"
-                  style={{ display: "inline-flex", alignItems: "center", gap: "6px", cursor: "pointer" }}
-                >
+                <button type="submit" className="button-secondary compact btn-with-icon">
                   <RefreshCw size={13} /> Refresh AI Schedule
                 </button>
               </form>
@@ -254,23 +235,20 @@ export default async function InspectionsPage({ searchParams }: Props) {
                 const isOverdue = insp.status === "planned" && insp.scheduledFor && new Date(insp.scheduledFor) < new Date();
                 return (
                   <article
-                    className="action-row"
+                    className={`action-row ${isOverdue ? "insp-row--overdue" : ""}`}
                     key={insp.id}
-                    style={isOverdue ? { borderLeft: "3px solid var(--color-red, #c0392b)", paddingLeft: "10px" } : undefined}
                   >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <strong style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    <div className="insp-main">
+                      <strong className="insp-title-row">
                         <Link href={`/inspections/${insp.id}`}>{insp.title}</Link>
                         {insp.autoGenerated && (
-                          <span style={{ fontSize: "10px", color: "#7c3aed", background: "#f5f3ff", borderRadius: "4px", padding: "2px 6px", border: "1px solid #ddd6fe", display: "inline-flex", alignItems: "center", gap: "3px", fontWeight: 500 }}>
-                            <Sparkles size={9} /> AI-scheduled
-                          </span>
+                          <span className="ai-badge"><Sparkles size={9} /> AI-scheduled</span>
                         )}
                       </strong>
                       <span className={STATUS_CLASS[insp.status]}>
                         {inspectionStatusLabels[insp.status]} &middot; {inspectionTypeLabels[insp.auditType] ?? insp.auditType}
                       </span>
-                      <p style={{ margin: "4px 0 0", fontSize: "0.8rem", color: "var(--color-muted)" }}>
+                      <p className="insp-meta">
                         {insp.scheduledFor
                           ? `Due ${new Date(insp.scheduledFor).toLocaleDateString()}`
                           : "No date set"}
@@ -283,7 +261,7 @@ export default async function InspectionsPage({ searchParams }: Props) {
                           ? ` (${insp.openFindingCount} open)`
                           : ""}
                         {insp.assigneeName && (
-                          <span style={{ marginLeft: "8px", display: "inline-flex", alignItems: "center", gap: "4px", color: "#1d4ed8" }}>
+                          <span className="insp-assignee">
                             <User size={11} /> {insp.assigneeName}
                           </span>
                         )}

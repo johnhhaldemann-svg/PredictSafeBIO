@@ -5895,6 +5895,29 @@ pre {
 .input-narrow       { width: 70px; }
 .input-medium       { width: 160px; }
 
+/* ── inspections page — AI recommendation cards & inspection list ── */
+.section-label-icon   { display: flex; align-items: center; gap: 6px; }
+.overdue-count        { margin-left: 10px; font-size: 0.75rem; font-weight: 600; color: var(--red-dk); }
+.rec-card-body        { flex: 1; min-width: 0; }
+.rec-card-title       { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rec-card-meta        { font-size: 0.8rem; color: var(--text2); }
+.rec-card-rationale   { font-size: 0.78rem; margin-top: 4px; color: var(--text2); }
+.rec-card-actions     { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.rec-card-due         { font-size: 0.75rem; font-weight: 600; }
+.ai-badge             { font-size: 10px; color: #7c3aed; background: #f5f3ff; border-radius: 4px; padding: 2px 6px; border: 1px solid #ddd6fe; display: inline-flex; align-items: center; gap: 3px; font-weight: 500; }
+.filter-action-bar    { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.btn-group            { display: flex; gap: 8px; align-items: center; }
+/* Priority-coloured left border on AI rec rows */
+.insp-rec--overdue    { border-left: 3px solid var(--red-dk);   padding-left: 12px; }
+.insp-rec--soon       { border-left: 3px solid var(--orange);   padding-left: 12px; }
+.insp-rec--ok         { border-left: 3px solid var(--green-dk); padding-left: 12px; }
+/* Overdue border on inspection list rows */
+.insp-row--overdue    { border-left: 3px solid var(--red-dk); padding-left: 10px; }
+.insp-main            { flex: 1; min-width: 0; }
+.insp-title-row       { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.insp-meta            { margin: 4px 0 0; font-size: 0.8rem; color: var(--text2); }
+.insp-assignee        { margin-left: 8px; display: inline-flex; align-items: center; gap: 4px; color: var(--blue); }
+
 /* ── RiskCellReviewCard ── */
 .risk-cell-card          { gap: 0.6rem; flex-direction: column; align-items: stretch; }
 .risk-cell-header        { display: flex; align-items: flex-start; gap: 0.75rem; }

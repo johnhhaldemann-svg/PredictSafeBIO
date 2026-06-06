@@ -6,7 +6,7 @@ import {
   resolveDeviation,
   type ProductType
 } from "@/lib/supabase/pesticide-service";
-import { authMessage } from "@/lib/auth-routing";
+import { authMessage, authSuccess } from "@/lib/auth-routing";
 
 export async function createPesticideAction(formData: FormData) {
   const productName = String(formData.get("productName") ?? "").trim();
@@ -37,7 +37,7 @@ export async function createPesticideAction(formData: FormData) {
     deviationNotes
   });
 
-  redirect(authMessage("/pesticide", result.message));
+  redirect(result.ok ? authSuccess("/pesticide", result.message) : authMessage("/pesticide", result.message));
 }
 
 export async function resolveDeviationAction(formData: FormData) {
@@ -47,5 +47,5 @@ export async function resolveDeviationAction(formData: FormData) {
   if (!id) redirect("/pesticide");
 
   const result = await resolveDeviation(id, resolutionNote || "Deviation reviewed and resolved by EHS.");
-  redirect(authMessage("/pesticide", result.message));
+  redirect(result.ok ? authSuccess("/pesticide", result.message) : authMessage("/pesticide", result.message));
 }
