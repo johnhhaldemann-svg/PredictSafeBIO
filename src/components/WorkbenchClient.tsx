@@ -38,6 +38,8 @@ type CommandCenterSummary = {
   ownerMode: boolean;
 };
 
+/** Demo scenario — only shown on the public/logged-out preview. Never used
+ *  as a default when a real initialInput is passed from the server. */
 const starterInput: BioAiInput = {
   siteName: "Demo Biotech Site",
   area: "QC Microbiology Lab",
@@ -71,6 +73,9 @@ const starterInput: BioAiInput = {
     }
   ]
 };
+
+/** Blank input for authenticated users who have no assessments yet. */
+const blankInput: BioAiInput = { signals: [] };
 
 const signalTypes: BioSignalType[] = [
   "contamination_event",
@@ -125,7 +130,7 @@ export function WorkbenchClient({
   assignees = [],
   canManageFoundationActions = false,
   foundationActions = [],
-  initialInput = starterInput,
+  initialInput = blankInput,
   notifications,
   productionVerification,
   commandCenter,

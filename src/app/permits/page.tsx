@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { AlertTriangle, ClipboardCheck, Lock, Plus, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 
 export const metadata: Metadata = { title: "Permits – PredictSafeBIO" };
 import { AppShell } from "@/components/AppShell";
@@ -82,13 +83,13 @@ export default async function PermitsPage({ searchParams }: Props) {
         {/* Filter strip */}
         <nav className="command-center-link-strip" aria-label="Permit filter">
           {(["all", "active", "overdue", "draft"] as const).map((f) => (
-            <a
+            <Link
               key={f}
               href={f === "all" ? "/permits" : `/permits?filter=${f}`}
               className={`button-secondary compact ${filter === f ? "active-filter" : ""}`}
             >
               {f === "all" ? "All permits" : f === "active" ? "Active" : f === "overdue" ? "Overdue" : "Drafts"}
-            </a>
+            </Link>
           ))}
         </nav>
 

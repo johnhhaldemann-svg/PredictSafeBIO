@@ -111,7 +111,10 @@ export default async function HazardRegisterPage({ searchParams }: Props) {
           {loadFailed ? (
             <DataLoadError resource="hazard register" />
           ) : hazards.length === 0 ? (
-            <p className="muted">No hazards yet. Identify your first hazard below.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No hazards registered yet</p>
+              <p className="muted">Add your first hazard below to begin tracking risk controls.</p>
+            </div>
           ) : (
             <div className="action-list">
               {hazards.map((hz) => (
