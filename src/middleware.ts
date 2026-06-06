@@ -2,9 +2,13 @@
  * middleware.ts — Edge middleware for PredictSafeBIO
  *
  * Responsibilities:
- *  1. Rate limiting — auth routes (login, signup, forgot-password) are limited
+ *  1. Session refresh — calls supabase.auth.getUser() on every request so that
+ *     expiring access tokens are refreshed and auth cookies are updated.
+ *     Without this, Supabase SSR can't rotate tokens and users get kicked to
+ *     /login mid-session ("Invalid refresh token" / "AuthApiError").
+ *  2. Rate limiting — auth routes (login, signup, forgot-password) are limited
  *     to 10 requests per IP per minute. Exceeding returns 429.
- *  2. API route protection — Stripe and cron endpoints get basic origin + method checks.
+ *  3. API route protection — Stripe and cron endpoints get basic origin + method checks.
  *
  * Implementation uses the Web Crypto API available in the Edge runtime.
  * No Redis required — uses an in-memory sliding window per edge instance.
@@ -15,18 +19,16 @@
  * that could expose access to PHI.
  */
 
+import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 
 export const config = {
   matcher: [
-    // Auth routes — rate limit
-    "/login",
-    "/signup",
-    "/forgot-password",
-    // API routes — method + origin checks
-    "/api/stripe/:path*",
-    "/api/cron/:path*",
-    "/api/admin/:path*",
+    /*
+     * Run on every route EXCEPT Next.js internals and static assets.
+     * Session refresh must cover all pages — not just auth routes.
+     */
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
 
@@ -83,12 +85,44 @@ function rateLimitedResponse(remaining: number): NextResponse {
   );
 }
 
-export function middleware(req: NextRequest): NextResponse {
+export async function middleware(req: NextRequest): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
   const ip = getClientIp(req);
   const method = req.method;
 
-  // ── 1. Auth route rate limiting ─────────────────────────────────────────────
+  // ── 1. Supabase session refresh ─────────────────────────────────────────────
+  // @supabase/ssr requires middleware to call auth.getUser() on every request
+  // so that expiring JWTs are refreshed and the new tokens are written back to
+  // cookies. Skipping this causes "Invalid refresh token" / mid-session logouts.
+  let response = NextResponse.next({ request: req });
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  if (supabaseUrl && supabaseKey) {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          // Write updated cookies into both the request (for downstream
+          // Server Components) and the response (sent back to the browser).
+          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
+          response = NextResponse.next({ request: req });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    });
+
+    // IMPORTANT: do not add logic between createServerClient and getUser().
+    // getUser() is what actually triggers the token refresh.
+    await supabase.auth.getUser();
+  }
+
+  // ── 2. Auth route rate limiting ─────────────────────────────────────────────
   if (
     pathname === "/login" ||
     pathname === "/signup" ||
@@ -103,10 +137,10 @@ export function middleware(req: NextRequest): NextResponse {
         return rateLimitedResponse(remaining);
       }
     }
-    return NextResponse.next();
+    return response;
   }
 
-  // ── 2. Cron endpoint — require CRON_SECRET ──────────────────────────────────
+  // ── 3. Cron endpoint — require CRON_SECRET ──────────────────────────────────
   if (pathname.startsWith("/api/cron/")) {
     if (method !== "GET") {
       return new NextResponse(null, { status: 405 });
@@ -121,10 +155,10 @@ export function middleware(req: NextRequest): NextResponse {
         return new NextResponse(null, { status: 401 });
       }
     }
-    return NextResponse.next();
+    return response;
   }
 
-  // ── 3. Stripe API routes ────────────────────────────────────────────────────
+  // ── 4. Stripe API routes ────────────────────────────────────────────────────
   if (pathname.startsWith("/api/stripe/")) {
     const { allowed } = checkRateLimit(`stripe:${ip}`, MAX_API);
     if (!allowed) return rateLimitedResponse(0);
@@ -132,7 +166,7 @@ export function middleware(req: NextRequest): NextResponse {
     // Webhook: must be POST, signature verified in handler — allow through
     if (pathname === "/api/stripe/webhook") {
       if (method !== "POST") return new NextResponse(null, { status: 405 });
-      return NextResponse.next();
+      return response;
     }
 
     // Checkout/portal/redirect: must be POST from same origin
@@ -145,16 +179,16 @@ export function middleware(req: NextRequest): NextResponse {
       if (method !== "POST") return new NextResponse(null, { status: 405 });
     }
 
-    return NextResponse.next();
+    return response;
   }
 
-  // ── 4. Admin export API ─────────────────────────────────────────────────────
+  // ── 5. Admin export API ─────────────────────────────────────────────────────
   if (pathname.startsWith("/api/admin/")) {
     if (method !== "GET") return new NextResponse(null, { status: 405 });
     const { allowed } = checkRateLimit(`admin:${ip}`, MAX_API);
     if (!allowed) return rateLimitedResponse(0);
-    return NextResponse.next();
+    return response;
   }
 
-  return NextResponse.next();
+  return response;
 }
