@@ -10,6 +10,7 @@ import { getProfileContext } from "@/lib/supabase/data-helpers";
 import { ComplianceAssistant } from "@/components/ComplianceAssistant";
 import { RiskCellReviewCard } from "@/components/RiskCellReviewCard";
 import { LoopNext } from "@/components/LoopNext";
+import { getManualSignals } from "@/lib/supabase/manual-signals-service";
 import {
   getRiskSummary,
   cellTypeLabels,
@@ -42,6 +43,7 @@ export default async function RiskCommandCenterPage() {
     getRiskSummary().catch(() => null),
     getProfileContext().catch(() => null)
   ]);
+  const manualSignals = await getManualSignals().catch(() => null);
 
   if (!summary) {
     return (
@@ -102,6 +104,35 @@ export default async function RiskCommandCenterPage() {
             <em>Early warning signals detected.</em>
           </article>
         </section>
+
+        {/* Manual v1.1 - platform alignment signals */}
+        {manualSignals && (
+          <section className="panel">
+            <div className="panel-heading">
+              <div>
+                <p className="section-label">Platform alignment</p>
+                <h2>Risk register, programs &amp; change signals</h2>
+              </div>
+            </div>
+            <div className="command-card-grid command-card-grid--tight">
+              <article className={`command-card ${manualSignals.overdueRiskRegister > 0 ? "platform-red" : "platform-green"} command-card--compact`}>
+                <div><strong>Overdue register items</strong></div><small>{manualSignals.overdueRiskRegister}</small><em>Risk register entries past due.</em>
+              </article>
+              <article className={`command-card ${manualSignals.programsPending > 0 ? "platform-blue" : "platform-green"} command-card--compact`}>
+                <div><strong>Programs pending</strong></div><small>{manualSignals.programsPending}</small><em>Awaiting activation decision.</em>
+              </article>
+              <article className={`command-card ${manualSignals.mocAwaitingReview > 0 ? "platform-red" : "platform-green"} command-card--compact`}>
+                <div><strong>Changes awaiting review</strong></div><small>{manualSignals.mocAwaitingReview}</small><em>MOC records in review.</em>
+              </article>
+              <article className={`command-card ${manualSignals.aiPendingReview > 0 ? "platform-blue" : "platform-green"} command-card--compact`}>
+                <div><strong>AI drafts to review</strong></div><small>{manualSignals.aiPendingReview}</small><em>AI recommendations pending human review.</em>
+              </article>
+              <article className={`command-card ${manualSignals.qualifiedExpiring > 0 ? "platform-red" : "platform-green"} command-card--compact`}>
+                <div><strong>Qualified expirations</strong></div><small>{manualSignals.qualifiedExpiring}</small><em>Qualified persons expiring in 30 days.</em>
+              </article>
+            </div>
+          </section>
+        )}
 
         {/* Cell type breakdown */}
         <section className="panel">

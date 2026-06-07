@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>PredictSafeBIO — Correction Show Pack</title>
+<style>
+  :root{
+    --navy:#0D2B4E; --blue:#185FA5; --blue-mid:#378ADD; --blue-lt:#B5D4F4; --blue-bg:#E6F1FB; --blue-xs:#F4F8FD;
+    --bg:#F0F4F8; --panel:#fff; --panel-soft:#F4F8FD; --text:#0D1B2A; --text2:#4A6080; --muted:#8FA8C0; --line:#D6E4F0;
+    --green:#639922; --green-bg:#EAF3DE; --green-dk:#3B6D11;
+    --amber:#EF9F27; --amber-bg:#FAEEDA; --amber-dk:#854F0B;
+    --red:#E24B4A; --red-bg:#FCEBEB; --red-dk:#A32D2D;
+    --teal:#1D9E75; --purple:#534AB7; --purple-bg:#EEEDFE; --purple-dk:#3C3489;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 22px 60px}
+  .top{background:var(--navy);color:#fff;border-radius:14px;padding:22px 24px;margin-bottom:8px}
+  .top h1{margin:0;font-size:21px;font-weight:700}
+  .top p{margin:7px 0 0;font-size:13.5px;color:#B5D4F4;max-width:760px;line-height:1.5}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text2);margin:16px 2px 4px}
+  .legend b{color:var(--text)}
+  .item{background:var(--panel);border:1px solid var(--line);border-radius:14px;margin-top:18px;overflow:hidden;box-shadow:0 4px 16px rgba(13,43,78,.06)}
+  .ihead{padding:14px 18px;border-bottom:1px solid var(--line);background:var(--blue-xs)}
+  .ihead .num{display:inline-block;background:var(--blue);color:#fff;font-size:12px;font-weight:700;border-radius:6px;padding:2px 8px;margin-right:8px}
+  .ihead .tag{float:right;font-size:11px;font-weight:700;border-radius:6px;padding:3px 9px}
+  .tag.fix{background:var(--red-bg);color:var(--red-dk)} .tag.ins{background:var(--green-bg);color:var(--green-dk)} .tag.chg{background:var(--amber-bg);color:var(--amber-dk)}
+  .ihead h2{display:inline;font-size:15px;font-weight:600}
+  .delta{padding:9px 18px;font-size:12.5px;color:var(--text2);background:#fff;border-bottom:1px solid var(--line)}
+  .delta b{color:var(--text)}
+  .stage{padding:18px}
+  /* page chrome */
+  .page{border:1px solid var(--line);border-radius:11px;overflow:hidden}
+  .pbar{background:var(--panel-soft);border-bottom:1px solid var(--line);padding:9px 14px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+  .pbar .t{color:var(--navy);font-weight:600;font-size:13px}
+  .pbody{padding:14px}
+  /* bits */
+  .btn{background:var(--blue);color:#fff;border:0;border-radius:8px;padding:7px 13px;font-size:12.5px;font-weight:600;cursor:default}
+  .btn.g{background:#fff;color:var(--blue);border:1px solid var(--line)}
+  .chip{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+  .s-draft{background:var(--blue-bg);color:#0C447C}.s-pend{background:var(--amber-bg);color:var(--amber-dk)}.s-active{background:var(--green-bg);color:var(--green-dk)}
+  .s-restr{background:var(--purple-bg);color:var(--purple-dk)}.s-over{background:var(--red-bg);color:var(--red-dk)}.s-oos{background:#ECEFF3;color:#4A6080}
+  .s-cwe{background:var(--green-bg);color:var(--green-dk)}.s-eff{background:var(--amber-bg);color:var(--amber-dk)}.s-ret{background:#ECEFF3;color:#8FA8C0}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;color:var(--muted);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;padding:8px 7px;border-bottom:1px solid var(--line)}
+  td{padding:9px 7px;border-bottom:1px solid var(--line);color:var(--text2)}
+  td b{color:var(--text);font-weight:600} tr:last-child td{border-bottom:0}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+  .kpi{background:var(--panel-soft);border:1px solid var(--line);border-radius:10px;padding:12px}
+  .kpi .n{font-size:23px;font-weight:700}.kpi .l{font-size:11.5px;color:var(--text2);margin-top:4px}
+  .kpi.bad .n{color:var(--red-dk)}
+  .gz{margin:9px 0}.gz .r{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}.gz .r b{font-weight:600}
+  .bar{height:8px;border-radius:6px;background:var(--panel-soft);overflow:hidden}.bar span{display:block;height:100%;border-radius:6px}
+  .field{margin-bottom:10px}.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px;font-weight:500}
+  .inp{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12.5px;background:#fff;color:var(--text);width:100%}
+  .toggle{display:flex;gap:6px}.toggle span{border:1px solid var(--line);border-radius:7px;padding:5px 12px;font-size:12px;color:var(--text2)}
+  .toggle span.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .steps span{font-size:11px;padding:4px 9px;border-radius:20px;background:var(--panel-soft);color:var(--muted);border:1px solid var(--line)}
+  .steps span.on{background:var(--blue-bg);color:#0C447C;border-color:var(--blue-lt);font-weight:600}
+  .progress{height:6px;background:var(--panel-soft);border-radius:6px;overflow:hidden;margin-bottom:14px}.progress span{display:block;height:100%;background:var(--blue)}
+  .mod{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-bottom:8px}
+  .mod .why{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .ai{border:1px solid var(--blue-lt);background:var(--blue-bg);border-radius:10px;padding:12px}
+  .ai .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .ai .badge{background:#fff;border:1px solid var(--blue-lt);color:var(--blue);font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px}
+  .ai ul{margin:6px 0 10px;padding-left:18px;font-size:12px;color:var(--text2)}
+  .acts{display:flex;gap:7px}.acts .a{font-size:11.5px;font-weight:600;border-radius:7px;padding:5px 11px;border:1px solid var(--line);background:#fff;color:var(--text2)}
+  .acts .a.acc{background:var(--green);color:#fff;border-color:var(--green)}
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .col h4{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 7px}
+  .navmock{width:180px}
+  .nl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px}
+  .ni{font-size:12.5px;color:var(--text2);padding:5px 8px;border-radius:7px}.ni.on{background:var(--blue-bg);color:#0C447C;font-weight:600}.ni.new{color:var(--green-dk);font-weight:600}
+  .note{font-size:11.5px;color:var(--teal);margin-top:8px}
+  .small{font-size:11.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>Correction Show Pack — in your current design</h1>
+    <p>Each block below is one correction from the Corrections Register, mocked up on its real page using your existing navy/blue style. Above each is what it looks like today vs. what the document says. Nothing here is built yet — this is the "Show" step for your approval.</p>
+  </div>
+  <div class="legend">
+    <span><b class="" style="color:var(--red-dk)">●</b> Fix (broken today)</span>
+    <span><b style="color:var(--green-dk)">●</b> Insert (missing)</span>
+    <span><b style="color:var(--amber-dk)">●</b> Change (exists but wrong)</span>
+  </div>
+
+  <!-- 1 PERMITS -->
+  <div class="item"><div class="ihead"><span class="num">1</span><h2>Work Permits</h2><span class="tag fix">FIX</span></div>
+    <div class="delta">Currently: the page works but <b>nothing saves</b> (no database table). Document: a real Work Permits module. Correction: add the table — same UI, now persists.</div>
+    <div class="stage"><div class="page"><div class="pbar"><span class="t">Operate › Work Permits</span><span><span class="btn">+ New permit</span></span></div>
+      <div class="pbody"><table><thead><tr><th>Permit</th><th>Type</th><th>Area</th><th>Reviewer</th><th>Status</th></tr></thead><tbody>
+        <tr><td><b>HW-2026-014</b></td><td>Hot work</td><td>Pilot plant</td><td>EHS</td><td><span class="chip s-active">Active</span></td></tr>
+        <tr><td><b>CS-2026-007</b></td><td>Confined space</td><td>Tank farm</td><td>Process Safety</td><td><span class="chip s-pend">Pending Qualified Review</span></td></tr>
+        <tr><td><b>HW-2026-013</b></td><td>Hot work</td><td>Roof</td><td>EHS</td><td><span class="chip s-cwe">Closed with Evidence</span></td></tr>
+      </tbody></table><div class="note">✓ Records now persist to controlled_work_permits with org-scoped security.</div></div></div></div></div>
+
+  <!-- 2 PESTICIDE -->
+  <div class="item"><div class="ihead"><span class="num">2</span><h2>Pest &amp; Disinfection</h2><span class="tag fix">FIX</span></div>
+    <div class="delta">Currently: page works but <b>nothing saves</b> (no table). Document: approved disinfectants, contact times, logs. Correction: add the table.</div>
+    <div class="stage"><div class="page"><div class="pbar"><span class="t">Operate › Pest &amp; Disinfect</span><span><span class="btn">+ Log entry</span></span></div>
+      <div class="pbody"><table><thead><tr><th>Product</th><th>Area</th><th>Contact time</th><th>Date</th><th>Status</th></tr></thead><tbody>
+        <tr><td><b>Spor-Klenz</b></td><td>Cleanroom B</td><td>10 min</td><td>Jun 5</td><td><span class="chip s-cwe">Closed with Evidence</span></td></tr>
+        <tr><td><b>70% IPA</b></td><td>BSL-2 suite</td><td>1 min</td><td>Jun 5</td><td><span class="chip s-active">Active</span></td></tr>
+      </tbody></table></div></div></div></div>
+
+  <!-- 3 QUESTIONNAIRE -->
+  <div class="item"><div class="ihead"><span class="num">3</span><h2>Setup Questionnaire (26 questions)</h2><span class="tag ins">INSERT</span></div>
+    <div class="delta">Currently: onboarding asks ~5 fields. Document: a 26-question intake that decides which programs apply. Correction: expand the existing form into 7 sections.</div>
+    <div class="stage"><div class="page"><div class="pbar"><span class="t">Assess › Setup Questionnaire</span><span class="small">Step 3 of 7</span></div>
+      <div class="pbody">
+        <div class="steps"><span>Company</span><span>Operations</span><span class="on">Materials</span><span>Equipment</span><span>Specialized</span><span>Governance</span><span>Records</span></div>
+        <div class="progress"><span style="width:43%"></span></div>
+        <div class="field"><label>3. Do you use biological materials?</label><div class="toggle"><span class="on">Yes</span><span>No</span></div></div>
+        <div class="field"><label>4. Human blood, tissue, patient samples, or other potentially infectious material?</label><div class="toggle"><span class="on">Yes</span><span>No</span></div></div>
+        <div class="field"><label>6. Recombinant/synthetic nucleic acids, viral vectors, GMOs, animals, or plants?</label><div class="toggle"><span class="on">Yes</span><span>No</span></div></div>
+        <div class="field"><label>7. BSL level assigned per lab/process (incl. enhanced BSL-2 / BSL-2+)?</label><input class="inp" value="BSL-2; one BSL-2+ suite" readonly/></div>
+        <div style="text-align:right"><span class="btn g">Back</span> <span class="btn">Next: Equipment</span></div>
+        <div class="note">→ Answers feed the applicability engine (correction #4) and seed the Risk Register (#5).</div>
+      </div></div></div></div>
+
+  <!-- 4 APPLICABILITY WHY -->
+  <div class="item"><div class="ihead"><span class="num">4</span><h2>Compliance Map — why on / why off</h2><span class="tag chg">CHANGE</span></div>
+    <div class="delta">Currently: modules toggle on/off. Document: every module shows <b>why it's on</b>; disabled ones show <b>why not</b> and stay re-activatable.</div>
+    <div class="stage"><div class="page"><div class="pbar"><span class="t">Plan › Compliance Map</span></div>
+      <div class="pbody">
+        <div class="mod"><div><b>Bloodborne Pathogens</b><div class="why">On — triggered by Q4 "human blood / OPIM = Yes"</div></div><span class="chip s-active">Applicable</span></div>
+        <div class="mod"><div><b>IBC / Recombinant Nucleic Acids</b><div class="why">On — triggered by Q6 "viral vectors = Yes"</div></div><span class="chip s-active">Applicable</span></div>
+        <div class="mod"><div><b>Radiation Safety</b><div class="why">Off — Q9 "radioactive material = No". Re-activate anytime.</div></div><span class="chip s-ret">Not applicable</span></div>
+        <div class="mod"><div><b>Laser Safety</b><div class="why">Off — Q8 "lasers = No". Re-activate anytime.</div></div><span class="chip s-ret">Not applicable</span></div>
+      </div></div></div></div>
+
+  <!-- 5 RISK REGISTER -->
+  <div class="item"><div class="ihead"><span class="num">5</span><h2>Risk Register — full fields</h2><span class="tag ins">INSERT</span></div>
+    <div class="delta">Currently: register rows exist with limited fields. Document §6: add source basis, control, frequency/trigger, qualified reviewer, evidence required.</div>
+    <div class="stage"><div class="page"><div class="pbar"><span class="t">Assess › Risk Register</span></div>
+      <div class="pbody"><table><thead><tr><th>Requirement</th><th>Source basis</th><th>Control</th><th>Frequency</th><th>Qualified reviewer</th><th>Evidence</th><th>Status</th></tr></thead><tbody>
+        <tr><td><b>BSC certification</b></td><td>BMBL / mfr</td><td>Engineering</td><td>Annual</td><td>BSO</td><td>Cert.</td><td><span class="chip s-active">Active</span></td></tr>
+        <tr><td><b>Chemical Hygiene Plan</b></td><td>29 CFR 1910.1450</td><td>Admin</td><td>Annual</td><td>CHO</td><td>Signed plan</td><td><span class="chip s-active">Active</span></td></tr>
+        <tr><td><b>Sharps container check</b></td><td>29 CFR 1910.1030</td><td>Admin</td><td>Weekly</td><td>EHS</td><td>Checklist</td><td><span class="chip s-over">Overdue</span></td></tr>
+      </tbody></table><div class="note">→ Each row's frequency now generates calendar tasks (correction #7).</div></div></div></div></div>
+
+  <!-- 6 STATUS -->
+  <div class="item"><div class="ihead"><span class="num">6</span><h2>Unified status labels (9)</h2><span class="tag chg">CHANGE</span></div>
+    <div class="delta">Currently: mixed labels (open / in_progress / complete / blocked + others). Document §15.2: one shared set of 9 statuses, used everywhere.</div>
+    <div class="stage"><div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span class="chip s-draft">Draft</span><span class="chip s-pend">Pending Qualified Review</span><span class="chip s-active">Active</span>
+      <span class="chip s-restr">Restricted</span><span class="chip s-over">Overdue</span><span class="chip s-oos">Out of Service</span>
+      <span class="chip s-cwe">Closed with Evidence</span><span class="chip s-eff">Closed – Effectiveness Pending</span><span class="chip s-ret">Retired / Obsolete</span>
+    </div><div class="note">One reusable status chip; your existing statuses map onto these.</div></div></div>
+
+  <!-- 7 CALENDAR -->
+  <div class="item"><div class="ihead"><span class="num">7</span><h2>Compliance Calendar — generated from the register</h2><span class="tag ins">INSERT</span></div>
+    <div class="delta">Currently: deadlines + schedulers exist. Document §7: the calendar is generated from Risk Register frequencies (daily…3-year + event-triggered).</div>
+    <div class="stage"><div class="page"><div class="pbar"><span class="t">Plan › Compliance Calendar</span><span class="small">June 2026</span></div>
+      <div class="pbody"><table><thead><tr><th>Due</th><th>Task</th><th>Generated from</th><th>Owner</th><th>Status</th></tr></thead><tbody>
+        <tr><td><b>Jun 8</b></td><td>Hazardous waste area inspection</td><td>Register: Waste · Weekly</td><td>EHS</td><td><span class="chip s-over">Overdue</span></td></tr>
+        <tr><td><b>Jun 12</b></td><td>Eyewash activation check</td><td>Register: Equipment · Weekly</td><td>Supervisor</td><td><span class="chip s-active">Active</span></td></tr>
+        <tr><td><b>Jun 30</b></td><td>Chemical storage review</td><td>Register: Chem Hygiene · Monthly</td><td>CHO</td><td><span class="chip s-draft">Draft</span></td></tr>
+      </tbody></table></div></div></div></div>
+
+  <!-- 8 RISK MONITOR -->
+  <div class="item"><div class="ihead"><span class="num">8</span><h2>Risk Monitor — tiles + pressure gauges</h2><span class="tag ins">INSERT</span></div>
+    <div class="delta">Currently: prioritized risk signals. Document §11: KPI tiles + category pressure gauges. Correction: add them in your current style.</div>
+    <div class="stage"><div class="page"><div class="pbar"><span class="t">Monitor › Risk Monitor</span><span class="small">Live</span></div>
+      <div class="pbody">
+        <div class="kpis"><div class="kpi bad"><div class="n">14</div><div class="l">Overdue</div></div><div class="kpi bad"><div class="n">3</div><div class="l">High risk</div></div><div class="kpi"><div class="n">87%</div><div class="l">Evidence</div></div><div class="kpi"><div class="n">6</div><div class="l">Open CAPA</div></div><div class="kpi"><div class="n">2</div><div class="l">To review</div></div></div>
+        <div style="margin-top:14px" class="ba">
+          <div class="col"><div class="gz"><div class="r"><span>Waste</span><b>89%</b></div><div class="bar"><span style="width:89%;background:var(--red)"></span></div></div>
+            <div class="gz"><div class="r"><span>Chemical</span><b>72%</b></div><div class="bar"><span style="width:72%;background:var(--amber)"></span></div></div>
+            <div class="gz"><div class="r"><span>Equipment</span><b>61%</b></div><div class="bar"><span style="width:61%;background:var(--amber)"></span></div></div></div>
+          <div class="col"><div class="gz"><div class="r"><span>Biosafety</span><b>55%</b></div><div class="bar"><span style="width:55%;background:var(--amber)"></span></div></div>
+            <div class="gz"><div class="r"><span>Training</span><b>42%</b></div><div class="bar"><span style="width:42%;background:var(--green)"></span></div></div>
+            <div class="gz"><div class="r"><span>CAPA</span><b>48%</b></div><div class="bar"><span style="width:48%;background:var(--blue-mid)"></span></div></div></div>
+        </div></div></div></div></div>
+
+  <!-- 9 CALIBRATION -->
+  <div class="item"><div class="ihead"><span class="num">9</span><h2>Predictive Engine — feed the calibration loop</h2><span class="tag ins">INSERT</span></div>
+    <div class="delta">Currently: forecast runs but confidence is stuck at "moderate" (loop not fed). Document §11: compare predictions to outcomes so confidence improves.</div>
+    <div class="stage"><div class="page"><div class="pbar"><span class="t">Monitor › Predictive Engine</span></div>
+      <div class="pbody"><div class="gz"><div class="r"><span>Calibration progress</span><b>11 / 20 outcomes logged</b></div><div class="bar"><span style="width:55%;background:var(--blue)"></span></div></div>
+        <table style="margin-top:8px"><thead><tr><th>Prediction</th><th>Predicted</th><th>Actual outcome</th></tr></thead><tbody>
+          <tr><td>Waste area pressure</td><td>High</td><td><span class="chip s-cwe">No incident</span></td></tr>
+          <tr><td>BSC overdue → contamination</td><td>Elevated</td><td><span class="chip s-eff">Near miss</span></td></tr>
+        </tbody></table><div class="note">Once 20 outcomes are logged, confidence can rise above "moderate."</div></div></div></div></div>
+
+  <!-- 10 AI INTEGRITY -->
+  <div class="item"><div class="ihead"><span class="num">10</span><h2>AI outputs — cite inputs + accept/reject audit</h2><span class="tag ins">INSERT</span></div>
+    <div class="delta">Currently: AI shows "Draft – Human Review Required." Document §11.1: also cite the data used and record accept / reject / modify + reviewer + time.</div>
+    <div class="stage"><div class="ai"><div class="hd"><b style="font-size:13px">Suggested CAPA action</b><span class="badge">DRAFT · HUMAN REVIEW REQUIRED</span></div>
+      <div class="small" style="color:var(--text2)">Recommend re-certifying BSC-02 and retraining 3 users before resuming aerosol work.</div>
+      <div class="small" style="margin-top:8px;color:var(--muted)">Inputs used:</div>
+      <ul><li>Inspection AF-204 (BSC-02 cert overdue 9 days)</li><li>Training matrix (3 expired aerosol certs)</li><li>Risk cell: Biosafety pressure 55%</li></ul>
+      <div class="acts"><span class="a acc">Accept</span><span class="a">Modify</span><span class="a">Reject</span></div>
+      <div class="note">Decision, reviewer, and timestamp are written to the audit trail.</div></div></div></div>
+
+  <!-- 11 CAPA EFFECTIVENESS -->
+  <div class="item"><div class="ihead"><span class="num">11</span><h2>CAPA — effectiveness-pending state</h2><span class="tag chg">CHANGE</span></div>
+    <div class="delta">Currently: a field for effectiveness exists, but no status for it. Document §9: close to "Closed – Effectiveness Pending," then verify effectiveness.</div>
+    <div class="stage"><div class="page"><div class="pbar"><span class="t">Operate › CAPA › CAPA-118</span></div>
+      <div class="pbody"><table><thead><tr><th>Action</th><th>Owner</th><th>Closed</th><th>Status</th></tr></thead><tbody>
+        <tr><td><b>Replace sharps bins</b></td><td>EHS</td><td>Jun 2</td><td><span class="chip s-eff">Closed – Effectiveness Pending</span></td></tr>
+      </tbody></table><div class="field" style="margin-top:12px"><label>Effectiveness check due</label><input class="inp" value="Jul 2 — verify no recurrence in 30 days" readonly/></div></div></div></div></div>
+
+  <!-- 12 CHEMICAL APPROVAL -->
+  <div class="item"><div class="ihead"><span class="num">12</span><h2>Chemical Approval before use</h2><span class="tag ins">INSERT</span></div>
+    <div class="delta">Currently: inventory + SDS. Document §9: a New Chemical Approval review (hazard, storage, PPE, ventilation, waste) before the chemical is used.</div>
+    <div class="stage"><div class="page"><div class="pbar"><span class="t">Operate › Chemical &amp; SDS › New request</span></div>
+      <div class="pbody"><div class="ba"><div class="col"><h4>Request</h4><div class="field"><label>Chemical</label><input class="inp" value="Piranha solution" readonly/></div><div class="field"><label>SDS attached</label><input class="inp" value="✓ piranha_sds.pdf" readonly/></div></div>
+        <div class="col"><h4>Review (before use)</h4><div style="font-size:12px;color:var(--text2);line-height:1.9">☑ Hazard / IDLH &nbsp; ☑ Storage compatibility<br>☑ PPE &nbsp; ☑ Ventilation &nbsp; ☐ Waste route<br><span class="chip s-pend" style="margin-top:6px">Pending Qualified Review</span></div></div></div>
+        <div class="note">Cannot be ordered/used until review is complete (when site policy requires approval).</div></div></div></div></div>
+
+  <!-- 13 IMPROVE NAV -->
+  <div class="item"><div class="ihead"><span class="num">13</span><h2>Add the "Improve" nav section</h2><span class="tag ins">INSERT</span></div>
+    <div class="delta">Currently: nav has Assess / Plan / Operate / Monitor / Workspace. Document §15.1: also an Improve section.</div>
+    <div class="stage"><div class="page"><div class="pbody"><div class="navmock">
+      <div class="nl">Operate</div><div class="ni">Inspections &amp; CAPA</div>
+      <div class="nl">Monitor</div><div class="ni">Risk Monitor</div><div class="ni">Predictive Engine</div>
+      <div class="nl" style="color:var(--green-dk)">Improve (new)</div><div class="ni new">Lessons learned</div><div class="ni new">SOP revisions</div><div class="ni new">Retraining</div><div class="ni new">CAPA effectiveness</div>
+    </div><div class="note">Most of this data already exists — Improve just gives it a home.</div></div></div></div></div>
+
+  <!-- 14 ROLES -->
+  <div class="item"><div class="ihead"><span class="num">14</span><h2>Reviewer roles + committees</h2><span class="tag ins">INSERT</span></div>
+    <div class="delta">Currently: 6 roles (owner, supervisor, member, viewer + platform). Document §10/§12: 16 reviewer roles + committees + routing.</div>
+    <div class="stage"><div class="page"><div class="pbar"><span class="t">Workspace › Team › Roles</span></div>
+      <div class="pbody"><div class="ba"><div class="col"><h4>Existing</h4><div class="small" style="line-height:2;color:var(--text2)">Owner · Supervisor · Member · Viewer</div></div>
+        <div class="col"><h4>Add as modules switch on</h4><div class="small" style="line-height:2;color:var(--green-dk)">BSO · CHO · RSO · LSO · Authorized Shipper · Responsible Official · IACUC · Controlled-Sub Custodian · Process-Safety · Quality/Data-Integrity</div></div></div>
+        <div class="note">Restricted decisions route to the matching committee (IBC, Radiation, Laser, Chemical Hygiene, Process Safety, Quality, Management Review).</div></div></div></div></div>
+
+  <!-- 15 PERSONNEL RELABEL -->
+  <div class="item"><div class="ihead"><span class="num">15</span><h2>Re-label healthcare leftovers</h2><span class="tag chg">CHANGE</span></div>
+    <div class="delta">Currently: Personnel/Provider pages use healthcare fields (patient bios, NPI, "accepting patients"). Document §10: Qualified Person Registry + EHS expert directory.</div>
+    <div class="stage"><div class="ba">
+      <div class="col"><h4>Before</h4><div class="page"><div class="pbody small" style="color:var(--text2);line-height:2">Patient bio · NPI number · Specialty · Accepting patients ✓</div></div></div>
+      <div class="col"><h4>After</h4><div class="page"><div class="pbody small" style="color:var(--text);line-height:2">Qualified person · Credential / cert · Review authority · Expiration</div></div></div>
+    </div></div></div>
+
+  <!-- 16 RETENTION -->
+  <div class="item"><div class="ihead"><span class="num">16</span><h2>Evidence retention class + universal attach</h2><span class="tag ins">INSERT</span></div>
+    <div class="delta">Currently: versioning/approvals exist; retention only on archived records. Document §12: every evidence item has a retention class; any task can attach evidence.</div>
+    <div class="stage"><div class="page"><div class="pbar"><span class="t">Attach evidence — Inspection AF-204</span></div>
+      <div class="pbody"><div class="field"><label>File</label><input class="inp" value="✓ bsc02_cert_2026.pdf" readonly/></div>
+        <div class="field"><label>Retention class</label><select class="inp"><option>GxP / Part 11 — 7 years</option><option>EHS record — 3 years</option><option>Training — duration + 3 yrs</option></select></div>
+        <div class="small">Linked to: Risk Register requirement "BSC certification" · Reviewer: BSO</div></div></div></div></div>
+
+  <!-- 17 BSC FUME -->
+  <div class="item"><div class="ihead"><span class="num">17</span><h2>Enforce BSC ≠ fume hood</h2><span class="tag chg">CHANGE</span></div>
+    <div class="delta">Currently: equipment records exist. Document §3.3/§9: BSC and fume hood are non-interchangeable asset types with different controls.</div>
+    <div class="stage"><div class="page"><div class="pbar"><span class="t">Operate › Equipment › New asset</span></div>
+      <div class="pbody"><div class="field"><label>Asset type (locked once set)</label>
+        <div class="toggle"><span class="on">Biosafety Cabinet</span><span>Chemical Fume Hood</span><span>Laminar Flow / Clean Bench</span></div></div>
+        <div class="small" style="line-height:1.8">BSC → certification, class/type, decon, BSO review.<br>Fume hood → face-velocity verification, sash rules, chemical-hygiene link.</div>
+        <div class="note">⚠ The system blocks treating a BSC as a fume hood (or vice-versa).</div></div></div></div></div>
+
+  <p class="small" style="margin-top:24px;text-align:center">End of Show Pack · 17 corrections · your current navy/blue design · nothing built until you approve "Do."</p>
+</div>
+</body>
+</html>
