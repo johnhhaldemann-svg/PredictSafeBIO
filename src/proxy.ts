@@ -1,5 +1,5 @@
 /**
- * middleware.ts — Edge middleware for PredictSafeBIO
+ * proxy.ts — Next.js 16 proxy (replaces middleware.ts, runs on Node.js runtime)
  *
  * Responsibilities:
  *  1. Session refresh — calls supabase.auth.getUser() on every request so that
@@ -10,8 +10,8 @@
  *     to 10 requests per IP per minute. Exceeding returns 429.
  *  3. API route protection — Stripe and cron endpoints get basic origin + method checks.
  *
- * Implementation uses the Web Crypto API available in the Edge runtime.
- * No Redis required — uses an in-memory sliding window per edge instance.
+ * Runs on Node.js runtime (Next.js 16 proxy convention — no edge-runtime restrictions).
+ * No Redis required — uses an in-memory sliding window per process instance.
  * Note: in-memory state resets on cold start / across instances. For production
  * at scale, replace with Upstash Redis (@upstash/ratelimit).
  *
@@ -21,16 +21,6 @@
 
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
-
-export const config = {
-  matcher: [
-    /*
-     * Run on every route EXCEPT Next.js internals and static assets.
-     * Session refresh must cover all pages — not just auth routes.
-     */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
-};
 
 // ── In-memory rate limit store ────────────────────────────────────────────────
 // Key: `${ip}:${route_group}` → [timestamps of requests in last window]
@@ -90,19 +80,31 @@ function rateLimitedResponse(remaining: number, limit = MAX_AUTH): NextResponse 
   );
 }
 
-export async function middleware(req: NextRequest): Promise<NextResponse> {
+export async function proxy(req: NextRequest): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
   const ip = getClientIp(req);
   const method = req.method;
 
+  // Skip static assets — served from CDN; no auth cookies or rate limiting needed.
+  if (
+    pathname.startsWith("/_next/static") ||
+    pathname.startsWith("/_next/image") ||
+    pathname === "/favicon.ico" ||
+    /\.(svg|png|jpg|jpeg|gif|webp)$/.test(pathname)
+  ) {
+    return NextResponse.next();
+  }
+
   // ── 1. Supabase session refresh ─────────────────────────────────────────────
-  // @supabase/ssr requires middleware to call auth.getUser() on every request
+  // @supabase/ssr requires the proxy to call auth.getUser() on every request
   // so that expiring JWTs are refreshed and the new tokens are written back to
   // cookies. Skipping this causes "Invalid refresh token" / mid-session logouts.
   let response = NextResponse.next({ request: req });
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const supabaseKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (supabaseUrl && supabaseKey) {
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
@@ -125,7 +127,7 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
     // IMPORTANT: do not add logic between createServerClient and getUser().
     // getUser() is what actually triggers the token refresh.
     // Wrapped in try/catch: a Supabase network error must not take down the
-    // entire middleware and make every page return 500.
+    // entire proxy and make every page return 500.
     try {
       await supabase.auth.getUser();
     } catch {
@@ -145,7 +147,7 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
       const key = `auth:${ip}`;
       const { allowed, remaining } = checkRateLimit(key, MAX_AUTH);
       if (!allowed) {
-        console.warn(`[middleware] Rate limit hit: ${ip} on ${pathname}`);
+        console.warn(`[proxy] Rate limit hit: ${ip} on ${pathname}`);
         return rateLimitedResponse(remaining);
       }
     }

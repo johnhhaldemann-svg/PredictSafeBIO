@@ -46,6 +46,7 @@ const categories: Category[] = [
     href: "/workbench",
     icon: ShieldCheck,
     subItems: [
+      { href: "/assess/setup-questionnaire",  label: "Setup Questionnaire",  icon: ClipboardList, desc: "26-question intake that activates programs" },
       { href: "/workbench",                   label: "BioRisk Workbench",    icon: Gauge,         desc: "Score and review your biosafety risks" },
       { href: "/workbench?tab=risk-register", label: "Risk Register",        icon: ShieldCheck,   desc: "All assessed risks and their status" },
       { href: "/hazards",                     label: "Hazard Register",      icon: AlertCircle,   desc: "Identify hazards; feeds the Predictive Engine" },
@@ -61,6 +62,9 @@ const categories: Category[] = [
     icon: ClipboardCheck,
     subItems: [
       { href: "/foundation",                label: "Compliance Map",  icon: ClipboardCheck, desc: "Coverage, gaps, and readiness by area" },
+      { href: "/plan/risk-register",        label: "Risk Register",   icon: ShieldCheck,    desc: "Full register - controls, frequency, evidence" },
+      { href: "/plan/compliance-calendar",  label: "Compliance Calendar", icon: ClipboardCheck, desc: "Dated work generated from the register" },
+      { href: "/plan/qualified-persons",    label: "Qualified Persons", icon: Users,        desc: "Who may approve restricted decisions" },
       { href: "/controls",                  label: "Control Register",icon: Wrench,         desc: "Controls by hierarchy; residual-risk forecast" },
       { href: "/exposure-map",              label: "Exposure Map",    icon: Building2,      desc: "People, labs, materials & exposure routes" },
       { href: "/my-work",                   label: "My Work",         icon: ClipboardList,  desc: "Tasks and follow-ups assigned to you" },
@@ -79,6 +83,7 @@ const categories: Category[] = [
       { href: "/operations",                  label: "Operations",      icon: Activity,      desc: "Day-to-day HSE operational records" },
       { href: "/inspections",                 label: "Inspections",     icon: ClipboardCheck, desc: "Scheduled and completed inspections" },
       { href: "/operations/capa",             label: "CAPA",            icon: AlertCircle,   desc: "Corrective and preventive actions" },
+      { href: "/operate/management-of-change", label: "Management of Change", icon: GitBranch, desc: "Revalidate controls when work changes" },
       { href: "/permits",                     label: "Work Permits",    icon: Lock,          desc: "Permits for high-hazard work" },
       { href: "/chemical-inventory",          label: "Chemical & SDS",  icon: FlaskConical,  desc: "Chemical inventory and safety data sheets" },
       { href: "/waste-management",            label: "Waste Mgmt",      icon: Wrench,        desc: "Hazardous and biohazard waste tracking" },
