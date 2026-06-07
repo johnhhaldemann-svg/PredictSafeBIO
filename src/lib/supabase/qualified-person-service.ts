@@ -21,7 +21,7 @@ function mapRow(r: Record<string, unknown>): QualifiedPerson {
   return {
     id: r.id as string,
     profileId: r.profile_id as string,
-    personName: (profiles?.full_name as string) ?? (profiles?.email as string) ?? null,
+    personName: (profiles?.full_name as string) ?? null,
     roleTitle: (r.role_title as string) ?? null,
     qualifiedFor: (r.qualified_for as string[]) ?? [],
     qualificationBasis: (r.qualification_basis as string) ?? null,
@@ -38,7 +38,7 @@ export async function listQualifiedPersons(): Promise<QualifiedPerson[]> {
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from("qualified_person_registry")
-      .select("id,profile_id,role_title,qualified_for,qualification_basis,expiration_date,active,profiles:profile_id(full_name,email)")
+      .select("id,profile_id,role_title,qualified_for,qualification_basis,expiration_date,active,profiles:profile_id(full_name)")
       .eq("organization_id", ctx.organizationId)
       .order("created_at", { ascending: false });
     if (error) throw error;
@@ -130,11 +130,11 @@ export async function listOrgMembers(): Promise<OrgMember[]> {
     const supabase = await createSupabaseServerClient();
     const { data } = await supabase
       .from("profiles")
-      .select("id,full_name,email")
+      .select("id,full_name")
       .eq("organization_id", ctx.organizationId);
     return (data ?? []).map((r: Record<string, unknown>) => ({
       id: r.id as string,
-      name: (r.full_name as string) || (r.email as string) || (r.id as string),
+      name: (r.full_name as string) || (r.id as string),
     }));
   } catch { return []; }
 }

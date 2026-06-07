@@ -69,7 +69,7 @@ function mapRow(r: Record<string, unknown>): RiskRegisterEntry {
     controlType: (r.control_type as ControlType) ?? null,
     controlDescription: (r.control_description as string) ?? null,
     frequency: (r.frequency as string) ?? null,
-    qualifiedReviewerName: (reviewer?.full_name as string) ?? (reviewer?.email as string) ?? null,
+    qualifiedReviewerName: (reviewer?.full_name as string) ?? null,
     evidenceRequired: (r.evidence_required as string[]) ?? [],
     inherentRisk: (r.inherent_risk as RiskLevel) ?? null,
     residualRisk: (r.residual_risk as RiskLevel) ?? null,
@@ -90,7 +90,7 @@ export async function listRiskRegisterEntries(filters?: {
     if (!ctx) return [];
     const supabase = await createSupabaseServerClient();
     let q = supabase.from("risk_register_entries")
-      .select("*,reviewer:qualified_reviewer_id(full_name,email)")
+      .select("*,reviewer:qualified_reviewer_id(full_name)")
       .eq("organization_id", ctx.organizationId)
       .order("created_at", { ascending: false });
     if (filters?.status) q = q.eq("status", filters.status);
