@@ -10,6 +10,7 @@ import { getFieldReportDueState } from "@/lib/foundation/timing";
 import { getFoundationDueBucket, getFoundationWorkKpis, isFoundationReadyForClosure } from "@/lib/foundation/work-kpis";
 import { commonUtilities, gapModuleCards, platformCategories } from "@/lib/platform-outline";
 import type {
+  CategoryScores,
   FoundationAssigneeOption,
   FoundationNotificationSummary,
   FoundationProductionVerificationSummary,
@@ -36,7 +37,20 @@ type CommandCenterSummary = {
   openActionTrend: string;
   recentCriticalSignals: string[];
   ownerMode: boolean;
+  categoryScores?: CategoryScores;
 };
+
+function scoreToHealth(score: number): { status: string; cls: string; dot: string } {
+  if (score >= 70) return { status: "Strong",   cls: "cap-s", dot: "#1D9E75" };
+  if (score >= 40) return { status: "Moderate", cls: "cap-m", dot: "#EF9F27" };
+  return               { status: "Weak",     cls: "cap-w", dot: "#E24B4A" };
+}
+
+function pctColor(pct: number): string {
+  if (pct >= 70) return "#1D9E75";
+  if (pct >= 40) return "#EF9F27";
+  return "#E24B4A";
+}
 
 /** Demo scenario — only shown on the public/logged-out preview. Never used
  *  as a default when a real initialInput is passed from the server. */
@@ -1410,23 +1424,29 @@ function EnterpriseWidgetRow({
           </span>
           <Link href="/foundation" className="wh-more">View all</Link>
         </div>
-        {[
-          { label: "Biosafety",  pct: 85, color: "#1D9E75", Icon: ShieldCheck },
-          { label: "Documents",  pct: 55, color: "#378ADD", Icon: FileText },
-          { label: "Training",   pct: 40, color: "#EF9F27", Icon: Activity },
-          { label: "Evidence",   pct: 60, color: "#85B7EB", Icon: Zap },
-          { label: "CAPA",       pct: 33, color: "#E24B4A", Icon: ListChecks }
-        ].map((cat) => (
-          <div className="cat-item" key={cat.label}>
-            <div className="cat-icon" style={{ color: cat.color }}>
-              <cat.Icon size={14} aria-hidden="true" />
+        {((): { label: string; pct: number; Icon: React.ElementType }[] => {
+          const cs = commandSummary.categoryScores;
+          return [
+            { label: "Biosafety", pct: cs?.biosafety ?? 0, Icon: ShieldCheck },
+            { label: "Documents", pct: cs?.documents ?? 0, Icon: FileText },
+            { label: "Training",  pct: cs?.training  ?? 0, Icon: Activity },
+            { label: "Evidence",  pct: cs?.evidence  ?? 0, Icon: Zap },
+            { label: "CAPA",      pct: cs?.capa      ?? 0, Icon: ListChecks },
+          ];
+        })().map((cat) => {
+          const color = pctColor(cat.pct);
+          return (
+            <div className="cat-item" key={cat.label}>
+              <div className="cat-icon" style={{ color }}>
+                <cat.Icon size={14} aria-hidden="true" />
+              </div>
+              <div className="cat-body">
+                <div className="cat-top"><span>{cat.label}</span><strong>{cat.pct}%</strong></div>
+                <div className="cat-bar"><div className="cat-fill" style={{ width: `${cat.pct}%`, background: color }} /></div>
+              </div>
             </div>
-            <div className="cat-body">
-              <div className="cat-top"><span>{cat.label}</span><strong>{cat.pct}%</strong></div>
-              <div className="cat-bar"><div className="cat-fill" style={{ width: `${cat.pct}%`, background: cat.color }} /></div>
-            </div>
-          </div>
-        ))}
+          );
+        })}
         <Link href="/foundation" className="view-link">View all categories</Link>
       </div>
 
@@ -1438,22 +1458,31 @@ function EnterpriseWidgetRow({
           </span>
           <Link href="/foundation" className="wh-more">View all</Link>
         </div>
-        {[
-          { name: "Biosafety controls",  dot: "#1D9E75", status: "Strong",   cls: "cap-s" },
-          { name: "Risk assessment",      dot: "#1D9E75", status: "Strong",   cls: "cap-s" },
-          { name: "Document control",     dot: "#EF9F27", status: "Moderate", cls: "cap-m" },
-          { name: "Training program",     dot: "#EF9F27", status: "Moderate", cls: "cap-m" },
-          { name: "Incident management",  dot: "#E24B4A", status: "Weak",     cls: "cap-w" },
-          { name: "CAPA effectiveness",   dot: "#E24B4A", status: "Weak",     cls: "cap-w" }
-        ].map((cap) => (
-          <div className="cap-row" key={cap.name}>
-            <div className="cap-left">
-              <div className="cap-dot" style={{ background: cap.dot }} />
-              <span className="cap-name">{cap.name}</span>
+        {((): { name: string; score: number }[] => {
+          const cs = commandSummary.categoryScores;
+          const riskScore = commandSummary.assessmentCount > 0
+            ? Math.max(0, 100 - Math.round((commandSummary.criticalRiskCount / commandSummary.assessmentCount) * 100))
+            : 0;
+          return [
+            { name: "Biosafety controls", score: cs?.biosafety ?? 0 },
+            { name: "Risk assessment",    score: riskScore },
+            { name: "Document control",   score: cs?.documents ?? 0 },
+            { name: "Training program",   score: cs?.training  ?? 0 },
+            { name: "Incident management",score: cs?.incidents ?? 0 },
+            { name: "CAPA effectiveness", score: cs?.capa      ?? 0 },
+          ];
+        })().map((cap) => {
+          const h = scoreToHealth(cap.score);
+          return (
+            <div className="cap-row" key={cap.name}>
+              <div className="cap-left">
+                <div className="cap-dot" style={{ background: h.dot }} />
+                <span className="cap-name">{cap.name}</span>
+              </div>
+              <span className={`cap-status ${h.cls}`}>{h.status}</span>
             </div>
-            <span className={`cap-status ${cap.cls}`}>{cap.status}</span>
-          </div>
-        ))}
+          );
+        })}
         <Link href="/operations" className="view-link">View all capabilities</Link>
       </div>
 

@@ -1,7 +1,13 @@
 export function getSupabaseBrowserEnv() {
   return {
     url: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    publishableKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? ""
+    // Support both the new publishable-key name and the legacy anon-key name so
+    // Vercel projects configured before the rename continue to work without
+    // requiring an env var update before redeployment.
+    publishableKey:
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+      ""
   };
 }
 

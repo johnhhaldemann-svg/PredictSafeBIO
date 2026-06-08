@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>PredictSafeBIO — Clean Clinical SaaS reference</title>
+<style>
+  :root{
+    --bg:#F7F9FC; --panel:#FFFFFF; --panel-soft:#F4F8FD; --line:#E2E9F2;
+    --accent:#185FA5; --accent-soft:#E6F1FB;
+    --text:#0D1B2A; --text2:#4A6080; --muted:#8FA8C0;
+    --critical:#E24B4A; --critical-bg:#FCEBEB;
+    --high:#EF9F27; --high-bg:#FAEEDA;
+    --ok:#1D9E75; --ok-bg:#EAF3DE;
+    --info:#378ADD; --info-bg:#E6F1FB;
+    --shadow:0 1px 2px rgba(13,43,78,.04), 0 6px 20px rgba(13,43,78,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;letter-spacing:-.01em;
+    -webkit-font-smoothing:antialiased}
+  .app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+  /* Sidebar */
+  .side{background:var(--panel);border-right:1px solid var(--line);padding:18px 14px;position:sticky;top:0;height:100vh}
+  .brand{display:flex;align-items:center;gap:9px;padding:6px 8px 16px;font-weight:700;font-size:15px}
+  .logo{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#185FA5,#378ADD)}
+  .navgrp{margin-top:10px}
+  .navgrp h4{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 8px 6px;font-weight:600}
+  .navitem{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;color:var(--text2);font-size:13.5px;font-weight:500;cursor:pointer}
+  .navitem:hover{background:var(--panel-soft)}
+  .navitem.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.55}
+  /* Main */
+  .main{padding:26px 32px 40px;max-width:1200px}
+  .head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+  .h1{font-size:23px;font-weight:600;margin:0}
+  .sub{color:var(--text2);font-size:13.5px;margin:5px 0 0}
+  .btn{background:var(--accent);color:#fff;border:0;border-radius:9px;padding:10px 16px;font-size:13.5px;font-weight:600;cursor:pointer;box-shadow:var(--shadow)}
+  .btn.ghost{background:#fff;color:var(--accent);border:1px solid var(--line)}
+  /* AI banner */
+  .ai{display:flex;gap:12px;align-items:center;background:var(--info-bg);border:1px solid #CFE3F7;border-radius:11px;padding:12px 16px;margin:20px 0 22px}
+  .ai .badge{background:#fff;border:1px solid #CFE3F7;color:var(--accent);font-size:11px;font-weight:700;letter-spacing:.04em;padding:4px 9px;border-radius:6px;white-space:nowrap}
+  .ai p{margin:0;font-size:13px;color:var(--text2)}
+  /* KPI */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:22px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:16px 16px 14px;box-shadow:var(--shadow)}
+  .kpi .n{font-size:28px;font-weight:700;line-height:1}
+  .kpi .l{font-size:12.5px;color:var(--text2);margin-top:7px;font-weight:500}
+  .kpi .t{font-size:11px;margin-top:8px;font-weight:600}
+  .up{color:var(--critical)} .down{color:var(--ok)}
+  .kpi.alert .n{color:var(--critical)}
+  /* sections */
+  .grid2{display:grid;grid-template-columns:1.15fr 1fr;gap:20px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .card h3{font-size:14.5px;font-weight:600;margin:0;padding:16px 18px;border-bottom:1px solid var(--line)}
+  .cardbody{padding:8px 18px 18px}
+  /* gauges */
+  .gauge{margin:14px 0}
+  .gauge .row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+  .gauge .row .v{font-weight:600}
+  .bar{height:9px;border-radius:6px;background:var(--panel-soft);overflow:hidden}
+  .bar span{display:block;height:100%;border-radius:6px}
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;color:var(--muted);font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-weight:600;padding:10px 8px;border-bottom:1px solid var(--line)}
+  td{padding:11px 8px;border-bottom:1px solid var(--line);color:var(--text2)}
+  td b{color:var(--text);font-weight:600}
+  tr:last-child td{border-bottom:0}
+  .chip{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:20px}
+  .c-overdue{background:var(--critical-bg);color:#A32D2D}
+  .c-review{background:var(--high-bg);color:#854F0B}
+  .c-active{background:var(--ok-bg);color:#3B6D11}
+  .c-draft{background:var(--info-bg);color:#185FA5}
+  .c-restricted{background:#F1ECFA;color:#5B3FA8}
+  .legend{font-size:11px;color:var(--muted);padding:14px 18px 0}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="logo"></div> PredictSafeBIO</div>
+    <div class="navgrp"><h4>Workspace</h4>
+      <div class="navitem"><span class="dot"></span> Company &amp; Sites</div>
+      <div class="navitem"><span class="dot"></span> People &amp; Committees</div>
+    </div>
+    <div class="navgrp"><h4>Assess</h4>
+      <div class="navitem"><span class="dot"></span> Setup Questionnaire</div>
+      <div class="navitem"><span class="dot"></span> BioRisk Workbench</div>
+      <div class="navitem"><span class="dot"></span> Risk Register</div>
+    </div>
+    <div class="navgrp"><h4>Plan</h4>
+      <div class="navitem"><span class="dot"></span> Compliance Map</div>
+      <div class="navitem"><span class="dot"></span> Compliance Calendar</div>
+      <div class="navitem"><span class="dot"></span> Training Matrix</div>
+    </div>
+    <div class="navgrp"><h4>Operate</h4>
+      <div class="navitem"><span class="dot"></span> Inspections &amp; CAPA</div>
+      <div class="navitem"><span class="dot"></span> Chemical &amp; Waste</div>
+    </div>
+    <div class="navgrp"><h4>Monitor</h4>
+      <div class="navitem active"><span class="dot"></span> Risk Monitor</div>
+      <div class="navitem"><span class="dot"></span> Predictive Engine</div>
+    </div>
+    <div class="navgrp"><h4>Improve</h4>
+      <div class="navitem"><span class="dot"></span> Continuous Improvement</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="head">
+      <div>
+        <h1 class="h1">Risk Monitor</h1>
+        <p class="sub">Live leading indicators across all programs · Acme Biologics — South San Francisco</p>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn ghost">Export evidence</button>
+        <button class="btn">Review queue (2)</button>
+      </div>
+    </div>
+
+    <div class="ai">
+      <span class="badge">DRAFT · HUMAN REVIEW REQUIRED</span>
+      <p>AI ranked this queue from overdue inspections, expired training, and 2 open high-risk CAPAs. Recommendations only — a qualified reviewer approves all regulatory, biosafety, and CAPA decisions.</p>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi alert"><div class="n">14</div><div class="l">Overdue items</div><div class="t up">▲ 3 vs last week</div></div>
+      <div class="kpi alert"><div class="n">3</div><div class="l">High-risk changes</div><div class="t up">▲ 1</div></div>
+      <div class="kpi"><div class="n">87%</div><div class="l">Evidence complete</div><div class="t down">▲ 4%</div></div>
+      <div class="kpi"><div class="n">6</div><div class="l">Open CAPA</div><div class="t down">▼ 2</div></div>
+      <div class="kpi"><div class="n">2</div><div class="l">Awaiting review</div><div class="t">—</div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Review queue — prioritized</h3>
+        <div class="cardbody" style="padding-top:0">
+          <table>
+            <thead><tr><th>Item</th><th>Program</th><th>Owner</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td><b>BSC-02 certification</b><br>Overdue 9 days</td><td>Biosafety</td><td>BSO</td><td><span class="chip c-overdue">Overdue</span></td></tr>
+              <tr><td><b>Peroxide-former inspection</b></td><td>Aging Chemicals</td><td>CHO</td><td><span class="chip c-overdue">Overdue</span></td></tr>
+              <tr><td><b>New viral vector intake</b></td><td>IBC / rDNA</td><td>IBC</td><td><span class="chip c-review">Pending Review</span></td></tr>
+              <tr><td><b>Hazmat shipper renewal</b></td><td>Shipping</td><td>Auth. Shipper</td><td><span class="chip c-restricted">Restricted</span></td></tr>
+              <tr><td><b>Q2 waste manifest</b></td><td>Waste Mgmt</td><td>EHS</td><td><span class="chip c-active">Active</span></td></tr>
+              <tr><td><b>CAPA-118 effectiveness</b></td><td>CAPA</td><td>EHS</td><td><span class="chip c-draft">Draft</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Risk pressure by category</h3>
+        <div class="cardbody">
+          <div class="gauge"><div class="row"><span>Waste</span><span class="v">89%</span></div><div class="bar"><span style="width:89%;background:var(--critical)"></span></div></div>
+          <div class="gauge"><div class="row"><span>Chemical</span><span class="v">72%</span></div><div class="bar"><span style="width:72%;background:var(--high)"></span></div></div>
+          <div class="gauge"><div class="row"><span>Equipment</span><span class="v">61%</span></div><div class="bar"><span style="width:61%;background:var(--high)"></span></div></div>
+          <div class="gauge"><div class="row"><span>Biosafety</span><span class="v">55%</span></div><div class="bar"><span style="width:55%;background:var(--high)"></span></div></div>
+          <div class="gauge"><div class="row"><span>CAPA</span><span class="v">48%</span></div><div class="bar"><span style="width:48%;background:var(--info)"></span></div></div>
+          <div class="gauge"><div class="row"><span>Training</span><span class="v">42%</span></div><div class="bar"><span style="width:42%;background:var(--ok)"></span></div></div>
+        </div>
+        <div class="legend">Predicted pressure · confidence: <b>Moderate</b> (calibrating — 11/20 outcomes logged)</div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>
