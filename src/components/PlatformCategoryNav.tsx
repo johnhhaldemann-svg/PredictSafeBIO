@@ -41,79 +41,82 @@ type Category = {
 
 const categories: Category[] = [
   {
-    // ── 1. ASSESS — what are my risks? ──────────────────────────────────────
+    // ── 1. ASSESS — identify & score all risks ──────────────────────────────
     title: "Assess",
     href: "/workbench",
     icon: ShieldCheck,
     subItems: [
-      { href: "/assess/setup-questionnaire",  label: "Setup Questionnaire",  icon: ClipboardList, desc: "26-question intake that activates programs" },
-      { href: "/workbench",                   label: "BioRisk Workbench",    icon: Gauge,         desc: "Score and review your biosafety risks" },
-      { href: "/workbench?tab=risk-register", label: "Risk Register",        icon: ShieldCheck,   desc: "All assessed risks and their status" },
-      { href: "/hazards",                     label: "Hazard Register",      icon: AlertCircle,   desc: "Identify hazards; feeds the Predictive Engine" },
-      { href: "/bios",                        label: "Personnel",            icon: Users,         desc: "People records used in risk scoring" },
-      { href: "/bios/new",                    label: "Add Personnel Record", icon: ClipboardList, desc: "Create a new personnel record" },
-      { href: "/providers",                   label: "Provider Directory",   icon: Briefcase,     desc: "Biosafety & EHS consultants and experts" },
+      { href: "/assess/setup-questionnaire",  label: "Setup Questionnaire", icon: ClipboardList, desc: "26-question intake that activates programs" },
+      { href: "/workbench",                   label: "BioRisk Workbench",   icon: Gauge,         desc: "Score and review your biosafety risks" },
+      { href: "/workbench?tab=risk-register", label: "Risk Register",       icon: ShieldCheck,   desc: "All assessed risks and their status" },
+      { href: "/hazards",                     label: "Hazard Register",     icon: AlertCircle,   desc: "Identify hazards; feeds the Predictive Engine" },
+      { href: "/exposure-map",                label: "Exposure Map",        icon: Building2,     desc: "People, labs, materials & exposure routes" },
+      { href: "/bios",                        label: "Personnel",           icon: Users,         desc: "People records used in risk scoring" },
     ]
   },
   {
-    // ── 2. PLAN — what do I need to do? ─────────────────────────────────────
+    // ── 2. PLAN — design controls, schedules & documents ────────────────────
     title: "Plan",
     href: "/foundation",
     icon: ClipboardCheck,
     subItems: [
-      { href: "/foundation",                label: "Compliance Map",  icon: ClipboardCheck, desc: "Coverage, gaps, and readiness by area" },
-      { href: "/plan/risk-register",        label: "Risk Register",   icon: ShieldCheck,    desc: "Full register - controls, frequency, evidence" },
-      { href: "/plan/compliance-calendar",  label: "Compliance Calendar", icon: ClipboardCheck, desc: "Dated work generated from the register" },
-      { href: "/plan/qualified-persons",    label: "Qualified Persons", icon: Users,        desc: "Who may approve restricted decisions" },
-      { href: "/controls",                  label: "Control Register",icon: Wrench,         desc: "Controls by hierarchy; residual-risk forecast" },
-      { href: "/exposure-map",              label: "Exposure Map",    icon: Building2,      desc: "People, labs, materials & exposure routes" },
-      { href: "/my-work",                   label: "My Work",         icon: ClipboardList,  desc: "Tasks and follow-ups assigned to you" },
-      { href: "/programs",                  label: "Programs",        icon: BookOpen,       desc: "Safety program tools and checklists" },
-      { href: "/change-plan",               label: "Change Plan",     icon: GitBranch,      desc: "Planned changes and their impact" },
-      { href: "/documents",                 label: "Documents",       icon: FileText,       desc: "Controlled SOPs, records, and files" },
-      { href: "/documents/version-control", label: "Version Control", icon: GitBranch,      desc: "Revisions, approvals, and change history" },
+      { href: "/foundation",               label: "Compliance Map",         icon: ClipboardCheck, desc: "Coverage, gaps, and readiness by area" },
+      { href: "/plan/compliance-calendar", label: "Compliance Calendar",    icon: ClipboardCheck, desc: "Dated work generated from the register" },
+      { href: "/training-matrix",          label: "Training Matrix",        icon: GraduationCap,  desc: "Role-based training calendar and expiries" },
+      { href: "/plan/qualified-persons",   label: "Qualified Persons",      icon: Users,          desc: "Who may approve restricted decisions" },
+      { href: "/controls",                 label: "Control Register",       icon: Wrench,         desc: "Controls by hierarchy; residual-risk forecast" },
+      { href: "/change-management",        label: "Change Management",      icon: GitBranch,      desc: "Planned changes, impact review & revalidation" },
+      { href: "/programs",                 label: "Programs",               icon: BookOpen,       desc: "Safety program tools and checklists" },
+      { href: "/emergency-response",       label: "Emergency Response",     icon: ShieldCheck,    desc: "Emergency response plans and drills" },
+      { href: "/documents",                label: "Documents",              icon: FileText,       desc: "Controlled SOPs, records, and files" },
     ]
   },
   {
-    // ── 3. OPERATE — do the work ────────────────────────────────────────────
+    // ── 3. OPERATE — execute day-to-day safety work ─────────────────────────
     title: "Operate",
-    href: "/operations",
+    href: "/inspections",
     icon: HardHat,
     subItems: [
-      { href: "/operations",                  label: "Operations",      icon: Activity,      desc: "Day-to-day HSE operational records" },
-      { href: "/inspections",                 label: "Inspections",     icon: ClipboardCheck, desc: "Scheduled and completed inspections" },
-      { href: "/operations/capa",             label: "CAPA",            icon: AlertCircle,   desc: "Corrective and preventive actions" },
-      { href: "/operate/management-of-change", label: "Management of Change", icon: GitBranch, desc: "Revalidate controls when work changes" },
-      { href: "/permits",                     label: "Work Permits",    icon: Lock,          desc: "Permits for high-hazard work" },
-      { href: "/chemical-inventory",          label: "Chemical & SDS",  icon: FlaskConical,  desc: "Chemical inventory and safety data sheets" },
-      { href: "/waste-management",            label: "Waste Mgmt",      icon: Wrench,        desc: "Hazardous and biohazard waste tracking" },
-      { href: "/training-matrix",             label: "Training Matrix", icon: GraduationCap, desc: "Role-based training and expiries" },
-      { href: "/ergonomics/self-assessment",  label: "Ergonomics",      icon: Activity,      desc: "Ergonomic self-assessments" },
-      { href: "/pesticide",                   label: "Pest & Disinfect",icon: ShieldCheck,   desc: "Pest control and disinfection logs" },
+      { href: "/inspections",                label: "Inspections",        icon: ClipboardCheck, desc: "Scheduled and completed inspections" },
+      { href: "/incidents",                  label: "Incident Reporting", icon: AlertCircle,    desc: "Log and triage safety incidents" },
+      { href: "/operations/capa",            label: "CAPA",               icon: Activity,       desc: "Corrective and preventive actions" },
+      { href: "/permits",                    label: "Work Permits",       icon: Lock,           desc: "Permits for high-hazard work" },
+      { href: "/chemical-inventory",         label: "Chemical & SDS",     icon: FlaskConical,   desc: "Chemical inventory and safety data sheets" },
+      { href: "/waste-management",           label: "Waste Management",   icon: Wrench,         desc: "Hazardous and biohazard waste tracking" },
+      { href: "/ergonomics/self-assessment", label: "Ergonomics",         icon: Activity,       desc: "Ergonomic self-assessments" },
+      { href: "/pesticide",                  label: "Pest & Disinfect",   icon: ShieldCheck,    desc: "Pest control and disinfection logs" },
+      { href: "/equipment-calibration",      label: "Equipment & Calibration", icon: Gauge,     desc: "Equipment PM logs and calibration records" },
     ]
   },
   {
-    // ── 4. MONITOR — am I on track? ─────────────────────────────────────────
+    // ── 4. MONITOR — track KPIs, signals & trends ───────────────────────────
     title: "Monitor",
     href: "/",
     icon: Activity,
     subItems: [
-      { href: "/",                    label: "Safety Loop",       icon: Gauge,    desc: "Assess → Plan → Operate → Monitor overview" },
-      { href: "/predictive-engine",   label: "Predictive Engine", icon: Brain,    desc: "Forward-looking risk forecast & early warnings" },
-      { href: "/risk-command-center", label: "Risk Monitor",      icon: Activity, desc: "Prioritized HSE risk signals" },
+      { href: "/",                    label: "Dashboard",           icon: Gauge,      desc: "Assess → Plan → Operate → Monitor overview" },
+      { href: "/predictive-engine",   label: "Predictive Engine",   icon: Brain,      desc: "Forward-looking risk forecast & early warnings" },
+      { href: "/risk-command-center", label: "Risk Monitor",        icon: Activity,   desc: "Prioritized HSE risk signals" },
+      { href: "/monitoring/exposure", label: "Exposure Monitoring", icon: FlaskConical, desc: "Live air quality and biological exposure levels" },
+      { href: "/management-review",   label: "Management Review",   icon: BarChart3,     desc: "Quarterly & annual review; trend analysis" },
+      { href: "/lessons-learned",     label: "Lessons Learned",     icon: BookOpen,      desc: "Capture and share insights from incidents and CAPAs" },
+      { href: "/my-work",             label: "My Work",             icon: ClipboardList, desc: "Tasks and follow-ups assigned to you" },
     ]
   },
   {
+    // ── WORKSPACE — org settings & team ─────────────────────────────────────
     title: "Workspace",
     href: "/account/company",
     icon: Settings,
     subItems: [
-      { href: "/account/company", label: "Company Settings", icon: Building2,   desc: "Operating context, programs, review owners" },
-      { href: "/account/team",    label: "Team",             icon: Users,       desc: "Members, roles, and invitations" },
-      { href: "/account/billing", label: "Billing",          icon: CreditCard,  desc: "Plan, invoices, and usage" },
+      { href: "/account/company", label: "Company Settings",  icon: Building2,  desc: "Operating context, programs, review owners" },
+      { href: "/account/team",    label: "Team",              icon: Users,       desc: "Members, roles, and invitations" },
+      { href: "/providers",       label: "Provider Directory",icon: Briefcase,   desc: "Biosafety & EHS consultants and experts" },
+      { href: "/account/billing", label: "Billing",           icon: CreditCard,  desc: "Plan, invoices, and usage" },
     ]
   },
   {
+    // ── SYSTEM RELIANCE — platform_staff / superadmin only ──────────────────
     title: "System Reliance",
     href: "/admin/audit",
     icon: Server,
@@ -129,8 +132,10 @@ const categories: Category[] = [
 ];
 
 function isActivePath(pathname: string, href: string): boolean {
-  if (href === "/workbench" || href === "/") return pathname === href;
-  return pathname.startsWith(href);
+  // Strip query string from href before comparing (pathname never includes query params)
+  const hrefPath = href.split("?")[0];
+  if (hrefPath === "/workbench" || hrefPath === "/") return pathname === hrefPath;
+  return pathname.startsWith(hrefPath);
 }
 
 function getActiveCategoryTitle(pathname: string): string | null {
