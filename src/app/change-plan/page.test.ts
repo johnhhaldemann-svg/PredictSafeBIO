@@ -67,9 +67,10 @@ describe("command center and change plan", () => {
   });
 
   it("adds Change Plan navigation and visible gap module cards", () => {
-    expect(platformNav).toContain("Change Plan");
-    expect(platformNav).toContain("/change-plan");
-    expect(platformNav).toContain("/documents/version-control");
+    // Change Plan + Management of Change merged into a single hub — nav now uses Change Management
+    expect(platformNav).toContain("Change Management");
+    expect(platformNav).toContain("/change-management");
+    // Version Control is a sub-page of Documents (not a standalone nav entry)
     expect(platformNav).toContain("/training-matrix");
     expect(changePlanPage).toContain("Visible Gap Modules");
     expect(workbenchClient).toContain("gapModuleCards");
