@@ -282,22 +282,22 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
               </p>
               <form method="GET" action={`/api/admin/export/org/${orgId}`} style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "flex-end" }}>
                 <fieldset style={{ border: "none", padding: 0, margin: 0 }}>
-                  <legend className="section-label" style={{ marginBottom: "0.4rem" }}>Select data to include</legend>
-                  <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap" }}>
+                  <legend className="section-label">Select data to include</legend>
+                  <div className="command-center-link-strip">
                     {[
                       { label: "Assessments", value: "assessments" },
                       { label: "Documents",   value: "documents" },
                       { label: "CAPAs",       value: "capas" },
                     ].map(({ label, value }) => (
-                      <label key={value} className="check-row" style={{ fontSize: "0.85rem" }}>
+                      <label key={value} className="check-row">
                         <input type="checkbox" name="types" value={value} defaultChecked />
                         <span>{label}</span>
                       </label>
                     ))}
                   </div>
                 </fieldset>
-                <button className="button-secondary compact" type="submit" style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
-                  <Download size={14} /> Download CSV
+                <button className="button-secondary compact" type="submit">
+                  <Download size={14} className="icon-mr" /> Download CSV
                 </button>
               </form>
             </section>
@@ -321,9 +321,9 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                   ["Demo mode",   org.demo_mode ? "Yes" : "No"],
                   ["Created",     new Date(org.created_at).toLocaleString()],
                 ].map(([label, value]) => (
-                  <article className="action-row" key={String(label)} style={{ alignItems: "center" }}>
-                    <div><strong style={{ fontSize: "0.85rem" }}>{label}</strong></div>
-                    <p style={{ fontFamily: label === "Org ID" ? "monospace" : undefined, fontSize: "0.85rem" }}>
+                  <article className="action-row" key={String(label)}>
+                    <div><strong>{label}</strong></div>
+                    <p style={{ fontFamily: label === "Org ID" ? "monospace" : undefined }}>
                       {String(value)}
                     </p>
                   </article>
@@ -341,16 +341,16 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                 <Link href={tabHref("audit")} className="button-secondary compact">View full log</Link>
               </div>
               {!recentActivity?.length ? (
-                <p className="muted" style={{ padding: "1rem" }}>No audit events recorded yet.</p>
+                <p className="muted">No audit events recorded yet.</p>
               ) : (
                 <div className="action-list">
                   {recentActivity.map((evt, i) => (
                     <article className="action-row" key={i}>
                       <div>
-                        <strong style={{ fontSize: "0.82rem" }}>{evt.event_type.replace(/_/g, " ")}</strong>
+                        <strong>{evt.event_type.replace(/_/g, " ")}</strong>
                       </div>
-                      <p style={{ fontSize: "0.82rem" }}>{evt.summary}</p>
-                      <span className="muted" style={{ fontSize: "0.74rem" }}>
+                      <p>{evt.summary}</p>
+                      <span className="muted">
                         {new Date(evt.created_at).toLocaleString()}
                       </span>
                     </article>
@@ -412,7 +412,7 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                 <tbody>
                   {memberList.length === 0 ? (
                     <tr>
-                      <td colSpan={5} style={{ textAlign: "center", padding: "2rem", color: "var(--muted)" }}>
+                      <td colSpan={5} className="table-empty-cell">
                         No members in this organization yet.
                       </td>
                     </tr>
@@ -420,20 +420,20 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                     memberList.map((member) => (
                       <tr key={member.id}>
                         <td>
-                          <strong style={{ fontSize: "0.85rem" }}>{member.full_name ?? "—"}</strong>
-                          <div style={{ fontSize: "0.74rem", color: "var(--muted)" }}>{member.email ?? "—"}</div>
-                          <div style={{ fontSize: "0.7rem", color: "var(--muted)", fontFamily: "monospace" }}>{member.id.slice(0, 8)}…</div>
+                          <strong>{member.full_name ?? "—"}</strong>
+                          <div className="muted">{member.email ?? "—"}</div>
+                          <div className="muted" style={{ fontFamily: "monospace" }}>{member.id.slice(0, 8)}…</div>
                         </td>
                         <td>
-                          <form action={updateUserRoleAction} style={{ display: "flex", gap: "0.3rem", alignItems: "center" }}>
+                          <form action={updateUserRoleAction} className="form-action-row">
                             <input type="hidden" name="orgId" value={orgId} />
                             <input type="hidden" name="userId" value={member.id} />
-                            <select name="role" defaultValue={member.role} style={{ fontSize: "0.8rem" }}>
+                            <select name="role" defaultValue={member.role}>
                               {ROLE_OPTIONS.map((r) => (
                                 <option key={r.value} value={r.value}>{r.label}</option>
                               ))}
                             </select>
-                            <button className="button-secondary compact" type="submit" style={{ fontSize: "0.76rem" }}>Save</button>
+                            <button className="button-secondary compact" type="submit">Save</button>
                           </form>
                         </td>
                         <td>
@@ -441,23 +441,23 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                             {member.account_status ?? "active"}
                           </span>
                         </td>
-                        <td className="muted" style={{ fontSize: "0.8rem" }}>
+                        <td className="muted">
                           {member.last_sign_in ? new Date(member.last_sign_in).toLocaleDateString() : "Never"}
                         </td>
                         <td>
-                          <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
+                          <div className="command-center-link-strip">
                             <form action={setUserStatusAction}>
                               <input type="hidden" name="orgId" value={orgId} />
                               <input type="hidden" name="userId" value={member.id} />
                               <input type="hidden" name="status" value={member.account_status === "suspended" ? "active" : "suspended"} />
-                              <button className="button-secondary compact" type="submit" style={{ fontSize: "0.76rem" }}>
+                              <button className="button-secondary compact" type="submit">
                                 {member.account_status === "suspended" ? "Reinstate" : "Suspend"}
                               </button>
                             </form>
                             <form action={removeUserFromOrgAction}>
                               <input type="hidden" name="orgId" value={orgId} />
                               <input type="hidden" name="userId" value={member.id} />
-                              <button className="button-secondary compact" type="submit" style={{ fontSize: "0.76rem", color: "var(--red,#dc2626)" }}>
+                              <button className="button-secondary compact" type="submit" style={{ color: "var(--red)" }}>
                                 Remove
                               </button>
                             </form>
@@ -485,7 +485,7 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                   <h2>Edit organization details</h2>
                 </div>
               </div>
-              <form action={updateOrgProfileAction} style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 480 }}>
+              <form action={updateOrgProfileAction} className="stacked-form" style={{ maxWidth: 480 }}>
                 <input type="hidden" name="orgId" value={orgId} />
                 <label>
                   Organization name
@@ -509,22 +509,21 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                     <option value="development">Development</option>
                   </select>
                 </label>
-                <div style={{ background: "var(--surface,#f8f9fa)", border: "1px solid var(--border)", borderRadius: 6, padding: "0.75rem", fontSize: "0.83rem" }}>
+                <div className="guardrail-box" style={{ flexDirection: "column", alignItems: "flex-start" }}>
                   <strong>Confirmation required for Suspended or Archived.</strong>
-                  <br />
                   <span className="muted">Type the exact organization name to confirm sensitive status changes. Leave blank if keeping the current status.</span>
-                  <input name="confirmName" type="text" placeholder={`e.g. ${org.name}`} style={{ marginTop: "0.5rem" }} />
+                  <input name="confirmName" type="text" placeholder={`e.g. ${org.name}`} />
                 </div>
-                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+                <div className="form-action-row">
                   <button className="button-primary" type="submit">Save profile</button>
                   <Link href={tabHref("profile")} className="button-secondary">Cancel</Link>
                 </div>
               </form>
 
-              <div style={{ marginTop: "2rem", paddingTop: "1rem", borderTop: "1px solid var(--border)" }}>
+              <div style={{ marginTop: "2rem", paddingTop: "1rem", borderTop: "1px solid var(--line)" }}>
                 <p className="section-label">Org ID</p>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.3rem" }}>
-                  <code style={{ fontSize: "0.82rem", background: "var(--surface)", padding: "0.3rem 0.5rem", borderRadius: 4, border: "1px solid var(--border)" }}>
+                <div className="command-center-link-strip">
+                  <code className="muted" style={{ background: "var(--bg)", padding: "0.3rem 0.5rem", borderRadius: 4, border: "1px solid var(--line)" }}>
                     {orgId}
                   </code>
                   <Copy size={14} className="muted" />
@@ -541,25 +540,24 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                 </div>
                 <Shield size={24} style={{ color: "var(--red)" }} />
               </div>
-              <p className="muted" style={{ fontSize: "0.85rem", marginBottom: "1.5rem" }}>
+              <p className="muted">
                 Both actions require typing the exact organization name to confirm. All actions are recorded in the audit log.
               </p>
 
               {/* Archive */}
-              <div style={{ marginBottom: "1.5rem", paddingBottom: "1.5rem", borderBottom: "1px solid var(--border)" }}>
-                <strong style={{ fontSize: "0.9rem" }}>Archive organization</strong>
-                <p className="muted" style={{ fontSize: "0.82rem", margin: "0.3rem 0 0.75rem" }}>
+              <div style={{ marginBottom: "1.5rem", paddingBottom: "1.5rem", borderBottom: "1px solid var(--line)" }}>
+                <strong>Archive organization</strong>
+                <p className="muted">
                   Hides this org from the active tenants list. All data is preserved. Status changes to Archived.
                   Reversible — set status back to Active via the Profile form above.
                 </p>
-                <form action={archiveOrgAction} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 360 }}>
+                <form action={archiveOrgAction} className="stacked-form" style={{ maxWidth: 360 }}>
                   <input type="hidden" name="orgId" value={orgId} />
                   <input
                     name="confirmName"
                     type="text"
                     placeholder={`Type "${org.name}" to confirm`}
                     required
-                    style={{ fontSize: "0.85rem" }}
                   />
                   <button
                     className="button-secondary"
@@ -573,18 +571,17 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
 
               {/* Delete */}
               <div>
-                <strong style={{ fontSize: "0.9rem" }}>Delete organization</strong>
-                <p className="muted" style={{ fontSize: "0.82rem", margin: "0.3rem 0 0.75rem" }}>
+                <strong>Delete organization</strong>
+                <p className="muted">
                   Permanently removes this organization and all its data. This cannot be undone.
                 </p>
-                <form action={deleteOrgAction} style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: 360 }}>
+                <form action={deleteOrgAction} className="stacked-form" style={{ maxWidth: 360 }}>
                   <input type="hidden" name="orgId" value={orgId} />
                   <input
                     name="confirmName"
                     type="text"
                     placeholder={`Type "${org.name}" to confirm`}
                     required
-                    style={{ fontSize: "0.85rem" }}
                   />
                   <button
                     className="button-secondary"
@@ -616,13 +613,13 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                 Disabled modules are hidden from all users in this organization immediately.
                 New organizations default to all modules enabled.
               </p>
-              <form action={updateModuleFlagsAction} style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <form action={updateModuleFlagsAction} className="stacked-form">
                 <input type="hidden" name="orgId" value={orgId} />
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "0.5rem 1.5rem" }}>
                   {PLATFORM_MODULES.map(({ key, label }) => {
                     const isEnabled = moduleFlags[key] !== false;
                     return (
-                      <label key={key} className="check-row" style={{ fontSize: "0.85rem" }}>
+                      <label key={key} className="check-row">
                         <input
                           type="checkbox"
                           name="enabledModules"
@@ -634,9 +631,7 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                     );
                   })}
                 </div>
-                <div style={{ marginTop: "0.75rem" }}>
-                  <button className="button-primary" type="submit">Save module flags</button>
-                </div>
+                <button className="button-primary" type="submit">Save module flags</button>
               </form>
             </section>
 
@@ -652,7 +647,7 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                 Suspending blocks all member logins. All data is preserved.
                 Current status: <strong style={{ textTransform: "capitalize" }}>{org.status ?? "active"}</strong>
               </p>
-              <div style={{ display: "flex", gap: "0.75rem" }}>
+              <div className="command-center-link-strip">
                 <form action={setOrgStatusAction}>
                   <input type="hidden" name="orgId" value={orgId} />
                   <input type="hidden" name="status" value="active" />
@@ -683,7 +678,7 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                   <h2>Seat limits, plan tier, and feature flags</h2>
                 </div>
               </div>
-              <form action={updateOrgControlsAction} style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 480 }}>
+              <form action={updateOrgControlsAction} className="stacked-form" style={{ maxWidth: 480 }}>
                 <input type="hidden" name="orgId" value={orgId} />
                 <label>
                   Plan tier
@@ -709,7 +704,7 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                   <input type="checkbox" name="demoMode" value="true" defaultChecked={Boolean(org.demo_mode)} />
                   <span>Demo mode (uses seeded demo data, not live records)</span>
                 </label>
-                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+                <div className="form-action-row">
                   <button className="button-primary" type="submit">Save controls</button>
                 </div>
               </form>
@@ -735,20 +730,18 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                 <input type="hidden" name="tab" value="audit" />
                 <label style={{ flex: "0 0 160px" }}>
                   From
-                  <input type="date" name="from" defaultValue={from ?? ""} style={{ fontSize: "0.85rem" }} />
+                  <input type="date" name="from" defaultValue={from ?? ""} />
                 </label>
                 <label style={{ flex: "0 0 160px" }}>
                   To
-                  <input type="date" name="to" defaultValue={to ?? ""} style={{ fontSize: "0.85rem" }} />
+                  <input type="date" name="to" defaultValue={to ?? ""} />
                 </label>
                 <label style={{ flex: "1 1 200px", minWidth: 140 }}>
                   User (name or email)
-                  <input type="text" name="actor" defaultValue={actor ?? ""} placeholder="Search user…" style={{ fontSize: "0.85rem" }} />
+                  <input type="text" name="actor" defaultValue={actor ?? ""} placeholder="Search user…" />
                 </label>
                 <button className="button-secondary compact" type="submit">Filter</button>
-                <Link href={tabHref("audit")} className="button-secondary compact" style={{ fontSize: "0.8rem" }}>
-                  Clear
-                </Link>
+                <Link href={tabHref("audit")} className="button-secondary compact">Clear</Link>
               </form>
             </section>
 
@@ -758,7 +751,7 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                 <p className="muted" style={{ padding: "1.5rem" }}>No audit events match the current filters.</p>
               ) : (
                 <>
-                  <p className="muted" style={{ padding: "0.5rem 1rem 0", fontSize: "0.78rem" }}>
+                  <p className="muted" style={{ padding: "0.5rem 1rem 0" }}>
                     Showing {auditEvents.length} event{auditEvents.length !== 1 ? "s" : ""}
                     {auditEvents.length === 500 ? " (limit 500 — apply filters to narrow)" : ""}
                   </p>
@@ -776,27 +769,27 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                         const [actorName, actorEmail] = (auditActorMap.get(evt.actor_id) ?? "|||").split("|||");
                         return (
                           <tr key={evt.id}>
-                            <td className="muted" style={{ fontSize: "0.8rem", whiteSpace: "nowrap" }}>
+                            <td className="muted" style={{ whiteSpace: "nowrap" }}>
                               {new Date(evt.created_at).toLocaleString()}
                             </td>
-                            <td style={{ fontSize: "0.82rem" }}>
+                            <td>
                               {evt.actor_id ? (
                                 <>
                                   <div>{actorName || "Unknown"}</div>
                                   {actorEmail && (
-                                    <div className="muted" style={{ fontSize: "0.74rem" }}>{actorEmail}</div>
+                                    <div className="muted">{actorEmail}</div>
                                   )}
                                 </>
                               ) : (
                                 <span className="muted">System</span>
                               )}
                             </td>
-                            <td style={{ fontSize: "0.82rem" }}>
-                              <code style={{ fontSize: "0.76rem", background: "var(--surface)", padding: "0.1rem 0.35rem", borderRadius: 3, whiteSpace: "nowrap" }}>
+                            <td>
+                              <code style={{ background: "var(--bg)", padding: "0.1rem 0.35rem", borderRadius: 3, whiteSpace: "nowrap" }}>
                                 {evt.event_type}
                               </code>
                             </td>
-                            <td style={{ fontSize: "0.82rem", maxWidth: 320 }}>
+                            <td style={{ maxWidth: 320 }}>
                               {evt.summary}
                             </td>
                           </tr>

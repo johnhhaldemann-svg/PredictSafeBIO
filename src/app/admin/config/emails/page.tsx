@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Mail, ShieldAlert, Zap } from "lucide-react";
+import { CheckCircle2, Mail, ShieldAlert, Zap } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PlatformConfigError } from "@/components/PlatformConfigError";
 import { createServerClient } from "@/lib/supabase/server";
@@ -69,14 +69,13 @@ export default async function EmailTemplatesPage({ searchParams }: Props) {
   return (
     <AppShell>
       <div className="page-stack">
-        <Link href="/admin/config" className="text-link" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.85rem" }}>
-          <ArrowLeft size={14} /> Back to Config
-        </Link>
-
         <header className="page-header">
-          <p className="section-label">Admin › Config</p>
-          <h1>Email Templates</h1>
-          <p className="muted">Edit the subject and body of every system email. Use <code>{"{{variable}}"}</code> placeholders.</p>
+          <div className="page-header-left">
+            <p className="section-label">Admin › Config</p>
+            <h1>Email Templates</h1>
+            <p className="muted">Edit the subject and body of every system email. Use <code>{"{{variable}}"}</code> placeholders.</p>
+          </div>
+          <Link href="/admin/config" className="button-secondary">← Config</Link>
         </header>
 
         {sp.success && (
@@ -96,20 +95,19 @@ export default async function EmailTemplatesPage({ searchParams }: Props) {
         )}
 
         {/* Template tabs */}
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+        <nav className="command-center-link-strip">
           {templates.map(t => (
             <Link
               key={t.key}
               href={`/admin/config/emails?tab=${t.key}`}
               className={t.key === activeTab ? "button-primary" : "button-secondary"}
-              style={{ fontSize: "0.8rem", padding: "0.3rem 0.85rem", display: "flex", alignItems: "center", gap: 5 }}
             >
-              <Mail size={12} />
+              <Mail size={12} className="icon-mr" />
               {t.label}
               {!t.is_active && <span style={{ opacity: 0.6 }}>(off)</span>}
             </Link>
           ))}
-        </div>
+        </nav>
 
         {activeTemplate && (
           <section className="panel">
@@ -117,9 +115,9 @@ export default async function EmailTemplatesPage({ searchParams }: Props) {
               <div>
                 <p className="section-label">Template · <code style={{ fontSize: "0.8rem" }}>{activeTemplate.key}</code></p>
                 <h2>{activeTemplate.label}</h2>
-                <p className="muted" style={{ fontSize: "0.82rem" }}>{activeTemplate.description}</p>
+                <p className="muted">{activeTemplate.description}</p>
               </div>
-              <span className={`status-chip ${activeTemplate.is_active ? "status-current" : "status-missing"}`} style={{ fontSize: "0.72rem" }}>
+              <span className={`status-chip ${activeTemplate.is_active ? "status-current" : "status-missing"}`}>
                 {activeTemplate.is_active ? "Active" : "Inactive"}
               </span>
             </div>
@@ -137,38 +135,38 @@ export default async function EmailTemplatesPage({ searchParams }: Props) {
               </div>
             )}
 
-            <form action={saveEmailTemplateAction} style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+            <form action={saveEmailTemplateAction} className="stacked-form">
               <input type="hidden" name="key" value={activeTemplate.key} />
 
-              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
+              <label>
                 Subject line
-                <input name="subject" defaultValue={activeTemplate.subject} required style={{ width: "100%" }} />
+                <input name="subject" defaultValue={activeTemplate.subject} required />
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
+              <label>
                 HTML body
-                <span className="muted" style={{ fontSize: "0.75rem" }}>Supports basic HTML tags. Use {"{{variable}}"} for dynamic content.</span>
+                <span className="muted">Supports basic HTML tags. Use {"{{variable}}"} for dynamic content.</span>
                 <textarea
                   name="body_html"
                   defaultValue={activeTemplate.body_html}
                   required
                   rows={10}
-                  style={{ width: "100%", fontFamily: "monospace", fontSize: "0.78rem" }}
+                  style={{ fontFamily: "monospace" }}
                 />
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
+              <label>
                 Plain-text fallback
-                <span className="muted" style={{ fontSize: "0.75rem" }}>For email clients that do not render HTML.</span>
+                <span className="muted">For email clients that do not render HTML.</span>
                 <textarea
                   name="body_text"
                   defaultValue={activeTemplate.body_text}
                   rows={4}
-                  style={{ width: "100%", fontFamily: "monospace", fontSize: "0.78rem" }}
+                  style={{ fontFamily: "monospace" }}
                 />
               </label>
 
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.85rem" }}>
+              <label className="check-row">
                 <input
                   type="checkbox"
                   name="is_active"
@@ -178,9 +176,9 @@ export default async function EmailTemplatesPage({ searchParams }: Props) {
                 Template active (send this email when triggered)
               </label>
 
-              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <div className="form-action-row">
                 <button className="button-primary" type="submit">Save template</button>
-                <p className="muted" style={{ fontSize: "0.75rem" }}>
+                <p className="muted">
                   Last saved: {new Date(activeTemplate.updated_at).toLocaleString()}
                 </p>
               </div>
