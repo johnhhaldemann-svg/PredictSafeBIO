@@ -98,7 +98,8 @@ const categories: Category[] = [
       { href: "/predictive-engine",   label: "Predictive Engine",   icon: Brain,      desc: "Forward-looking risk forecast & early warnings" },
       { href: "/risk-command-center", label: "Risk Monitor",        icon: Activity,   desc: "Prioritized HSE risk signals" },
       { href: "/monitoring/exposure", label: "Exposure Monitoring", icon: FlaskConical, desc: "Live air quality and biological exposure levels" },
-      { href: "/management-review",   label: "Management Review",   icon: BarChart3,  desc: "Quarterly & annual review; trend analysis" },
+      { href: "/management-review",   label: "Management Review",   icon: BarChart3,     desc: "Quarterly & annual review; trend analysis" },
+      { href: "/lessons-learned",     label: "Lessons Learned",     icon: BookOpen,      desc: "Capture and share insights from incidents and CAPAs" },
       { href: "/my-work",             label: "My Work",             icon: ClipboardList, desc: "Tasks and follow-ups assigned to you" },
     ]
   },
@@ -131,8 +132,10 @@ const categories: Category[] = [
 ];
 
 function isActivePath(pathname: string, href: string): boolean {
-  if (href === "/workbench" || href === "/") return pathname === href;
-  return pathname.startsWith(href);
+  // Strip query string from href before comparing (pathname never includes query params)
+  const hrefPath = href.split("?")[0];
+  if (hrefPath === "/workbench" || hrefPath === "/") return pathname === hrefPath;
+  return pathname.startsWith(hrefPath);
 }
 
 function getActiveCategoryTitle(pathname: string): string | null {
