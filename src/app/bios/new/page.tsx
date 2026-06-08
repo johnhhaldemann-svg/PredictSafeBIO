@@ -38,17 +38,17 @@ export default async function BioNewPage({ searchParams }: Props) {
     return (
       <AppShell>
         <div className="page-stack" style={{ maxWidth: 580 }}>
-          <div className="verification-pass-box" style={{ padding: "2rem", flexDirection: "column", gap: "1rem", alignItems: "flex-start" }}>
-            <CheckCircle2 size={32} style={{ color: "#16a34a" }} />
-            <div>
-              <h2 style={{ margin: "0 0 0.5rem" }}>Personnel record created</h2>
-              <p style={{ margin: 0 }}>The personnel record has been saved securely and is visible to your team.</p>
+          <section className="panel">
+            <div className="empty-state-card">
+              <CheckCircle2 size={32} className="status-current" />
+              <p className="empty-state-title">Personnel record created</p>
+              <p className="muted">The personnel record has been saved securely and is visible to your team.</p>
+              <div className="form-action-row">
+                <Link href="/bios/new" className="button-primary">Add another</Link>
+                <Link href="/workbench" className="button-secondary">Dashboard</Link>
+              </div>
             </div>
-            <div style={{ display: "flex", gap: "0.75rem" }}>
-              <Link href="/bios/new" className="button-primary">Add another</Link>
-              <Link href="/workbench" className="button-secondary">Dashboard</Link>
-            </div>
-          </div>
+          </section>
         </div>
       </AppShell>
     );
@@ -58,12 +58,15 @@ export default async function BioNewPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack" style={{ maxWidth: 680 }}>
         <header className="page-header">
-          <p className="section-label">Personnel Records</p>
-          <h1>New personnel record</h1>
-          <p className="muted">
-            Create a privacy-safe personnel record. Use a display name; no legal name required.
-            No full date of birth or contact information is collected.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Personnel Records</p>
+            <h1>New personnel record</h1>
+            <p className="muted">
+              Create a privacy-safe personnel record. Use a display name; no legal name required.
+              No full date of birth or contact information is collected.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/bios">← Personnel Records</Link>
         </header>
 
         {sp.error && (
@@ -90,24 +93,23 @@ export default async function BioNewPage({ searchParams }: Props) {
           </span>
         </div>
 
-        <form action={submitPersonnelRecordAction}>
-          <div className="panel" style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-
-            <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem", maxWidth: 360 }}>
-              Display name <span style={{ color: "#dc2626" }}>*</span>
-              <span className="muted" style={{ fontSize: "0.72rem" }}>A chosen pseudonym, e.g. Person A or initials only.</span>
-              <input name="display_name" required placeholder="e.g. Person A, J.D., Lab 4B" style={{ width: "100%" }} />
+        <section className="panel">
+          <form action={submitPersonnelRecordAction} className="stacked-form">
+            <label>
+              Display name <span style={{ color: "var(--red)" }}>*</span>
+              <span className="muted">A chosen pseudonym, e.g. Person A or initials only.</span>
+              <input name="display_name" required placeholder="e.g. Person A, J.D., Lab 4B" />
             </label>
 
-            <div style={{ display: "flex", gap: "0.75rem" }}>
+            <div className="form-action-row">
               <button className="button-primary" type="submit" disabled={atLimit}
                 style={{ opacity: atLimit ? 0.5 : 1 }}>
                 Save personnel record
               </button>
               <Link href="/workbench" className="button-secondary">Cancel</Link>
             </div>
-          </div>
-        </form>
+          </form>
+        </section>
       </div>
     </AppShell>
   );

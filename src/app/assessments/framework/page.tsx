@@ -135,7 +135,7 @@ export default function RiskTriggerFrameworkPage() {
           <div className="page-header-left">
             <p className="section-label">Assess / Risk Register</p>
             <h1>Auto-Trigger Framework</h1>
-            <p style={{ color: "var(--text2)", fontSize: 14, marginTop: 4 }}>
+            <p className="muted">
               What the platform does automatically when an assessment resolves to each risk tier.
             </p>
           </div>
@@ -146,7 +146,7 @@ export default function RiskTriggerFrameworkPage() {
 
         {/* Intro callout */}
         <div className="ai-context-bar">
-          <span style={{ fontSize: 16 }}>⚙️</span>
+          <span>⚙️</span>
           <span>
             <strong>Automated response, not just classification.</strong> Each risk level activates a
             defined chain of records, notifications, and gates — no human has to remember to escalate.
@@ -330,42 +330,21 @@ export default function RiskTriggerFrameworkPage() {
               </p>
             </div>
           </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
-              gap: 12,
-              padding: "0 0 4px",
-            }}
-          >
+          <div className="command-card-grid">
             {principles.map((p) => (
-              <div
-                key={p.title}
-                style={{
-                  background: "var(--panel-soft)",
-                  border: "1px solid var(--line)",
-                  borderRadius: 8,
-                  padding: "14px 16px",
-                }}
-              >
-                <div style={{ fontSize: 20, marginBottom: 8 }}>{p.icon}</div>
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 5, color: "var(--text)" }}>
-                  {p.title}
-                </div>
-                <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.6 }}>{p.desc}</div>
+              <div key={p.title} className="command-card">
+                <div style={{ fontSize: 20 }}>{p.icon}</div>
+                <strong>{p.title}</strong>
+                <p className="muted">{p.desc}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* Footer nav */}
-        <div style={{ display: "flex", gap: 12, paddingBottom: 8 }}>
-          <Link className="button-secondary" href="/assessments">
-            ← Risk Register
-          </Link>
-          <Link className="button-secondary" href="/workbench">
-            Run a new assessment →
-          </Link>
+        <div className="command-center-link-strip">
+          <Link className="button-secondary" href="/assessments">← Risk Register</Link>
+          <Link className="button-secondary" href="/workbench">Run a new assessment →</Link>
         </div>
       </div>
     </AppShell>

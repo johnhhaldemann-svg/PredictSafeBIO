@@ -1,6 +1,8 @@
 export const dynamic = "force-dynamic";
 
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Building2 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { createServerClient } from "@/lib/supabase/server";
 import { isAdminRole } from "@/lib/role-permissions";
@@ -46,42 +48,55 @@ export default async function CompanyDashboardPage({ params }: Props) {
 
   return (
     <AppShell>
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold">{org.name}</h1>
-          <p className="text-sm text-gray-400 capitalize">
-            {org.environment} · {org.status}
-          </p>
-        </div>
+      <div className="page-stack">
+        <header className="page-header">
+          <div className="page-header-left">
+            <p className="section-label">Organization</p>
+            <h1>{org.name}</h1>
+            <p className="muted">
+              {org.environment[0].toUpperCase() + org.environment.slice(1)} · {org.status}
+            </p>
+          </div>
+          <Building2 size={20} className="muted" />
+        </header>
 
-        <div className="mb-6">
-          <h2 className="text-lg font-medium mb-3">Projects</h2>
-          {!projects?.length ? (
-            <p className="text-sm text-gray-400">No active projects. Create one to get started.</p>
-          ) : (
-            <div className="space-y-2">
-              {projects.map((p) => (
-                <a
-                  key={p.id}
-                  href={`/project/${p.id}/dashboard`}
-                  className="flex items-center justify-between rounded-lg border px-4 py-3 hover:bg-gray-50"
-                >
-                  <span className="font-medium text-sm">{p.name}</span>
-                  <span className="text-xs text-gray-400 capitalize">{p.status}</span>
-                </a>
-              ))}
+        <section className="table-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Projects</p>
+              <h2>{projects?.length ?? 0} project{projects?.length !== 1 ? "s" : ""}</h2>
             </div>
+          </div>
+          {!projects?.length ? (
+            <p className="muted">No active projects. Create one to get started.</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Status</th>
+                  <th>Environment</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projects.map((p) => (
+                  <tr key={p.id}>
+                    <td>
+                      <a href={`/project/${p.id}/dashboard`} className="text-link">{p.name}</a>
+                    </td>
+                    <td className="muted">{p.status}</td>
+                    <td className="muted">{p.environment}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
-        </div>
+        </section>
 
         {isAdminRole(profile?.role) && (
-          <div className="flex gap-3">
-            <a href={`/company/${organizationId}/users`} className="text-sm text-blue-600 hover:underline">
-              Manage Users
-            </a>
-            <a href={`/company/${organizationId}/settings`} className="text-sm text-blue-600 hover:underline">
-              Settings
-            </a>
+          <div className="command-center-link-strip">
+            <a href={`/company/${organizationId}/users`} className="button-secondary">Manage Users</a>
+            <a href={`/company/${organizationId}/settings`} className="button-secondary">Settings</a>
           </div>
         )}
       </div>

@@ -92,13 +92,16 @@ export default async function AiKnowledgePage({
       <div className="page-stack">
 
         <header className="page-header">
-          <p className="section-label">AI Safety Engine</p>
-          <h1>AI Knowledge Review</h1>
-          <p className="muted">
-            Every payload submitted to the Safety Engine is captured here.
-            Owners approve valid knowledge, flag low-quality entries, or reject
-            junk so it cannot influence risk scores or recommendations.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">AI Safety Engine</p>
+            <h1>AI Knowledge Review</h1>
+            <p className="muted">
+              Every payload submitted to the Safety Engine is captured here.
+              Owners approve valid knowledge, flag low-quality entries, or reject
+              junk so it cannot influence risk scores or recommendations.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/admin/dashboard">← Command Center</Link>
         </header>
 
         {/* Summary KPI strip */}

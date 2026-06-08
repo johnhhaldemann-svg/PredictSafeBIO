@@ -8055,6 +8055,12 @@ pre {
   margin-right: 4px;
 }
 
+/* Admin billing tier stat mini-cards */
+.tier-stat-card { padding: 0.75rem 1.25rem; border-radius: 8px; border: 1px solid var(--line); min-width: 110px; }
+.tier-stat-card h3 { font-size: 0.9rem; font-weight: 600; margin: 0; }
+.tier-stat-card .tier-stat-value { font-size: 1.4rem; font-weight: 700; margin: 0.25rem 0; }
+.tier-stat-card .tier-stat-sub { font-size: 0.78rem; margin: 0; }
+
 /* Assessment signal builder */
 .draft-banner { display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1rem; border-radius: 8px; }
 .signal-list { margin: 0.75rem 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
