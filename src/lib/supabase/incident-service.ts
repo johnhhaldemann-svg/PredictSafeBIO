@@ -274,11 +274,15 @@ export async function createIncident(input: {
     return { ok: false, message: error?.message ?? "Could not log incident." };
   }
 
-  await withAuditTrace({
-    organizationId: context.organizationId,
-    eventType: "incident_created",
+  await supabase.from("audit_events").insert({
+    organization_id: context.organizationId,
+    actor_id: context.userId,
+    event_type: "incident_created",
     summary: `Incident logged: ${input.title}`,
-    payload: { incidentId: data.id, incidentType: input.incidentType, severity: input.severity },
+    payload: withAuditTrace(
+      { incidentId: data.id, incidentType: input.incidentType, severity: input.severity },
+      { sourceModule: "incidents", sourceRecordId: data.id }
+    ),
   });
 
   return { ok: true, message: "Incident logged successfully.", id: data.id };
@@ -310,11 +314,15 @@ export async function updateIncidentStatus(input: {
 
   if (error) return { ok: false, message: error.message };
 
-  await withAuditTrace({
-    organizationId: context.organizationId,
-    eventType: "incident_status_updated",
+  await supabase.from("audit_events").insert({
+    organization_id: context.organizationId,
+    actor_id: context.userId,
+    event_type: "incident_status_updated",
     summary: input.note ?? `Incident status changed to ${input.status}.`,
-    payload: { incidentId: input.incidentId, newStatus: input.status },
+    payload: withAuditTrace(
+      { incidentId: input.incidentId, newStatus: input.status },
+      { sourceModule: "incidents", sourceRecordId: input.incidentId }
+    ),
   });
 
   return { ok: true, message: `Status updated to ${incidentStatusLabels[input.status]}.` };
