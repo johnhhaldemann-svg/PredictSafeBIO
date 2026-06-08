@@ -216,7 +216,7 @@ export default async function ProvidersDirectoryPage({ searchParams }: Props) {
                       <p className="muted">{p.specialty}</p>
                     </div>
                     {p.npi_verified && (
-                      <CheckCircle2 size={16} className="provider-verified-icon" title="Verified profile" />
+                      <CheckCircle2 size={16} className="provider-verified-icon" aria-label="Verified profile" />
                     )}
                   </div>
 
