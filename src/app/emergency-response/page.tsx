@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ShieldCheck, ArrowRight, FileText, Phone } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 
@@ -44,7 +45,7 @@ export default function EmergencyResponsePage() {
             cards — is on the roadmap. In the meantime, store your current emergency response SOPs in
             the Documents module and tag them as emergency plans.
           </p>
-          <a
+          <Link
             href="/documents"
             style={{
               display: "inline-flex", alignItems: "center", gap: "6px",
@@ -52,7 +53,7 @@ export default function EmergencyResponsePage() {
             }}
           >
             Open Documents <ArrowRight size={13} />
-          </a>
+          </Link>
         </div>
 
         {/* Plan types */}

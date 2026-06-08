@@ -67,7 +67,7 @@ export default function ExposureMonitoringPage() {
           <p style={{ fontSize: ".85rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "16px" }}>
             Sampling result logging, OEL comparison, trend charts, and overexposure alert routing
             are on the roadmap. Today, exposure data entered in the Hazard Register feeds the
-            Predictive Engine's risk forecasts.
+            Predictive Engine risk forecasts.
           </p>
           <a
             href="/exposure-map"

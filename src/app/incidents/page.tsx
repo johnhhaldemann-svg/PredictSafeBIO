@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { AlertCircle, ClipboardList, Clock, ArrowRight } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 
@@ -44,7 +45,7 @@ export default function IncidentReportingPage() {
             notification routing — is being built. In the meantime, use the CAPA module to log and
             track corrective actions for any incidents that have occurred.
           </p>
-          <a
+          <Link
             href="/operations/capa"
             style={{
               display: "inline-flex", alignItems: "center", gap: "6px",
@@ -52,7 +53,7 @@ export default function IncidentReportingPage() {
             }}
           >
             Go to CAPA <ArrowRight size={13} />
-          </a>
+          </Link>
         </div>
 
         {/* Incident type reference */}
