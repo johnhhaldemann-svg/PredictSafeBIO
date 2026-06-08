@@ -27,12 +27,13 @@ const STATUS_CLASS: Record<HazardStatus, string> = {
 };
 
 type Props = {
-  searchParams: Promise<{ message?: string; success?: string; filter?: string }>;
+  searchParams: Promise<{ message?: string; success?: string; filter?: string; search?: string }>;
 };
 
 export default async function HazardRegisterPage({ searchParams }: Props) {
   const params = await searchParams;
   const filter = params.filter ?? "all";
+  const searchQuery = (params.search ?? "").trim().toLowerCase();
 
   const statusFilter: HazardStatus | undefined =
     filter === "identified" ? "identified" : filter === "controlled" ? "controlled" : undefined;
@@ -48,10 +49,15 @@ export default async function HazardRegisterPage({ searchParams }: Props) {
   ]);
 
   const loadFailed = hazardsResult === null;
-  const hazards = hazardsResult ?? [];
+  const allHazards = hazardsResult ?? [];
+  const hazards = searchQuery
+    ? allHazards.filter((h) => h.name.toLowerCase().includes(searchQuery))
+    : allHazards;
   const totalCount = hazards.length;
   const identifiedCount = hazards.filter((h) => h.status === "identified").length;
   const controlledCount = hazards.filter((h) => h.status === "controlled").length;
+  const allIdentifiedCount = allHazards.filter((h) => h.status === "identified").length;
+  const allControlledCount = allHazards.filter((h) => h.status === "controlled").length;
 
   return (
     <AppShell>
@@ -88,25 +94,59 @@ export default async function HazardRegisterPage({ searchParams }: Props) {
         {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message && <p className="form-message">{params.message}</p>}
 
-        {/* Filter strip */}
-        <nav className="command-center-link-strip" aria-label="Hazard filter">
-          {(["all", "identified", "controlled"] as const).map((f) => (
+        {/* Search + filter strip */}
+        <div className="command-center-link-strip">
+          <form method="get" action="/hazards" className="hazard-search-row">
+            {filter !== "all" && <input type="hidden" name="filter" value={filter} />}
+            <input
+              type="search"
+              name="search"
+              defaultValue={params.search ?? ""}
+              placeholder="Search hazards…"
+              aria-label="Search hazards by name"
+            />
+            <button className="button-secondary compact" type="submit">Search</button>
+            {searchQuery && (
+              <Link className="button-secondary compact" href={filter !== "all" ? `/hazards?filter=${filter}` : "/hazards"}>
+                Clear
+              </Link>
+            )}
+          </form>
+          <nav aria-label="Hazard filter" className="command-center-link-strip">
             <Link
-              key={f}
-              href={f === "all" ? "/hazards" : `/hazards?filter=${f}`}
-              className={`button-secondary compact ${filter === f ? "active-filter" : ""}`}
+              href="/hazards"
+              className={`button-secondary compact ${filter === "all" ? "active-filter" : ""}`}
             >
-              {f === "all" ? "All hazards" : f === "identified" ? "Identified (uncontrolled)" : "Controlled"}
+              All hazards
+              <span className="filter-count-badge">{allHazards.length}</span>
             </Link>
-          ))}
-        </nav>
+            <Link
+              href="/hazards?filter=identified"
+              className={`button-secondary compact ${filter === "identified" ? "active-filter" : ""}`}
+            >
+              Identified (uncontrolled)
+              <span className="filter-count-badge">{allIdentifiedCount}</span>
+            </Link>
+            <Link
+              href="/hazards?filter=controlled"
+              className={`button-secondary compact ${filter === "controlled" ? "active-filter" : ""}`}
+            >
+              Controlled
+              <span className="filter-count-badge">{allControlledCount}</span>
+            </Link>
+          </nav>
+        </div>
 
         {/* Hazard register */}
         <section className="panel">
           <div className="panel-heading">
             <div>
               <p className="section-label">Hazard register</p>
-              <h2>{totalCount} hazard{totalCount !== 1 ? "s" : ""}</h2>
+              <h2>
+                {searchQuery
+                  ? `${totalCount} result${totalCount !== 1 ? "s" : ""} for "${params.search}"`
+                  : `${totalCount} hazard${totalCount !== 1 ? "s" : ""}`}
+              </h2>
             </div>
           </div>
 
@@ -168,13 +208,16 @@ export default async function HazardRegisterPage({ searchParams }: Props) {
                   </select>
                 </label>
                 <label>
-                  Risk family (predictive linkage)
+                  Risk family
                   <select name="riskFamily" defaultValue="">
                     <option value="">— Select —</option>
                     {riskFamilyOptions.map((f) => (
                       <option key={f.id} value={f.id}>{f.label}</option>
                     ))}
                   </select>
+                  <span className="muted" style={{ fontWeight: 400 }}>
+                    Links this hazard to a predictive risk category — uncontrolled hazards in the same family raise forecasted risk together.
+                  </span>
                 </label>
                 <label>
                   BSL level

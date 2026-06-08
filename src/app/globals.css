@@ -7498,3 +7498,314 @@ pre {
   .ai-mem-obj-grid { grid-template-columns: repeat(2, 1fr); }
   .ai-mem-nav { width: 120px; }
 }
+
+/* ── WorkStopBanner ── */
+.work-stop-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+
+.work-stop-banner--high {
+  background: var(--red-bg);
+  border: 2px solid var(--red);
+}
+
+.work-stop-banner--critical {
+  background: #f3effe;
+  border: 2px solid #7c3aed;
+}
+
+.wsb-icon {
+  font-size: 24px;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.wsb-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.wsb-title {
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+
+.work-stop-banner--high .wsb-title { color: var(--red-dk); }
+.work-stop-banner--critical .wsb-title { color: #5b21b6; }
+
+.wsb-text {
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.work-stop-banner--high .wsb-text { color: #7f1d1d; }
+.work-stop-banner--critical .wsb-text { color: #4c1d95; }
+
+.wsb-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.wsb-chip {
+  padding: 3px 10px;
+  border-radius: 5px;
+  font-weight: 700;
+}
+
+/* High-risk chip variants */
+.wsb-chip--deadline-ok {
+  background: #fecaca;
+  color: #7f1d1d;
+  border: 1px solid rgba(162,45,45,0.3);
+}
+.wsb-chip--deadline-overdue {
+  background: var(--red-dk);
+  color: #fff;
+  border: 1px solid rgba(162,45,45,0.3);
+}
+.wsb-chip--escalate-pending {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid rgba(127,29,29,0.25);
+}
+.wsb-chip--escalated {
+  background: #7f1d1d;
+  color: #fff;
+  border: 1px solid rgba(127,29,29,0.25);
+}
+
+/* Critical-risk chip variants */
+.wsb-chip--critical-ok {
+  background: #ede9fe;
+  color: #4c1d95;
+  border: 1px solid rgba(91,33,182,0.3);
+}
+.wsb-chip--critical-overdue {
+  background: #5b21b6;
+  color: #fff;
+  border: 1px solid rgba(91,33,182,0.3);
+}
+
+/* Regulatory notification checklist (inside critical banner) */
+.wsb-checklist {
+  background: rgba(255,255,255,0.6);
+  border: 1px solid rgba(124,58,237,0.25);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.wsb-checklist-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7c3aed;
+  margin-bottom: 10px;
+}
+
+.wsb-checklist-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wsb-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #4c1d95;
+}
+
+.wsb-checklist-item input[type="checkbox"] {
+  width: 15px;
+  min-height: 15px;
+  accent-color: #7c3aed;
+  flex-shrink: 0;
+}
+
+.wsb-checklist-hint {
+  font-size: 11px;
+  color: #7c3aed;
+  margin-top: 10px;
+  opacity: 0.7;
+}
+
+.wsb-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── Assessment detail content panels ── */
+.assessment-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.assessment-detail-section h2 {
+  margin: 0 0 8px;
+}
+
+/* ── ai-context-bar colour variants ── */
+.ai-context-bar--warning {
+  background: linear-gradient(135deg, #fffbeb 0%, #fefce8 100%);
+  border-color: #fde68a;
+  color: #78350f;
+}
+.ai-context-bar--warning svg { color: #d97706; }
+
+.ai-context-bar--danger {
+  background: linear-gradient(135deg, #fef2f2 0%, #fff5f5 100%);
+  border-color: #fecaca;
+  color: #991b1b;
+}
+.ai-context-bar--danger svg { color: #ef4444; }
+
+.ai-context-bar--success {
+  background: linear-gradient(135deg, #f0fdf4 0%, #f7fffe 100%);
+  border-color: #bbf7d0;
+  color: #14532d;
+}
+.ai-context-bar--success svg { color: #16a34a; }
+
+/* ai-fill-btn colour variants */
+.ai-fill-btn--warning {
+  border-color: #fbbf24;
+  color: #92400e;
+}
+.ai-fill-btn--warning:hover { background: #fef9c3; }
+
+.ai-fill-btn--danger {
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+.ai-fill-btn--danger:hover { background: #fee2e2; }
+
+.ai-fill-btn--success {
+  border-color: #86efac;
+  color: #14532d;
+}
+.ai-fill-btn--success:hover { background: #dcfce7; }
+
+/* ── Table cell: overdue date ── */
+.overdue-cell {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* ── Question block in setup questionnaire ── */
+.qn-block {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  display: grid;
+  gap: 6px;
+}
+
+.qn-block label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0;
+}
+
+.qn-block .qn-notes {
+  margin-top: 2px;
+}
+
+/* ── Inline form button row ── */
+.form-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* ── Answer progress bar (setup questionnaire) ── */
+.answer-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--panel-soft);
+  border: 1px solid var(--bdr);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.answer-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--blue-bg);
+  border-radius: 999px;
+  overflow: hidden;
+  min-width: 80px;
+}
+
+.answer-progress-fill {
+  height: 100%;
+  background: var(--blue-mid);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.answer-progress-label {
+  font-weight: 600;
+  color: var(--blue);
+  white-space: nowrap;
+}
+
+/* ── Result count for table headings ── */
+.result-count {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-left: 6px;
+}
+
+/* ── Hazard search row ── */
+.hazard-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hazard-search-row input {
+  max-width: 280px;
+}
+
+/* ── Filter button with count badge ── */
+.filter-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--blue-bg);
+  color: var(--blue);
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.button-secondary.active-filter .filter-count-badge {
+  background: var(--blue);
+  color: #fff;
+}

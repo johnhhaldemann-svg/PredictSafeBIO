@@ -63,7 +63,7 @@ export default async function SetupQuestionnairePage({ searchParams }: Props) {
                 Risk Register and Compliance Calendar stay stable. Update them only when your operations,
                 materials, equipment, or scale change.
               </p>
-              <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
+              <div className="form-action-row">
                 <Link className="button-primary" href="/assess/setup-questionnaire?edit=1">
                   <Pencil size={14} aria-hidden="true" /> Update answers
                 </Link>
@@ -97,6 +97,19 @@ export default async function SetupQuestionnairePage({ searchParams }: Props) {
               applicability before any program is treated as active.
             </AiDraftBanner>
 
+            {/* Answer progress */}
+            <div className="answer-progress">
+              <div className="answer-progress-bar">
+                <div
+                  className="answer-progress-fill"
+                  style={{ width: `${Math.round((answeredCount / SETUP_QUESTIONS.length) * 100)}%` }}
+                />
+              </div>
+              <span className="answer-progress-label">
+                {answeredCount} / {SETUP_QUESTIONS.length} answered
+              </span>
+            </div>
+
             <form action={saveQuestionnaireAction}>
               {domains.map((domain, idx) => {
                 const qs = SETUP_QUESTIONS.filter((q) => q.domain === domain);
@@ -113,8 +126,8 @@ export default async function SetupQuestionnairePage({ searchParams }: Props) {
                       {qs.map((q) => {
                         const current = answerMap.get(q.number) ?? "";
                         return (
-                          <div key={q.number} className="qn-block" style={{ borderTop: "1px solid var(--line)", paddingTop: 12 }}>
-                            <label style={{ display: "block", fontWeight: 600, marginBottom: 6 }}>
+                          <div key={q.number} className="qn-block">
+                            <label>
                               {q.number}. {q.text}
                             </label>
                             {q.kind === "boolean" ? (
@@ -131,7 +144,7 @@ export default async function SetupQuestionnairePage({ searchParams }: Props) {
                               type="text"
                               defaultValue={noteMap.get(q.number) ?? ""}
                               placeholder="Notes (optional)"
-                              style={{ marginTop: 6 }}
+                              className="qn-notes"
                             />
                           </div>
                         );
@@ -142,14 +155,14 @@ export default async function SetupQuestionnairePage({ searchParams }: Props) {
               })}
 
               <section className="panel">
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <div className="form-action-row">
                   <button className="button-secondary" type="submit" name="runEngine" value="0">Save answers</button>
                   <button className="button-primary" type="submit" name="runEngine" value="1">
                     {completed ? "Save & re-run engine" : "Save & run applicability engine"}
                   </button>
                   {editMode && <Link className="button-secondary" href="/assess/setup-questionnaire">Cancel</Link>}
                 </div>
-                <p className="muted" style={{ marginTop: 10, fontSize: 12 }}>
+                <p className="muted">
                   Running the engine enables applicable programs and creates your Risk Register entries and
                   Compliance Calendar tasks. On first completion you&apos;ll be taken to your workspace, and
                   this questionnaire becomes read-only until you choose to update it.

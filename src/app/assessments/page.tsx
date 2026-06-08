@@ -110,24 +110,24 @@ export default async function AssessmentsPage({
           </div>
         ) : null}
         {needsActionCount > 0 ? (
-          <div className="ai-context-bar" style={{ background: "linear-gradient(135deg,#fffbeb,#fefce8)", borderColor: "#fde68a", color: "#78350f" }}>
+          <div className="ai-context-bar ai-context-bar--warning">
             <TrendingUp size={15} />
             <span><strong>{needsActionCount} assessment{needsActionCount !== 1 ? "s" : ""} need corrective action.</strong> Outstanding steps are blocking closure.</span>
-            <Link className="ai-fill-btn" style={{ borderColor: "#fbbf24", color: "#92400e" }} href="/assessments?review=reviewed_needs_action">View</Link>
+            <Link className="ai-fill-btn ai-fill-btn--warning" href="/assessments?review=reviewed_needs_action">View</Link>
           </div>
         ) : null}
         {overdueCount > 0 ? (
-          <div className="ai-context-bar" style={{ background: "linear-gradient(135deg,#fef2f2,#fff5f5)", borderColor: "#fecaca", color: "#991b1b" }}>
+          <div className="ai-context-bar ai-context-bar--danger">
             <Clock size={15} />
             <span><strong>{overdueCount} assessment{overdueCount !== 1 ? "s" : ""} past review due date.</strong> Overdue reviews may block audit readiness.</span>
-            <Link className="ai-fill-btn" style={{ borderColor: "#fca5a5", color: "#991b1b" }} href="/assessments?due=overdue">View overdue</Link>
+            <Link className="ai-fill-btn ai-fill-btn--danger" href="/assessments?due=overdue">View overdue</Link>
           </div>
         ) : null}
         {assignedToMeCount > 0 && currentUserId ? (
-          <div className="ai-context-bar" style={{ background: "linear-gradient(135deg,#f0fdf4,#f7fffe)", borderColor: "#bbf7d0", color: "#14532d" }}>
+          <div className="ai-context-bar ai-context-bar--success">
             <UserCheck size={15} />
             <span><strong>{assignedToMeCount} assessment{assignedToMeCount !== 1 ? "s" : ""} assigned to you for review.</strong></span>
-            <Link className="ai-fill-btn" style={{ borderColor: "#86efac", color: "#14532d" }} href="/assessments?assigned=mine">My assignments</Link>
+            <Link className="ai-fill-btn ai-fill-btn--success" href="/assessments?assigned=mine">My assignments</Link>
           </div>
         ) : null}
 
@@ -143,7 +143,7 @@ export default async function AssessmentsPage({
             <span>{pendingReviewCount} draft review required</span>
             <span>{needsActionCount} needs action</span>
             <span>{monitoringCount} monitoring</span>
-            {overdueCount > 0 && <span style={{ color: "#dc2626" }}>{overdueCount} overdue</span>}
+            {overdueCount > 0 && <span className="overdue-cell">{overdueCount} overdue</span>}
           </div>
           <form className="filter-grid">
             <label>Review status
@@ -192,6 +192,16 @@ export default async function AssessmentsPage({
         </section>
 
         <section className="table-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Results</p>
+              <h2>
+                {filteredAssessments.length === assessments.length
+                  ? `${assessments.length} assessment${assessments.length !== 1 ? "s" : ""}`
+                  : `${filteredAssessments.length} of ${assessments.length} shown`}
+              </h2>
+            </div>
+          </div>
           <table>
             <thead>
               <tr>
@@ -218,7 +228,7 @@ export default async function AssessmentsPage({
                     <td>{assessment.score}</td>
                     <td>{getHumanReviewStatusLabel(assessment.humanReviewStatus)}</td>
                     <td>{assessment.assignedReviewerName ?? <span className="muted">Unassigned</span>}</td>
-                    <td style={overdue ? { color: "#dc2626", fontWeight: 600 } : undefined}>{formatDueDate(assessment.reviewDueDate)}</td>
+                    <td className={overdue ? "overdue-cell" : undefined}>{formatDueDate(assessment.reviewDueDate)}</td>
                     <td>{assessment.reviewedAt ? new Date(assessment.reviewedAt).toLocaleDateString() : "Not reviewed"}</td>
                   </tr>
                 );

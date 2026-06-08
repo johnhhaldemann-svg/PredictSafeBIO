@@ -50,68 +50,27 @@ function WorkStopBanner({
 
   if (isHigh) {
     return (
-      <div
-        style={{
-          background: "#FCEBEB",
-          border: "2px solid #E24B4A",
-          borderRadius: 10,
-          padding: "16px 20px",
-          display: "flex",
-          alignItems: "flex-start",
-          gap: 14,
-        }}
-      >
-        <span style={{ fontSize: 24, marginTop: 1 }}>🛑</span>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 800, fontSize: 15, color: "#A32D2D", letterSpacing: "-0.01em", marginBottom: 6 }}>
-            WORK STOP RECOMMENDED
-          </div>
-          <div style={{ fontSize: 13, color: "#7f1d1d", lineHeight: 1.6, marginBottom: 10 }}>
+      <div className="work-stop-banner work-stop-banner--high">
+        <span className="wsb-icon">🛑</span>
+        <div className="wsb-body">
+          <div className="wsb-title">WORK STOP RECOMMENDED</div>
+          <div className="wsb-text">
             High risk assessment requires immediate supervisor review. Work should pause pending
             CAPA acknowledgment. A CAPA has been auto-created with a {deadlineHours}-hour deadline.
           </div>
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 8,
-              marginBottom: 12,
-              fontSize: 12,
-              fontFamily: "monospace",
-            }}
-          >
+          <div className="wsb-chips">
             {capaDeadline && (
-              <span
-                style={{
-                  padding: "3px 10px",
-                  borderRadius: 5,
-                  background: capaOverdue ? "#A32D2D" : "#fecaca",
-                  color: capaOverdue ? "#fff" : "#7f1d1d",
-                  fontWeight: 700,
-                  border: "1px solid rgba(162,45,45,0.3)",
-                }}
-              >
+              <span className={capaOverdue ? "wsb-chip wsb-chip--deadline-overdue" : "wsb-chip wsb-chip--deadline-ok"}>
                 CAPA deadline: {capaDeadline.toLocaleDateString()}{capaOverdue ? " — OVERDUE" : ""}
               </span>
             )}
             {escalationDeadline && (
-              <span
-                style={{
-                  padding: "3px 10px",
-                  borderRadius: 5,
-                  background: escalated ? "#7f1d1d" : "#fef2f2",
-                  color: escalated ? "#fff" : "#991b1b",
-                  fontWeight: 700,
-                  border: "1px solid rgba(127,29,29,0.25)",
-                }}
-              >
+              <span className={escalated ? "wsb-chip wsb-chip--escalated" : "wsb-chip wsb-chip--escalate-pending"}>
                 {escalated ? "⬆ Escalated to dept head" : `Escalates to dept head: ${escalationDeadline.toLocaleDateString()}`}
               </span>
             )}
           </div>
-          <Link className="button-secondary" href="/operations/capa" style={{ fontSize: 13 }}>
-            View CAPA records →
-          </Link>
+          <Link className="button-secondary" href="/operations/capa">View CAPA records →</Link>
         </div>
       </div>
     );
@@ -119,110 +78,45 @@ function WorkStopBanner({
 
   // Critical
   return (
-    <div
-      style={{
-        background: "#f3effe",
-        border: "2px solid #7c3aed",
-        borderRadius: 10,
-        padding: "18px 20px",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14 }}>
-        <span style={{ fontSize: 26, marginTop: 1 }}>🆘</span>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 800, fontSize: 16, color: "#5b21b6", letterSpacing: "-0.01em", marginBottom: 6 }}>
-            WORK STOP REQUIRED — IMMINENT HAZARD
+    <div className="work-stop-banner work-stop-banner--critical">
+      <span className="wsb-icon">🆘</span>
+      <div className="wsb-body">
+        <div className="wsb-title">WORK STOP REQUIRED — IMMINENT HAZARD</div>
+        <div className="wsb-text">
+          Executive sign-off required before work resumes. Incident record initiated.
+          Mandatory investigation must be completed within 72 hours. Immutable audit trail is active.
+        </div>
+        <div className="wsb-chips">
+          {capaDeadline && (
+            <span className={capaOverdue ? "wsb-chip wsb-chip--critical-overdue" : "wsb-chip wsb-chip--critical-ok"}>
+              CAPA deadline: {capaDeadline.toLocaleDateString()}{capaOverdue ? " — OVERDUE" : ""}
+            </span>
+          )}
+          <span className="wsb-chip wsb-chip--critical-ok">🔐 Executive sign-off required to resume</span>
+          <span className="wsb-chip wsb-chip--critical-ok">🛡 Audit trail locked — immutable</span>
+        </div>
+        <div className="wsb-checklist">
+          <div className="wsb-checklist-title">Regulatory Notification Checklist</div>
+          <div className="wsb-checklist-items">
+            {regulatoryItems.map((item) => (
+              <div key={item.key} className="wsb-checklist-item">
+                <input type="checkbox" disabled />
+                <span>
+                  <strong>{item.key}</strong>{" "}
+                  {item.label}
+                  <span style={{ opacity: 0.7 }}> — pending confirmation</span>
+                </span>
+              </div>
+            ))}
           </div>
-          <div style={{ fontSize: 13, color: "#4c1d95", lineHeight: 1.6 }}>
-            Executive sign-off required before work resumes. Incident record initiated.
-            Mandatory investigation must be completed within 72 hours. Immutable audit trail is active.
-          </div>
+          <p className="wsb-checklist-hint">
+            Mark notifications complete in your incident record once confirmed with each agency.
+          </p>
         </div>
-      </div>
-
-      {/* Deadline chips */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14, fontSize: 12, fontFamily: "monospace" }}>
-        {capaDeadline && (
-          <span
-            style={{
-              padding: "3px 10px",
-              borderRadius: 5,
-              background: capaOverdue ? "#5b21b6" : "#ede9fe",
-              color: capaOverdue ? "#fff" : "#4c1d95",
-              fontWeight: 700,
-              border: "1px solid rgba(91,33,182,0.3)",
-            }}
-          >
-            CAPA deadline: {capaDeadline.toLocaleDateString()}{capaOverdue ? " — OVERDUE" : ""}
-          </span>
-        )}
-        <span style={{ padding: "3px 10px", borderRadius: 5, background: "#ede9fe", color: "#4c1d95", fontWeight: 700, border: "1px solid rgba(91,33,182,0.3)" }}>
-          🔐 Executive sign-off required to resume
-        </span>
-        <span style={{ padding: "3px 10px", borderRadius: 5, background: "#ede9fe", color: "#4c1d95", fontWeight: 700, border: "1px solid rgba(91,33,182,0.3)" }}>
-          🛡 Audit trail locked — immutable
-        </span>
-      </div>
-
-      {/* Regulatory notification checklist */}
-      <div
-        style={{
-          background: "rgba(255,255,255,0.6)",
-          border: "1px solid rgba(124,58,237,0.25)",
-          borderRadius: 8,
-          padding: "12px 16px",
-          marginBottom: 12,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "#7c3aed",
-            marginBottom: 10,
-          }}
-        >
-          Regulatory Notification Checklist
+        <div className="wsb-actions">
+          <Link className="button-secondary" href="/operations/capa">View CAPA records →</Link>
+          <Link className="button-secondary" href="/risk-command-center">Risk Monitor →</Link>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {regulatoryItems.map((item) => (
-            <div
-              key={item.key}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                fontSize: 13,
-                color: "#4c1d95",
-              }}
-            >
-              <input
-                type="checkbox"
-                disabled
-                style={{ width: 15, height: 15, accentColor: "#7c3aed", flexShrink: 0 }}
-              />
-              <span>
-                <strong style={{ marginRight: 6 }}>{item.key}</strong>
-                <span style={{ color: "#6d28d9" }}>{item.label}</span>
-                <span style={{ color: "#7c3aed", opacity: 0.7 }}> — pending confirmation</span>
-              </span>
-            </div>
-          ))}
-        </div>
-        <p style={{ fontSize: 11, color: "#7c3aed", marginTop: 10, opacity: 0.7 }}>
-          Mark notifications complete in your incident record once confirmed with each agency.
-        </p>
-      </div>
-
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <Link className="button-secondary" href="/operations/capa" style={{ fontSize: 13 }}>
-          View CAPA records →
-        </Link>
-        <Link className="button-secondary" href="/risk-command-center" style={{ fontSize: 13 }}>
-          Risk Monitor →
-        </Link>
       </div>
     </div>
   );
@@ -311,9 +205,14 @@ export default async function AssessmentDetailPage({
           </article>
         </section>
         <section className="panel">
-          <h2>Latest review event</h2>
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Audit trail</p>
+              <h2>Latest review event</h2>
+            </div>
+          </div>
           {latestReviewEvent ? (
-            <p>{latestReviewEvent.createdAt ?? "Pending timestamp"} - {latestReviewEvent.summary}</p>
+            <p>{latestReviewEvent.createdAt ?? "Pending timestamp"} — {latestReviewEvent.summary}</p>
           ) : (
             <p className="muted">No review-status audit event has been recorded yet.</p>
           )}
@@ -387,7 +286,7 @@ export default async function AssessmentDetailPage({
           </label>
         </form>
         <section className="panel">
-          <h2>Guarded explanation</h2>
+          <div className="panel-heading"><div><p className="section-label">AI output</p><h2>Guarded explanation</h2></div></div>
           <p>{assessment.output.explanation}</p>
           <p className="muted">{draftAiRecommendationGuardrail}</p>
         </section>
@@ -397,7 +296,7 @@ export default async function AssessmentDetailPage({
             <h2>Shareable BioRisk report</h2>
             <p className="muted">Draft only — for human review. Not a regulatory release or approval record.</p>
           </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <div className="form-action-row">
             <a className="button-primary" href={`/api/reports/assessment/${assessment.id}?format=pdf`} target="_blank" rel="noopener noreferrer">
               Download PDF
             </a>
@@ -408,7 +307,7 @@ export default async function AssessmentDetailPage({
         </section>
         <section className="split-list wide">
           <div className="panel">
-            <h2>Top drivers</h2>
+            <div className="panel-heading"><div><p className="section-label">Risk drivers</p><h2>Top drivers</h2></div></div>
             <ul>
               {assessment.output.topDrivers.map((driver: any) => (
                 <li key={driver.label}>
@@ -419,7 +318,7 @@ export default async function AssessmentDetailPage({
             </ul>
           </div>
           <div className="panel">
-            <h2>Critical gaps</h2>
+            <div className="panel-heading"><div><p className="section-label">Control gaps</p><h2>Critical gaps</h2></div></div>
             <ul>
               {assessment.output.criticalControlGaps.map((gap: string) => (
                 <li key={gap}>{gap}</li>
@@ -429,7 +328,7 @@ export default async function AssessmentDetailPage({
         </section>
         <section className="split-list wide">
           <div className="panel">
-            <h2>Missing information</h2>
+            <div className="panel-heading"><div><p className="section-label">Data quality</p><h2>Missing information</h2></div></div>
             <ul>
               {assessment.output.missingInformation.map((item: string) => (
                 <li key={item}>{item}</li>
@@ -437,7 +336,7 @@ export default async function AssessmentDetailPage({
             </ul>
           </div>
           <div className="panel">
-            <h2>Signals</h2>
+            <div className="panel-heading"><div><p className="section-label">Input signals</p><h2>Signals</h2></div></div>
             <ul>
               {assessment.signals.map((signal: any, i: number) => (
                 <li key={i}>
@@ -449,7 +348,7 @@ export default async function AssessmentDetailPage({
           </div>
         </section>
         <section className="panel">
-          <h2>Recommended actions</h2>
+          <div className="panel-heading"><div><p className="section-label">Next steps</p><h2>Recommended actions</h2></div></div>
           <div className="action-list">
             {assessment.output.recommendedActions.map((action: any) => (
               <article className="action-row" key={action.title}>
@@ -464,7 +363,7 @@ export default async function AssessmentDetailPage({
         </section>
         {assessment.auditEvents.length > 0 ? (
           <section className="panel">
-            <h2>Audit trail</h2>
+            <div className="panel-heading"><div><p className="section-label">Traceability</p><h2>Audit trail</h2></div></div>
             <div className="timeline">
               {assessment.auditEvents.map((event: any, i: number) => (
                 <article className="timeline-row" key={i}>
