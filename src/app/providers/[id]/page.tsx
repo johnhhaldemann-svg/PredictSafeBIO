@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CheckCircle2, ShieldCheck, Stethoscope } from "lucide-react";
+import { CheckCircle2, ShieldCheck, Stethoscope } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseServiceConfigured } from "@/lib/supabase/env";
@@ -20,7 +20,7 @@ export default async function ProviderProfilePage({ params }: Props) {
   if (!isSupabaseServiceConfigured()) notFound();
   const admin = getSupabaseAdminClient();
 
-   
+
   const { data } = await (admin as any)
     .from("provider_profiles")
     .select(`
@@ -38,7 +38,7 @@ export default async function ProviderProfilePage({ params }: Props) {
 
   if (!data) notFound();
 
-   
+
   const p = data as any;
   const provider = {
     id:                p.id as string,
@@ -57,96 +57,84 @@ export default async function ProviderProfilePage({ params }: Props) {
 
   return (
     <AppShell>
-      <div className="page-stack" style={{ maxWidth: 680 }}>
-        <Link href="/providers" className="text-link"
-          style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.85rem" }}>
-          <ArrowLeft size={14} /> Provider directory
-        </Link>
-
-        <section className="panel">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", flexWrap: "wrap" }}>
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <div style={{ width: 48, height: 48, borderRadius: "50%", background: "var(--surface-2, #f1f5f9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Stethoscope size={20} style={{ color: "#2563eb" }} />
-                </div>
-                <div>
-                  <h1 style={{ margin: 0, fontSize: "1.4rem" }}>{provider.full_name}</h1>
-                  <p className="muted" style={{ margin: 0, fontSize: "0.85rem" }}>{provider.specialty}</p>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-              {provider.accepting_patients ? (
-                <span className="status-chip status-current">✓ Available for consultation</span>
-              ) : (
-                <span className="status-chip status-unknown">Not currently available</span>
-              )}
-              {provider.npi_verified && (
-                <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: "0.75rem", color: "#16a34a" }}>
-                  <CheckCircle2 size={13} />
-                  NPI verified
-                  {provider.npi_verified_at && (
-                    <span className="muted"> · {new Date(provider.npi_verified_at).toLocaleDateString()}</span>
-                  )}
-                </div>
-              )}
-            </div>
+      <div className="page-stack">
+        <header className="page-header">
+          <div className="page-header-left">
+            <p className="section-label">Provider Directory</p>
+            <h1>{provider.full_name}</h1>
+            <p className="muted">{provider.specialty}{provider.org_name ? ` · ${provider.org_name}` : ""}</p>
           </div>
+          <Link href="/providers" className="button-secondary">← Directory</Link>
+        </header>
 
-          {provider.credentials.length > 0 && (
-            <div style={{ marginTop: "1.25rem" }}>
-              <p className="section-label" style={{ marginBottom: "0.4rem" }}>Credentials</p>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {provider.credentials.map((c: string) => (
-                  <span key={c} className="status-chip status-current" style={{ fontSize: "0.78rem" }}>{c}</span>
-                ))}
-              </div>
-            </div>
+        {/* Status badges */}
+        <div className="form-action-row">
+          {provider.accepting_patients ? (
+            <span className="status-current">✓ Available for consultation</span>
+          ) : (
+            <span className="status-needs-review">Not currently available</span>
           )}
+          {provider.npi_verified && (
+            <span className="status-current">
+              <CheckCircle2 size={13} className="inline-icon" />
+              NPI verified
+              {provider.npi_verified_at && ` · ${new Date(provider.npi_verified_at).toLocaleDateString()}`}
+            </span>
+          )}
+        </div>
 
-          <div style={{ marginTop: "1.25rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+        {/* Credentials */}
+        {provider.credentials.length > 0 && (
+          <section className="panel">
+            <div className="panel-heading">
+              <div><p className="section-label">Credentials</p><h2>Qualifications on file</h2></div>
+            </div>
+            <div className="command-center-link-strip">
+              {provider.credentials.map((c: string) => (
+                <span key={c} className="status-current">{c}</span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Provider details */}
+        <section className="panel">
+          <div className="panel-heading">
+            <div><p className="section-label">Provider details</p><h2>License &amp; registration</h2></div>
+            <Stethoscope size={22} />
+          </div>
+          <div className="verification-status-grid">
             {provider.npi_number && (
-              <div>
-                <p className="section-label" style={{ marginBottom: 2 }}>NPI Number</p>
-                <p style={{ fontFamily: "monospace", fontSize: "0.9rem", margin: 0 }}>{provider.npi_number}</p>
-              </div>
+              <article><span>NPI Number</span><strong>{provider.npi_number}</strong></article>
             )}
             {provider.license_state && (
-              <div>
-                <p className="section-label" style={{ marginBottom: 2 }}>License State</p>
-                <p style={{ margin: 0 }}>{provider.license_state}</p>
-              </div>
+              <article><span>License State</span><strong>{provider.license_state}</strong></article>
             )}
             {provider.license_number && (
-              <div>
-                <p className="section-label" style={{ marginBottom: 2 }}>License Number</p>
-                <p style={{ fontFamily: "monospace", fontSize: "0.9rem", margin: 0 }}>{provider.license_number}</p>
-              </div>
+              <article><span>License Number</span><strong>{provider.license_number}</strong></article>
             )}
             {provider.org_name && (
-              <div>
-                <p className="section-label" style={{ marginBottom: 2 }}>Organization</p>
-                <p style={{ margin: 0 }}>{provider.org_name}</p>
-              </div>
+              <article><span>Organization</span><strong>{provider.org_name}</strong></article>
             )}
-          </div>
-
-          <div style={{ marginTop: "1.5rem", padding: "1rem", background: "var(--surface-2, #f8fafc)", borderRadius: 8, border: "1px solid var(--border)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-              <ShieldCheck size={14} style={{ color: "#16a34a" }} />
-              <strong style={{ fontSize: "0.83rem" }}>Verified profile</strong>
-            </div>
-            <p className="muted" style={{ fontSize: "0.78rem", margin: 0 }}>
-              This provider profile has been reviewed and verified by the PredictSafeBIO moderation team.
-              NPI credentials were checked against the NPPES National Provider Registry.
-              Profile listed since {new Date(provider.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })}.
-            </p>
+            <article>
+              <span>Listed since</span>
+              <strong>{new Date(provider.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</strong>
+            </article>
           </div>
         </section>
 
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+        {/* Verified notice */}
+        <div className="ai-context-bar ai-context-bar--success">
+          <ShieldCheck size={15} />
+          <span>
+            <strong>Verified profile.</strong>{" "}
+            This provider has been reviewed by the PredictSafeBIO moderation team.
+            NPI credentials checked against the NPPES National Provider Registry.
+          </span>
+        </div>
+
+        {/* Footer nav */}
+        <div className="command-center-link-strip">
           <Link href="/providers" className="button-secondary">← Back to directory</Link>
           <Link href="/providers/new" className="button-secondary">Add your profile</Link>
         </div>
