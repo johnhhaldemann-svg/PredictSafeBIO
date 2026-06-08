@@ -7,6 +7,8 @@ import { SETUP_QUESTIONS } from "@/lib/manual/setup-questions";
 import { authMessage, authSuccess } from "@/lib/auth-routing";
 
 const PATH = "/assess/setup-questionnaire";
+// Where the user lands once first-time setup is complete.
+const WORKSPACE = "/";
 
 export async function saveQuestionnaireAction(formData: FormData) {
   const answers = SETUP_QUESTIONS.map((q) => ({
@@ -25,7 +27,13 @@ export async function saveQuestionnaireAction(formData: FormData) {
   const runEngine = String(formData.get("runEngine") ?? "") === "1";
   if (runEngine) {
     const eng = await runApplicabilityEngine();
-    redirect(eng.ok ? authSuccess(PATH, eng.message) : authMessage(PATH, eng.message));
+    if (eng.ok) {
+      // Setup complete → move the user into the workspace; questionnaire becomes locked.
+      redirect(authSuccess(WORKSPACE, `Setup complete. ${eng.message}`));
+    }
+    redirect(authMessage(PATH, eng.message));
   }
+
+  // Plain save (editing later) → return to the now-locked questionnaire view.
   redirect(authSuccess(PATH, saved.message));
 }
