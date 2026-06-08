@@ -26,7 +26,8 @@ import {
   Server,
   Building2,
   Users,
-  CreditCard
+  CreditCard,
+  TrendingUp
 } from "lucide-react";
 
 type SubItem = { href: string; label: string; icon: React.ElementType; desc: string };
@@ -98,6 +99,7 @@ const categories: Category[] = [
       { href: "/predictive-engine",   label: "Predictive Engine",   icon: Brain,      desc: "Forward-looking risk forecast & early warnings" },
       { href: "/risk-command-center", label: "Risk Monitor",        icon: Activity,   desc: "Prioritized HSE risk signals" },
       { href: "/monitoring/exposure", label: "Exposure Monitoring", icon: FlaskConical, desc: "Live air quality and biological exposure levels" },
+      { href: "/trends",              label: "Trend Analysis",      icon: TrendingUp,    desc: "CAPA backlog, training completion & audit readiness over time" },
       { href: "/management-review",   label: "Management Review",   icon: BarChart3,     desc: "Quarterly & annual review; trend analysis" },
       { href: "/lessons-learned",     label: "Lessons Learned",     icon: BookOpen,      desc: "Capture and share insights from incidents and CAPAs" },
       { href: "/my-work",             label: "My Work",             icon: ClipboardList, desc: "Tasks and follow-ups assigned to you" },

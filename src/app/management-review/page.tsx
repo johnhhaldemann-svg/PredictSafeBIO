@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import { BarChart3, ArrowRight, CheckCircle } from "lucide-react";
+import Link from "next/link";
+import { BarChart3, ArrowRight, CheckCircle, RefreshCw } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { feedFindingToHazardRegisterAction } from "./actions";
 
 export const metadata: Metadata = { title: "Management Review – PredictSafeBIO" };
 
@@ -25,7 +27,10 @@ const REVIEW_OUTPUTS = [
   "Risk register revisions feeding back to Phase 1 (Assess)",
 ];
 
-export default function ManagementReviewPage() {
+type Props = { searchParams: Promise<{ message?: string }> };
+
+export default async function ManagementReviewPage({ searchParams }: Props) {
+  const { message } = await searchParams;
   return (
     <AppShell>
       <div className="page-stack">
@@ -136,6 +141,68 @@ export default function ManagementReviewPage() {
             </div>
           </section>
         </div>
+
+        {/* Phase 6 → Phase 1 feedback loop */}
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Phase 6 → Phase 1 Loop-back</p>
+              <h2>Feed finding to Hazard Register</h2>
+            </div>
+            <RefreshCw size={22} style={{ color: "var(--brand)" }} />
+          </div>
+          <p className="muted" style={{ marginBottom: "16px" }}>
+            When this review surfaces a new or uncontrolled risk, log it directly into the
+            Hazard Register. It will be scored by the Predictive Engine as a leading indicator.
+          </p>
+          {message && <p className="form-message">{message}</p>}
+          <form action={feedFindingToHazardRegisterAction} className="stacked-form">
+            <div className="form-grid">
+              <label>
+                Finding / Hazard name
+                <input name="name" type="text" placeholder="e.g. Inadequate fume hood maintenance schedule" required />
+              </label>
+              <label>
+                Hazard type
+                <select name="hazardType" defaultValue="other">
+                  <option value="biological">Biological</option>
+                  <option value="chemical">Chemical</option>
+                  <option value="ergonomic">Ergonomic</option>
+                  <option value="radiation">Radiation</option>
+                  <option value="equipment">Equipment</option>
+                  <option value="environmental">Environmental</option>
+                  <option value="fire">Fire / flammable</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+              <label>
+                Location (optional)
+                <input name="location" type="text" placeholder="e.g. Lab 101" />
+              </label>
+            </div>
+            <label>
+              Description
+              <textarea name="description" rows={2} placeholder="What was found during review and why it needs reassessment" />
+            </label>
+            <button className="button-primary" type="submit">
+              Add to Hazard Register
+            </button>
+          </form>
+          <p style={{ fontSize: ".75rem", color: "var(--muted)", marginTop: "10px" }}>
+            Record will be created as <strong>Identified — Draft, Human Review Required</strong> and
+            linked back to the risk scoring engine. A qualified reviewer must assess and classify it.
+          </p>
+        </section>
+
+        {/* Trend data shortcut */}
+        <section className="panel inline-action-panel">
+          <div>
+            <p className="section-label">Before your review</p>
+            <h2>Pull trend data</h2>
+            <p className="muted">View current CAPA backlog, training completion, and audit readiness score.</p>
+          </div>
+          <Link href="/trends" className="button-secondary">Open Trend Analysis</Link>
+        </section>
       </div>
     </AppShell>
   );

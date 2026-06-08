@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpen, ArrowRight, CheckCircle, RefreshCw } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { feedLessonToHazardRegisterAction } from "./actions";
 
 export const metadata: Metadata = { title: "Lessons Learned – PredictSafeBIO" };
 
@@ -23,7 +24,10 @@ const LOOP_BACK = [
   { phase: "Phase 5 — CAPA",     action: "Recurring issue pattern → systemic CAPA targeting root system" },
 ];
 
-export default function LessonsLearnedPage() {
+type Props = { searchParams: Promise<{ message?: string }> };
+
+export default async function LessonsLearnedPage({ searchParams }: Props) {
+  const { message } = await searchParams;
   return (
     <AppShell>
       <div className="page-stack">
@@ -146,6 +150,58 @@ export default function LessonsLearnedPage() {
             </div>
           </section>
         </div>
+
+        {/* Phase 6 → Phase 1 feedback form */}
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Phase 6 → Phase 1 Loop-back</p>
+              <h2>Feed this lesson to the Hazard Register</h2>
+            </div>
+            <RefreshCw size={22} style={{ color: "var(--brand)" }} />
+          </div>
+          <p className="muted" style={{ marginBottom: "16px" }}>
+            When a lesson identifies an uncontrolled or new risk, push it directly into Phase 1.
+            The Predictive Engine will score it as a leading indicator immediately on creation.
+          </p>
+          {message && <p className="form-message">{message}</p>}
+          <form action={feedLessonToHazardRegisterAction} className="stacked-form">
+            <div className="form-grid">
+              <label>
+                Hazard / risk name
+                <input name="name" type="text" placeholder="e.g. No procedure for cryogen vessel inspection" required />
+              </label>
+              <label>
+                Hazard type
+                <select name="hazardType" defaultValue="other">
+                  <option value="biological">Biological</option>
+                  <option value="chemical">Chemical</option>
+                  <option value="ergonomic">Ergonomic</option>
+                  <option value="radiation">Radiation</option>
+                  <option value="equipment">Equipment</option>
+                  <option value="environmental">Environmental</option>
+                  <option value="fire">Fire / flammable</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+              <label>
+                Location (optional)
+                <input name="location" type="text" placeholder="e.g. Cryogenic storage room" />
+              </label>
+            </div>
+            <label>
+              Lesson / context
+              <textarea name="description" rows={2} placeholder="What was learned and why this risk needs to be formally assessed" />
+            </label>
+            <button className="button-primary" type="submit">
+              Add to Hazard Register
+            </button>
+          </form>
+          <p style={{ fontSize: ".75rem", color: "var(--muted)", marginTop: "10px" }}>
+            Created as <strong>Identified — Draft, Human Review Required</strong>. A qualified
+            reviewer must confirm and classify before it enters the risk scoring cycle.
+          </p>
+        </section>
       </div>
     </AppShell>
   );
