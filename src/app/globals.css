@@ -4141,6 +4141,26 @@ textarea {
   margin: 12px 0;
 }
 
+/* Programs checklist visual checkbox */
+.checklist-box {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--line);
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Additional regs small list */
+.additional-regs-list {
+  margin: 0.25rem 0 0 1rem;
+}
+.additional-regs-list li {
+  font-size: 0.85em;
+  color: var(--text2);
+}
+
 .demo-control-panel {
   border-color: #bfdbfe;
   background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);

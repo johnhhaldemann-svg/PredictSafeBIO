@@ -37,12 +37,15 @@ export default async function ProgramToolPage({ params }: Props) {
 
         {/* Header */}
         <header className="page-header">
-          <p className="section-label">{program.groupLabel}</p>
-          <h1>
-            {program.title}
-            {program.subtitle ? <small style={{ fontWeight: 400, fontSize: "0.65em", marginLeft: "0.5rem", color: "var(--text-secondary)" }}>— {program.subtitle}</small> : null}
-          </h1>
-          <p className="muted">{program.overview}</p>
+          <div className="page-header-left">
+            <p className="section-label">Operate · {program.groupLabel}</p>
+            <h1>
+              {program.title}
+              {program.subtitle ? <em className="muted"> — {program.subtitle}</em> : null}
+            </h1>
+            <p className="muted">{program.overview}</p>
+          </div>
+          <Link className="button-secondary" href="/programs">← All Programs</Link>
         </header>
 
         {/* Key metadata strip */}
@@ -89,15 +92,15 @@ export default async function ProgramToolPage({ params }: Props) {
             <BookOpen size={22} />
           </div>
           <p>{program.biotechNote}</p>
-          <div className="summary-strip" style={{ marginTop: "1rem" }}>
+          <div className="summary-strip">
             <span>Primary regulation: <strong>{program.regulation}</strong></span>
           </div>
           {program.additionalRegs && program.additionalRegs.length > 0 ? (
-            <div style={{ marginTop: "0.75rem" }}>
+            <div>
               <p className="section-label">Also applicable</p>
-              <ul style={{ margin: "0.25rem 0 0 1rem" }}>
+              <ul className="additional-regs-list">
                 {program.additionalRegs.map((r) => (
-                  <li key={r} style={{ fontSize: "0.85em", color: "var(--text-secondary)" }}>{r}</li>
+                  <li key={r}>{r}</li>
                 ))}
               </ul>
             </div>
@@ -115,11 +118,9 @@ export default async function ProgramToolPage({ params }: Props) {
           </div>
           <div className="action-list">
             {program.requirements.map((req, i) => (
-              <article className="action-row" key={i} style={{ padding: "0.6rem 0" }}>
-                <div style={{ display: "flex", alignItems: "flex-start", gap: "0.6rem" }}>
-                  <CheckCircle2 size={16} style={{ color: "var(--color-green)", marginTop: "2px", flexShrink: 0 }} />
-                  <p style={{ margin: 0 }}>{req}</p>
-                </div>
+              <article className="action-row" key={i}>
+                <CheckCircle2 size={16} style={{ color: "var(--green)", flexShrink: 0 }} />
+                <p>{req}</p>
               </article>
             ))}
           </div>
@@ -138,25 +139,15 @@ export default async function ProgramToolPage({ params }: Props) {
           <div className="action-list">
             {program.checklist.map((item) => (
               <article className="action-row compact-list" key={item.id}>
-                <div style={{ display: "flex", alignItems: "flex-start", gap: "0.75rem" }}>
-                  <span style={{
-                    display: "inline-block",
-                    width: "18px",
-                    height: "18px",
-                    border: "2px solid var(--border-color)",
-                    borderRadius: "4px",
-                    flexShrink: 0,
-                    marginTop: "2px"
-                  }} aria-label="Checklist checkbox" />
-                  <div>
-                    <strong style={{ fontSize: "0.9em" }}>{item.label}</strong>
-                    {item.detail ? <p className="muted" style={{ margin: "0.15rem 0 0" }}>{item.detail}</p> : null}
-                  </div>
+                <span className="checklist-box" aria-label="Checklist checkbox" />
+                <div>
+                  <strong>{item.label}</strong>
+                  {item.detail ? <p className="muted">{item.detail}</p> : null}
                 </div>
               </article>
             ))}
           </div>
-          <div style={{ marginTop: "1rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <div className="command-center-link-strip">
             <Link className="button-primary" href={program.inspectionHref}>
               <ClipboardList size={15} />
               Log inspection for this program

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { persistDocumentRecommendationsAction } from "@/app/documents/actions";
 import { generateDocumentGapRecommendations, generateDocumentUpdateRecommendations } from "@/lib/documents/recommendations";
@@ -21,8 +22,11 @@ export default async function DocumentDetailPage({
       <AppShell>
         <div className="page-stack">
           <header className="page-header">
-            <p className="section-label">Plan</p>
-            <h1>Document not found</h1>
+            <div className="page-header-left">
+              <p className="section-label">Plan · <Link href="/documents">Document Control</Link></p>
+              <h1>Document not found</h1>
+            </div>
+            <Link className="button-secondary" href="/documents">← All Documents</Link>
           </header>
           <section className="panel">
             <p>This document was not found in the current signed-in workspace.</p>
@@ -47,25 +51,31 @@ export default async function DocumentDetailPage({
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Document detail</p>
-          <h1>{document.title}</h1>
+          <div className="page-header-left">
+            <p className="section-label">Plan · <Link href="/documents">Document Control</Link> / Detail</p>
+            <h1>{document.title}</h1>
+            <p className="muted">Controlled document record. All revisions require qualified review before release.</p>
+          </div>
+          <Link className="button-secondary" href="/documents">← All Documents</Link>
         </header>
         {query.message ? <p className="form-message">{query.message}</p> : null}
-        <section className="profile-grid">
-          {[
-            ["Status", document.status],
-            ["Owner role", document.ownerRole],
-            ["Area", document.area ?? "Missing"],
-            ["Related process", document.relatedProcess ?? "Missing"],
-            ["Revision", document.revision ?? "Missing"],
-            ["Next review", document.nextReviewDate ?? "Missing"],
-            ["Uploaded file", document.storagePath ? `${document.storageBucket}/${document.storagePath}` : "No file linked"]
-          ].map(([label, value]) => (
-            <article className="profile-row" key={label}>
-              <span>{label}</span>
-              <strong>{value}</strong>
-            </article>
-          ))}
+        <section className="panel">
+          <div className="panel-heading">
+            <div><p className="section-label">Document details</p><h2>Record information</h2></div>
+          </div>
+          <div className="verification-status-grid">
+            {[
+              ["Status", document.status],
+              ["Owner role", document.ownerRole],
+              ["Area", document.area ?? "Missing"],
+              ["Related process", document.relatedProcess ?? "Missing"],
+              ["Revision", document.revision ?? "Missing"],
+              ["Next review", document.nextReviewDate ?? "Missing"],
+              ["Uploaded file", document.storagePath ? `${document.storageBucket}/${document.storagePath}` : "No file linked"]
+            ].map(([label, value]) => (
+              <article key={label}><span>{label}</span><strong>{value}</strong></article>
+            ))}
+          </div>
         </section>
         <section className="panel inline-action-panel">
           <div>
@@ -96,7 +106,9 @@ export default async function DocumentDetailPage({
         </form>
         <section className="split-list wide">
           <div className="panel">
-            <h2>Gap recommendations</h2>
+            <div className="panel-heading">
+              <div><p className="section-label">AI-Assisted</p><h2>Gap recommendations</h2></div>
+            </div>
             <ul>
               {gaps.map((gap) => (
                 <li key={gap.title}>
@@ -107,7 +119,9 @@ export default async function DocumentDetailPage({
             </ul>
           </div>
           <div className="panel">
-            <h2>Draft update recommendations</h2>
+            <div className="panel-heading">
+              <div><p className="section-label">AI-Assisted</p><h2>Draft update recommendations</h2></div>
+            </div>
             <ul>
               {updates.map((update) => (
                 <li key={update.title}>
@@ -119,7 +133,9 @@ export default async function DocumentDetailPage({
           </div>
         </section>
         <section className="panel">
-          <h2>Persisted recommendation history</h2>
+          <div className="panel-heading">
+            <div><p className="section-label">Audit history</p><h2>Persisted recommendation history</h2></div>
+          </div>
           {history.length === 0 ? (
             <p className="muted">No persisted recommendation runs found yet. Use Save draft recommendations to create immutable draft history.</p>
           ) : null}
