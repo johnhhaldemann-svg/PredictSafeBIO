@@ -39,7 +39,7 @@ export default async function BillingPage() {
   const plans = await listPlans();
 
   // Check if org has an active subscription
-   
+
   const { data: sub } = await (supabase as any)
     .from("subscriptions")
     .select("plan_id, status, trial_end_at, subscription_plans(name, tier)")
@@ -47,16 +47,19 @@ export default async function BillingPage() {
     .in("status", ["active", "trialing"])
     .maybeSingle();
 
-   
+
   const currentTier = (sub as any)?.subscription_plans?.tier ?? null;
 
   return (
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Account</p>
-          <h1>Billing &amp; Plan</h1>
-          <p className="muted">Annual billing · Billed per organization/site · All plans include onboarding</p>
+          <div className="page-header-left">
+            <p className="section-label">Account</p>
+            <h1>Billing &amp; Plan</h1>
+            <p className="muted">Annual billing · Billed per organization/site · All plans include onboarding</p>
+          </div>
+          <Link className="button-secondary" href="/account">Account Settings →</Link>
         </header>
 
         {/* No active subscription notice */}
@@ -77,7 +80,6 @@ export default async function BillingPage() {
             <div className="panel-heading">
               <div>
                 <p className="section-label">Current Plan</p>
-                { }
                 <h2>{(sub as any)?.subscription_plans?.name}</h2>
               </div>
               <span className="status-chip status-current">Active</span>
@@ -90,7 +92,7 @@ export default async function BillingPage() {
         )}
 
         {/* Plan cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem" }}>
+        <div className="command-card-grid">
           {plans.map(plan => {
             const color = TIER_HIGHLIGHT[plan.tier] ?? "#6b7280";
             const isCurrent = plan.tier === currentTier;
@@ -99,47 +101,45 @@ export default async function BillingPage() {
             return (
               <article
                 key={plan.tier}
-                className="panel"
-                style={{ borderTop: `3px solid ${color}`, display: "flex", flexDirection: "column", gap: "0.75rem" }}
+                className="panel billing-plan-card"
+                style={{ borderTop: `3px solid ${color}` }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div className="billing-plan-header">
                   <div>
                     <p className="section-label" style={{ color }}>{plan.name}</p>
-                    <p style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700 }}>{formatAnnual(plan.price_cents)}</p>
+                    <p className="billing-plan-price">{formatAnnual(plan.price_cents)}</p>
                   </div>
                   {isCurrent && (
-                    <span className="status-chip status-current" style={{ fontSize: "0.72rem" }}>Current</span>
+                    <span className="status-chip status-current">Current</span>
                   )}
                 </div>
 
-                <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <ul className="billing-features">
                   {plan.features.map((f, i) => (
-                    <li key={i} style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start", fontSize: "0.85rem" }}>
-                      <CheckCircle2 size={13} style={{ color, flexShrink: 0, marginTop: 2 }} />
+                    <li key={i}>
+                      <CheckCircle2 size={13} style={{ color }} className="feature-icon" />
                       <span>{f}</span>
                     </li>
                   ))}
                 </ul>
 
-                <div style={{ marginTop: "auto", paddingTop: "0.75rem" }}>
+                <div className="billing-plan-action">
                   {isStrategic ? (
                     <a
                       href="mailto:sales@predictsafebio.com?subject=PredictSafeBIO Strategic Plan Inquiry"
                       className="button-primary"
-                      style={{ display: "block", textAlign: "center", textDecoration: "none" }}
                     >
-                      <Mail size={14} style={{ verticalAlign: "middle", marginRight: 6 }} />
+                      <Mail size={14} className="icon-mr" />
                       Contact Sales
                     </a>
                   ) : isCurrent ? (
-                    <button className="button-secondary" disabled style={{ width: "100%", opacity: 0.6 }}>
+                    <button className="button-secondary" disabled style={{ opacity: 0.6 }}>
                       Current Plan
                     </button>
                   ) : (
                     <a
                       href="mailto:sales@predictsafebio.com?subject=PredictSafeBIO Plan Upgrade Request"
                       className="button-primary"
-                      style={{ display: "block", textAlign: "center", textDecoration: "none" }}
                     >
                       Get Started
                     </a>
@@ -151,12 +151,12 @@ export default async function BillingPage() {
         </div>
 
         {/* Notes */}
-        <section className="panel" style={{ background: "var(--surface-alt, #f8fafc)" }}>
-          <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start" }}>
-            <Lock size={16} style={{ flexShrink: 0, marginTop: 2, color: "var(--muted)" }} />
+        <section className="panel">
+          <div className="inline-icon-group">
+            <Lock size={16} className="muted feature-icon" />
             <div>
-              <p style={{ margin: 0, fontWeight: 600, fontSize: "0.9rem" }}>Annual billing · Secure invoicing</p>
-              <p className="muted" style={{ margin: "0.25rem 0 0", fontSize: "0.83rem" }}>
+              <p><strong>Annual billing · Secure invoicing</strong></p>
+              <p className="muted">
                 All plans are billed annually per organization or site. Invoicing is handled by PredictSafeBIO directly.
                 To add sites, upgrade, or discuss a custom contract, email{" "}
                 <a href="mailto:billing@predictsafebio.com" className="text-link">billing@predictsafebio.com</a>.
@@ -166,7 +166,7 @@ export default async function BillingPage() {
           </div>
         </section>
 
-        <p className="muted" style={{ fontSize: "0.8rem", textAlign: "center" }}>
+        <p className="muted" style={{ textAlign: "center" }}>
           Questions? <Link href="/account/team" className="text-link">Manage your team</Link> ·{" "}
           <a href="mailto:support@predictsafebio.com" className="text-link">Contact support</a>
         </p>
