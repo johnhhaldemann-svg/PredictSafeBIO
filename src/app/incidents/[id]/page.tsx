@@ -81,22 +81,25 @@ export default async function IncidentDetailPage({ params, searchParams }: Props
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">
-            <Link href="/incidents">Incident Register</Link> / Detail
-          </p>
-          <h1>{incident.title}</h1>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
-            <span className={STATUS_CLASS[incident.status]}>
-              <StatusIcon size={13} style={{ display: "inline", marginRight: 4 }} />
-              {incidentStatusLabels[incident.status]}
-            </span>
-            <span className={incident.severity === "critical" || incident.severity === "high" ? "status-missing" : "status-needs-review"}>
-              {incidentSeverityLabels[incident.severity]}
-            </span>
-            {incident.isOshaRecordable && (
-              <span className="status-missing">OSHA Recordable</span>
-            )}
+          <div className="page-header-left">
+            <p className="section-label">
+              <Link href="/incidents">Incident Register</Link> / Detail
+            </p>
+            <h1>{incident.title}</h1>
+            <div className="form-action-row">
+              <span className={STATUS_CLASS[incident.status]}>
+                <StatusIcon size={13} style={{ display: "inline", marginRight: 4 }} />
+                {incidentStatusLabels[incident.status]}
+              </span>
+              <span className={incident.severity === "critical" || incident.severity === "high" ? "status-missing" : "status-needs-review"}>
+                {incidentSeverityLabels[incident.severity]}
+              </span>
+              {incident.isOshaRecordable && (
+                <span className="status-missing">OSHA Recordable</span>
+              )}
+            </div>
           </div>
+          <Link className="button-secondary" href="/incidents">← All incidents</Link>
         </header>
 
         {sp.message && <p className="form-message">{sp.message}</p>}
@@ -110,40 +113,27 @@ export default async function IncidentDetailPage({ params, searchParams }: Props
             </div>
             <FileText size={20} />
           </div>
-          <dl style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 24px", fontSize: ".85rem" }}>
-            <div>
-              <dt style={{ fontWeight: 700, color: "var(--muted)", marginBottom: "2px" }}>Type</dt>
-              <dd>{incidentTypeLabels[incident.incidentType]}</dd>
-            </div>
-            <div>
-              <dt style={{ fontWeight: 700, color: "var(--muted)", marginBottom: "2px" }}>Severity</dt>
-              <dd>{incidentSeverityLabels[incident.severity]}</dd>
-            </div>
-            <div>
-              <dt style={{ fontWeight: 700, color: "var(--muted)", marginBottom: "2px" }}>Status</dt>
-              <dd>{incidentStatusLabels[incident.status]}</dd>
-            </div>
-            <div>
-              <dt style={{ fontWeight: 700, color: "var(--muted)", marginBottom: "2px" }}>Occurred</dt>
-              <dd>
-                {incident.occurredAt
-                  ? new Date(incident.occurredAt).toLocaleString()
-                  : "Not recorded"}
-              </dd>
-            </div>
-            <div>
-              <dt style={{ fontWeight: 700, color: "var(--muted)", marginBottom: "2px" }}>Reported</dt>
-              <dd>{incident.createdAt ? new Date(incident.createdAt).toLocaleString() : "—"}</dd>
-            </div>
-            <div>
-              <dt style={{ fontWeight: 700, color: "var(--muted)", marginBottom: "2px" }}>OSHA Recordable</dt>
-              <dd>{incident.isOshaRecordable ? "Yes — must appear on 300 Log within 7 days" : "No"}</dd>
-            </div>
-          </dl>
+          <div className="verification-status-grid">
+            <article><span>Type</span><strong>{incidentTypeLabels[incident.incidentType]}</strong></article>
+            <article><span>Severity</span><strong>{incidentSeverityLabels[incident.severity]}</strong></article>
+            <article><span>Status</span><strong>{incidentStatusLabels[incident.status]}</strong></article>
+            <article>
+              <span>Occurred</span>
+              <strong>{incident.occurredAt ? new Date(incident.occurredAt).toLocaleString() : "Not recorded"}</strong>
+            </article>
+            <article>
+              <span>Reported</span>
+              <strong>{incident.createdAt ? new Date(incident.createdAt).toLocaleString() : "—"}</strong>
+            </article>
+            <article>
+              <span>OSHA Recordable</span>
+              <strong>{incident.isOshaRecordable ? "Yes — 300 Log within 7 days" : "No"}</strong>
+            </article>
+          </div>
           {incident.summary && (
-            <div style={{ marginTop: "16px", padding: "14px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "8px" }}>
-              <p style={{ fontWeight: 700, fontSize: ".8rem", color: "var(--muted)", marginBottom: "6px" }}>SUMMARY</p>
-              <p style={{ fontSize: ".88rem", lineHeight: 1.6 }}>{incident.summary}</p>
+            <div>
+              <p className="section-label">Summary</p>
+              <p>{incident.summary}</p>
             </div>
           )}
         </section>
@@ -159,7 +149,7 @@ export default async function IncidentDetailPage({ params, searchParams }: Props
               <Clock size={20} />
             </div>
             <p className="muted">Move this incident through the investigation workflow.</p>
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "12px" }}>
+            <div className="command-center-link-strip">
               {nextStatuses.map((s) => {
                 const Icon = STATUS_ICON[s];
                 return (
@@ -190,7 +180,7 @@ export default async function IncidentDetailPage({ params, searchParams }: Props
             Open a CAPA record to document root cause analysis, corrective actions, and effectiveness
             verification for this incident.
           </p>
-          <div className="command-center-link-strip" style={{ marginTop: "12px" }}>
+          <div className="command-center-link-strip">
             <Link
               href={`/operations/capa?message=Create a CAPA linked to incident: ${encodeURIComponent(incident.title)}`}
               className="button-primary"
@@ -204,7 +194,7 @@ export default async function IncidentDetailPage({ params, searchParams }: Props
         </section>
 
         {/* Footer nav */}
-        <Link href="/incidents" className="button-secondary" style={{ alignSelf: "flex-start" }}>
+        <Link href="/incidents" className="button-secondary">
           ← Back to Incident Register
         </Link>
       </div>
