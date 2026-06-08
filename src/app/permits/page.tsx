@@ -33,30 +33,45 @@ export default async function PermitsPage({ searchParams }: Props) {
   const params = await searchParams;
   const filter = params.filter ?? "all";
 
-  const [permitsResult, adminAccess] = await Promise.all([
-    listPermits(
-      filter === "active"  ? { status: "active" } :
-      filter === "overdue" ? { overdue: true } :
-      filter === "draft"   ? { status: "draft" } :
-      undefined
-    ).catch(() => null),
+  const [allPermitsResult, adminAccess] = await Promise.all([
+    listPermits().catch(() => null),
     getFoundationAdminAccessSummary().catch(() => ({
       configured: false, signedIn: false, isOwner: false, message: ""
     }))
   ]);
 
-  const loadFailed = permitsResult === null;
-  const permits = permitsResult ?? [];
-  const activeCount  = permits.filter((p) => p.closeoutStatus === "active" || p.closeoutStatus === "approved").length;
-  const overdueCount = permits.filter((p) => p.isOverdue).length;
-  const draftCount   = permits.filter((p) => p.closeoutStatus === "draft").length;
+  const loadFailed = allPermitsResult === null;
+  const allPermits = allPermitsResult ?? [];
+  const permits = allPermits.filter((p) => {
+    if (filter === "active")  return p.closeoutStatus === "active" || p.closeoutStatus === "approved";
+    if (filter === "overdue") return p.isOverdue;
+    if (filter === "draft")   return p.closeoutStatus === "draft";
+    return true;
+  });
+
+  const activeCount  = allPermits.filter((p) => p.closeoutStatus === "active" || p.closeoutStatus === "approved").length;
+  const overdueCount = allPermits.filter((p) => p.isOverdue).length;
+  const draftCount   = allPermits.filter((p) => p.closeoutStatus === "draft").length;
+  const filterCounts = {
+    all: allPermits.length,
+    active: activeCount,
+    overdue: overdueCount,
+    draft: draftCount,
+  };
 
   return (
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Operate</p>
-          <h1>Controlled Work / Permit System</h1>
+          <div className="page-header-left">
+            <p className="section-label">Operate · Permit to Work</p>
+            <h1>Controlled Work Permits</h1>
+            <p className="muted">
+              LOTO, hot work, confined space, contractor, and chemical transfer permits.
+              No work may begin without an Approved permit on file.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/inspections">Inspections →</Link>
         </header>
 
         {/* KPI strip */}
@@ -78,6 +93,17 @@ export default async function PermitsPage({ searchParams }: Props) {
           </article>
         </section>
 
+        {overdueCount > 0 && (
+          <div className="ai-context-bar ai-context-bar--danger">
+            <AlertTriangle size={15} />
+            <span>
+              <strong>{overdueCount} permit{overdueCount !== 1 ? "s" : ""} open beyond 24 hours.</strong>{" "}
+              Permits left open past their stop time must be closed or escalated immediately.
+            </span>
+            <Link className="ai-fill-btn ai-fill-btn--danger" href="/permits?filter=overdue">View overdue</Link>
+          </div>
+        )}
+
         {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message && <p className="form-message">{params.message}</p>}
 
@@ -90,6 +116,7 @@ export default async function PermitsPage({ searchParams }: Props) {
               className={`button-secondary compact ${filter === f ? "active-filter" : ""}`}
             >
               {f === "all" ? "All permits" : f === "active" ? "Active" : f === "overdue" ? "Overdue" : "Drafts"}
+              <span className="filter-count-badge">{filterCounts[f] ?? 0}</span>
             </Link>
           ))}
         </nav>
@@ -99,7 +126,11 @@ export default async function PermitsPage({ searchParams }: Props) {
           <div className="panel-heading">
             <div>
               <p className="section-label">Permit register</p>
-              <h2>{permits.length} permit{permits.length !== 1 ? "s" : ""}</h2>
+              <h2>
+                {permits.length === allPermits.length
+                  ? `${allPermits.length} permit${allPermits.length !== 1 ? "s" : ""}`
+                  : `${permits.length} of ${allPermits.length} shown`}
+              </h2>
             </div>
           </div>
 
@@ -139,7 +170,7 @@ export default async function PermitsPage({ searchParams }: Props) {
                   {adminAccess.signedIn &&
                     permit.closeoutStatus !== "closed" &&
                     permit.closeoutStatus !== "voided" && (
-                    <form action={updatePermitStatusAction} style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.4rem" }}>
+                    <form action={updatePermitStatusAction} className="form-action-row">
                       <input type="hidden" name="id" value={permit.id} />
                       <select name="closeoutStatus" defaultValue={permit.closeoutStatus}>
                         <option value="draft">Draft</option>
@@ -149,7 +180,7 @@ export default async function PermitsPage({ searchParams }: Props) {
                         <option value="closed">Close (work complete)</option>
                         <option value="voided">Void</option>
                       </select>
-                      <input name="notes" type="text" placeholder="Closeout notes (optional)" style={{ flex: 1, minWidth: "180px" }} />
+                      <input name="notes" type="text" placeholder="Closeout notes (optional)" />
                       <button className="button-secondary compact" type="submit">Update status</button>
                     </form>
                   )}
@@ -207,7 +238,7 @@ export default async function PermitsPage({ searchParams }: Props) {
                 Hazards identified (comma-separated)
                 <input name="hazards" type="text" placeholder="e.g. fire, fumes, electrical, biological" />
               </label>
-              <p className="muted" style={{ fontSize: "0.82em" }}>
+              <p className="muted">
                 Permit starts in Draft status. Submit for approval, then activate when work begins. Close when complete.
               </p>
               <button className="button-primary" type="submit">Create permit</button>
