@@ -64,11 +64,14 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">System Reliance</p>
-          <h1>Team &amp; Role Management</h1>
-          <p className="muted">
-            Manage your workspace team, send invitations, and see what each role can access.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">System Reliance</p>
+            <h1>Team &amp; Role Management</h1>
+            <p className="muted">
+              Manage your workspace team, send invitations, and see what each role can access.
+            </p>
+          </div>
+          <a className="button-secondary" href="/account/company">Company Settings →</a>
         </header>
 
         {/* Current user's role */}

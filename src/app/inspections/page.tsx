@@ -72,7 +72,7 @@ export default async function InspectionsPage({ searchParams }: Props) {
   const filterStatus = (params.filter as InspectionStatus | "all") ?? "all";
 
   const [inspectionsResult, aiRecommendations, ergonomic, adminAccess] = await Promise.all([
-    listInspections(filterStatus !== "all" ? { status: filterStatus } : undefined).catch(() => null),
+    listInspections().catch(() => null),
     getAiInspectionRecommendations().catch(() => []),
     getErgonomicLevel1Summary().catch(() => ({
       counts: [], recentScreenings: [], aiInsight: "",
@@ -85,18 +85,37 @@ export default async function InspectionsPage({ searchParams }: Props) {
   ]);
 
   const loadFailed = inspectionsResult === null;
-  const inspections = inspectionsResult ?? [];
-  const upcomingCount = inspections.filter((i) => i.status === "planned").length;
-  const activeCount = inspections.filter((i) => i.status === "in_progress").length;
-  const openFindingsTotal = inspections.reduce((n, i) => n + (i.openFindingCount ?? 0), 0);
+  const allInspections = inspectionsResult ?? [];
+  const inspections = filterStatus !== "all"
+    ? allInspections.filter((i) => i.status === filterStatus)
+    : allInspections;
+
+  const upcomingCount = allInspections.filter((i) => i.status === "planned").length;
+  const activeCount   = allInspections.filter((i) => i.status === "in_progress").length;
+  const openFindingsTotal = allInspections.reduce((n, i) => n + (i.openFindingCount ?? 0), 0);
   const overdueCount = aiRecommendations.filter((r) => r.priority === "overdue").length;
+
+  const statusCounts = {
+    all: allInspections.length,
+    planned: upcomingCount,
+    in_progress: activeCount,
+    completed: allInspections.filter((i) => i.status === "completed").length,
+    cancelled: allInspections.filter((i) => i.status === "cancelled").length,
+  };
 
   return (
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Operate</p>
-          <h1>Inspection / Audit Management</h1>
+          <div className="page-header-left">
+            <p className="section-label">Operate · Inspections &amp; Audits</p>
+            <h1>Inspection Management</h1>
+            <p className="muted">
+              AI-scheduled required inspections, manual scheduling, findings tracking, and
+              ergonomic hazard screening. Overdue inspections raise predicted risk.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/permits">Work Permits →</Link>
         </header>
 
         <section className="command-card-grid" aria-label="Inspection summary">
@@ -121,6 +140,16 @@ export default async function InspectionsPage({ searchParams }: Props) {
             <em>{openFindingsTotal > 0 ? "Findings requiring resolution." : "No open findings."}</em>
           </article>
         </section>
+
+        {overdueCount > 0 && (
+          <div className="ai-context-bar ai-context-bar--danger">
+            <AlertTriangle size={15} />
+            <span>
+              <strong>{overdueCount} inspection{overdueCount !== 1 ? "s" : ""} past due date.</strong>{" "}
+              Overdue required inspections raise predicted risk and may block audit readiness.
+            </span>
+          </div>
+        )}
 
         {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message && <p className="form-message">{params.message}</p>}
@@ -201,6 +230,7 @@ export default async function InspectionsPage({ searchParams }: Props) {
                 className={`button-secondary compact ${filterStatus === s ? "active-filter" : ""}`}
               >
                 {s === "all" ? "All" : inspectionStatusLabels[s as InspectionStatus]}
+                <span className="filter-count-badge">{statusCounts[s] ?? 0}</span>
               </Link>
             ))}
           </nav>
@@ -222,7 +252,11 @@ export default async function InspectionsPage({ searchParams }: Props) {
           <div className="panel-heading">
             <div>
               <p className="section-label">Inspection register</p>
-              <h2>{inspections.length} inspection{inspections.length !== 1 ? "s" : ""}</h2>
+              <h2>
+                {inspections.length === allInspections.length
+                  ? `${allInspections.length} inspection${allInspections.length !== 1 ? "s" : ""}`
+                  : `${inspections.length} of ${allInspections.length} shown`}
+              </h2>
             </div>
           </div>
           {loadFailed ? (

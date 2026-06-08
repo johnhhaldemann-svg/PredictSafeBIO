@@ -24,17 +24,9 @@ const US_STATES = [
 ];
 
 const SPECIALTIES = [
-  "Biosafety Officer",
-  "Environmental Health & Safety",
-  "Occupational Medicine",
-  "Infection Control",
-  "Laboratory Safety",
-  "Radiation Safety",
-  "Chemical Safety",
-  "Industrial Hygiene",
-  "Emergency Management",
-  "Public Health",
-  "Other",
+  "Biosafety Officer","Environmental Health & Safety","Occupational Medicine",
+  "Infection Control","Laboratory Safety","Radiation Safety","Chemical Safety",
+  "Industrial Hygiene","Emergency Management","Public Health","Other",
 ];
 
 const CREDENTIALS = [
@@ -71,20 +63,20 @@ export default async function ProviderNewPage({ searchParams }: Props) {
     return (
       <AppShell>
         <div className="page-stack" style={{ maxWidth: 600 }}>
-          <div className="verification-pass-box" style={{ padding: "2rem", flexDirection: "column", gap: "1rem", alignItems: "flex-start" }}>
-            <CheckCircle2 size={32} style={{ color: "#16a34a" }} />
-            <div>
-              <h2 style={{ margin: "0 0 0.5rem" }}>Profile submitted for review</h2>
-              <p style={{ margin: 0 }}>
+          <section className="panel">
+            <div className="empty-state-card">
+              <CheckCircle2 size={32} className="status-current" />
+              <p className="empty-state-title">Profile submitted for review</p>
+              <p className="muted">
                 Your provider profile is now in our moderation queue. We typically review profiles within 1–2 business days.
                 You will receive an email once it is approved or if we need additional information.
               </p>
+              <div className="form-action-row">
+                <Link href="/workbench" className="button-primary">Go to dashboard</Link>
+                <Link href="/account" className="button-secondary">Account settings</Link>
+              </div>
             </div>
-            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-              <Link href="/workbench" className="button-primary">Go to dashboard</Link>
-              <Link href="/account" className="button-secondary">Account settings</Link>
-            </div>
-          </div>
+          </section>
         </div>
       </AppShell>
     );
@@ -94,12 +86,15 @@ export default async function ProviderNewPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack" style={{ maxWidth: 680 }}>
         <header className="page-header">
-          <p className="section-label">Providers</p>
-          <h1>Create your provider profile</h1>
-          <p className="muted">
-            Submit your professional details for review. Once approved, your profile will appear in the
-            PredictSafeBIO provider directory.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Providers</p>
+            <h1>Create your provider profile</h1>
+            <p className="muted">
+              Submit your professional details for review. Once approved, your profile will appear in the
+              PredictSafeBIO provider directory.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/providers">← Qualified Persons</Link>
         </header>
 
         {sp.error && (
@@ -130,34 +125,32 @@ export default async function ProviderNewPage({ searchParams }: Props) {
           </div>
         )}
 
-        <form action={submitProviderProfileAction}>
-          <div className="panel" style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-
+        <section className="panel">
+          <form action={submitProviderProfileAction} className="stacked-form">
             <div>
-              <p className="section-label" style={{ marginBottom: "0.75rem" }}>Professional details</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem 1.5rem" }}>
-
-                <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem", gridColumn: "1 / -1" }}>
-                  Specialty <span style={{ color: "#dc2626" }}>*</span>
+              <p className="section-label">Professional details</p>
+              <div className="form-grid">
+                <label style={{ gridColumn: "1 / -1" }}>
+                  Specialty <span style={{ color: "var(--red)" }}>*</span>
                   <select name="specialty" required>
                     <option value="">Select your specialty…</option>
                     {SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </label>
 
-                <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
-                  NPI Number <span className="muted" style={{ fontSize: "0.72rem" }}>(if applicable)</span>
-                  <span className="muted" style={{ fontSize: "0.72rem" }}>Optional — 10-digit ID for clinical / occupational-health providers</span>
+                <label>
+                  NPI Number <span className="muted">— optional</span>
+                  <span className="muted">10-digit ID for clinical / occupational-health providers</span>
                   <input name="npi_number" placeholder="Optional" maxLength={10}
                     pattern="\d{10}" title="Must be a 10-digit number" style={{ fontFamily: "monospace" }} />
                 </label>
 
-                <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
+                <label>
                   License number
                   <input name="license_number" placeholder="Optional" />
                 </label>
 
-                <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
+                <label>
                   License state
                   <select name="license_state">
                     <option value="">Select state…</option>
@@ -168,11 +161,11 @@ export default async function ProviderNewPage({ searchParams }: Props) {
             </div>
 
             <div>
-              <p className="section-label" style={{ marginBottom: "0.5rem" }}>Credentials</p>
-              <p className="muted" style={{ fontSize: "0.78rem", marginBottom: "0.75rem" }}>Select all that apply.</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.4rem" }}>
+              <p className="section-label">Credentials</p>
+              <p className="muted">Select all that apply.</p>
+              <div className="checkbox-group">
                 {CREDENTIALS.map(c => (
-                  <label key={c.value} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.83rem", cursor: "pointer" }}>
+                  <label key={c.value}>
                     <input type="checkbox" name="credentials" value={c.value} />
                     {c.label}
                   </label>
@@ -180,7 +173,7 @@ export default async function ProviderNewPage({ searchParams }: Props) {
               </div>
             </div>
 
-            <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: "0.85rem", cursor: "pointer" }}>
+            <label>
               <input type="checkbox" name="accepting_patients" value="true" defaultChecked />
               Currently available for new consultations
             </label>
@@ -193,7 +186,7 @@ export default async function ProviderNewPage({ searchParams }: Props) {
               </span>
             </div>
 
-            <div style={{ display: "flex", gap: "0.75rem" }}>
+            <div className="form-action-row">
               <button
                 className="button-primary"
                 type="submit"
@@ -204,8 +197,8 @@ export default async function ProviderNewPage({ searchParams }: Props) {
               </button>
               <Link href="/workbench" className="button-secondary">Cancel</Link>
             </div>
-          </div>
-        </form>
+          </form>
+        </section>
       </div>
     </AppShell>
   );

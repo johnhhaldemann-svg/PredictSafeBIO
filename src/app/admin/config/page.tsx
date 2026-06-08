@@ -63,21 +63,24 @@ export default async function ConfigHubPage() {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Admin</p>
-          <h1>Platform Configuration</h1>
-          <p className="muted">Manage feature flags, branding, and system emails — no code deploy needed.</p>
+          <div className="page-header-left">
+            <p className="section-label">Admin</p>
+            <h1>Platform Configuration</h1>
+            <p className="muted">Manage feature flags, branding, and system emails — no code deploy needed.</p>
+          </div>
+          <Link href="/admin/dashboard" className="button-secondary">← Command Center</Link>
         </header>
 
         <div className="command-card-grid">
           {sections.map(({ href, label, icon: Icon, description, meta, color }) => (
-            <Link key={href} href={href} style={{ textDecoration: "none" }}>
-              <article className="command-card" style={{ borderTop: `3px solid ${color}`, cursor: "pointer", height: "100%" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <Link key={href} href={href} className="provider-card-link">
+              <article className="command-card" style={{ borderTop: `3px solid ${color}` }}>
+                <div className="inline-icon-group">
                   <Icon size={16} style={{ color }} />
                   <strong>{label}</strong>
                 </div>
-                <p style={{ fontSize: "0.83rem", color: "var(--muted)", margin: "0 0 0.5rem" }}>{description}</p>
-                <p style={{ fontSize: "0.75rem", fontFamily: "monospace", color: "var(--muted)" }}>{meta}</p>
+                <p className="muted">{description}</p>
+                <code className="muted">{meta}</code>
               </article>
             </Link>
           ))}
@@ -97,11 +100,11 @@ export default async function ConfigHubPage() {
               { label: "Platform name customized",      ok: branding.platform_name !== "PredictSafeBIO" },
               { label: "Invite-only signup enabled",    ok: flags.find(f => f.key === "invite_only_signup")?.enabled ?? false },
             ].map(({ label, ok }) => (
-              <article key={label} className="action-row" style={{ paddingTop: "0.4rem", paddingBottom: "0.4rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: ok ? "#16a34a" : "#dc2626", flexShrink: 0 }} />
-                  <span style={{ fontSize: "0.85rem", color: ok ? "inherit" : "var(--muted)" }}>{label}</span>
-                  <span className={`status-chip ${ok ? "status-current" : "status-missing"}`} style={{ fontSize: "0.68rem", marginLeft: "auto" }}>
+              <article key={label} className="action-row">
+                <div>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: ok ? "var(--green)" : "var(--red)", flexShrink: 0, display: "inline-block" }} />
+                  <span style={{ color: ok ? "inherit" : "var(--muted)" }}>{label}</span>
+                  <span className={`status-chip ${ok ? "status-current" : "status-missing"}`}>
                     {ok ? "✓" : "Not set"}
                   </span>
                 </div>

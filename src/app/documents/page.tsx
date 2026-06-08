@@ -39,7 +39,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
         </header>
 
         {documents.length > 0 && totalDocumentGaps > 0 ? (
-          <div className="ai-context-bar">
+          <div className="ai-context-bar ai-context-bar--warning">
             <Bot size={15} />
             <span>
               <strong>AI identified {totalDocumentGaps} document gap{totalDocumentGaps !== 1 ? "s" : ""}.</strong>{" "}
@@ -59,7 +59,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
           </div>
           {params.message ? <p className="form-message">{params.message}</p> : null}
           {canCreateDocuments ? (
-            <form action={createDocumentMetadataAction} className="document-form" encType="multipart/form-data">
+            <form action={createDocumentMetadataAction} className="stacked-form" encType="multipart/form-data">
               <div className="form-grid">
                 <label>
                   Title

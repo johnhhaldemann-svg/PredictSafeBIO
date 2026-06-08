@@ -63,10 +63,13 @@ export default async function InspectionDetailPage({ params, searchParams }: Pro
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">
-            <Link href="/inspections">Inspection register</Link> / Detail
-          </p>
-          <h1>{inspection.title}</h1>
+          <div className="page-header-left">
+            <p className="section-label">
+              Operate · <Link href="/inspections">Inspection Register</Link> / Detail
+            </p>
+            <h1>{inspection.title}</h1>
+          </div>
+          <Link className="button-secondary" href="/inspections">← All Inspections</Link>
         </header>
 
         {sp.success && <div className="verification-pass-box"><span>✓ {sp.success}</span></div>}

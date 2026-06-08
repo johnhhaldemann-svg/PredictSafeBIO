@@ -179,7 +179,7 @@ export function NewAssessmentClient() {
         </header>
 
         {/* Draft banner */}
-        <div className="draft-banner" style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.7rem 1rem", borderRadius: 8 }}>
+        <div className="draft-banner">
           <AlertTriangle size={16} />
           Draft — Human Review Required. AI may recommend; EHS personnel must review and approve.
         </div>
@@ -289,15 +289,15 @@ export function NewAssessmentClient() {
 
             {/* Signal builder */}
             <div className="signal-builder">
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                <h2 style={{ margin: 0 }}>Add risk signals</h2>
-                <span style={{ fontSize: 11, color: "var(--muted)" }}>
+              <div className="panel-heading">
+                <h2>Add risk signals</h2>
+                <span className="signal-count muted">
                   {input.signals?.length ?? 0} added
                 </span>
               </div>
 
               {/* Quick presets */}
-              <p style={{ margin: "0 0 8px", fontSize: 12, color: "var(--text2)" }}>Quick add:</p>
+              <p className="muted">Quick add:</p>
               <div className="signal-presets">
                 {signalPresets.map((p) => (
                   <button key={p.label} className="signal-preset-chip" type="button" onClick={() => addPreset(p)} title={p.evidence}>
@@ -308,14 +308,14 @@ export function NewAssessmentClient() {
               </div>
 
               {/* Custom signal */}
-              <p style={{ margin: "10px 0 6px", fontSize: 12, color: "var(--text2)" }}>Or describe a custom signal:</p>
+              <p className="muted">Or describe a custom signal:</p>
               <label>
                 Signal type
                 <select value={signalType} onChange={(e) => setSignalType(e.target.value as BioSignalType)}>
                   {signalTypes.map((t) => <option value={t} key={t}>{signalLabel(t)}</option>)}
                 </select>
               </label>
-              <label style={{ marginTop: 8 }}>
+              <label>
                 Description
                 <input
                   placeholder="What was observed…"
@@ -323,7 +323,7 @@ export function NewAssessmentClient() {
                   onChange={(e) => setCustomLabel(e.target.value)}
                 />
               </label>
-              <label style={{ marginTop: 8 }}>
+              <label>
                 Evidence
                 <textarea
                   placeholder="Supporting detail, record IDs, timestamps…"
@@ -332,20 +332,20 @@ export function NewAssessmentClient() {
                   rows={2}
                 />
               </label>
-              <button className="button-secondary" type="button" onClick={addCustomSignal} style={{ marginTop: 8 }} disabled={!customLabel.trim()}>
+              <button className="button-secondary" type="button" onClick={addCustomSignal} disabled={!customLabel.trim()}>
                 <Plus size={15} /> Add signal
               </button>
 
               {/* Signal list */}
               {(input.signals?.length ?? 0) > 0 && (
-                <ul style={{ margin: "0.75rem 0 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <ul className="signal-list">
                   {input.signals?.map((sig, i) => (
-                    <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem", fontSize: "0.82rem", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 6, padding: "0.5rem 0.75rem" }}>
-                      <div style={{ flex: 1 }}>
+                    <li key={i} className="signal-item">
+                      <div className="signal-item-body">
                         <strong>{sig.label}</strong>
-                        <span className="muted" style={{ marginLeft: 6 }}>{signalLabel(sig.type)}</span>
+                        <span className="muted"> · {signalLabel(sig.type)}</span>
                       </div>
-                      <button type="button" onClick={() => removeSignal(i)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 0, fontSize: "1rem", lineHeight: 1 }} aria-label="Remove signal">×</button>
+                      <button type="button" onClick={() => removeSignal(i)} className="signal-remove-btn" aria-label="Remove signal">×</button>
                     </li>
                   ))}
                 </ul>
@@ -411,9 +411,9 @@ export function NewAssessmentClient() {
             )}
 
             {/* Save */}
-            <div className="audit-preview" style={{ marginTop: "auto" }}>
+            <div className="audit-preview">
               <h3>Save to Risk Register</h3>
-              <p className="muted" style={{ fontSize: "0.82rem" }}>
+              <p className="muted">
                 Saves score {assessment.score} ({assessment.level}), confidence {assessment.confidence}, and logs an audit event.
               </p>
               <button
@@ -421,18 +421,17 @@ export function NewAssessmentClient() {
                 type="button"
                 onClick={saveAssessment}
                 disabled={saveState === "saving" || saveState === "saved"}
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
               >
                 <Save size={16} />
                 {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved!" : "Save assessment"}
               </button>
 
               {saveMessage && (
-                <p className={`save-message save-${saveState}`} style={{ marginTop: "0.4rem" }}>{saveMessage}</p>
+                <p className={`save-message save-${saveState}`}>{saveMessage}</p>
               )}
 
               {saveState === "blocked" && (
-                <div className="save-actions" style={{ marginTop: "0.5rem" }}>
+                <div className="save-actions">
                   <Link className="button-secondary compact" href="/login?next=/assessments/new">Sign in</Link>
                   <Link className="button-primary compact" href="/onboarding">Onboarding</Link>
                 </div>
@@ -440,7 +439,7 @@ export function NewAssessmentClient() {
             </div>
 
             {/* Guardrail */}
-            <div className="guardrail-box" style={{ marginTop: "1rem" }}>
+            <div className="guardrail-box">
               <CheckCircle2 size={18} />
               <span>{draftAiRecommendationGuardrail}</span>
             </div>

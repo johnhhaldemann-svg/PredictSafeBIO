@@ -54,11 +54,13 @@ export default async function PlatformOpsPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Platform Operations</p>
-          <h1>Platform health &amp; operations</h1>
-          <p className="muted">
-            Cross-org platform view. Visible only to platform operators with the admin key.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Platform Operations</p>
+            <h1>Platform health &amp; operations</h1>
+            <p className="muted">
+              Cross-org platform view. Visible only to platform operators with the admin key.
+            </p>
+          </div>
         </header>
 
         {/* Overall readiness */}
@@ -199,7 +201,7 @@ export default async function PlatformOpsPage({ searchParams }: Props) {
           <div>
             <p className="section-label">Next steps</p>
             <h2>To fully activate the platform</h2>
-            <div className="action-list" style={{ marginTop: "0.75rem" }}>
+            <div className="action-list">
               {!security.smtpConfigured && (
                 <article className="action-row">
                   <div><AlertTriangle size={14} /><strong>Configure custom SMTP</strong></div>
@@ -226,7 +228,7 @@ export default async function PlatformOpsPage({ searchParams }: Props) {
         </section>
 
         <section className="panel">
-          <p className="muted" style={{ fontSize: "0.75rem" }}>
+          <p className="muted">
             Platform ops page — for authorized platform operators only. Do not share the admin key or this URL.
             Data shown reflects live production state at time of page load.
           </p>

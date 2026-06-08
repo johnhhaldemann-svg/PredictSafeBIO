@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, CheckCircle2, ShieldAlert, Zap } from "lucide-react";
+import { CheckCircle2, ShieldAlert, Zap } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PlatformConfigError } from "@/components/PlatformConfigError";
 import { createServerClient } from "@/lib/supabase/server";
@@ -43,24 +43,23 @@ export default async function BillingOverridesPage({ searchParams }: Props) {
 
   const [overrides, orgsRaw] = await Promise.all([
     listManualOverrides(),
-     
+
     (getSupabaseAdminClient() as any).from("organizations").select("id, name").order("name"),
   ]);
 
-   
+
   const orgs = ((orgsRaw.data ?? []) as any[]).map((o: any) => ({ id: o.id as string, name: o.name as string }));
 
   return (
     <AppShell>
       <div className="page-stack">
-        <Link href="/admin/billing" className="text-link" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.85rem" }}>
-          <ArrowLeft size={14} /> Back to Billing
-        </Link>
-
         <header className="page-header">
-          <p className="section-label">Admin › Billing</p>
-          <h1>Manual Overrides</h1>
-          <p className="muted">Grant free trials, apply discounts, extend subscriptions, or force plan changes.</p>
+          <div className="page-header-left">
+            <p className="section-label">Admin › Billing</p>
+            <h1>Manual Overrides</h1>
+            <p className="muted">Grant free trials, apply discounts, extend subscriptions, or force plan changes.</p>
+          </div>
+          <Link href="/admin/billing" className="button-secondary">← Billing</Link>
         </header>
 
         {sp.success && (
@@ -76,52 +75,53 @@ export default async function BillingOverridesPage({ searchParams }: Props) {
             <div><p className="section-label">New override</p><h2>Grant a billing override</h2></div>
             <Zap size={20} />
           </div>
-          <p className="muted" style={{ fontSize: "0.85rem", marginBottom: "1rem" }}>
+          <p className="muted">
             Overrides are logged to the audit trail. All changes are reversible.
           </p>
-          <form action={createOverrideAction} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem 1.5rem" }}>
-            <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
-              Organization
-              <select name="organization_id" required>
-                <option value="">Select organization…</option>
-                {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-              </select>
-            </label>
+          <form action={createOverrideAction} className="stacked-form">
+            <div className="form-grid">
+              <label>
+                Organization
+                <select name="organization_id" required>
+                  <option value="">Select organization…</option>
+                  {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                </select>
+              </label>
 
-            <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
-              Override type
-              <select name="override_type" required>
-                {Object.entries(OVERRIDE_LABELS).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
-                ))}
-              </select>
-            </label>
+              <label>
+                Override type
+                <select name="override_type" required>
+                  {Object.entries(OVERRIDE_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>{v}</option>
+                  ))}
+                </select>
+              </label>
 
-            <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
-              Value
-              <input
-                name="value"
-                required
-                placeholder="e.g. 30 for 30 days, or 'pro' for plan upgrade"
-                style={{ width: "100%" }}
-              />
-              <span className="muted" style={{ fontSize: "0.75rem" }}>
-                free_trial/extension_days = number · discount_pct = 0-100 · plan_upgrade/downgrade = tier name
-              </span>
-            </label>
+              <label>
+                Value
+                <input
+                  name="value"
+                  required
+                  placeholder="e.g. 30 for 30 days, or 'pro' for plan upgrade"
+                />
+                <span className="muted">
+                  free_trial/extension_days = number · discount_pct = 0-100 · plan_upgrade/downgrade = tier name
+                </span>
+              </label>
 
-            <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
-              Expires at (optional)
-              <input name="expires_at" type="datetime-local" style={{ width: "100%" }} />
-            </label>
+              <label>
+                Expires at (optional)
+                <input name="expires_at" type="datetime-local" />
+              </label>
 
-            <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem", gridColumn: "1 / -1" }}>
-              Reason <span style={{ color: "var(--error, #dc2626)" }}>*</span>
-              <textarea name="reason" required rows={2} placeholder="e.g. Customer success team approved 30-day free trial for enterprise prospect." style={{ width: "100%" }} />
-            </label>
+              <label style={{ gridColumn: "1 / -1" }}>
+                Reason <span style={{ color: "var(--red)" }}>*</span>
+                <textarea name="reason" required rows={2} placeholder="e.g. Customer success team approved 30-day free trial for enterprise prospect." />
+              </label>
 
-            <div style={{ gridColumn: "1 / -1" }}>
-              <button className="button-primary" type="submit">Create override</button>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <button className="button-primary" type="submit">Create override</button>
+              </div>
             </div>
           </form>
         </section>
@@ -138,23 +138,23 @@ export default async function BillingOverridesPage({ searchParams }: Props) {
               {overrides.map(o => (
                 <article className="action-row" key={o.id}>
                   <div>
-                    <span className={`status-chip ${o.is_active ? "status-current" : "status-unknown"}`} style={{ fontSize: "0.72rem" }}>
+                    <span className={`status-chip ${o.is_active ? "status-current" : "status-unknown"}`}>
                       {o.is_active ? "Active" : "Revoked"}
                     </span>
                     <strong>{OVERRIDE_LABELS[o.override_type] ?? o.override_type}</strong>
-                    <span className="muted" style={{ fontSize: "0.82rem" }}>= {o.value}</span>
+                    <span className="muted">= {o.value}</span>
                   </div>
-                  <p style={{ fontSize: "0.83rem" }}>
+                  <p>
                     <strong>{o.organization_name ?? "—"}</strong>
                     {" · by "}{o.creator_name ?? "Unknown"}
                     {" · "}{new Date(o.created_at).toLocaleDateString()}
                     {o.expires_at ? " · expires " + new Date(o.expires_at).toLocaleDateString() : ""}
                   </p>
-                  <p className="muted" style={{ fontSize: "0.82rem", fontStyle: "italic" }}>{o.reason}</p>
+                  <p className="muted" style={{ fontStyle: "italic" }}>{o.reason}</p>
                   {o.is_active && (
-                    <form action={revokeOverrideAction} style={{ marginTop: 6 }}>
+                    <form action={revokeOverrideAction}>
                       <input type="hidden" name="overrideId" value={o.id} />
-                      <button className="button-secondary" type="submit" style={{ fontSize: "0.8rem", padding: "0.25rem 0.75rem", color: "var(--error, #dc2626)" }}>
+                      <button className="button-secondary" type="submit" style={{ color: "var(--red)" }}>
                         Revoke
                       </button>
                     </form>

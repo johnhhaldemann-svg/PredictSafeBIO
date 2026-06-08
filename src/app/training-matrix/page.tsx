@@ -34,8 +34,15 @@ export default async function TrainingMatrixPage({ searchParams }: { searchParam
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Operate</p>
-          <h1>Training Matrix</h1>
+          <div className="page-header-left">
+            <p className="section-label">Operate · Training &amp; Competency</p>
+            <h1>Training Matrix</h1>
+            <p className="muted">
+              Required training from BioType branches, controlled document changes, and live assignment evidence.
+              Completion must be verified by a qualified reviewer — AI does not authorize training closure.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/plan/qualified-persons">Qualified Persons →</Link>
         </header>
 
         {loadFailed && <DataLoadError resource="the training matrix" />}
@@ -104,7 +111,7 @@ export default async function TrainingMatrixPage({ searchParams }: { searchParam
                     <Link href={row.documentHref}>{row.documentTitle}</Link>
                   </td>
                   <td>
-                    <span className={row.readiness === "Expired" ? "text-danger" : row.readiness === "Current" ? "text-success" : ""}>
+                    <span className={row.readiness === "Expired" ? "overdue-cell" : row.readiness === "Current" ? "status-current" : ""}>
                       {row.assignmentStatus}
                     </span>
                     {row.dueDate ? ` / due ${new Date(row.dueDate).toLocaleDateString()}` : ""}
@@ -121,7 +128,7 @@ export default async function TrainingMatrixPage({ searchParams }: { searchParam
                   </td>
                   <td>
                     {adminAccess.signedIn && row.assignmentStatus !== "completed" && (
-                      <form action={markTrainingCompleteAction} style={{ display: "inline" }}>
+                      <form action={markTrainingCompleteAction}>
                         <input type="hidden" name="assignmentId" value={row.id} />
                         <button className="icon-button" type="submit" title="Mark complete" aria-label="Mark complete">
                           <CheckCircle size={15} />
@@ -129,7 +136,7 @@ export default async function TrainingMatrixPage({ searchParams }: { searchParam
                       </form>
                     )}
                     {adminAccess.isOwner && (
-                      <form action={deleteTrainingRequirementAction} style={{ display: "inline" }}>
+                      <form action={deleteTrainingRequirementAction}>
                         <input type="hidden" name="requirementId" value={row.id} />
                         <button className="icon-button" type="submit" title="Delete requirement" aria-label="Delete">
                           <Trash2 size={14} />

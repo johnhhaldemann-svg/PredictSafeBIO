@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nav Restructure — Before / After</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; display: flex; flex-direction: column; min-height: 100vh; }
+
+  .header { background: #161b27; border-bottom: 1px solid #2d3748; padding: 16px 32px; display: flex; align-items: center; gap: 16px; }
+  .header h1 { font-size: 15px; font-weight: 600; color: #fff; }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600; letter-spacing: .4px; }
+  .badge-before { background: #7f1d1d; color: #fca5a5; }
+  .badge-after  { background: #14532d; color: #86efac; }
+  .badge-change { background: #1e3a5f; color: #93c5fd; }
+
+  .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 0; flex: 1; }
+
+  .col { padding: 24px 20px; border-right: 1px solid #2d3748; }
+  .col:last-child { border-right: none; }
+  .col-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #2d3748; }
+  .col-title.before { color: #f87171; }
+  .col-title.after  { color: #4ade80; }
+
+  /* Sidebar sim */
+  .sidebar { background: #161b27; border-radius: 10px; padding: 12px 8px; width: 230px; border: 1px solid #2d3748; }
+
+  .section-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; border-radius: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+    color: #94a3b8; cursor: pointer; margin-bottom: 2px;
+    justify-content: space-between;
+  }
+  .section-header .left { display: flex; align-items: center; gap: 8px; }
+  .section-header .icon { width: 16px; height: 16px; opacity: .7; }
+  .section-header .chevron { font-size: 10px; opacity: .5; }
+  .section-header:hover { background: #1e2636; }
+
+  .section-items { margin-bottom: 6px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 6px 10px 6px 34px;
+    border-radius: 5px; font-size: 12px; color: #94a3b8;
+    position: relative; cursor: pointer;
+  }
+  .nav-item:hover { background: #1e2636; color: #e2e8f0; }
+  .nav-item.active { background: #1e3a5f; color: #93c5fd; }
+  .nav-item .dot { width: 5px; height: 5px; border-radius: 50%; background: #4b5563; position: absolute; left: 18px; }
+  .nav-item .dot.active { background: #60a5fa; }
+
+  /* Issue flags */
+  .flag { font-size: 9px; padding: 1px 5px; border-radius: 3px; margin-left: auto; font-weight: 600; white-space: nowrap; }
+  .flag-dup   { background: #451a03; color: #fb923c; }
+  .flag-mis   { background: #1a1a2e; color: #818cf8; }
+  .flag-act   { background: #1c1917; color: #a8a29e; }
+  .flag-new   { background: #052e16; color: #4ade80; }
+  .flag-move  { background: #0c1a3d; color: #7dd3fc; }
+  .flag-merge { background: #2e1065; color: #c4b5fd; }
+  .flag-drop  { background: #1c0505; color: #f87171; text-decoration: line-through; opacity: .7; }
+
+  /* Section colours */
+  .sec-assess  .section-header { color: #818cf8; }
+  .sec-assess  .section-header:hover { background: #1a1f35; }
+  .sec-plan    .section-header { color: #34d399; }
+  .sec-plan    .section-header:hover { background: #0d2318; }
+  .sec-operate .section-header { color: #f59e0b; }
+  .sec-operate .section-header:hover { background: #2a1a05; }
+  .sec-monitor .section-header { color: #38bdf8; }
+  .sec-monitor .section-header:hover { background: #0a2030; }
+  .sec-ws      .section-header { color: #94a3b8; }
+
+  .divider { height: 1px; background: #2d3748; margin: 6px 0; }
+
+  /* Legend */
+  .legend { display: flex; gap: 12px; padding: 14px 24px; background: #161b27; border-top: 1px solid #2d3748; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #94a3b8; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+  /* Change callouts */
+  .changes { margin-top: 20px; }
+  .change-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; font-size: 12px; }
+  .change-row.move   { background: #0c1a3d; border-left: 3px solid #3b82f6; }
+  .change-row.merge  { background: #2e1065; border-left: 3px solid #8b5cf6; }
+  .change-row.remove { background: #1c0505; border-left: 3px solid #ef4444; }
+  .change-row.rename { background: #052e16; border-left: 3px solid #10b981; }
+  .change-label { font-weight: 600; min-width: 52px; }
+  .change-row.move   .change-label { color: #60a5fa; }
+  .change-row.merge  .change-label { color: #a78bfa; }
+  .change-row.remove .change-label { color: #f87171; }
+  .change-row.rename .change-label { color: #34d399; }
+  .change-desc { color: #cbd5e1; line-height: 1.5; }
+
+  .col-changes { padding: 24px 20px; }
+  .col-changes .col-title { color: #f59e0b; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="width:28px;height:28px;background:#3b82f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">P</div>
+  <h1>PredictSafeBIO — Navigation Restructure</h1>
+  <span class="badge badge-before">CURRENT</span>
+  <span style="color:#4b5563;font-size:18px;">→</span>
+  <span class="badge badge-after">PROPOSED</span>
+</div>
+
+<div class="columns">
+
+  <!-- ─── BEFORE ─────────────────────────────────────── -->
+  <div class="col">
+    <div class="col-title before">⚠ Current Structure — Issues Highlighted</div>
+    <div class="sidebar">
+
+      <!-- ASSESS -->
+      <div class="section-items sec-assess">
+        <div class="section-header"><span class="left">🛡 ASSESS</span><span class="chevron">▾</span></div>
+        <div class="nav-item"><span class="dot"></span> Setup Questionnaire</div>
+        <div class="nav-item active"><span class="dot active"></span> BioRisk Workbench</div>
+        <div class="nav-item"><span class="dot"></span> Risk Register <span class="flag flag-dup">DUPLICATE</span></div>
+        <div class="nav-item"><span class="dot"></span> Hazard Register</div>
+        <div class="nav-item"><span class="dot"></span> Personnel <span class="flag flag-mis">MISPLACED?</span></div>
+        <div class="nav-item"><span class="dot"></span> Add Personnel Record <span class="flag flag-act">ACTION BTN</span></div>
+        <div class="nav-item"><span class="dot"></span> Provider Directory <span class="flag flag-mis">MISPLACED</span></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- PLAN -->
+      <div class="section-items sec-plan">
+        <div class="section-header"><span class="left">📋 PLAN</span><span class="chevron">▾</span></div>
+        <div class="nav-item"><span class="dot"></span> Compliance Map</div>
+        <div class="nav-item"><span class="dot"></span> Risk Register <span class="flag flag-dup">DUPLICATE</span></div>
+        <div class="nav-item"><span class="dot"></span> Compliance Calendar</div>
+        <div class="nav-item"><span class="dot"></span> Qualified Persons</div>
+        <div class="nav-item"><span class="dot"></span> Control Register</div>
+        <div class="nav-item"><span class="dot"></span> Exposure Map <span class="flag flag-mis">MISPLACED</span></div>
+        <div class="nav-item"><span class="dot"></span> My Work <span class="flag flag-mis">MISPLACED</span></div>
+        <div class="nav-item"><span class="dot"></span> Programs</div>
+        <div class="nav-item"><span class="dot"></span> Change Plan <span class="flag flag-dup">DUPLICATE</span></div>
+        <div class="nav-item"><span class="dot"></span> Documents</div>
+        <div class="nav-item"><span class="dot"></span> Version Control <span class="flag flag-act">SUB-PAGE</span></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- OPERATE -->
+      <div class="section-items sec-operate">
+        <div class="section-header"><span class="left">⚙ OPERATE</span><span class="chevron">▾</span></div>
+        <div class="nav-item"><span class="dot"></span> Operations <span class="flag flag-act">VAGUE HUB</span></div>
+        <div class="nav-item"><span class="dot"></span> Inspections</div>
+        <div class="nav-item"><span class="dot"></span> CAPA</div>
+        <div class="nav-item"><span class="dot"></span> Management of Change <span class="flag flag-dup">DUPLICATE</span></div>
+        <div class="nav-item"><span class="dot"></span> Work Permits</div>
+        <div class="nav-item"><span class="dot"></span> Chemical & SDS</div>
+        <div class="nav-item"><span class="dot"></span> Waste Mgmt</div>
+        <div class="nav-item"><span class="dot"></span> Training Matrix <span class="flag flag-mis">MISPLACED?</span></div>
+        <div class="nav-item"><span class="dot"></span> Ergonomics</div>
+        <div class="nav-item"><span class="dot"></span> Pest & Disinfect</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- MONITOR -->
+      <div class="section-items sec-monitor">
+        <div class="section-header"><span class="left">📊 MONITOR</span><span class="chevron">▾</span></div>
+        <div class="nav-item"><span class="dot"></span> Safety Loop <span class="flag flag-act">ODD NAME</span></div>
+        <div class="nav-item"><span class="dot"></span> Predictive Engine</div>
+        <div class="nav-item"><span class="dot"></span> Risk Monitor</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- WORKSPACE -->
+      <div class="section-items sec-ws">
+        <div class="section-header"><span class="left">⚙ WORKSPACE</span><span class="chevron">▾</span></div>
+        <div class="nav-item"><span class="dot"></span> Company Settings</div>
+        <div class="nav-item"><span class="dot"></span> Team</div>
+        <div class="nav-item"><span class="dot"></span> Billing</div>
+      </div>
+
+    </div>
+
+    <div style="margin-top:14px;padding:12px;background:#1a1f2e;border-radius:8px;border:1px solid #2d3748;">
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;font-weight:600;">ISSUE COUNT</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="flag flag-dup">4 duplicates</span>
+        <span class="flag flag-mis">5 misplaced</span>
+        <span class="flag flag-act">4 action/sub-pages</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── AFTER ──────────────────────────────────────── -->
+  <div class="col">
+    <div class="col-title after">✅ Proposed Structure — Clean & Logical</div>
+    <div class="sidebar">
+
+      <!-- ASSESS -->
+      <div class="section-items sec-assess">
+        <div class="section-header"><span class="left">🛡 ASSESS</span><span class="chevron">▾</span></div>
+        <div class="nav-item"><span class="dot"></span> Setup Questionnaire</div>
+        <div class="nav-item active"><span class="dot active"></span> BioRisk Workbench</div>
+        <div class="nav-item"><span class="dot"></span> Risk Register</div>
+        <div class="nav-item"><span class="dot"></span> Hazard Register</div>
+        <div class="nav-item"><span class="dot"></span> Exposure Map <span class="flag flag-move">← from Plan</span></div>
+        <div class="nav-item"><span class="dot"></span> Personnel</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- PLAN -->
+      <div class="section-items sec-plan">
+        <div class="section-header"><span class="left">📋 PLAN</span><span class="chevron">▾</span></div>
+        <div class="nav-item"><span class="dot"></span> Compliance Map</div>
+        <div class="nav-item"><span class="dot"></span> Compliance Calendar</div>
+        <div class="nav-item"><span class="dot"></span> Training Matrix <span class="flag flag-move">← from Operate</span></div>
+        <div class="nav-item"><span class="dot"></span> Qualified Persons</div>
+        <div class="nav-item"><span class="dot"></span> Control Register</div>
+        <div class="nav-item"><span class="dot"></span> Change Management <span class="flag flag-merge">merged</span></div>
+        <div class="nav-item"><span class="dot"></span> Programs</div>
+        <div class="nav-item"><span class="dot"></span> Documents</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- OPERATE -->
+      <div class="section-items sec-operate">
+        <div class="section-header"><span class="left">⚙ OPERATE</span><span class="chevron">▾</span></div>
+        <div class="nav-item"><span class="dot"></span> Inspections</div>
+        <div class="nav-item"><span class="dot"></span> CAPA</div>
+        <div class="nav-item"><span class="dot"></span> Work Permits</div>
+        <div class="nav-item"><span class="dot"></span> Chemical & SDS</div>
+        <div class="nav-item"><span class="dot"></span> Waste Management</div>
+        <div class="nav-item"><span class="dot"></span> Ergonomics</div>
+        <div class="nav-item"><span class="dot"></span> Pest & Disinfect</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- MONITOR -->
+      <div class="section-items sec-monitor">
+        <div class="section-header"><span class="left">📊 MONITOR</span><span class="chevron">▾</span></div>
+        <div class="nav-item active"><span class="dot active"></span> Dashboard <span class="flag flag-new">renamed</span></div>
+        <div class="nav-item"><span class="dot"></span> Predictive Engine</div>
+        <div class="nav-item"><span class="dot"></span> Risk Monitor</div>
+        <div class="nav-item"><span class="dot"></span> My Work <span class="flag flag-move">← from Plan</span></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- WORKSPACE -->
+      <div class="section-items sec-ws">
+        <div class="section-header"><span class="left">⚙ WORKSPACE</span><span class="chevron">▾</span></div>
+        <div class="nav-item"><span class="dot"></span> Company Settings</div>
+        <div class="nav-item"><span class="dot"></span> Team</div>
+        <div class="nav-item"><span class="dot"></span> Provider Directory <span class="flag flag-move">← from Assess</span></div>
+        <div class="nav-item"><span class="dot"></span> Billing</div>
+      </div>
+
+    </div>
+
+    <div style="margin-top:14px;padding:12px;background:#0d2318;border-radius:8px;border:1px solid #166534;">
+      <div style="font-size:11px;color:#4ade80;margin-bottom:8px;font-weight:600;">RESULT</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="flag flag-new">0 duplicates</span>
+        <span class="flag flag-new">−3 nav items</span>
+        <span class="flag flag-new">logical flow</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ─── CHANGE LOG ──────────────────────────────────── -->
+<div style="padding:20px 24px;background:#0f1117;border-top:1px solid #2d3748;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#f59e0b;margin-bottom:14px;">What Changes & Why</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div class="change-row move"><span class="change-label">MOVE</span><span class="change-desc">Exposure Map: Plan → Assess — mapping current exposures is risk identification, not planning</span></div>
+    <div class="change-row move"><span class="change-label">MOVE</span><span class="change-desc">Training Matrix: Operate → Plan — training is scheduled and planned, not a day-to-day operation</span></div>
+    <div class="change-row move"><span class="change-label">MOVE</span><span class="change-desc">My Work: Plan → Monitor — it's your live task inbox, you check it to see if you're on track</span></div>
+    <div class="change-row move"><span class="change-label">MOVE</span><span class="change-desc">Provider Directory: Assess → Workspace — external consultants are a workspace resource, not a risk tool</span></div>
+    <div class="change-row merge"><span class="change-label">MERGE</span><span class="change-desc">Change Plan (Plan) + Management of Change (Operate) → "Change Management" in Plan — same concept, one home</span></div>
+    <div class="change-row rename"><span class="change-label">RENAME</span><span class="change-desc">"Safety Loop" → "Dashboard" in Monitor — clearer label for the home/overview page</span></div>
+    <div class="change-row remove"><span class="change-label">REMOVE</span><span class="change-desc">"Add Personnel Record" — this is a button/action inside /bios, not a nav section</span></div>
+    <div class="change-row remove"><span class="change-label">REMOVE</span><span class="change-desc">"Version Control" — sub-page of Documents; accessible as a tab, not a separate nav entry</span></div>
+    <div class="change-row remove"><span class="change-label">REMOVE</span><span class="change-desc">Risk Register duplicate in Plan — one canonical entry under Assess where risk output lives</span></div>
+    <div class="change-row remove"><span class="change-label">REMOVE</span><span class="change-desc">"Operations" hub page — vague landing page removed; individual items surface directly in Operate</span></div>
+  </div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#fb923c"></div> Duplicate entry</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#818cf8"></div> Misplaced section</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#a8a29e"></div> Action/sub-page (not a section)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div> Moved to better section</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div> Merged with duplicate</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f87171"></div> Removed from nav</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#4ade80"></div> New/renamed</div>
+</div>
+
+</body>
+</html>

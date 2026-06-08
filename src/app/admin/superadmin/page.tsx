@@ -37,8 +37,10 @@ export default async function SuperadminPage({ searchParams }: Props) {
       <AppShell>
         <div className="page-stack">
           <header className="page-header">
-            <p className="section-label">Superadmin</p>
-            <h1>Access restricted</h1>
+            <div className="page-header-left">
+              <p className="section-label">Superadmin</p>
+              <h1>Access restricted</h1>
+            </div>
           </header>
           <section className="panel">
             <p className="muted">

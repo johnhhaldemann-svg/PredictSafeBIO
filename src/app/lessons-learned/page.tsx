@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpen, ArrowRight, CheckCircle, RefreshCw } from "lucide-react";
+import { BookOpen, RefreshCw, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { feedLessonToHazardRegisterAction } from "./actions";
 
@@ -32,135 +32,89 @@ export default async function LessonsLearnedPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Monitor · Phase 6 — Review &amp; Improve</p>
-          <h1>Lessons Learned</h1>
-          <p className="muted">
-            Capture, share, and act on insights from incidents, CAPAs, audits, and near misses.
-            Lessons Learned closes the loop — every insight feeds back into Phase 1 to make the
-            next cycle smarter. Required documentation under ICH Q10 and ISO 45001.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Monitor · Phase 6 — Review &amp; Improve</p>
+            <h1>Lessons Learned</h1>
+            <p className="muted">
+              Capture, share, and act on insights from incidents, CAPAs, audits, and near misses.
+              Lessons Learned closes the loop — every insight feeds back into Phase 1 to make the
+              next cycle smarter. Required documentation under ICH Q10 and ISO 45001.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/management-review">Management Review →</Link>
         </header>
 
-        {/* Module status */}
-        <div style={{
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderLeft: "4px solid var(--brand)",
-          borderRadius: "10px",
-          padding: "20px 24px",
-          maxWidth: "680px",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-            <BookOpen size={18} style={{ color: "var(--brand)" }} />
-            <span style={{ fontWeight: 700 }}>Module in Development</span>
-          </div>
-          <p style={{ fontSize: ".85rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "16px" }}>
-            A structured lessons learned registry — tagging entries by phase, hazard type, and
-            affected program, with auto-distribution to relevant team members — is on the roadmap.
-            Today, capture lessons as CAPA notes or in the Documents library and share in
-            Management Review.
-          </p>
-          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-            <Link
-              href="/operations/capa"
-              style={{
-                display: "inline-flex", alignItems: "center", gap: "6px",
-                fontSize: ".83rem", fontWeight: 600, color: "var(--brand)", textDecoration: "none"
-              }}
-            >
-              Open CAPA <ArrowRight size={13} />
-            </Link>
-            <Link
-              href="/management-review"
-              style={{
-                display: "inline-flex", alignItems: "center", gap: "6px",
-                fontSize: ".83rem", fontWeight: 600, color: "var(--brand)", textDecoration: "none"
-              }}
-            >
-              Management Review <ArrowRight size={13} />
-            </Link>
-          </div>
+        <div className="ai-context-bar ai-context-bar--warning">
+          <BookOpen size={15} />
+          <span>
+            <strong>Module in Development.</strong>{" "}
+            A structured lessons learned registry — tagging entries by phase, hazard type, and affected
+            program, with auto-distribution to relevant team members — is on the roadmap. Today, capture
+            lessons as CAPA notes or in the Documents library and share in Management Review.
+          </span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", maxWidth: "900px" }}>
-          {/* Sources */}
-          <section>
-            <h2 style={{ fontSize: ".95rem", fontWeight: 700, marginBottom: "12px" }}>
-              📥 Where Lessons Come From
-            </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              {LESSON_SOURCES.map((s) => (
-                <div
-                  key={s.label}
-                  style={{
-                    padding: "10px 14px",
-                    background: "var(--surface)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "7px",
-                  }}
-                >
-                  <div style={{ fontWeight: 600, fontSize: ".83rem", marginBottom: "3px" }}>{s.label}</div>
-                  <div style={{ fontSize: ".77rem", color: "var(--muted)", lineHeight: 1.5 }}>{s.desc}</div>
+        <nav className="command-center-link-strip" aria-label="Related modules">
+          <Link className="button-secondary compact" href="/operations/capa">Open CAPA →</Link>
+          <Link className="button-secondary compact" href="/management-review">Management Review →</Link>
+        </nav>
+
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Inputs</p>
+              <h2>Where Lessons Come From</h2>
+            </div>
+          </div>
+          <div className="action-list">
+            {LESSON_SOURCES.map((s) => (
+              <article className="action-row" key={s.label}>
+                <div>
+                  <strong>{s.label}</strong>
+                  <small className="muted">{s.desc}</small>
                 </div>
-              ))}
-            </div>
-          </section>
+              </article>
+            ))}
+          </div>
+        </section>
 
-          {/* Loop back */}
-          <section>
-            <h2 style={{ fontSize: ".95rem", fontWeight: 700, marginBottom: "12px" }}>
-              🔄 How Lessons Feed Back into the Cycle
-            </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              {LOOP_BACK.map((l) => (
-                <div
-                  key={l.phase}
-                  style={{
-                    padding: "10px 14px",
-                    background: "var(--surface)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "7px",
-                    display: "flex",
-                    gap: "10px",
-                    alignItems: "flex-start",
-                  }}
-                >
-                  <RefreshCw size={13} style={{ color: "var(--brand)", marginTop: "3px", flexShrink: 0 }} />
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: ".80rem", marginBottom: "2px", color: "var(--brand)" }}>{l.phase}</div>
-                    <div style={{ fontSize: ".77rem", color: "var(--muted)", lineHeight: 1.5 }}>{l.action}</div>
-                  </div>
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Loop-back</p>
+              <h2>How Lessons Feed Back into the Cycle</h2>
+            </div>
+            <RefreshCw size={20} />
+          </div>
+          <div className="action-list">
+            {LOOP_BACK.map((l) => (
+              <article className="action-row" key={l.phase}>
+                <div>
+                  <strong>{l.phase}</strong>
+                  <small className="muted">{l.action}</small>
                 </div>
-              ))}
-            </div>
+              </article>
+            ))}
+          </div>
+          <div className="ai-context-bar ai-context-bar--success">
+            <ShieldCheck size={14} />
+            <span>
+              <strong>ICH Q10 §2.7:</strong> The pharmaceutical quality system should include a process
+              for knowledge management, including the sharing of knowledge and lessons learned across
+              products, processes, and sites.
+            </span>
+          </div>
+        </section>
 
-            <div style={{
-              marginTop: "14px",
-              background: "#f0fdf4",
-              border: "1px solid #86efac",
-              borderRadius: "8px",
-              padding: "12px 16px",
-              fontSize: ".80rem",
-              color: "#14532d",
-              lineHeight: 1.6,
-            }}>
-              <strong>ICH Q10 §2.7:</strong> The pharmaceutical quality system should include
-              a process for knowledge management, including the sharing of knowledge and lessons
-              learned across products, processes, and sites.
-            </div>
-          </section>
-        </div>
-
-        {/* Phase 6 → Phase 1 feedback form */}
         <section className="panel">
           <div className="panel-heading">
             <div>
               <p className="section-label">Phase 6 → Phase 1 Loop-back</p>
               <h2>Feed this lesson to the Hazard Register</h2>
             </div>
-            <RefreshCw size={22} style={{ color: "var(--brand)" }} />
+            <RefreshCw size={22} />
           </div>
-          <p className="muted" style={{ marginBottom: "16px" }}>
+          <p className="muted">
             When a lesson identifies an uncontrolled or new risk, push it directly into Phase 1.
             The Predictive Engine will score it as a leading indicator immediately on creation.
           </p>
@@ -197,7 +151,7 @@ export default async function LessonsLearnedPage({ searchParams }: Props) {
               Add to Hazard Register
             </button>
           </form>
-          <p style={{ fontSize: ".75rem", color: "var(--muted)", marginTop: "10px" }}>
+          <p className="muted">
             Created as <strong>Identified — Draft, Human Review Required</strong>. A qualified
             reviewer must confirm and classify before it enters the risk scoring cycle.
           </p>

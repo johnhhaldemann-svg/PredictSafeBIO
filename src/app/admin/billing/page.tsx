@@ -57,9 +57,12 @@ export default async function BillingPage() {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Admin</p>
-          <h1>Billing &amp; Subscriptions</h1>
-          <p className="muted">Revenue overview, subscription management, and manual overrides.</p>
+          <div className="page-header-left">
+            <p className="section-label">Platform Admin</p>
+            <h1>Billing &amp; Subscriptions</h1>
+            <p className="muted">Revenue overview, subscription management, and manual overrides.</p>
+          </div>
+          <Link href="/admin/dashboard" className="button-secondary">← Command Center</Link>
         </header>
 
         {!stripeConfigured && (
@@ -74,11 +77,11 @@ export default async function BillingPage() {
           </div>
         )}
 
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-          <Link href="/admin/billing/plans" className="button-secondary" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.85rem" }}>
+        <div className="command-center-link-strip">
+          <Link href="/admin/billing/plans" className="button-secondary">
             <Settings size={14} /> Manage Plans
           </Link>
-          <Link href="/admin/billing/overrides" className="button-secondary" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.85rem" }}>
+          <Link href="/admin/billing/overrides" className="button-secondary">
             <Zap size={14} /> Manual Overrides
           </Link>
         </div>
@@ -97,79 +100,81 @@ export default async function BillingPage() {
             ].map(({ label, value, sub, color, Icon }) => (
               <article key={label} className="command-card" style={{ borderTop: "3px solid " + color }}>
                 <div><Icon size={14} style={{ color }} /><strong>{label}</strong></div>
-                <small style={{ fontSize: "1.4rem", fontWeight: 700 }}>{value}</small>
-                <em style={{ fontSize: "0.78rem" }}>{sub}</em>
+                <small>{value}</small>
+                <em>{sub}</em>
               </article>
             ))}
           </div>
 
           <div style={{ marginTop: "1.25rem" }}>
-            <p className="section-label" style={{ marginBottom: "0.4rem" }}>Active subscriptions by tier</p>
-            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+            <p className="section-label">Active subscriptions by tier</p>
+            <div className="command-card-grid">
               {(["small_lab", "growth", "enterprise", "strategic"] as const).map(tier => {
                 const d = summary.by_tier[tier];
                 return (
-                  <div key={tier} style={{ padding: "0.75rem 1.25rem", borderRadius: 8, border: "1px solid var(--border)", minWidth: 110 }}>
-                    <p style={{ fontWeight: 600, margin: 0 }}>{{ small_lab: "Small Lab", growth: "Growth", enterprise: "Enterprise", strategic: "Strategic" }[tier]}</p>
-                    <p style={{ fontSize: "1.4rem", fontWeight: 700, margin: "0.25rem 0" }}>{d?.count ?? 0}</p>
-                    <p className="muted" style={{ fontSize: "0.78rem", margin: 0 }}>{formatCents(d?.mrr_cents ?? 0)}/mo</p>
+                  <div key={tier} className="tier-stat-card">
+                    <h3>{{ small_lab: "Small Lab", growth: "Growth", enterprise: "Enterprise", strategic: "Strategic" }[tier]}</h3>
+                    <p className="tier-stat-value">{d?.count ?? 0}</p>
+                    <p className="tier-stat-sub muted">{formatCents(d?.mrr_cents ?? 0)}/mo</p>
                   </div>
                 );
               })}
-              <div style={{ padding: "0.75rem 1.25rem", borderRadius: 8, border: "1px solid var(--border)", minWidth: 110 }}>
-                <p style={{ fontWeight: 600, margin: 0 }}>Trialing</p>
-                <p style={{ fontSize: "1.4rem", fontWeight: 700, margin: "0.25rem 0" }}>{summary.trialing_subscriptions}</p>
-                <p className="muted" style={{ fontSize: "0.78rem", margin: 0 }}>active trials</p>
+              <div className="tier-stat-card">
+                <h3>Trialing</h3>
+                <p className="tier-stat-value">{summary.trialing_subscriptions}</p>
+                <p className="tier-stat-sub muted">active trials</p>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="panel" style={{ padding: 0, overflow: "hidden" }}>
-          <div className="panel-heading" style={{ padding: "1rem 1.25rem 0.75rem" }}>
+        <section className="table-panel">
+          <div className="panel-heading">
             <div><p className="section-label">Subscriptions</p><h2>{subscriptions.length} total</h2></div>
             <CreditCard size={20} />
           </div>
           {subscriptions.length === 0 ? (
-            <p className="muted" style={{ padding: "1.5rem" }}>No subscriptions yet.</p>
+            <p className="muted">No subscriptions yet.</p>
           ) : (
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                    {["Organization", "Plan", "Status", "MRR", "Period ends", "Last payment", "Stripe ID"].map(h => (
-                      <th key={h} style={{ padding: "0.55rem 1rem", textAlign: "left", fontWeight: 600, color: "var(--muted)", whiteSpace: "nowrap" }}>{h}</th>
-                    ))}
+            <table>
+              <thead>
+                <tr>
+                  <th>Organization</th>
+                  <th>Plan</th>
+                  <th>Status</th>
+                  <th>MRR</th>
+                  <th>Period ends</th>
+                  <th>Last payment</th>
+                  <th>Stripe ID</th>
+                </tr>
+              </thead>
+              <tbody>
+                {subscriptions.map(s => (
+                  <tr key={s.id}>
+                    <td>{s.organization_name ?? "—"}</td>
+                    <td>{s.plan_tier[0].toUpperCase() + s.plan_tier.slice(1)}</td>
+                    <td>
+                      <span className={"status-chip " + (STATUS_CLASS[s.status] ?? "status-unknown")}>
+                        {s.status}
+                      </span>
+                      {s.cancel_at_period_end && (
+                        <span className="status-chip status-critical">cancels</span>
+                      )}
+                    </td>
+                    <td>{formatCents(s.price_cents)}</td>
+                    <td className="muted">
+                      {s.current_period_end ? new Date(s.current_period_end).toLocaleDateString() : "—"}
+                    </td>
+                    <td className="muted">
+                      {s.last_payment_at ? new Date(s.last_payment_at).toLocaleDateString() : "—"}
+                    </td>
+                    <td className="muted">
+                      <code>{s.stripe_subscription_id ? s.stripe_subscription_id.slice(0, 14) + "..." : "—"}</code>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {subscriptions.map(s => (
-                    <tr key={s.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                      <td style={{ padding: "0.6rem 1rem", fontWeight: 500 }}>{s.organization_name ?? "—"}</td>
-                      <td style={{ padding: "0.6rem 1rem", textTransform: "capitalize", fontWeight: 500 }}>{s.plan_tier}</td>
-                      <td style={{ padding: "0.6rem 1rem" }}>
-                        <span className={"status-chip " + (STATUS_CLASS[s.status] ?? "status-unknown")} style={{ fontSize: "0.72rem" }}>
-                          {s.status}
-                        </span>
-                        {s.cancel_at_period_end && (
-                          <span className="status-chip status-critical" style={{ fontSize: "0.68rem", marginLeft: 4 }}>cancels</span>
-                        )}
-                      </td>
-                      <td style={{ padding: "0.6rem 1rem", fontWeight: 600 }}>{formatCents(s.price_cents)}</td>
-                      <td style={{ padding: "0.6rem 1rem", color: "var(--muted)", whiteSpace: "nowrap" }}>
-                        {s.current_period_end ? new Date(s.current_period_end).toLocaleDateString() : "—"}
-                      </td>
-                      <td style={{ padding: "0.6rem 1rem", color: "var(--muted)", whiteSpace: "nowrap" }}>
-                        {s.last_payment_at ? new Date(s.last_payment_at).toLocaleDateString() : "—"}
-                      </td>
-                      <td style={{ padding: "0.6rem 1rem", fontFamily: "monospace", fontSize: "0.75rem", color: "var(--muted)" }}>
-                        {s.stripe_subscription_id ? s.stripe_subscription_id.slice(0, 14) + "..." : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           )}
         </section>
 

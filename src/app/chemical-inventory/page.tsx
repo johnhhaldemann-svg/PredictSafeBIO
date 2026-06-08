@@ -32,30 +32,44 @@ export default async function ChemicalInventoryPage({ searchParams }: Props) {
   const params = await searchParams;
   const filter = params.filter ?? "all";
 
-  const [chemicalsResult, adminAccess] = await Promise.all([
-    listChemicals(
-      filter === "expiring" ? { expiringSoon: true } :
-      filter === "no-sds"   ? { missingSds: true } :
-      undefined
-    ).catch(() => null),
+  const [allChemicalsResult, adminAccess] = await Promise.all([
+    listChemicals().catch(() => null),
     getFoundationAdminAccessSummary().catch(() => ({
       configured: false, signedIn: false, isOwner: false, message: ""
     }))
   ]);
 
-  const loadFailed = chemicalsResult === null;
-  const chemicals = chemicalsResult ?? [];
-  const totalCount     = chemicals.length;
-  const missingSds     = chemicals.filter((c) => !c.sdsPresent).length;
-  const expiringSoon   = chemicals.filter((c) => c.expiringSoon).length;
-  const expiredCount   = chemicals.filter((c) => c.expired).length;
+  const loadFailed  = allChemicalsResult === null;
+  const allChemicals = allChemicalsResult ?? [];
+  const chemicals = allChemicals.filter((c) => {
+    if (filter === "expiring")  return c.expiringSoon || c.expired;
+    if (filter === "no-sds")    return !c.sdsPresent;
+    return true;
+  });
+
+  const totalCount   = allChemicals.length;
+  const missingSds   = allChemicals.filter((c) => !c.sdsPresent).length;
+  const expiringSoon = allChemicals.filter((c) => c.expiringSoon && !c.expired).length;
+  const expiredCount = allChemicals.filter((c) => c.expired).length;
+  const filterCounts = {
+    all: totalCount,
+    expiring: allChemicals.filter((c) => c.expiringSoon || c.expired).length,
+    "no-sds": missingSds,
+  };
 
   return (
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Operate</p>
-          <h1>Chemical &amp; SDS Management</h1>
+          <div className="page-header-left">
+            <p className="section-label">Operate · Chemical Hygiene</p>
+            <h1>Chemical &amp; SDS Management</h1>
+            <p className="muted">
+              GHS inventory, SDS tracking, expiry alerts, and storage compatibility.
+              All classification and storage decisions require a qualified chemical hygiene officer.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/waste-management">Waste Management →</Link>
         </header>
 
         {/* KPI strip */}
@@ -81,6 +95,17 @@ export default async function ChemicalInventoryPage({ searchParams }: Props) {
           </article>
         </section>
 
+        {missingSds > 0 && (
+          <div className="ai-context-bar ai-context-bar--danger">
+            <AlertTriangle size={15} />
+            <span>
+              <strong>{missingSds} chemical{missingSds !== 1 ? "s" : ""} missing SDS.</strong>{" "}
+              SDS is required for all hazardous chemicals. Resolve before next inspection.
+            </span>
+            <Link className="ai-fill-btn ai-fill-btn--danger" href="/chemical-inventory?filter=no-sds">View</Link>
+          </div>
+        )}
+
         {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message && <p className="form-message">{params.message}</p>}
 
@@ -93,6 +118,7 @@ export default async function ChemicalInventoryPage({ searchParams }: Props) {
               className={`button-secondary compact ${filter === f ? "active-filter" : ""}`}
             >
               {f === "all" ? "All chemicals" : f === "expiring" ? "Expiring soon" : "Missing SDS"}
+              <span className="filter-count-badge">{filterCounts[f] ?? 0}</span>
             </Link>
           ))}
         </nav>
@@ -102,7 +128,11 @@ export default async function ChemicalInventoryPage({ searchParams }: Props) {
           <div className="panel-heading">
             <div>
               <p className="section-label">Chemical register</p>
-              <h2>{totalCount} chemical{totalCount !== 1 ? "s" : ""}</h2>
+              <h2>
+                {chemicals.length === allChemicals.length
+                  ? `${totalCount} chemical${totalCount !== 1 ? "s" : ""}`
+                  : `${chemicals.length} of ${totalCount} shown`}
+              </h2>
             </div>
           </div>
 
@@ -143,7 +173,7 @@ export default async function ChemicalInventoryPage({ searchParams }: Props) {
                       : ""}
                   </p>
                   {adminAccess.signedIn && (
-                    <form action={archiveChemicalAction} style={{ display: "inline" }}>
+                    <form action={archiveChemicalAction}>
                       <input type="hidden" name="id" value={chem.id} />
                       <button
                         className="button-secondary compact"
@@ -227,7 +257,7 @@ export default async function ChemicalInventoryPage({ searchParams }: Props) {
                 <input name="restricted" type="checkbox" />
                 Restricted / controlled substance — requires additional authorization
               </label>
-              <p className="muted" style={{ fontSize: "0.82em" }}>
+              <p className="muted">
                 After adding, upload the SDS document through your document library to resolve the open risk cell.
               </p>
               <button className="button-primary" type="submit">Add chemical</button>

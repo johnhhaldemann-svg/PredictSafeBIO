@@ -78,41 +78,28 @@ export default async function ModerationPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Admin</p>
-          <h1>Content Moderation</h1>
-          <p className="muted">Review provider bios, triage reports, and manage takedowns.</p>
+          <div className="page-header-left">
+            <p className="section-label">Platform Admin</p>
+            <h1>Content Moderation</h1>
+            <p className="muted">Review provider bios, triage reports, and manage takedowns.</p>
+          </div>
+          <Link className="button-secondary" href="/admin/dashboard">← Command Center</Link>
         </header>
 
         {/* Tab bar */}
-        <div style={{ display: "flex", gap: "0.25rem", borderBottom: "1px solid var(--border)", paddingBottom: 0 }}>
+        <nav className="tab-nav" aria-label="Moderation tabs">
           {tabs.map(({ id, label, count, icon: Icon }) => (
             <Link
               key={id}
               href={`/admin/moderation?tab=${id}`}
-              style={{
-                display: "flex", alignItems: "center", gap: 6,
-                padding: "0.6rem 1rem",
-                borderBottom: tab === id ? "2px solid var(--primary, #2563eb)" : "2px solid transparent",
-                fontWeight: tab === id ? 600 : 400,
-                fontSize: "0.875rem",
-                color: tab === id ? "var(--primary, #2563eb)" : "var(--muted)",
-                textDecoration: "none",
-                whiteSpace: "nowrap",
-              }}
+              className={`tab-nav__item${tab === id ? " tab-nav__item--active" : ""}`}
             >
               <Icon size={14} />
               {label}
-              {count > 0 && (
-                <span style={{
-                  background: tab === id ? "var(--primary, #2563eb)" : "var(--muted)",
-                  color: "#fff", borderRadius: 99, padding: "1px 7px", fontSize: "0.72rem", fontWeight: 700,
-                }}>
-                  {count}
-                </span>
-              )}
+              {count > 0 && <span className="tab-nav__badge">{count}</span>}
             </Link>
           ))}
-        </div>
+        </nav>
 
         {/* ── Pending Review Tab ────────────────────────────────────────── */}
         {tab === "pending" && (

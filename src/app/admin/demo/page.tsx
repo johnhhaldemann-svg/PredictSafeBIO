@@ -17,8 +17,12 @@ export default async function AdminDemoPage({ searchParams }: { searchParams: Pr
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">System Reliance</p>
-          <h1>Admin Utilities</h1>
+          <div className="page-header-left">
+            <p className="section-label">Platform Admin</p>
+            <h1>Admin Utilities</h1>
+            <p className="muted">Developer tools — demo seeding and internal test utilities.</p>
+          </div>
+          <Link className="button-secondary" href="/admin/dashboard">← Command Center</Link>
         </header>
         {params.message ? <p className="form-message">{params.message}</p> : null}
         <section className="panel">

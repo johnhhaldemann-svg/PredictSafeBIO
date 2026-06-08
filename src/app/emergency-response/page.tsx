@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ShieldCheck, ArrowRight, FileText, Phone } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 
 export const metadata: Metadata = { title: "Emergency Response – PredictSafeBIO" };
@@ -19,80 +19,51 @@ export default function EmergencyResponsePage() {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Plan · Emergency Response</p>
-          <h1>Emergency Response Plans</h1>
-          <p className="muted">
-            Documented, drilled, and readily accessible response plans for every foreseeable
-            emergency in your facility. Required under OSHA 29 CFR 1910.38 and NFPA 45.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Plan · Emergency Response</p>
+            <h1>Emergency Response Plans</h1>
+            <p className="muted">
+              Documented, drilled, and readily accessible response plans for every foreseeable
+              emergency in your facility. Required under OSHA 29 CFR 1910.38 and NFPA 45.
+            </p>
+          </div>
         </header>
 
-        {/* Module status */}
-        <div style={{
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderLeft: "4px solid var(--brand)",
-          borderRadius: "10px",
-          padding: "20px 24px",
-          maxWidth: "680px",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-            <ShieldCheck size={18} style={{ color: "var(--brand)" }} />
-            <span style={{ fontWeight: 700 }}>Module in Development</span>
-          </div>
-          <p style={{ fontSize: ".85rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "16px" }}>
+        <div className="ai-context-bar ai-context-bar--warning">
+          <ShieldCheck size={15} />
+          <span>
+            <strong>Module in Development.</strong>{" "}
             The ERP builder — step-by-step plan authoring, drill scheduling, and real-time quick-reference
-            cards — is on the roadmap. In the meantime, store your current emergency response SOPs in
-            the Documents module and tag them as emergency plans.
-          </p>
-          <Link
-            href="/documents"
-            style={{
-              display: "inline-flex", alignItems: "center", gap: "6px",
-              fontSize: ".83rem", fontWeight: 600, color: "var(--brand)", textDecoration: "none"
-            }}
-          >
-            Open Documents <ArrowRight size={13} />
-          </Link>
+            cards — is on the roadmap. Store current emergency response SOPs in the Documents module
+            and tag them as emergency plans.
+          </span>
+          <Link className="ai-fill-btn ai-fill-btn--warning" href="/documents">Open Documents</Link>
         </div>
 
-        {/* Plan types */}
-        <section>
-          <h2 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "12px" }}>
-            Required Plans — Biotech / Pharma Facility
-          </h2>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", maxWidth: "760px" }}>
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Required plans</p>
+              <h2>Biotech / Pharma Facility</h2>
+            </div>
+          </div>
+          <div className="command-card-grid">
             {ERP_TYPES.map((t) => (
-              <div
-                key={t.label}
-                style={{
-                  padding: "12px 16px",
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "8px",
-                }}
-              >
-                <div style={{ fontWeight: 600, fontSize: ".85rem", marginBottom: "4px" }}>{t.label}</div>
-                <div style={{ fontSize: ".78rem", color: "var(--muted)", lineHeight: 1.5 }}>{t.desc}</div>
-              </div>
+              <article key={t.label} className="command-card">
+                <div><strong>{t.label}</strong></div>
+                <em>{t.desc}</em>
+              </article>
             ))}
           </div>
         </section>
 
-        {/* Regulatory note */}
-        <div style={{
-          background: "#f0fdf4",
-          border: "1px solid #86efac",
-          borderRadius: "8px",
-          padding: "14px 18px",
-          maxWidth: "680px",
-          fontSize: ".83rem",
-          color: "#14532d",
-          lineHeight: 1.6,
-        }}>
-          <strong>📋 OSHA 1910.38 requirement:</strong> Written emergency action plans are required
-          for facilities with 10+ employees. Plans must be reviewed when facility layout changes,
-          after any emergency event, or when processes that create new hazards are added.
+        <div className="ai-context-bar ai-context-bar--success">
+          <ShieldCheck size={15} />
+          <span>
+            <strong>OSHA 1910.38 requirement:</strong> Written emergency action plans are required
+            for facilities with 10+ employees. Plans must be reviewed when facility layout changes,
+            after any emergency event, or when processes that create new hazards are added.
+          </span>
         </div>
       </div>
     </AppShell>

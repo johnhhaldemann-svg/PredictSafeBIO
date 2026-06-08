@@ -70,6 +70,17 @@ export const exposureStatusLabels: Record<ExposureStatus, string> = {
   retired: "Retired",
 };
 
+export const exposureRouteOptions: ExposureRoute[] = [
+  "inhalation",
+  "skin",
+  "injection",
+  "ingestion",
+  "mucosal",
+  "other",
+];
+
+export const exposureFrequencyOptions: ExposureFrequency[] = ["routine", "occasional", "rare"];
+
 // ---------------------------------------------------------------------------
 // Early-warning scoring (predictive tie-in)
 // ---------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BarChart3, ArrowRight, CheckCircle, RefreshCw } from "lucide-react";
+import { BarChart3, RefreshCw, ShieldCheck, CheckCircle } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { feedFindingToHazardRegisterAction } from "./actions";
 
@@ -35,123 +35,80 @@ export default async function ManagementReviewPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Monitor · Management Review</p>
-          <h1>Management Review</h1>
-          <p className="muted">
-            Formal quarterly and annual review of the EHS management system by senior leadership.
-            This is the Phase 6 close-the-loop mechanism — findings feed directly back into
-            risk assessments and the improvement plan. Required under ISO 45001 and ICH Q10.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Monitor · Management Review</p>
+            <h1>Management Review</h1>
+            <p className="muted">
+              Formal quarterly and annual review of the EHS management system by senior leadership.
+              This is the Phase 6 close-the-loop mechanism — findings feed directly back into
+              risk assessments and the improvement plan. Required under ISO 45001 and ICH Q10.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/trends">Trend Analysis →</Link>
         </header>
 
-        {/* Module status */}
-        <div style={{
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderLeft: "4px solid var(--brand)",
-          borderRadius: "10px",
-          padding: "20px 24px",
-          maxWidth: "680px",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-            <BarChart3 size={18} style={{ color: "var(--brand)" }} />
-            <span style={{ fontWeight: 700 }}>Module in Development</span>
-          </div>
-          <p style={{ fontSize: ".85rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "16px" }}>
+        <div className="ai-context-bar ai-context-bar--warning">
+          <BarChart3 size={15} />
+          <span>
+            <strong>Module in Development.</strong>{" "}
             Structured management review workflows — agenda builder, auto-populated KPI summaries,
-            action item tracking, and signed meeting records — are on the roadmap. Today, use the
-            Risk Monitor and Predictive Engine dashboards to assemble your review inputs.
-          </p>
-          <a
-            href="/risk-command-center"
-            style={{
-              display: "inline-flex", alignItems: "center", gap: "6px",
-              fontSize: ".83rem", fontWeight: 600, color: "var(--brand)", textDecoration: "none"
-            }}
-          >
-            Open Risk Monitor <ArrowRight size={13} />
-          </a>
+            action item tracking, and signed meeting records — are on the roadmap. Use the Risk Monitor
+            and Predictive Engine dashboards to assemble your review inputs today.
+          </span>
+          <a className="ai-fill-btn ai-fill-btn--warning" href="/risk-command-center">Open Risk Monitor</a>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", maxWidth: "860px" }}>
-          {/* Inputs */}
-          <section>
-            <h2 style={{ fontSize: ".95rem", fontWeight: 700, marginBottom: "12px", color: "var(--brand)" }}>
-              📥 Review Inputs
-            </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              {REVIEW_INPUTS.map((item) => (
-                <div
-                  key={item}
-                  style={{
-                    display: "flex", alignItems: "flex-start", gap: "8px",
-                    padding: "8px 12px",
-                    background: "var(--surface)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "6px",
-                    fontSize: ".80rem",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  <CheckCircle size={13} style={{ color: "var(--brand)", marginTop: "2px", flexShrink: 0 }} />
-                  {item}
-                </div>
-              ))}
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Inputs</p>
+              <h2>Review Inputs</h2>
             </div>
-          </section>
+            <CheckCircle size={20} />
+          </div>
+          <div className="action-list">
+            {REVIEW_INPUTS.map((item) => (
+              <article className="action-row" key={item}>
+                <div><strong>{item}</strong></div>
+              </article>
+            ))}
+          </div>
+        </section>
 
-          {/* Outputs */}
-          <section>
-            <h2 style={{ fontSize: ".95rem", fontWeight: 700, marginBottom: "12px", color: "#2e7d32" }}>
-              📤 Review Outputs
-            </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              {REVIEW_OUTPUTS.map((item) => (
-                <div
-                  key={item}
-                  style={{
-                    display: "flex", alignItems: "flex-start", gap: "8px",
-                    padding: "8px 12px",
-                    background: "var(--surface)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "6px",
-                    fontSize: ".80rem",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  <ArrowRight size={13} style={{ color: "#2e7d32", marginTop: "2px", flexShrink: 0 }} />
-                  {item}
-                </div>
-              ))}
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Outputs</p>
+              <h2>Review Outputs</h2>
             </div>
-
-            <div style={{
-              marginTop: "16px",
-              background: "#f0fdf4",
-              border: "1px solid #86efac",
-              borderRadius: "8px",
-              padding: "12px 16px",
-              fontSize: ".80rem",
-              color: "#14532d",
-              lineHeight: 1.6,
-            }}>
+            <RefreshCw size={20} />
+          </div>
+          <div className="action-list">
+            {REVIEW_OUTPUTS.map((item) => (
+              <article className="action-row" key={item}>
+                <div><strong>{item}</strong></div>
+              </article>
+            ))}
+          </div>
+          <div className="ai-context-bar ai-context-bar--success">
+            <ShieldCheck size={14} />
+            <span>
               <strong>ISO 45001 Clause 9.3:</strong> Management review outputs must include decisions
               related to continual improvement opportunities, changes to the OH&S management system,
               and resource needs. Records must be retained as documented information.
-            </div>
-          </section>
-        </div>
+            </span>
+          </div>
+        </section>
 
-        {/* Phase 6 → Phase 1 feedback loop */}
         <section className="panel">
           <div className="panel-heading">
             <div>
               <p className="section-label">Phase 6 → Phase 1 Loop-back</p>
               <h2>Feed finding to Hazard Register</h2>
             </div>
-            <RefreshCw size={22} style={{ color: "var(--brand)" }} />
+            <RefreshCw size={22} />
           </div>
-          <p className="muted" style={{ marginBottom: "16px" }}>
+          <p className="muted">
             When this review surfaces a new or uncontrolled risk, log it directly into the
             Hazard Register. It will be scored by the Predictive Engine as a leading indicator.
           </p>
@@ -188,13 +145,12 @@ export default async function ManagementReviewPage({ searchParams }: Props) {
               Add to Hazard Register
             </button>
           </form>
-          <p style={{ fontSize: ".75rem", color: "var(--muted)", marginTop: "10px" }}>
+          <p className="muted">
             Record will be created as <strong>Identified — Draft, Human Review Required</strong> and
             linked back to the risk scoring engine. A qualified reviewer must assess and classify it.
           </p>
         </section>
 
-        {/* Trend data shortcut */}
         <section className="panel inline-action-panel">
           <div>
             <p className="section-label">Before your review</p>

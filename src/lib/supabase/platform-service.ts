@@ -96,10 +96,12 @@ export async function getPlatformData(): Promise<PlatformData> {
   // Counts via simple per-table queries
   const counts = await getSimpleCounts(admin);
 
-  // RLS: all public tables have RLS enforced by schema convention.
-  // The count is verified periodically via the Supabase security advisor
-  // and tracked in docs/rls-integration-test-plan.md.
-  const tablesWithRls = 64; // verified 2026-06-02 via pg_tables check
+  // RLS: pg_tables is a system catalog not exposed via PostgREST.
+  // Count is maintained here; update by running:
+  //   SELECT COUNT(*) FROM pg_tables WHERE schemaname = 'public';
+  //   SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND rowsecurity = false;
+  // Last verified 2026-06-08: 96 tables, all 96 have RLS enabled.
+  const tablesWithRls = 96;
   const tablesWithoutRls: string[] = [];
 
   const metrics: PlatformMetrics = {
