@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Activity, ArrowLeft, Lock, ShieldAlert, ShieldCheck, User } from "lucide-react";
+import { Activity, Lock, ShieldAlert, ShieldCheck, User } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { createServerClient } from "@/lib/supabase/server";
 import { getAdminUserDetail } from "@/lib/supabase/user-admin-service";
@@ -84,24 +84,20 @@ export default async function UserDetailPage({ params, searchParams }: Props) {
   return (
     <AppShell>
       <div className="page-stack">
-        {/* Back nav */}
-        <div>
-          <Link href="/admin/users" className="text-link" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.85rem" }}>
-            <ArrowLeft size={14} /> Back to Users
-          </Link>
-        </div>
-
         <header className="page-header">
-          <p className="section-label">Admin › User Detail</p>
-          <h1>{userDetail.full_name ?? userDetail.email ?? "Unknown user"}</h1>
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
-            <span className={`role-chip ${getRoleBadgeClass(userDetail.role)}`}>
-              {getDbRoleLabel(userDetail.role)}
-            </span>
-            <span className={`status-chip ${statusBadgeClass(userDetail.account_status)}`}>
-              {userDetail.account_status}
-            </span>
+          <div className="page-header-left">
+            <p className="section-label">Admin · User Detail</p>
+            <h1>{userDetail.full_name ?? userDetail.email ?? "Unknown user"}</h1>
+            <div className="form-action-row">
+              <span className={`role-chip ${getRoleBadgeClass(userDetail.role)}`}>
+                {getDbRoleLabel(userDetail.role)}
+              </span>
+              <span className={`status-chip ${statusBadgeClass(userDetail.account_status)}`}>
+                {userDetail.account_status}
+              </span>
+            </div>
           </div>
+          <Link href="/admin/users" className="button-secondary">← All Users</Link>
         </header>
 
         {/* Flash messages */}
@@ -216,14 +212,14 @@ export default async function UserDetailPage({ params, searchParams }: Props) {
             </div>
             <ShieldCheck size={20} />
           </div>
-          <p className="muted" style={{ marginBottom: "1rem", fontSize: "0.85rem" }}>
+          <p className="muted">
             Changing a user&apos;s role takes effect immediately. The change is logged to the immutable audit trail.
           </p>
-          <form action={changeUserRoleAction} style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end", flexWrap: "wrap" }}>
+          <form action={changeUserRoleAction} className="form-action-row">
             <input type="hidden" name="userId" value={userDetail.id} />
-            <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
+            <label>
               New role
-              <select name="role" defaultValue={userDetail.role} style={{ minWidth: 180 }}>
+              <select name="role" defaultValue={userDetail.role}>
                 {availableRoles.map((r) => (
                   <option key={r.value} value={r.value}>{r.label}</option>
                 ))}
@@ -242,7 +238,7 @@ export default async function UserDetailPage({ params, searchParams }: Props) {
             </div>
             <ShieldAlert size={20} />
           </div>
-          <p className="muted" style={{ marginBottom: "1rem", fontSize: "0.85rem" }}>
+          <p className="muted">
             Suspending a user immediately revokes their ability to sign in. Reactivating restores access.
             All status changes are logged.
           </p>
@@ -257,8 +253,7 @@ export default async function UserDetailPage({ params, searchParams }: Props) {
               <button
                 className="button-secondary"
                 type="submit"
-                style={{ color: "var(--error, #c0392b)" }}
-              >
+                >
                 Suspend account
               </button>
             </form>
@@ -275,7 +270,7 @@ export default async function UserDetailPage({ params, searchParams }: Props) {
               </div>
               <Lock size={20} />
             </div>
-            <p className="muted" style={{ marginBottom: "1rem", fontSize: "0.85rem" }}>
+            <p className="muted">
               Sends a password-reset link to <strong>{userDetail.email}</strong>. Requires SMTP to be configured.
             </p>
             <form action={sendPasswordResetAction}>

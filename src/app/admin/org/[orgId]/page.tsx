@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  Building2, ChevronLeft, Users, Settings, Shield, Activity,
+  Building2, Users, Settings, Shield, Activity,
   UserPlus, Copy, Download, BookOpen,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
@@ -198,30 +198,24 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
         {/* ── Header ── */}
         <header className="page-header">
           <div className="page-header-left">
-            <Link href="/admin/organizations" className="muted" style={{ fontSize: "0.8rem", display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
-              <ChevronLeft size={13} /> All organizations
-            </Link>
-            <p className="section-label">Platform Admin · Company</p>
+            <p className="section-label">Platform Admin · <Link href="/admin/organizations">Organizations</Link></p>
             <h1>{org.name}</h1>
+            <div className="form-action-row">
+              <span className={`${statusBadge(org.status)} capitalize`}>{org.status ?? "active"}</span>
+              <span className="muted capitalize">{org.environment ?? "production"}</span>
+            </div>
           </div>
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-            <span className={statusBadge(org.status)} style={{ textTransform: "capitalize" }}>
-              {org.status ?? "active"}
-            </span>
-            <span className="muted" style={{ fontSize: "0.8rem", textTransform: "capitalize" }}>
-              {org.environment ?? "production"}
-            </span>
-          </div>
+          <Link href="/admin/organizations" className="button-secondary">← All Orgs</Link>
         </header>
 
         {/* ── Feedback banners ── */}
         {success && (
-          <div className="ai-context-bar" style={{ background: "var(--green-light,#f0fdf4)", borderColor: "#bbf7d0", color: "#15803d" }}>
+          <div className="ai-context-bar ai-context-bar--success">
             ✓ {decodeURIComponent(success)}
           </div>
         )}
         {error && (
-          <div className="ai-context-bar" style={{ background: "#fef2f2", borderColor: "#fecaca", color: "#991b1b" }}>
+          <div className="ai-context-bar ai-context-bar--danger">
             ✗ {decodeURIComponent(error)}
           </div>
         )}
@@ -282,7 +276,7 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                 </div>
                 <Download size={20} />
               </div>
-              <p className="muted" style={{ marginBottom: "1rem", fontSize: "0.85rem" }}>
+              <p className="muted">
                 Download a CSV archive of this organization&apos;s records for compliance audits or offboarding.
                 Export actions are recorded in the audit log.
               </p>
@@ -344,9 +338,7 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                   <p className="section-label">Audit trail</p>
                   <h2>Recent activity</h2>
                 </div>
-                <Link href={tabHref("audit")} className="button-secondary compact" style={{ fontSize: "0.78rem" }}>
-                  View full log
-                </Link>
+                <Link href={tabHref("audit")} className="button-secondary compact">View full log</Link>
               </div>
               {!recentActivity?.length ? (
                 <p className="muted" style={{ padding: "1rem" }}>No audit events recorded yet.</p>
@@ -541,13 +533,13 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
             </section>
 
             {/* Danger Zone — Ticket 5 */}
-            <section className="panel" style={{ borderColor: "var(--red,#dc2626)" }}>
+            <section className="panel" style={{ borderColor: "var(--red)" }}>
               <div className="panel-heading">
                 <div>
-                  <p className="section-label" style={{ color: "var(--red,#dc2626)" }}>Danger zone</p>
+                  <p className="section-label" style={{ color: "var(--red)" }}>Danger zone</p>
                   <h2>Archive or delete this organization</h2>
                 </div>
-                <Shield size={24} style={{ color: "var(--red,#dc2626)", flexShrink: 0 }} />
+                <Shield size={24} style={{ color: "var(--red)" }} />
               </div>
               <p className="muted" style={{ fontSize: "0.85rem", marginBottom: "1.5rem" }}>
                 Both actions require typing the exact organization name to confirm. All actions are recorded in the audit log.
@@ -572,7 +564,7 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                   <button
                     className="button-secondary"
                     type="submit"
-                    style={{ color: "var(--red,#dc2626)", borderColor: "var(--red,#dc2626)", alignSelf: "flex-start" }}
+                    style={{ color: "var(--red)", borderColor: "var(--red)" }}
                   >
                     Archive org
                   </button>
@@ -597,7 +589,7 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                   <button
                     className="button-secondary"
                     type="submit"
-                    style={{ color: "var(--red,#dc2626)", borderColor: "var(--red,#dc2626)", alignSelf: "flex-start" }}
+                    style={{ color: "var(--red)", borderColor: "var(--red)" }}
                   >
                     Delete org permanently
                   </button>
@@ -620,7 +612,7 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                   <h2>Enable or disable platform modules</h2>
                 </div>
               </div>
-              <p className="muted" style={{ marginBottom: "1rem", fontSize: "0.85rem" }}>
+              <p className="muted">
                 Disabled modules are hidden from all users in this organization immediately.
                 New organizations default to all modules enabled.
               </p>
@@ -656,7 +648,7 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                   <h2>Suspend or reinstate this organization</h2>
                 </div>
               </div>
-              <p className="muted" style={{ marginBottom: "1rem", fontSize: "0.85rem" }}>
+              <p className="muted">
                 Suspending blocks all member logins. All data is preserved.
                 Current status: <strong style={{ textTransform: "capitalize" }}>{org.status ?? "active"}</strong>
               </p>
@@ -674,7 +666,7 @@ export default async function OrgManagementPage({ params, searchParams }: Props)
                   <button
                     className="button-secondary"
                     type="submit"
-                    style={{ color: "var(--red,#dc2626)", borderColor: "var(--red,#dc2626)" }}
+                    style={{ color: "var(--red)", borderColor: "var(--red)" }}
                     disabled={org.status === "suspended"}
                   >
                     Suspend org

@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
-  Activity, ArrowLeft, CheckCircle2, EyeOff, Flag,
+  Activity, CheckCircle2, EyeOff, Flag,
   ShieldAlert, ShieldCheck, XCircle,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
@@ -90,26 +90,25 @@ export default async function BioReviewPage({ params, searchParams }: Props) {
   return (
     <AppShell>
       <div className="page-stack">
-        <Link href="/admin/moderation" className="text-link" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.85rem" }}>
-          <ArrowLeft size={14} /> Back to Moderation Queue
-        </Link>
-
         <header className="page-header">
-          <p className="section-label">Admin › Moderation › Review</p>
-          <h1>{bio.provider_name ?? "Unnamed Provider"}</h1>
-          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
-            <span className={`status-chip ${STATUS_CLASS[bio.review_status]}`}>
-              {STATUS_LABEL[bio.review_status]}
-            </span>
-            {bio.npi_verified
-              ? <span className="status-chip status-current" style={{ fontSize: "0.75rem" }}>NPI Verified ✓</span>
-              : <span className="status-chip status-needs-review" style={{ fontSize: "0.75rem" }}>NPI Unverified</span>}
-            {bio.report_count > 0 && (
-              <span style={{ color: "var(--error, #dc2626)", fontWeight: 600, fontSize: "0.82rem" }}>
-                🚩 {bio.report_count} open report{bio.report_count !== 1 ? "s" : ""}
+          <div className="page-header-left">
+            <p className="section-label">Admin · <Link href="/admin/moderation">Moderation Queue</Link> / Review</p>
+            <h1>{bio.provider_name ?? "Unnamed Provider"}</h1>
+            <div className="form-action-row">
+              <span className={`status-chip ${STATUS_CLASS[bio.review_status]}`}>
+                {STATUS_LABEL[bio.review_status]}
               </span>
-            )}
+              {bio.npi_verified
+                ? <span className="status-chip status-current">NPI Verified ✓</span>
+                : <span className="status-chip status-needs-review">NPI Unverified</span>}
+              {bio.report_count > 0 && (
+                <span className="status-missing">
+                  🚩 {bio.report_count} open report{bio.report_count !== 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
           </div>
+          <Link href="/admin/moderation" className="button-secondary">← Queue</Link>
         </header>
 
         {sp.success && (
@@ -153,17 +152,14 @@ export default async function BioReviewPage({ params, searchParams }: Props) {
             )}
           </div>
           {bio.npi_number && (
-            <div style={{ marginTop: "0.75rem", padding: "0 0.25rem" }}>
-              <a
-                href={`https://npiregistry.cms.hhs.gov/search?number=${bio.npi_number}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-link"
-                style={{ fontSize: "0.85rem" }}
-              >
-                Look up NPI {bio.npi_number} on NPPES registry →
-              </a>
-            </div>
+            <a
+              href={`https://npiregistry.cms.hhs.gov/search?number=${bio.npi_number}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-link"
+            >
+              Look up NPI {bio.npi_number} on NPPES registry →
+            </a>
           )}
         </section>
 
@@ -175,11 +171,11 @@ export default async function BioReviewPage({ params, searchParams }: Props) {
               <h2>{checkedCount} / {NPI_CHECKLIST_KEYS.length} items confirmed</h2>
             </div>
             {npiComplete
-              ? <CheckCircle2 size={20} style={{ color: "var(--success, #16a34a)" }} />
-              : <ShieldAlert size={20} style={{ color: "var(--warn, #d97706)" }} />}
+              ? <CheckCircle2 size={20} style={{ color: "var(--green)" }} />
+              : <ShieldAlert size={20} style={{ color: "var(--amber)" }} />}
           </div>
           {npiComplete && (
-            <div className="verification-pass-box" style={{ marginBottom: "0.75rem" }}>
+            <div className="verification-pass-box">
               <CheckCircle2 size={14} />
               <span>All 7 items verified — NPI checklist complete.</span>
             </div>
@@ -189,22 +185,18 @@ export default async function BioReviewPage({ params, searchParams }: Props) {
               const item = bio.npi_checklist[key];
               const checked = item?.checked ?? false;
               return (
-                <article className="action-row" key={key} style={{ alignItems: "flex-start" }}>
-                  <div style={{ alignItems: "flex-start" }}>
+                <article className="action-row" key={key}>
+                  <div>
                     {checked
-                      ? <CheckCircle2 size={15} style={{ color: "var(--success, #16a34a)", flexShrink: 0 }} />
-                      : <XCircle size={15} style={{ color: "var(--muted)", flexShrink: 0 }} />}
-                    <strong style={{ fontSize: "0.875rem" }}>{NPI_CHECKLIST_LABELS[key]}</strong>
+                      ? <CheckCircle2 size={15} style={{ color: "var(--green)" }} />
+                      : <XCircle size={15} className="muted" />}
+                    <strong>{NPI_CHECKLIST_LABELS[key]}</strong>
                   </div>
-                  <form action={updateNpiChecklistAction} style={{ marginTop: 6 }}>
+                  <form action={updateNpiChecklistAction} className="form-action-row">
                     <input type="hidden" name="profileId" value={bio.id} />
                     <input type="hidden" name="key" value={key} />
                     <input type="hidden" name="checked" value={String(!checked)} />
-                    <button
-                      className="button-secondary"
-                      type="submit"
-                      style={{ fontSize: "0.78rem", padding: "0.2rem 0.6rem" }}
-                    >
+                    <button className="button-secondary compact" type="submit">
                       {checked ? "Uncheck" : "Mark confirmed"}
                     </button>
                   </form>
@@ -221,64 +213,52 @@ export default async function BioReviewPage({ params, searchParams }: Props) {
               <div><p className="section-label">Decision</p><h2>Review actions</h2></div>
               <ShieldCheck size={20} />
             </div>
-            <p className="muted" style={{ fontSize: "0.85rem", marginBottom: "1rem" }}>
+            <p className="muted">
               All decisions are logged to the immutable audit trail and cannot be undone silently.
               Notes are shared back to the provider when requesting changes or rejecting.
             </p>
 
             {/* Approve */}
             {!isApproved && (
-              <details style={{ marginBottom: "0.75rem" }}>
-                <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: "0.9rem", color: "var(--success, #16a34a)" }}>
-                  ✅ Approve bio
-                </summary>
-                <form action={approveProfileAction} style={{ marginTop: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <details className="stacked-form">
+                <summary className="details-summary">✅ Approve bio</summary>
+                <form action={approveProfileAction} className="stacked-form">
                   <input type="hidden" name="profileId" value={bio.id} />
-                  <label style={{ fontSize: "0.85rem" }}>
+                  <label>
                     Optional notes to provider
-                    <textarea name="notes" rows={2} placeholder="Great — bio looks accurate and complete." style={{ width: "100%", marginTop: 4 }} />
+                    <textarea name="notes" rows={2} placeholder="Great — bio looks accurate and complete." />
                   </label>
-                  <button className="button-primary" type="submit" style={{ alignSelf: "flex-start" }}>
-                    Approve &amp; make live
-                  </button>
+                  <button className="button-primary" type="submit">Approve &amp; make live</button>
                 </form>
               </details>
             )}
 
             {/* Request changes */}
             {isPending && (
-              <details style={{ marginBottom: "0.75rem" }}>
-                <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: "0.9rem" }}>
-                  ✏️ Request changes
-                </summary>
-                <form action={requestChangesAction} style={{ marginTop: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <details className="stacked-form">
+                <summary className="details-summary">✏️ Request changes</summary>
+                <form action={requestChangesAction} className="stacked-form">
                   <input type="hidden" name="profileId" value={bio.id} />
-                  <label style={{ fontSize: "0.85rem" }}>
-                    Notes for provider <span style={{ color: "var(--error, #dc2626)" }}>*</span>
-                    <textarea name="notes" required rows={3} placeholder="Please update your NPI number — the one on file doesn't match the NPPES registry." style={{ width: "100%", marginTop: 4 }} />
+                  <label>
+                    Notes for provider <span aria-hidden="true">*</span>
+                    <textarea name="notes" required rows={3} placeholder="Please update your NPI number — the one on file doesn't match the NPPES registry." />
                   </label>
-                  <button className="button-secondary" type="submit" style={{ alignSelf: "flex-start" }}>
-                    Send back for revision
-                  </button>
+                  <button className="button-secondary" type="submit">Send back for revision</button>
                 </form>
               </details>
             )}
 
             {/* Reject */}
             {!isApproved && (
-              <details style={{ marginBottom: "0.75rem" }}>
-                <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: "0.9rem", color: "var(--error, #dc2626)" }}>
-                  ❌ Reject bio
-                </summary>
-                <form action={rejectProfileAction} style={{ marginTop: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <details className="stacked-form">
+                <summary className="details-summary">❌ Reject bio</summary>
+                <form action={rejectProfileAction} className="stacked-form">
                   <input type="hidden" name="profileId" value={bio.id} />
-                  <label style={{ fontSize: "0.85rem" }}>
-                    Rejection reason <span style={{ color: "var(--error, #dc2626)" }}>*</span>
-                    <textarea name="notes" required rows={3} placeholder="Credentials could not be verified in NPPES. Suspected fraudulent NPI." style={{ width: "100%", marginTop: 4 }} />
+                  <label>
+                    Rejection reason <span aria-hidden="true">*</span>
+                    <textarea name="notes" required rows={3} placeholder="Credentials could not be verified in NPPES. Suspected fraudulent NPI." />
                   </label>
-                  <button className="button-secondary" type="submit" style={{ alignSelf: "flex-start", color: "var(--error, #dc2626)" }}>
-                    Reject permanently
-                  </button>
+                  <button className="button-secondary" type="submit">Reject permanently</button>
                 </form>
               </details>
             )}
@@ -294,7 +274,7 @@ export default async function BioReviewPage({ params, searchParams }: Props) {
             </div>
             <EyeOff size={20} />
           </div>
-          <div className="verification-pending-box" style={{ marginBottom: "1rem" }}>
+          <div className="ai-context-bar">
             <EyeOff size={14} />
             <span>Takedown hides a profile immediately without deleting data. Fully reversible and audit-safe.</span>
           </div>
@@ -304,19 +284,15 @@ export default async function BioReviewPage({ params, searchParams }: Props) {
               <button className="button-primary" type="submit">Restore to public view</button>
             </form>
           ) : (
-            <details>
-              <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: "0.9rem" }}>
-                🔻 Take down this bio
-              </summary>
-              <form action={takedownProfileAction} style={{ marginTop: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <details className="stacked-form">
+              <summary className="details-summary">🔻 Take down this bio</summary>
+              <form action={takedownProfileAction} className="stacked-form">
                 <input type="hidden" name="profileId" value={bio.id} />
-                <label style={{ fontSize: "0.85rem" }}>
-                  Reason for takedown <span style={{ color: "var(--error, #dc2626)" }}>*</span>
-                  <textarea name="notes" required rows={2} placeholder="Taken down pending investigation of fraud report." style={{ width: "100%", marginTop: 4 }} />
+                <label>
+                  Reason for takedown <span aria-hidden="true">*</span>
+                  <textarea name="notes" required rows={2} placeholder="Taken down pending investigation of fraud report." />
                 </label>
-                <button className="button-secondary" type="submit" style={{ alignSelf: "flex-start", color: "var(--error, #dc2626)" }}>
-                  Take down now
-                </button>
+                <button className="button-secondary" type="submit">Take down now</button>
               </form>
             </details>
           )}
@@ -333,24 +309,24 @@ export default async function BioReviewPage({ params, searchParams }: Props) {
               {bio.open_reports.map((report) => (
                 <article className="action-row" key={report.id}>
                   <div>
-                    <Flag size={13} style={{ color: report.status === "pending" ? "var(--error, #dc2626)" : "var(--muted)" }} />
+                    <Flag size={13} className={report.status === "pending" ? "status-missing" : "muted"} />
                     <strong>{REPORT_REASON_LABELS[report.reason] ?? report.reason}</strong>
-                    <span className={`status-chip ${report.status === "pending" ? "status-needs-review" : "status-unknown"}`} style={{ fontSize: "0.72rem" }}>
+                    <span className={`status-chip ${report.status === "pending" ? "status-needs-review" : "status-unknown"}`}>
                       {report.status}
                     </span>
                   </div>
-                  <p className="muted" style={{ fontSize: "0.83rem" }}>
+                  <p className="muted">
                     By {report.reporter_name ?? "Unknown"} · {new Date(report.created_at).toLocaleString()}
                   </p>
-                  {report.details && <p style={{ fontSize: "0.83rem" }}>{report.details}</p>}
+                  {report.details && <p>{report.details}</p>}
                   {report.status === "pending" && (
-                    <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem", flexWrap: "wrap" }}>
+                    <div className="form-action-row">
                       {(["reviewed", "actioned", "dismissed"] as const).map((action) => (
                         <form action={triageReportAction} key={action}>
                           <input type="hidden" name="reportId" value={report.id} />
                           <input type="hidden" name="profileId" value={bio.id} />
                           <input type="hidden" name="status" value={action} />
-                          <button className="button-secondary" type="submit" style={{ fontSize: "0.78rem", padding: "0.2rem 0.6rem", textTransform: "capitalize" }}>
+                          <button className="button-secondary compact" type="submit" style={{ textTransform: "capitalize" }}>
                             {action}
                           </button>
                         </form>
