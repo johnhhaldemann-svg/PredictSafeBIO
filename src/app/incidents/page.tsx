@@ -59,39 +59,50 @@ export default async function IncidentReportingPage({ searchParams }: Props) {
   const filterStatus = (params.filter as IncidentStatus | "all") ?? "all";
   const filterSeverity = (params.severity as IncidentSeverity | "all") ?? "all";
 
-  const [recordsResult, adminAccess] = await Promise.all([
-    listIncidents(
-      filterStatus !== "all" || filterSeverity !== "all"
-        ? {
-            status: filterStatus !== "all" ? filterStatus : undefined,
-            severity: filterSeverity !== "all" ? filterSeverity : undefined,
-          }
-        : undefined
-    ).catch(() => null),
+  const [allRecordsResult, adminAccess] = await Promise.all([
+    listIncidents().catch(() => null),
     getFoundationAdminAccessSummary().catch(() => ({
       configured: false, signedIn: false, isOwner: false, message: "",
     })),
   ]);
 
-  const loadFailed = recordsResult === null;
-  const records = recordsResult ?? [];
+  const loadFailed = allRecordsResult === null;
+  const allRecords = allRecordsResult ?? [];
+  const records = allRecords.filter((r) => {
+    if (filterStatus !== "all" && r.status !== filterStatus) return false;
+    if (filterSeverity !== "all" && r.severity !== filterSeverity) return false;
+    return true;
+  });
 
-  const openCount      = records.filter((r) => r.status === "open").length;
-  const investigatingCount = records.filter((r) => r.status === "investigating").length;
-  const criticalCount  = records.filter((r) => r.severity === "critical" || r.severity === "high").length;
-  const oshaCount      = records.filter((r) => r.isOshaRecordable).length;
-  const closedCount    = records.filter((r) => r.status === "closed").length;
+  const openCount          = allRecords.filter((r) => r.status === "open").length;
+  const investigatingCount = allRecords.filter((r) => r.status === "investigating").length;
+  const criticalCount      = allRecords.filter((r) => r.severity === "critical" || r.severity === "high").length;
+  const oshaCount          = allRecords.filter((r) => r.isOshaRecordable).length;
+  const closedCount        = allRecords.filter((r) => r.status === "closed").length;
+
+  // Per-status counts for filter badges
+  const statusCounts: Record<string, number> = {};
+  (["open", "investigating", "contained", "closed"] as const).forEach((s) => {
+    statusCounts[s] = allRecords.filter((r) => r.status === s).length;
+  });
+  const severityCounts: Record<string, number> = {};
+  (["critical", "high", "medium", "low"] as const).forEach((s) => {
+    severityCounts[s] = allRecords.filter((r) => r.severity === s).length;
+  });
 
   return (
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Operate · Incident Reporting</p>
-          <h1>Incident Register</h1>
-          <p className="muted">
-            Log safety incidents within 24 hours. Every report auto-creates a CAPA entry for root
-            cause investigation and feeds trend data into the Predictive Engine.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Operate · Incident Reporting</p>
+            <h1>Incident Register</h1>
+            <p className="muted">
+              Log safety incidents within 24 hours. Every report auto-creates a CAPA entry for root
+              cause investigation and feeds trend data into the Predictive Engine.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/operations/capa">CAPA Records →</Link>
         </header>
 
         {/* Summary cards */}
@@ -124,41 +135,58 @@ export default async function IncidentReportingPage({ searchParams }: Props) {
         </section>
 
         {/* OSHA obligation banner */}
-        <div style={{
-          background: "#fef3c7",
-          border: "1px solid #fbbf24",
-          borderRadius: "8px",
-          padding: "14px 18px",
-          fontSize: ".83rem",
-          color: "#78350f",
-          lineHeight: 1.6,
-        }}>
-          <strong>⏱ OSHA reporting deadlines:</strong> Recordable incidents → 300 Log within{" "}
-          <strong>7 days</strong>. Fatalities & in-patient hospitalisations → OSHA within{" "}
-          <strong>8 hours</strong>. Amputations & eye losses → OSHA within <strong>24 hours</strong>.
+        <div className="ai-context-bar ai-context-bar--warning">
+          <Clock size={15} />
+          <span>
+            <strong>OSHA reporting deadlines:</strong> Recordable incidents → 300 Log within{" "}
+            <strong>7 days</strong>. Fatalities &amp; hospitalisations → OSHA within{" "}
+            <strong>8 hours</strong>. Amputations &amp; eye losses → OSHA within <strong>24 hours</strong>.
+          </span>
         </div>
+
+        {criticalCount > 0 && (
+          <div className="ai-context-bar ai-context-bar--danger">
+            <AlertTriangle size={15} />
+            <span>
+              <strong>{criticalCount} high/critical incident{criticalCount !== 1 ? "s" : ""} open.</strong>{" "}
+              Priority response required.
+            </span>
+            <Link className="ai-fill-btn ai-fill-btn--danger" href="/incidents?severity=critical">
+              View critical
+            </Link>
+          </div>
+        )}
 
         {params.message && <p className="form-message">{params.message}</p>}
 
-        {/* Filter strip */}
+        {/* Status filter */}
         <nav className="command-center-link-strip" aria-label="Incident status filter">
-          {(["all", "open", "investigating", "contained", "closed"] as const).map((s) => (
+          <Link href="/incidents" className={`button-secondary compact ${filterStatus === "all" && filterSeverity === "all" ? "active-filter" : ""}`}>
+            All
+            <span className="filter-count-badge">{allRecords.length}</span>
+          </Link>
+          {(["open", "investigating", "contained", "closed"] as const).map((s) => (
             <Link
               key={s}
-              href={s === "all" ? "/incidents" : `/incidents?filter=${s}`}
+              href={`/incidents?filter=${s}`}
               className={`button-secondary compact ${filterStatus === s ? "active-filter" : ""}`}
             >
-              {s === "all" ? "All" : incidentStatusLabels[s]}
+              {incidentStatusLabels[s]}
+              <span className="filter-count-badge">{statusCounts[s] ?? 0}</span>
             </Link>
           ))}
-          <span style={{ width: 1, background: "var(--border)", margin: "0 4px" }} />
-          {(["all", "critical", "high", "medium", "low"] as const).map((s) => (
+        </nav>
+
+        {/* Severity filter */}
+        <nav className="command-center-link-strip" aria-label="Incident severity filter">
+          {(["critical", "high", "medium", "low"] as const).map((s) => (
             <Link
               key={`sev-${s}`}
-              href={s === "all" ? "/incidents" : `/incidents?severity=${s}`}
+              href={`/incidents?severity=${s}`}
               className={`button-secondary compact ${filterSeverity === s ? "active-filter" : ""}`}
             >
-              {s === "all" ? "All severities" : incidentSeverityLabels[s as IncidentSeverity]}
+              {incidentSeverityLabels[s as IncidentSeverity]}
+              {(severityCounts[s] ?? 0) > 0 && <span className="filter-count-badge">{severityCounts[s]}</span>}
             </Link>
           ))}
         </nav>
@@ -168,7 +196,11 @@ export default async function IncidentReportingPage({ searchParams }: Props) {
           <div className="panel-heading">
             <div>
               <p className="section-label">Incident Register</p>
-              <h2>{records.length} record{records.length !== 1 ? "s" : ""}</h2>
+              <h2>
+                {records.length === allRecords.length
+                  ? `${allRecords.length} record${allRecords.length !== 1 ? "s" : ""}`
+                  : `${records.length} of ${allRecords.length} shown`}
+              </h2>
             </div>
           </div>
 
@@ -190,13 +222,11 @@ export default async function IncidentReportingPage({ searchParams }: Props) {
                         <StatusIcon size={13} style={{ display: "inline", marginRight: 4 }} />
                         {incidentStatusLabels[incident.status]}
                       </span>
-                      <span className={SEVERITY_CLASS[incident.severity]}
-                        style={{ marginLeft: 6 }}
-                      >
+                      <span className={SEVERITY_CLASS[incident.severity]}>
                         {incidentSeverityLabels[incident.severity]}
                       </span>
                       {incident.isOshaRecordable && (
-                        <span className="status-missing" style={{ marginLeft: 6 }}>OSHA Recordable</span>
+                        <span className="status-missing">OSHA Recordable</span>
                       )}
                     </div>
                     <p>
@@ -242,7 +272,7 @@ export default async function IncidentReportingPage({ searchParams }: Props) {
                 />
               </label>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+              <div className="form-grid">
                 <label>
                   Incident type *
                   <select name="incidentType" required defaultValue="">
@@ -252,7 +282,6 @@ export default async function IncidentReportingPage({ searchParams }: Props) {
                     ))}
                   </select>
                 </label>
-
                 <label>
                   Severity *
                   <select name="severity" required defaultValue="medium">

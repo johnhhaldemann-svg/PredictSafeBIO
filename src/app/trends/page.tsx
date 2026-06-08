@@ -62,12 +62,15 @@ export default async function TrendsPage() {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Monitor · Phase 6 — Review &amp; Improve</p>
-          <h1>Trend Analysis</h1>
-          <p className="muted">
-            KPI trends across CAPAs, training completion, and audit readiness — the data inputs
-            for Management Review and the trigger for looping findings back into Phase 1.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Monitor · Phase 6 — Review &amp; Improve</p>
+            <h1>Trend Analysis</h1>
+            <p className="muted">
+              KPI trends across CAPAs, training completion, and audit readiness — the data inputs
+              for Management Review and the trigger for looping findings back into Phase 1.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/risk-command-center">Risk Monitor →</Link>
         </header>
 
         {/* KPI cards */}
@@ -105,7 +108,7 @@ export default async function TrendsPage() {
           </article>
         </section>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+        <div className="form-grid">
           {/* CAPA status breakdown */}
           <section className="panel">
             <div className="panel-heading">
@@ -149,30 +152,30 @@ export default async function TrendsPage() {
               </div>
             </div>
             {auditGaps.length === 0 && overdueTraining === 0 && overdue === 0 ? (
-              <p className="muted" style={{ color: "#2e7d32" }}>No critical gaps detected.</p>
+              <p className="muted">No critical gaps detected.</p>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <div className="action-list">
                 {overdue > 0 && (
-                  <div style={{ padding: "8px 12px", background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: "6px", fontSize: ".82rem" }}>
-                    <strong style={{ color: "#c62828" }}>⚠ {overdue} overdue CAPA{overdue !== 1 ? "s" : ""}</strong>
-                    <span style={{ color: "var(--muted)", marginLeft: 8 }}>
-                      <Link href="/operations/capa?filter=open" style={{ color: "#c62828" }}>Review →</Link>
-                    </span>
+                  <div className="ai-context-bar ai-context-bar--danger">
+                    <AlertCircle size={14} />
+                    <span><strong>{overdue} overdue CAPA{overdue !== 1 ? "s" : ""}</strong></span>
+                    <Link className="ai-fill-btn ai-fill-btn--danger" href="/operations/capa?filter=open">Review →</Link>
                   </div>
                 )}
                 {overdueTraining > 0 && (
-                  <div style={{ padding: "8px 12px", background: "#fef3c7", border: "1px solid #fbbf24", borderRadius: "6px", fontSize: ".82rem" }}>
-                    <strong style={{ color: "#92400e" }}>⚠ {overdueTraining} overdue training assignment{overdueTraining !== 1 ? "s" : ""}</strong>
-                    <span style={{ color: "var(--muted)", marginLeft: 8 }}>
-                      <Link href="/training-matrix" style={{ color: "#92400e" }}>Review →</Link>
-                    </span>
+                  <div className="ai-context-bar ai-context-bar--warning">
+                    <AlertCircle size={14} />
+                    <span><strong>{overdueTraining} overdue training assignment{overdueTraining !== 1 ? "s" : ""}</strong></span>
+                    <Link className="ai-fill-btn ai-fill-btn--warning" href="/training-matrix">Review →</Link>
                   </div>
                 )}
                 {auditGaps.slice(0, 5).map((gap, i) => (
-                  <div key={i} style={{ padding: "8px 12px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "6px", fontSize: ".82rem" }}>
-                    <strong>{gap.label}</strong>
-                    <span style={{ color: "var(--muted)", marginLeft: 8 }}>{gap.status.replace(/_/g, " ")}</span>
-                  </div>
+                  <article className="action-row" key={i}>
+                    <div>
+                      <strong>{gap.label}</strong>
+                      <span className="muted">{gap.status.replace(/_/g, " ")}</span>
+                    </div>
+                  </article>
                 ))}
               </div>
             )}
@@ -189,7 +192,7 @@ export default async function TrendsPage() {
               Use Management Review to record decisions; use Lessons Learned to capture the insight.
             </p>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div className="command-center-link-strip">
             <Link href="/management-review" className="button-primary">Management Review</Link>
             <Link href="/lessons-learned" className="button-secondary">Lessons Learned</Link>
             <Link href="/hazards" className="button-secondary">Add to Hazard Register</Link>

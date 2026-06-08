@@ -38,8 +38,15 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Operate</p>
-          <h1>Incident, CAPA & operating graph</h1>
+          <div className="page-header-left">
+            <p className="section-label">Operate · Hub</p>
+            <h1>Operations</h1>
+            <p className="muted">
+              Linked HSE records, live module signals, BioRisk context, and open review actions
+              — the central control point for the Operate phase.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/incidents">Incident Register →</Link>
         </header>
 
         <section className="panel">
@@ -52,7 +59,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
           </div>
           {params.message ? <p className="form-message">{params.message}</p> : null}
           {canCreateOperationsBundle ? (
-            <form action={createMapOperationsBundleAction} className="document-form">
+            <form action={createMapOperationsBundleAction} className="stacked-form">
               <div className="form-grid">
                 <label>
                   Site
