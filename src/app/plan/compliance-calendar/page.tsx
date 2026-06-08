@@ -4,20 +4,12 @@ import type { Metadata } from "next";
 import { CalendarClock, AlertTriangle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
-import { listCalendarItems, type CalendarUrgency } from "@/lib/supabase/compliance-calendar-service";
+import { listCalendarItems } from "@/lib/supabase/compliance-calendar-service";
 import { completeCalendarItemAction } from "./actions";
+import ComplianceCalendarGrid from "./ComplianceCalendarGrid";
 
 export const metadata: Metadata = { title: "Compliance Calendar – PredictSafeBIO" };
 
-const URGENCY_CLASS: Record<CalendarUrgency, string> = {
-  overdue: "status-overdue",
-  due_this_week: "status-needs-review",
-  upcoming: "status-pill",
-  completed: "status-ok",
-};
-const URGENCY_LABEL: Record<CalendarUrgency, string> = {
-  overdue: "Overdue", due_this_week: "Due this week", upcoming: "Upcoming", completed: "Completed",
-};
 const TASK_TYPES = ["inspection", "training", "certification", "committee_meeting", "permit", "capa", "equipment_check", "waste_pickup", "event_triggered"];
 
 type Props = { searchParams: Promise<{ message?: string; success?: string; taskType?: string }> };
@@ -65,7 +57,6 @@ export default async function ComplianceCalendarPage({ searchParams }: Props) {
         </nav>
 
         <section className="panel">
-          <div className="panel-heading"><div><p className="section-label">Scheduled work</p><h2>{items.length} task{items.length !== 1 ? "s" : ""}</h2></div></div>
           {items.length === 0 ? (
             <div className="empty-state-card">
               <p className="empty-state-title">No calendar tasks yet</p>
@@ -73,28 +64,7 @@ export default async function ComplianceCalendarPage({ searchParams }: Props) {
               <Link href="/assess/setup-questionnaire" className="button-secondary compact" style={{ marginTop: 8 }}>Go to Setup Questionnaire</Link>
             </div>
           ) : (
-            <div className="action-list">
-              {items.map((i) => (
-                <article className="action-row" key={i.id}>
-                  <div>
-                    <strong>{i.taskName}</strong>
-                    <span className={URGENCY_CLASS[i.urgency]}>{URGENCY_LABEL[i.urgency]}</span>
-                    <small className="muted">
-                      {i.taskType ? `${i.taskType.replace("_", " ")} · ` : ""}
-                      {i.frequency ? `${i.frequency} · ` : ""}
-                      {i.dueDate ? `Due ${i.dueDate}` : "No due date"}
-                      {i.programName ? ` · ${i.programName}` : ""}
-                    </small>
-                  </div>
-                  {i.status !== "completed" && (
-                    <form action={completeCalendarItemAction}>
-                      <input type="hidden" name="id" value={i.id} />
-                      <button className="button-secondary compact" type="submit">Mark complete</button>
-                    </form>
-                  )}
-                </article>
-              ))}
-            </div>
+            <ComplianceCalendarGrid items={items} completeAction={completeCalendarItemAction} />
           )}
         </section>
       </div>
