@@ -63,13 +63,15 @@ export default async function HazardRegisterPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Assess · Stage 3</p>
-          <h1>Hazard Register</h1>
-          <p className="muted">
-            Identify and track the biological, chemical, physical, and ergonomic hazards in your
-            operation. Each hazard you add feeds the <strong>Predictive AI Safety Engine</strong> as a
-            leading indicator — uncontrolled hazards raise predicted risk before an incident occurs.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Assess · Stage 3</p>
+            <h1>Hazard Register</h1>
+            <p className="muted">
+              Identify and track the biological, chemical, physical, and ergonomic hazards in your
+              operation. Each hazard you add feeds the <strong>Predictive AI Safety Engine</strong> as a
+              leading indicator — uncontrolled hazards raise predicted risk before an incident occurs.
+            </p>
+          </div>
         </header>
 
         {/* KPI strip */}
@@ -215,7 +217,7 @@ export default async function HazardRegisterPage({ searchParams }: Props) {
                       <option key={f.id} value={f.id}>{f.label}</option>
                     ))}
                   </select>
-                  <span className="muted" style={{ fontWeight: 400 }}>
+                  <span className="muted">
                     Links this hazard to a predictive risk category — uncontrolled hazards in the same family raise forecasted risk together.
                   </span>
                 </label>

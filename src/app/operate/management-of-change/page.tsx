@@ -23,12 +23,14 @@ export default async function ManagementOfChangePage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Operate · Change Control</p>
-          <h1>Management of Change</h1>
-          <p className="muted">
-            When material, process, equipment, scale, or location changes, controls must be revalidated.
-            Submitting a change auto-routes it to the right reviewers based on the affected programs.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Operate · <a href="/change-management">Change Management</a></p>
+            <h1>Management of Change</h1>
+            <p className="muted">
+              When material, process, equipment, scale, or location changes, controls must be revalidated.
+              Submitting a change auto-routes it to the right reviewers based on the affected programs.
+            </p>
+          </div>
         </header>
 
         {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
@@ -94,15 +96,13 @@ export default async function ManagementOfChangePage({ searchParams }: Props) {
             <label>Affected programs (comma-separated)
               <input name="affectedPrograms" type="text" placeholder="e.g. Biosafety, Chemical Hygiene, Waste Management" />
             </label>
-            <fieldset style={{ border: "1px solid var(--line)", borderRadius: 8, padding: "10px 12px" }}>
-              <legend style={{ fontSize: 12, color: "var(--text2)", padding: "0 6px" }}>Specialized screens</legend>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-                {SCREEN_FLAGS.map((f) => (
-                  <label key={f} style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 400 }}>
-                    <input type="checkbox" name="flags" value={f} /> {f}
-                  </label>
-                ))}
-              </div>
+            <fieldset className="checkbox-group">
+              <legend>Specialized screens</legend>
+              {SCREEN_FLAGS.map((f) => (
+                <label key={f}>
+                  <input type="checkbox" name="flags" value={f} /> {f}
+                </label>
+              ))}
             </fieldset>
             <label>New hazards introduced<textarea name="newHazards" rows={2} placeholder="Any new hazards from this change?" /></label>
             <label>Changed controls<textarea name="changedControls" rows={2} placeholder="Which controls need to change or be revalidated?" /></label>

@@ -162,7 +162,7 @@ export default async function PermitsPage({ searchParams }: Props) {
                       : ""}
                   </p>
                   {permit.hazards && permit.hazards.length > 0 && (
-                    <p className="muted" style={{ fontSize: "0.82em" }}>
+                    <p className="muted">
                       Hazards: {permit.hazards.join(", ")}
                     </p>
                   )}

@@ -83,8 +83,8 @@ function filterProviders(providers: Provider[], filters: { specialty?: string; q
 async function listApprovedProviders(filters: { specialty?: string; q?: string }): Promise<Provider[]> {
   if (!isSupabaseServiceConfigured()) return [];
   const admin = getSupabaseAdminClient();
-   
-  let query = (admin as any)
+
+  const query = (admin as any)
     .from("provider_profiles")
     .select(`
       id, specialty, npi_number, credentials, accepting_patients,
@@ -98,7 +98,6 @@ async function listApprovedProviders(filters: { specialty?: string; q?: string }
 
   const { data } = await query;
 
-   
   let providers: Provider[] = ((data ?? []) as any[]).map((p: any) => ({
     id:                p.id as string,
     specialty:         p.specialty as string,
@@ -117,13 +116,13 @@ async function listApprovedProviders(filters: { specialty?: string; q?: string }
 async function getSpecialties(): Promise<string[]> {
   if (!isSupabaseServiceConfigured()) return DEMO_PROVIDERS.map((p) => p.specialty).filter((v, i, a) => a.indexOf(v) === i).sort();
   const admin = getSupabaseAdminClient();
-   
+
   const { data } = await (admin as any)
     .from("provider_profiles")
     .select("specialty")
     .eq("review_status", "approved")
     .eq("is_public", true);
-   
+
   const all = ((data ?? []) as any[]).map((p: any) => p.specialty as string);
   const source = all.length > 0 ? all : DEMO_PROVIDERS.map((provider) => provider.specialty);
   return [...new Set(source)].sort();
@@ -140,18 +139,19 @@ export default async function ProvidersDirectoryPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Personnel qualification</p>
-          <h1>Provider Directory</h1>
-          <p className="muted">
-            A searchable record of credentialed biosafety, EHS, and occupational-health experts
-            (CIH, CSP, CBSP, and more). Documents qualified coverage for auditors, and puts the
-            right specialist one click away during a spill, exposure, or incident. All profiles are
-            reviewed by our moderation team.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Assess · Personnel Qualification</p>
+            <h1>Provider Directory</h1>
+            <p className="muted">
+              Credentialed biosafety, EHS, and occupational-health experts (CIH, CSP, CBSP, and more).
+              Documents qualified coverage for auditors and puts the right specialist one click away during an incident.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/plan/qualified-persons">Qualified Persons →</Link>
         </header>
 
         {/* Why this matters — compliance purpose */}
-        <section className="panel inline-action-panel" style={{ alignItems: "flex-start" }}>
+        <section className="panel inline-action-panel">
           <div>
             <p className="section-label">Why this directory matters</p>
             <ul className="provider-purpose-list">
@@ -164,76 +164,73 @@ export default async function ProvidersDirectoryPage({ searchParams }: Props) {
           <ShieldCheck size={22} aria-hidden="true" />
         </section>
 
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
-          <Link href="/providers/new" className="button-primary"
-            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.85rem" }}>
-            <PlusCircle size={14} /> Add your profile
+        <div className="command-center-link-strip">
+          <Link href="/providers/new" className="button-primary">
+            <PlusCircle size={14} className="icon-mr" /> Add your profile
           </Link>
-          <span className="muted" style={{ fontSize: "0.8rem" }}>
-            {providers.length} provider{providers.length !== 1 ? "s" : ""} listed
-          </span>
+          <span className="muted">{providers.length} provider{providers.length !== 1 ? "s" : ""} listed</span>
         </div>
 
         {/* Filters */}
-        <form style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "flex-end" }}>
-          <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.83rem", flex: "1 1 200px" }}>
-            <span style={{ display: "flex", alignItems: "center", gap: 5 }}><Search size={12} /> Search</span>
+        <form className="provider-filter-form">
+          <label>
+            <span><Search size={12} className="icon-mr" />Search</span>
             <input name="q" defaultValue={sp.q ?? ""} placeholder="Name, specialty, credential…" />
           </label>
-          <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.83rem", flex: "1 1 180px" }}>
+          <label>
             Specialty
             <select name="specialty" defaultValue={sp.specialty ?? ""}>
               <option value="">All specialties</option>
               {specialties.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </label>
-          <button className="button-secondary" type="submit" style={{ fontSize: "0.83rem" }}>Filter</button>
+          <button className="button-secondary" type="submit">Filter</button>
           {(sp.specialty || sp.q) && (
-            <Link href="/providers" className="button-secondary" style={{ fontSize: "0.83rem" }}>Clear</Link>
+            <Link href="/providers" className="button-secondary">Clear</Link>
           )}
         </form>
 
         {providers.length === 0 ? (
-          <section className="panel" style={{ textAlign: "center", padding: "3rem" }}>
-            <Briefcase size={32} style={{ color: "var(--muted)", margin: "0 auto 1rem" }} />
-            <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>No providers found</p>
-            <p className="muted" style={{ fontSize: "0.85rem" }}>
-              {sp.specialty || sp.q ? "Try adjusting your filters." : "Be the first to add your profile."}
-            </p>
-            <Link href="/providers/new" className="button-primary" style={{ display: "inline-flex", marginTop: "1rem" }}>
-              Add your profile
-            </Link>
+          <section className="panel">
+            <div className="empty-state-card">
+              <Briefcase size={32} className="muted" />
+              <p className="empty-state-title">No providers found</p>
+              <p className="muted">
+                {sp.specialty || sp.q ? "Try adjusting your filters." : "Be the first to add your profile."}
+              </p>
+              <Link href="/providers/new" className="button-primary">Add your profile</Link>
+            </div>
           </section>
         ) : (
           <div className="command-card-grid">
             {providers.map(p => (
-              <Link key={p.id} href={p.id.startsWith("demo-") ? "/providers" : `/providers/${p.id}`} style={{ textDecoration: "none" }}>
-                <article className="command-card" style={{ cursor: "pointer", height: "100%" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+              <Link
+                key={p.id}
+                href={p.id.startsWith("demo-") ? "/providers" : `/providers/${p.id}`}
+                className="provider-card-link"
+              >
+                <article className="command-card">
+                  <div className="provider-card-header">
                     <div>
-                      <strong style={{ fontSize: "0.95rem" }}>{p.full_name}</strong>
-                      <p className="muted" style={{ fontSize: "0.8rem", margin: "2px 0" }}>{p.specialty}</p>
+                      <strong>{p.full_name}</strong>
+                      <p className="muted">{p.specialty}</p>
                     </div>
                     {p.npi_verified && (
-                      <span title="Verified profile" style={{ flexShrink: 0 }}>
-                        <CheckCircle2 size={16} style={{ color: "#16a34a" }} />
-                      </span>
+                      <CheckCircle2 size={16} className="provider-verified-icon" title="Verified profile" />
                     )}
                   </div>
 
                   {p.credentials.length > 0 && (
-                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }}>
+                    <div className="provider-credentials">
                       {p.credentials.map((c: string) => (
-                        <span key={c} className="status-chip status-current" style={{ fontSize: "0.68rem" }}>{c}</span>
+                        <span key={c} className="status-chip status-current">{c}</span>
                       ))}
                     </div>
                   )}
 
-                  <div style={{ display: "flex", gap: "0.55rem 1rem", marginTop: 8, fontSize: "0.78rem", flexWrap: "wrap", alignItems: "center" }}>
-                    {p.license_state && (
-                      <span className="muted">📍 {p.license_state}</span>
-                    )}
-                    <span className="muted" style={{ color: p.accepting_patients ? "#16a34a" : "#6b7280", minWidth: 0 }}>
+                  <div className="provider-card-meta">
+                    {p.license_state && <span className="muted">📍 {p.license_state}</span>}
+                    <span className={p.accepting_patients ? "status-current" : "muted"}>
                       {p.accepting_patients ? "✓ Available for consultation" : "Not currently available"}
                     </span>
                   </div>

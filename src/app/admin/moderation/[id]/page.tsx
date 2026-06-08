@@ -147,7 +147,7 @@ export default async function BioReviewPage({ params, searchParams }: Props) {
             {bio.review_notes && (
               <article className="action-row">
                 <div><strong>Last review notes</strong></div>
-                <p style={{ fontStyle: "italic" }}>{bio.review_notes}</p>
+                <em className="muted">{bio.review_notes}</em>
               </article>
             )}
           </div>
@@ -274,7 +274,7 @@ export default async function BioReviewPage({ params, searchParams }: Props) {
             </div>
             <EyeOff size={20} />
           </div>
-          <div className="ai-context-bar">
+          <div className="ai-context-bar ai-context-bar--warning">
             <EyeOff size={14} />
             <span>Takedown hides a profile immediately without deleting data. Fully reversible and audit-safe.</span>
           </div>
@@ -326,8 +326,8 @@ export default async function BioReviewPage({ params, searchParams }: Props) {
                           <input type="hidden" name="reportId" value={report.id} />
                           <input type="hidden" name="profileId" value={bio.id} />
                           <input type="hidden" name="status" value={action} />
-                          <button className="button-secondary compact" type="submit" style={{ textTransform: "capitalize" }}>
-                            {action}
+                          <button className="button-secondary compact" type="submit">
+                            {action[0].toUpperCase() + action.slice(1)}
                           </button>
                         </form>
                       ))}

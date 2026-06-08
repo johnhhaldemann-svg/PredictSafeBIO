@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Gauge, ArrowRight, CheckCircle } from "lucide-react";
+import Link from "next/link";
+import { Gauge, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 
 export const metadata: Metadata = { title: "Equipment & Calibration – PredictSafeBIO" };
@@ -22,68 +23,56 @@ export default function EquipmentCalibrationPage() {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Operate · Equipment & Calibration</p>
-          <h1>Equipment & Calibration</h1>
-          <p className="muted">
-            Preventive maintenance schedules, calibration records, and certification logs for all
-            safety-critical and GxP-controlled equipment. Overdue items surface in the Risk Monitor.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Operate · Equipment &amp; Calibration</p>
+            <h1>Equipment &amp; Calibration</h1>
+            <p className="muted">
+              Preventive maintenance schedules, calibration records, and certification logs for all
+              safety-critical and GxP-controlled equipment. Overdue items surface in the Risk Monitor.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/plan/compliance-calendar">Compliance Calendar →</Link>
         </header>
 
-        {/* Module status */}
-        <div style={{
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderLeft: "4px solid var(--brand)",
-          borderRadius: "10px",
-          padding: "20px 24px",
-          maxWidth: "680px",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-            <Gauge size={18} style={{ color: "var(--brand)" }} />
-            <span style={{ fontWeight: 700 }}>Module in Development</span>
-          </div>
-          <p style={{ fontSize: ".85rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "16px" }}>
-            Equipment registry, PM scheduling, calibration certificate upload, and overdue alerts
-            are on the roadmap. Calibration due dates will feed directly into Compliance Calendar
-            and Predictive Engine warnings when built.
-          </p>
-          <a
-            href="/plan/compliance-calendar"
-            style={{
-              display: "inline-flex", alignItems: "center", gap: "6px",
-              fontSize: ".83rem", fontWeight: 600, color: "var(--brand)", textDecoration: "none"
-            }}
-          >
-            Open Compliance Calendar <ArrowRight size={13} />
-          </a>
+        <div className="ai-context-bar ai-context-bar--warning">
+          <Gauge size={15} />
+          <span>
+            <strong>Module in Development.</strong>{" "}
+            Equipment registry, PM scheduling, calibration certificate upload, and overdue alerts are
+            on the roadmap. Calibration due dates will feed directly into the Compliance Calendar and
+            Predictive Engine warnings when built.
+          </span>
+          <Link className="ai-fill-btn ai-fill-btn--warning" href="/plan/compliance-calendar">
+            Compliance Calendar
+          </Link>
         </div>
 
-        {/* Equipment reference table */}
-        <section>
-          <h2 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "12px" }}>
-            Common Lab Equipment — Calibration &amp; PM Requirements
-          </h2>
-          <div style={{ overflowX: "auto", maxWidth: "900px" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: ".82rem" }}>
-              <thead>
-                <tr style={{ background: "var(--surface-raised, #f1f5f9)" }}>
-                  <th style={{ padding: "9px 14px", textAlign: "left", fontWeight: 700, borderBottom: "2px solid var(--border)" }}>Equipment</th>
-                  <th style={{ padding: "9px 14px", textAlign: "left", fontWeight: 700, borderBottom: "2px solid var(--border)" }}>Frequency</th>
-                  <th style={{ padding: "9px 14px", textAlign: "left", fontWeight: 700, borderBottom: "2px solid var(--border)" }}>Standard / Reg</th>
-                </tr>
-              </thead>
-              <tbody>
-                {EQUIPMENT_CATEGORIES.map((eq, i) => (
-                  <tr key={eq.label} style={{ background: i % 2 === 0 ? "transparent" : "var(--surface)" }}>
-                    <td style={{ padding: "8px 14px", borderBottom: "1px solid var(--border)", fontWeight: 500 }}>{eq.label}</td>
-                    <td style={{ padding: "8px 14px", borderBottom: "1px solid var(--border)", color: "var(--muted)" }}>{eq.freq}</td>
-                    <td style={{ padding: "8px 14px", borderBottom: "1px solid var(--border)", color: "var(--muted)" }}>{eq.reg}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <section className="table-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Reference</p>
+              <h2>Common Lab Equipment — Calibration &amp; PM Requirements</h2>
+            </div>
+            <ShieldCheck size={20} />
           </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Equipment</th>
+                <th>Frequency</th>
+                <th>Standard / Reg</th>
+              </tr>
+            </thead>
+            <tbody>
+              {EQUIPMENT_CATEGORIES.map((eq) => (
+                <tr key={eq.label}>
+                  <td><strong>{eq.label}</strong></td>
+                  <td className="muted">{eq.freq}</td>
+                  <td className="muted">{eq.reg}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </section>
       </div>
     </AppShell>

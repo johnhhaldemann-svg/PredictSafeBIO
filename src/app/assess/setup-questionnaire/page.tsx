@@ -36,12 +36,15 @@ export default async function SetupQuestionnairePage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Assess · Setup</p>
-          <h1>Client Setup Questionnaire</h1>
-          <p className="muted">
-            The 26 questions from the platform manual decide which safety programs apply, and seed your
-            Risk Register and Compliance Calendar.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Assess · Setup</p>
+            <h1>Client Setup Questionnaire</h1>
+            <p className="muted">
+              The 26 questions from the platform manual decide which safety programs apply, and seed your
+              Risk Register and Compliance Calendar.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/assessments">Risk Register →</Link>
         </header>
 
         {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}

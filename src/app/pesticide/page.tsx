@@ -163,7 +163,7 @@ export default async function PesticidePage({ searchParams }: Props) {
                     {rec.reentryTimeMinutes != null ? ` · Re-entry: ${rec.reentryTimeMinutes} min` : ""}
                   </p>
                   {rec.deviationNoted && rec.deviationNotes && (
-                    <p className="muted" style={{ fontSize: "0.82em" }}>
+                    <p className="muted">
                       Deviation: {rec.deviationNotes}
                     </p>
                   )}

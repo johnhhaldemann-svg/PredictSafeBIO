@@ -104,7 +104,7 @@ function WorkStopBanner({
                 <span>
                   <strong>{item.key}</strong>{" "}
                   {item.label}
-                  <span style={{ opacity: 0.7 }}> — pending confirmation</span>
+                  <span className="muted"> — pending confirmation</span>
                 </span>
               </div>
             ))}
@@ -158,8 +158,12 @@ export default async function AssessmentDetailPage({
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Risk Register Detail</p>
-          <h1>{assessment.workflow}</h1>
+          <div className="page-header-left">
+            <p className="section-label">Assess · <a href="/assessments">Risk Register</a> / Detail</p>
+            <h1>{assessment.workflow}</h1>
+            <p className="muted">BioRisk assessment — human review required before action.</p>
+          </div>
+          <Link className="button-secondary" href="/assessments">← Risk Register</Link>
         </header>
         {query.message ? <p className="form-message">{query.message}</p> : null}
 

@@ -41,12 +41,15 @@ export default async function QualifiedPersonsPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Plan · Governance</p>
-          <h1>Qualified Person Registry</h1>
-          <p className="muted">
-            Who is qualified to approve restricted decisions — register status changes, CAPA closure,
-            chemical approvals, manifests, and changes. Restricted actions are blocked unless the user is listed here.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Plan · <a href="/plan/risk-register">Risk Register</a> / Governance</p>
+            <h1>Qualified Person Registry</h1>
+            <p className="muted">
+              Who is qualified to approve restricted decisions — register status changes, CAPA closure,
+              chemical approvals, manifests, and changes. Restricted actions are blocked unless the user is listed here.
+            </p>
+          </div>
+          <a className="button-secondary" href="/plan/risk-register">← Risk Register</a>
         </header>
 
         {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}

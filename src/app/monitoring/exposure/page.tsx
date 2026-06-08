@@ -82,15 +82,15 @@ export default async function ExposureMonitoringPage({ searchParams }: Props) {
           <div className="page-header-left">
             <p className="section-label">Monitor · Stage 1</p>
             <h1>Exposure Monitoring</h1>
+            <p className="muted">
+              Log and track personnel exposure pathways — by material, route, and frequency. High-route
+              routine exposures fire early-warning signals to the Predictive Engine before an incident occurs.
+            </p>
           </div>
           <Link className="button-secondary" href="/exposure-map">
             <Map size={15} /> Exposure Map
           </Link>
         </header>
-        <p className="muted">
-          Log and track personnel exposure pathways — by material, route, and frequency. High-route
-          routine exposures fire early-warning signals to the Predictive Engine before an incident occurs.
-        </p>
 
         {/* KPI strip */}
         <section className="command-card-grid" aria-label="Exposure monitoring summary">
@@ -196,7 +196,7 @@ export default async function ExposureMonitoringPage({ searchParams }: Props) {
                   <tr key={exp.id}>
                     <td>
                       <strong>{exp.material ?? <span className="muted">—</span>}</strong>
-                      {exp.notes && <p className="muted" style={{ fontSize: "12px", marginTop: 2 }}>{exp.notes}</p>}
+                      {exp.notes && <p className="muted">{exp.notes}</p>}
                     </td>
                     <td>{exp.personRole ?? <span className="muted">—</span>}</td>
                     <td>{exposureRouteLabels[exp.exposureRoute]}</td>

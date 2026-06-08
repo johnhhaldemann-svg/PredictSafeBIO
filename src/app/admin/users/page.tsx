@@ -81,11 +81,14 @@ export default async function AdminUsersPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Admin</p>
-          <h1>User Management</h1>
-          <p className="muted">
-            {total} user{total !== 1 ? "s" : ""} on the platform. Click any row to view or edit.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Platform Admin</p>
+            <h1>User Management</h1>
+            <p className="muted">
+              {total} user{total !== 1 ? "s" : ""} on the platform. Click any row to view or edit.
+            </p>
+          </div>
+          <ShieldCheck size={20} className="muted" />
         </header>
 
         {/* Search + filter form */}
@@ -124,95 +127,79 @@ export default async function AdminUsersPage({ searchParams }: Props) {
         </section>
 
         {/* User table */}
-        <section className="panel" style={{ padding: 0, overflow: "hidden" }}>
-          <div className="panel-heading" style={{ padding: "1rem 1.25rem 0.75rem" }}>
+        <section className="table-panel">
+          <div className="panel-heading">
             <div>
               <p className="section-label">Users</p>
               <h2>
-                <Users size={16} style={{ display: "inline", marginRight: 6 }} />
+                <Users size={16} className="icon-mr" />
                 {total} total
               </h2>
             </div>
-            <ShieldCheck size={20} />
           </div>
 
           {users.length === 0 ? (
-            <p className="muted" style={{ padding: "1.5rem" }}>No users match your filters.</p>
+            <p className="muted">No users match your filters.</p>
           ) : (
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid var(--border)", textAlign: "left" }}>
-                    <th style={{ padding: "0.6rem 1rem", fontWeight: 600, color: "var(--muted)" }}>Name</th>
-                    <th style={{ padding: "0.6rem 1rem", fontWeight: 600, color: "var(--muted)" }}>Email</th>
-                    <th style={{ padding: "0.6rem 1rem", fontWeight: 600, color: "var(--muted)" }}>Role</th>
-                    <th style={{ padding: "0.6rem 1rem", fontWeight: 600, color: "var(--muted)" }}>Status</th>
-                    <th style={{ padding: "0.6rem 1rem", fontWeight: 600, color: "var(--muted)" }}>Organization</th>
-                    <th style={{ padding: "0.6rem 1rem", fontWeight: 600, color: "var(--muted)" }}>Joined</th>
-                    <th style={{ padding: "0.6rem 1rem", fontWeight: 600, color: "var(--muted)" }}>Last sign-in</th>
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Organization</th>
+                  <th>Joined</th>
+                  <th>Last sign-in</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id}>
+                    <td>
+                      <Link href={`/admin/users/${u.id}`} className="text-link">
+                        {u.full_name ?? "—"}
+                      </Link>
+                    </td>
+                    <td className="muted">{u.email ?? "—"}</td>
+                    <td>
+                      <span className={`role-chip ${getRoleBadgeClass(u.role)}`}>
+                        {getDbRoleLabel(u.role)}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`status-chip ${statusBadgeClass(u.account_status)}`}>
+                        {u.account_status}
+                      </span>
+                    </td>
+                    <td className="muted">{u.organization_name ?? <em>No org</em>}</td>
+                    <td className="muted">{new Date(u.created_at).toLocaleDateString()}</td>
+                    <td className="muted">
+                      {u.last_sign_in_at
+                        ? new Date(u.last_sign_in_at).toLocaleDateString()
+                        : "Never"}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {users.map((u) => (
-                    <tr
-                      key={u.id}
-                      style={{ borderBottom: "1px solid var(--border)" }}
-                    >
-                      <td style={{ padding: "0.65rem 1rem" }}>
-                        <Link
-                          href={`/admin/users/${u.id}`}
-                          className="text-link"
-                          style={{ fontWeight: 500 }}
-                        >
-                          {u.full_name ?? "—"}
-                        </Link>
-                      </td>
-                      <td style={{ padding: "0.65rem 1rem", color: "var(--muted)" }}>{u.email ?? "—"}</td>
-                      <td style={{ padding: "0.65rem 1rem" }}>
-                        <span className={`role-chip ${getRoleBadgeClass(u.role)}`} style={{ fontSize: "0.75rem" }}>
-                          {getDbRoleLabel(u.role)}
-                        </span>
-                      </td>
-                      <td style={{ padding: "0.65rem 1rem" }}>
-                        <span className={`status-chip ${statusBadgeClass(u.account_status)}`} style={{ fontSize: "0.75rem" }}>
-                          {u.account_status}
-                        </span>
-                      </td>
-                      <td style={{ padding: "0.65rem 1rem", color: "var(--muted)" }}>
-                        {u.organization_name ?? <em>No org</em>}
-                      </td>
-                      <td style={{ padding: "0.65rem 1rem", color: "var(--muted)", whiteSpace: "nowrap" }}>
-                        {new Date(u.created_at).toLocaleDateString()}
-                      </td>
-                      <td style={{ padding: "0.65rem 1rem", color: "var(--muted)", whiteSpace: "nowrap" }}>
-                        {u.last_sign_in_at
-                          ? new Date(u.last_sign_in_at).toLocaleDateString()
-                          : "Never"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           )}
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", padding: "0.75rem 1rem", borderTop: "1px solid var(--border)" }}>
+            <div className="command-center-link-strip">
               {page > 1 && (
                 <Link
-                  className="button-secondary"
+                  className="button-secondary compact"
                   href={`/admin/users?search=${encodeURIComponent(search)}&role=${role}&status=${status}&page=${page - 1}`}
                 >
                   ← Previous
                 </Link>
               )}
-              <span className="muted" style={{ fontSize: "0.8rem" }}>
-                Page {page} of {totalPages}
-              </span>
+              <span className="muted">Page {page} of {totalPages}</span>
               {page < totalPages && (
                 <Link
-                  className="button-secondary"
+                  className="button-secondary compact"
                   href={`/admin/users?search=${encodeURIComponent(search)}&role=${role}&status=${status}&page=${page + 1}`}
                 >
                   Next →

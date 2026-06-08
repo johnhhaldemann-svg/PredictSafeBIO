@@ -66,6 +66,7 @@ export default async function AdminOrganizationsPage() {
           <div className="page-header-left">
             <p className="section-label">Platform Admin</p>
             <h1>Organizations</h1>
+            <p className="muted">All tenant organizations on the platform. Click a row to manage users, plan, and settings.</p>
           </div>
           <Link className="button-primary" href="/admin/org/new">
             <Plus size={15} />
@@ -108,27 +109,24 @@ export default async function AdminOrganizationsPage() {
             <tbody>
               {orgList.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "2rem", color: "var(--muted)" }}>
-                    No organizations found.
-                  </td>
+                  <td colSpan={6} className="table-empty-cell">No organizations found.</td>
                 </tr>
               ) : (
                 orgList.map((org) => (
                   <tr key={org.id}>
                     <td>
-                      <Link href={`/admin/org/${org.id}`} style={{ fontWeight: 600 }}>
-                        {org.name}
+                      <Link href={`/admin/org/${org.id}`} className="text-link">
+                        <strong>{org.name}</strong>
                       </Link>
-                      <div style={{ fontSize: "0.74em", color: "var(--muted)", fontFamily: "monospace", marginTop: 2 }}>
-                        {org.id.slice(0, 8)}…
-                      </div>
+                      <br />
+                      <code className="muted">{org.id.slice(0, 8)}…</code>
                     </td>
                     <td>
-                      <span className={statusClass(org.status)} style={{ textTransform: "capitalize" }}>
-                        {org.status ?? "active"}
+                      <span className={statusClass(org.status)}>
+                        {(org.status ?? "active")[0].toUpperCase() + (org.status ?? "active").slice(1)}
                       </span>
                     </td>
-                    <td style={{ textTransform: "capitalize" }}>{org.environment ?? "production"}</td>
+                    <td>{((org.environment ?? "production")[0].toUpperCase() + (org.environment ?? "production").slice(1))}</td>
                     <td>{countMap.get(org.id) ?? 0}</td>
                     <td className="muted">{new Date(org.created_at).toLocaleDateString()}</td>
                     <td>

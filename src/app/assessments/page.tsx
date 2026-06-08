@@ -96,14 +96,14 @@ export default async function AssessmentsPage({
             <p className="section-label">Assess</p>
             <h1>Risk Register</h1>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div className="command-center-link-strip">
             <Link className="button-secondary" href="/assessments/framework">Trigger logic</Link>
             <Link className="button-primary" href={currentUserId ? "/workbench" : "/login?next=/workbench"}>New assessment</Link>
           </div>
         </header>
 
         {pendingReviewCount > 0 ? (
-          <div className="ai-context-bar">
+          <div className="ai-context-bar ai-context-bar--warning">
             <Sparkles size={15} />
             <span><strong>AI flagged {pendingReviewCount} pending review{pendingReviewCount !== 1 ? "s" : ""}.</strong> Human approval required before these risks are considered resolved.</span>
             <Link className="ai-fill-btn" href="/assessments?review=draft_human_review_required">Review now</Link>

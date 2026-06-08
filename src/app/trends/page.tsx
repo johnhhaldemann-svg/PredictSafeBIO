@@ -11,11 +11,11 @@ import { getAuditReadinessConsoleSummary } from "@/lib/supabase/data";
 export const metadata: Metadata = { title: "Trend Analysis – PredictSafeBIO" };
 
 function trendIcon(value: number, goodDirection: "up" | "down") {
-  if (value === 0) return <Minus size={14} style={{ color: "var(--muted)" }} />;
+  if (value === 0) return <Minus size={14} className="muted" />;
   const isGood = goodDirection === "up" ? value > 0 : value < 0;
   return isGood
-    ? <TrendingDown size={14} style={{ color: "#2e7d32" }} />
-    : <TrendingUp size={14} style={{ color: "#c62828" }} />;
+    ? <TrendingDown size={14} style={{ color: "var(--green)" }} />
+    : <TrendingUp size={14} style={{ color: "var(--red)" }} />;
 }
 
 export default async function TrendsPage() {
@@ -87,7 +87,7 @@ export default async function TrendsPage() {
             <em>
               {openedLast30} opened last 30 days{" "}
               {capaTrend !== 0 && (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                <span className="inline-icon-group">
                   {trendIcon(capaTrend, "down")}
                   {capaTrend > 0 ? `+${capaTrend}` : capaTrend} vs prior 30d
                 </span>
@@ -121,24 +121,19 @@ export default async function TrendsPage() {
             {totalCapas === 0 ? (
               <p className="muted">No CAPA records yet.</p>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div className="trend-bar-list">
                 {statusBreakdown.map((s) => (
-                  <div key={s.label} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div style={{
+                  <div key={s.label} className="trend-bar-row">
+                    <div className="trend-bar-fill" style={{
                       width: `${Math.max(4, Math.round((s.count / totalCapas) * 100))}%`,
                       minWidth: s.count > 0 ? "24px" : "4px",
-                      height: "22px",
                       background: s.color,
-                      borderRadius: "4px",
-                      transition: "width .3s",
                     }} />
-                    <span style={{ fontSize: ".82rem", color: "var(--muted)", minWidth: "130px" }}>{s.label}</span>
-                    <strong style={{ fontSize: ".82rem" }}>{s.count}</strong>
+                    <span className="muted trend-bar-label">{s.label}</span>
+                    <strong className="trend-bar-count">{s.count}</strong>
                   </div>
                 ))}
-                <p style={{ fontSize: ".75rem", color: "var(--muted)", marginTop: "4px" }}>
-                  Closed last 30 days: <strong>{closedLast30}</strong>
-                </p>
+                <p className="muted">Closed last 30 days: <strong>{closedLast30}</strong></p>
               </div>
             )}
           </section>

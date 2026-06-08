@@ -173,7 +173,7 @@ export default async function ChemicalInventoryPage({ searchParams }: Props) {
                       : ""}
                   </p>
                   {adminAccess.signedIn && (
-                    <form action={archiveChemicalAction} style={{ display: "inline" }}>
+                    <form action={archiveChemicalAction}>
                       <input type="hidden" name="id" value={chem.id} />
                       <button
                         className="button-secondary compact"

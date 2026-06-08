@@ -88,7 +88,7 @@ export default async function IncidentDetailPage({ params, searchParams }: Props
             <h1>{incident.title}</h1>
             <div className="form-action-row">
               <span className={STATUS_CLASS[incident.status]}>
-                <StatusIcon size={13} style={{ display: "inline", marginRight: 4 }} />
+                <StatusIcon size={13} className="icon-mr" />
                 {incidentStatusLabels[incident.status]}
               </span>
               <span className={incident.severity === "critical" || incident.severity === "high" ? "status-missing" : "status-needs-review"}>
@@ -158,7 +158,7 @@ export default async function IncidentDetailPage({ params, searchParams }: Props
                     <input type="hidden" name="status" value={s} />
                     <input type="hidden" name="returnTo" value={`/incidents/${incident.id}`} />
                     <button type="submit" className="button-secondary compact">
-                      <Icon size={13} style={{ display: "inline", marginRight: 4 }} />
+                      <Icon size={13} className="icon-mr" />
                       Mark as {incidentStatusLabels[s]}
                     </button>
                   </form>

@@ -130,7 +130,7 @@ export default async function UserDetailPage({ params, searchParams }: Props) {
             </article>
             <article className="action-row">
               <div><strong>User ID</strong></div>
-              <p style={{ fontFamily: "monospace", fontSize: "0.8rem" }}>{userDetail.id}</p>
+              <p><code className="muted">{userDetail.id}</code></p>
             </article>
             <article className="action-row">
               <div><strong>Organization</strong></div>

@@ -39,8 +39,12 @@ export default async function ChangePlanPage({ searchParams }: ChangePlanPagePro
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">PredictSafeBIO - Editable Additions & Change Plan</p>
-          <h1>Additions & Change Plan</h1>
+          <div className="page-header-left">
+            <p className="section-label">Plan · Roadmap &amp; Change</p>
+            <h1>Additions &amp; Change Plan</h1>
+            <p className="muted">Platform roadmap — capability additions, feature priorities, and gap modules visible for demo and planning.</p>
+          </div>
+          <Link className="button-secondary" href="/change-management">← Change Management</Link>
         </header>
 
         {params.message ? <p className="form-message">{params.message}</p> : null}

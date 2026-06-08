@@ -62,14 +62,16 @@ export default async function ControlRegisterPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Plan · Stage 5</p>
-          <h1>Control Register</h1>
-          <p className="muted">
-            Select controls for each hazard using the <strong>hierarchy of controls</strong> —
-            elimination first, PPE last. The <strong>Predictive AI Safety Engine</strong> forecasts
-            each hazard&apos;s <strong>residual risk</strong> after its controls; overdue verification
-            raises that forecast back up.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Plan · Stage 5</p>
+            <h1>Control Register</h1>
+            <p className="muted">
+              Select controls for each hazard using the <strong>hierarchy of controls</strong> —
+              elimination first, PPE last. The <strong>Predictive AI Safety Engine</strong> forecasts
+              each hazard&apos;s <strong>residual risk</strong> after its controls; overdue verification
+              raises that forecast back up.
+            </p>
+          </div>
         </header>
 
         {/* KPI strip */}

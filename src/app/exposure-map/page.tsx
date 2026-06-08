@@ -70,13 +70,16 @@ export default async function ExposureMapPage({ searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Plan · Stage 2</p>
-          <h1>Exposure Map</h1>
-          <p className="muted">
-            Map who works with what, where, and by which <strong>exposure route</strong> — inhalation,
-            skin, injection, ingestion. The <strong>Predictive AI Safety Engine</strong> raises an{" "}
-            <strong>early warning</strong> when high-route, routine exposures accumulate in a lab.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Monitor · <Link href="/monitoring/exposure">Exposure Monitoring</Link></p>
+            <h1>Exposure Map</h1>
+            <p className="muted">
+              Map who works with what, where, and by which <strong>exposure route</strong> — inhalation,
+              skin, injection, ingestion. The <strong>Predictive AI Safety Engine</strong> raises an{" "}
+              <strong>early warning</strong> when high-route, routine exposures accumulate in a lab.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/monitoring/exposure">← Exposure Monitoring</Link>
         </header>
 
         {/* KPI strip */}

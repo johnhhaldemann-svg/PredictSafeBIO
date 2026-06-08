@@ -7829,3 +7829,245 @@ pre {
   background: var(--blue);
   color: #fff;
 }
+
+/* ── Checkbox group (fieldset replacement for MOC / form checkboxes) ──────── */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.checkbox-group legend {
+  font-size: 0.75rem;
+  color: var(--text2);
+  padding: 0 6px;
+  font-weight: 600;
+}
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+  font-size: 0.85rem;
+}
+
+/* ── Inspection calendar ──────────────────────────────────────────────────── */
+.calendar-month-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.calendar-month-block {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  background: #fff;
+  min-width: 260px;
+  flex: 1 1 260px;
+  max-width: 320px;
+}
+.calendar-month-block--current {
+  border: 2px solid var(--navy);
+  background: var(--blue-xs, #f0f5ff);
+}
+.calendar-month-block--past {
+  background: #fafafa;
+}
+.calendar-month-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.calendar-month-header__label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.calendar-month-header__name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.calendar-month-block--current .calendar-month-header__name {
+  color: var(--navy);
+}
+.calendar-current-badge {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--blue);
+  background: var(--blue-bg, #dbeafe);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.calendar-month-count {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+.calendar-month-overdue {
+  font-size: 10px;
+  color: var(--red);
+  font-weight: 600;
+}
+.calendar-empty {
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+  margin: 0;
+}
+.calendar-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  text-decoration: none;
+  margin-bottom: 6px;
+  transition: box-shadow 0.15s;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+.calendar-chip--in-progress {
+  border-color: #fde68a;
+  background: #fefce8;
+  color: #92400e;
+}
+.calendar-chip--completed {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+.calendar-chip--cancelled {
+  border-color: #e5e7eb;
+  background: #f9fafb;
+  color: #6b7280;
+}
+.calendar-chip--overdue {
+  border-color: #fca5a5;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+.calendar-chip__title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+.calendar-chip__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+.calendar-chip__ai-badge {
+  font-size: 10px;
+  color: #7c3aed;
+  background: #f5f3ff;
+  border-radius: 4px;
+  padding: 1px 5px;
+  border: 1px solid #ddd6fe;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.calendar-chip__assignee {
+  font-size: 10px;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.calendar-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 0;
+}
+.calendar-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text);
+}
+.calendar-legend__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.calendar-month-count-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+/* ── Trend bar chart (trends page) ────────────────────────────────────────── */
+.trend-bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.trend-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.trend-bar-fill {
+  height: 22px;
+  border-radius: 4px;
+  transition: width 0.3s;
+  flex-shrink: 0;
+}
+.trend-bar-label {
+  font-size: 0.82rem;
+  min-width: 130px;
+}
+.trend-bar-count {
+  font-size: 0.82rem;
+}
+
+/* ── Inline icon group (icon + text inline) ───────────────────────────────── */
+.inline-icon-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+/* Icon inside a status chip or button text */
+.icon-mr {
+  display: inline;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+/* Admin tab navigation */
+.tab-nav { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--line); padding-bottom: 0; }
+.tab-nav__item { display: flex; align-items: center; gap: 6px; padding: 0.6rem 1rem; border-bottom: 2px solid transparent; font-size: 0.875rem; font-weight: 400; color: var(--muted); text-decoration: none; white-space: nowrap; transition: color 0.15s, border-color 0.15s; }
+.tab-nav__item:hover { color: var(--text); }
+.tab-nav__item--active { font-weight: 600; color: var(--blue); border-bottom-color: var(--blue); }
+.tab-nav__badge { background: var(--muted); color: #fff; border-radius: 99px; padding: 1px 7px; font-size: 0.72rem; font-weight: 700; }
+.tab-nav__item--active .tab-nav__badge { background: var(--blue); }
+
+/* Provider directory */
+.provider-card-link { text-decoration: none; }
+.provider-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.provider-credentials { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.provider-card-meta { display: flex; gap: 0.55rem 1rem; margin-top: 8px; font-size: 0.78rem; flex-wrap: wrap; align-items: center; }
+.provider-verified-icon { color: var(--green); flex-shrink: 0; }
+.provider-filter-form { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end; }
+.provider-filter-form label { display: flex; flex-direction: column; gap: 4px; font-size: 0.83rem; flex: 1 1 180px; }

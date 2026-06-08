@@ -28,14 +28,16 @@ export default async function PredictiveEnginePage() {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Monitor · Predictive AI Safety Engine</p>
-          <h1>Predictive Engine</h1>
-          <p className="muted">
-            A forward-looking read of your safety data. The engine aggregates the leading indicators
-            from your hazards, controls, and exposure pathways into a single{" "}
-            <strong>predicted pressure</strong>, with a trend and a suggested review horizon. These
-            are <strong>early indicators for human review</strong> — not validated incident forecasts.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Monitor · Predictive AI Safety Engine</p>
+            <h1>Predictive Engine</h1>
+            <p className="muted">
+              A forward-looking read of your safety data. The engine aggregates the leading indicators
+              from your hazards, controls, and exposure pathways into a single{" "}
+              <strong>predicted pressure</strong>, with a trend and a suggested review horizon. These
+              are <strong>early indicators for human review</strong> — not validated incident forecasts.
+            </p>
+          </div>
         </header>
 
         {/* Forecast headline */}
@@ -47,17 +49,17 @@ export default async function PredictiveEnginePage() {
           </article>
           <article className="command-card platform-blue">
             <div><span><TrendIcon trend={forecast.trend} /></span><strong>Trend</strong></div>
-            <small style={{ fontSize: "1.4rem" }}>{trendLabels[forecast.trend]}</small>
+            <small>{trendLabels[forecast.trend]}</small>
             <em>Recent 14 days vs. the prior 14 days.</em>
           </article>
           <article className="command-card platform-blue">
             <div><span><Clock size={16} /></span><strong>Suggested review</strong></div>
-            <small style={{ fontSize: "1.4rem" }}>within {forecast.horizonDays}d</small>
+            <small>within {forecast.horizonDays}d</small>
             <em>Sooner when predicted pressure is higher.</em>
           </article>
           <article className="command-card platform-blue">
             <div><span><Activity size={16} /></span><strong>Confidence</strong></div>
-            <small style={{ fontSize: "1.4rem", textTransform: "capitalize" }}>{forecast.confidence}</small>
+            <small>{forecast.confidence[0].toUpperCase() + forecast.confidence.slice(1)}</small>
             <em>{calibration.calibrated ? "Calibrated against outcomes." : "Uncalibrated — capped at moderate."}</em>
           </article>
         </section>
@@ -100,8 +102,8 @@ export default async function PredictiveEnginePage() {
                 <article className="action-row" key={`${d.label}-${i}`}>
                   <div>
                     <strong>{d.label}</strong>
-                    <small className="muted" style={{ textTransform: "capitalize" }}>
-                      {d.severity} severity
+                    <small className="muted">
+                      {d.severity[0].toUpperCase() + d.severity.slice(1)} severity
                       {d.earlyWarning ? " · early warning" : ""}
                       {d.overdueVerification ? " · verification overdue" : ""}
                     </small>
