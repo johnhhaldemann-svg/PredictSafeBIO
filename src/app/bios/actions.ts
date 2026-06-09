@@ -22,7 +22,7 @@ export async function deactivateBioAction(formData: FormData) {
   const admin = getSupabaseAdminClient();
    
   const { error } = await (admin as any)
-    .from("patient_bios")
+    .from("personnel_records")
     .update({ is_active: false, updated_at: new Date().toISOString() })
     .eq("id", bioId)
     .eq("organization_id", profile?.organization_id);

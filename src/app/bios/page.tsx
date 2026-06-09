@@ -60,7 +60,7 @@ export default async function BiosListPage({ searchParams }: Props) {
   const admin = getSupabaseAdminClient();
   const [biosResult, usage] = await Promise.all([
     (admin as any)
-      .from("patient_bios")
+      .from("personnel_records")
       .select("id, display_name, is_active, created_at")
       .eq("organization_id", orgId)
       .order("created_at", { ascending: false })

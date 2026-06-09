@@ -59,7 +59,7 @@ export async function getOrgUsage(organizationId: string): Promise<OrgUsage> {
         .eq("organization_id", organizationId),
 
       (admin as any)
-        .from("patient_bios")
+        .from("personnel_records")
         .select("id", { count: "exact", head: true })
         .eq("organization_id", organizationId),
 

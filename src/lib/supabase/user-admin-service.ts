@@ -158,7 +158,7 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
   // Patient bio (no encrypted_notes — never expose that to UI)
    
   const { data: patientBio } = await (admin as any)
-    .from("patient_bios")
+    .from("personnel_records")
     .select("display_name, is_active")
     .eq("user_id", userId)
     .maybeSingle();
