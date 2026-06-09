@@ -64,8 +64,12 @@ export default async function AuditPage({
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">System Reliance</p>
-          <h1>Immutable Audit Log</h1>
+          <div className="page-header-left">
+            <p className="section-label">System Reliance</p>
+            <h1>Immutable Audit Log</h1>
+            <p className="muted">Source-traced foundation events — every AI-driven action is logged here.</p>
+          </div>
+          <Link className="button-secondary" href="/admin/dashboard">← Command Center</Link>
         </header>
         <FoundationReviewActionsPanel
           actions={foundationActions.slice(0, 6)}

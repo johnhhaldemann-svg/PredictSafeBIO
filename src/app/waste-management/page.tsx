@@ -33,30 +33,44 @@ export default async function WasteManagementPage({ searchParams }: Props) {
   const params = await searchParams;
   const filter = params.filter ?? "all";
 
-  const [recordsResult, adminAccess] = await Promise.all([
-    listWasteRecords(
-      filter === "at-risk" ? { atRisk: true } :
-      filter === "ready"   ? { status: "ready_for_pickup" } :
-      undefined
-    ).catch(() => null),
+  const [allRecordsResult, adminAccess] = await Promise.all([
+    listWasteRecords().catch(() => null),
     getFoundationAdminAccessSummary().catch(() => ({
       configured: false, signedIn: false, isOwner: false, message: ""
     }))
   ]);
 
-  const loadFailed = recordsResult === null;
-  const records = recordsResult ?? [];
-  const totalCount    = records.length;
-  const criticalCount = records.filter((r) => r.isCritical).length;
-  const atRiskCount   = records.filter((r) => r.isAtRisk && !r.isCritical).length;
-  const readyCount    = records.filter((r) => r.status === "ready_for_pickup").length;
+  const loadFailed = allRecordsResult === null;
+  const allRecords = allRecordsResult ?? [];
+  const records = allRecords.filter((r) => {
+    if (filter === "at-risk") return r.isAtRisk || r.isCritical;
+    if (filter === "ready")   return r.status === "ready_for_pickup";
+    return true;
+  });
+
+  const totalCount    = allRecords.length;
+  const criticalCount = allRecords.filter((r) => r.isCritical).length;
+  const atRiskCount   = allRecords.filter((r) => r.isAtRisk && !r.isCritical).length;
+  const readyCount    = allRecords.filter((r) => r.status === "ready_for_pickup").length;
+  const filterCounts  = {
+    all: totalCount,
+    "at-risk": criticalCount + atRiskCount,
+    ready: readyCount,
+  };
 
   return (
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Operate</p>
-          <h1>Waste Management</h1>
+          <div className="page-header-left">
+            <p className="section-label">Operate · Waste Tracking</p>
+            <h1>Waste Management</h1>
+            <p className="muted">
+              Container fill levels, pickup scheduling, manifest tracking, and critical waste alerts.
+              Classification and disposal authorization must be performed by a qualified EHS professional.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/chemical-inventory">Chemical &amp; SDS →</Link>
         </header>
 
         {/* KPI strip */}
@@ -82,6 +96,17 @@ export default async function WasteManagementPage({ searchParams }: Props) {
           </article>
         </section>
 
+        {criticalCount > 0 && (
+          <div className="ai-context-bar ai-context-bar--danger">
+            <AlertTriangle size={15} />
+            <span>
+              <strong>{criticalCount} critical container{criticalCount !== 1 ? "s" : ""}.</strong>{" "}
+              Full or incident-related waste containers require immediate attention.
+            </span>
+            <Link className="ai-fill-btn ai-fill-btn--danger" href="/waste-management?filter=at-risk">View</Link>
+          </div>
+        )}
+
         {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message && <p className="form-message">{params.message}</p>}
 
@@ -94,6 +119,7 @@ export default async function WasteManagementPage({ searchParams }: Props) {
               className={`button-secondary compact ${filter === f ? "active-filter" : ""}`}
             >
               {f === "all" ? "All containers" : f === "at-risk" ? "At risk (≥80%)" : "Ready for pickup"}
+              <span className="filter-count-badge">{filterCounts[f] ?? 0}</span>
             </Link>
           ))}
         </nav>
@@ -103,7 +129,11 @@ export default async function WasteManagementPage({ searchParams }: Props) {
           <div className="panel-heading">
             <div>
               <p className="section-label">Waste container register</p>
-              <h2>{totalCount} container{totalCount !== 1 ? "s" : ""}</h2>
+              <h2>
+                {records.length === allRecords.length
+                  ? `${totalCount} container${totalCount !== 1 ? "s" : ""}`
+                  : `${records.length} of ${totalCount} shown`}
+              </h2>
             </div>
           </div>
 

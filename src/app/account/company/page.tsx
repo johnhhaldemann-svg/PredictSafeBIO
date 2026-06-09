@@ -49,7 +49,7 @@ export default async function CompanySettingsPage({ searchParams }: Props) {
 
         {!canEdit && (
           <section className="panel access-banner access-readonly">
-            <strong><Lock size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />Read-only</strong>
+            <strong><Lock size={14} className="icon-mr" />Read-only</strong>
             <span>Only workspace owners can edit company settings. Contact your owner to make changes.</span>
           </section>
         )}
@@ -108,7 +108,7 @@ export default async function CompanySettingsPage({ searchParams }: Props) {
             <h2>Team &amp; account</h2>
             <p className="muted">Manage members and your personal account separately.</p>
           </div>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div className="command-center-link-strip">
             <Link className="button-secondary" href="/account/team">Team</Link>
             <Link className="button-secondary" href="/account">Account</Link>
           </div>

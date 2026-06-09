@@ -46,30 +46,47 @@ export default async function CapaListPage({ searchParams }: Props) {
   const params = await searchParams;
   const filterStatus = (params.filter as CapaStatus | "all") ?? "all";
 
-  const [recordsResult, adminAccess] = await Promise.all([
-    listCapaRecords(filterStatus !== "all" ? { status: filterStatus } : undefined).catch(() => null),
+  const [allRecordsResult, adminAccess] = await Promise.all([
+    listCapaRecords().catch(() => null),
     getFoundationAdminAccessSummary().catch(() => ({
       configured: false, signedIn: false, isOwner: false, message: ""
     }))
   ]);
 
-  const loadFailed = recordsResult === null;
-  const records = recordsResult ?? [];
-  const openCount = records.filter((r) => PRIORITY_STATUSES.includes(r.status)).length;
-  const overdueCount = records.filter(
+  const loadFailed = allRecordsResult === null;
+  const allRecords = allRecordsResult ?? [];
+  const records = filterStatus !== "all"
+    ? allRecords.filter((r) => r.status === filterStatus)
+    : allRecords;
+
+  const openCount = allRecords.filter((r) => PRIORITY_STATUSES.includes(r.status)).length;
+  const overdueCount = allRecords.filter(
     (r) => r.dueDate && new Date(r.dueDate) < new Date() && r.status !== "closed" && r.status !== "void"
   ).length;
+
+  // Per-status counts for filter badges
+  const statusCounts = (["draft_human_review_required", "open", "in_progress", "closed", "void"] as const).reduce<Record<string, number>>(
+    (acc, s) => { acc[s] = allRecords.filter((r) => r.status === s).length; return acc; },
+    {}
+  );
 
   return (
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Operate</p>
-          <h1>CAPA Records</h1>
+          <div className="page-header-left">
+            <p className="section-label">Operate · Stage 2</p>
+            <h1>CAPA Records</h1>
+            <p className="muted">
+              Corrective and Preventive Action records. Root-cause determination, action selection,
+              effectiveness verification, and closure are the sole responsibility of qualified quality personnel.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/incidents">Incident Register →</Link>
         </header>
 
         <section className="command-card-grid" aria-label="CAPA summary">
-          <article className="command-card platform-blue">
+          <article className={`command-card ${openCount > 0 ? "platform-blue" : "platform-green"}`}>
             <div><span><CircleDot size={16} /></span><strong>Open CAPAs</strong></div>
             <small>{openCount}</small>
             <em>Requiring action or review.</em>
@@ -81,27 +98,43 @@ export default async function CapaListPage({ searchParams }: Props) {
           </article>
           <article className="command-card platform-green">
             <div><span><CheckCircle2 size={16} /></span><strong>Closed</strong></div>
-            <small>{records.filter((r) => r.status === "closed").length}</small>
+            <small>{allRecords.filter((r) => r.status === "closed").length}</small>
             <em>Completed with effectiveness check.</em>
           </article>
         </section>
 
-        <section className={`panel access-banner ${adminAccess.isOwner ? "access-enabled" : "access-readonly"}`}>
-          <strong>{adminAccess.isOwner ? "Owner access" : "Read-only"}</strong>
-          <span>{adminAccess.message}</span>
-        </section>
+        {overdueCount > 0 && (
+          <div className="ai-context-bar ai-context-bar--danger">
+            <AlertTriangle size={15} />
+            <span>
+              <strong>{overdueCount} CAPA{overdueCount !== 1 ? "s" : ""} past due date.</strong>{" "}
+              Overdue CAPAs block compliance closure and may trigger escalation.
+            </span>
+            <Link className="ai-fill-btn ai-fill-btn--danger" href="/operations/capa?filter=open">
+              View open
+            </Link>
+          </div>
+        )}
 
         {params.message && <p className="form-message">{params.message}</p>}
 
         {/* Filter strip */}
         <nav className="command-center-link-strip" aria-label="CAPA status filter">
-          {(["all", "draft_human_review_required", "open", "in_progress", "closed", "void"] as const).map((s) => (
+          <Link
+            href="/operations/capa"
+            className={`button-secondary compact ${filterStatus === "all" ? "active-filter" : ""}`}
+          >
+            All
+            <span className="filter-count-badge">{allRecords.length}</span>
+          </Link>
+          {(["draft_human_review_required", "open", "in_progress", "closed", "void"] as const).map((s) => (
             <Link
               key={s}
-              href={s === "all" ? "/operations/capa" : `/operations/capa?filter=${s}`}
+              href={`/operations/capa?filter=${s}`}
               className={`button-secondary compact ${filterStatus === s ? "active-filter" : ""}`}
             >
-              {s === "all" ? "All" : capaStatusLabels[s]}
+              {capaStatusLabels[s]}
+              <span className="filter-count-badge">{statusCounts[s] ?? 0}</span>
             </Link>
           ))}
         </nav>
@@ -111,7 +144,11 @@ export default async function CapaListPage({ searchParams }: Props) {
           <div className="panel-heading">
             <div>
               <p className="section-label">CAPA Register</p>
-              <h2>{records.length} record{records.length !== 1 ? "s" : ""}</h2>
+              <h2>
+                {records.length === allRecords.length
+                  ? `${allRecords.length} record${allRecords.length !== 1 ? "s" : ""}`
+                  : `${records.length} of ${allRecords.length} shown`}
+              </h2>
             </div>
           </div>
           {loadFailed ? (
@@ -141,7 +178,7 @@ export default async function CapaListPage({ searchParams }: Props) {
                     <p>
                       {record.ownerRole ? `Owner: ${formatOwnerRole(record.ownerRole)} · ` : ""}
                       {record.dueDate ? (
-                        <span className={overdue ? "text-danger" : ""}>
+                        <span className={overdue ? "overdue-cell" : undefined}>
                           Due {new Date(record.dueDate).toLocaleDateString()}
                           {overdue ? " · OVERDUE" : ""}
                         </span>

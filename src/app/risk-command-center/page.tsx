@@ -50,8 +50,10 @@ export default async function RiskCommandCenterPage() {
       <AppShell>
         <div className="page-stack">
           <header className="page-header">
-            <p className="section-label">Monitor</p>
-            <h1>Risk Monitor</h1>
+            <div className="page-header-left">
+              <p className="section-label">Monitor · Live Risk Feed</p>
+              <h1>Risk Monitor</h1>
+            </div>
           </header>
           <p className="muted">Could not load risk data. Sign in to view your organization&apos;s risk feed.</p>
         </div>
@@ -65,8 +67,15 @@ export default async function RiskCommandCenterPage() {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Monitor</p>
-          <h1>Risk Monitor</h1>
+          <div className="page-header-left">
+            <p className="section-label">Monitor · Live Risk Feed</p>
+            <h1>Risk Monitor</h1>
+            <p className="muted">
+              Active risk cells surfaced across all EHS tools — failures, precursors, control gaps,
+              and behavioral signals. Review and escalate to CAPA from each card.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/trends">Trend Analysis →</Link>
         </header>
 
         <LoopNext

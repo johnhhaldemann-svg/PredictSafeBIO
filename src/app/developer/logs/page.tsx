@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { createServerClient } from "@/lib/supabase/server";
@@ -30,38 +31,42 @@ export default async function DeveloperLogsPage() {
 
   return (
     <AppShell>
-      <div className="max-w-5xl mx-auto p-6">
-        <h1 className="text-2xl font-semibold mb-2">Audit Log</h1>
-        <p className="text-sm text-gray-500 mb-6">
-          Last 100 platform events. Developer / owner access only.
-        </p>
+      <div className="page-stack">
+        <header className="page-header">
+          <div className="page-header-left">
+            <p className="section-label">Developer Tools</p>
+            <h1>Audit Log</h1>
+            <p className="muted">Last 100 platform events. Developer / owner access only.</p>
+          </div>
+          <Link className="button-secondary" href="/workbench">← Workbench</Link>
+        </header>
 
-        {!events?.length ? (
-          <p className="text-sm text-gray-400">No events logged yet.</p>
-        ) : (
-          <table className="w-full text-sm border rounded-lg overflow-hidden">
-            <thead className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">
-              <tr>
-                <th className="px-4 py-3">Time</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Summary</th>
-                <th className="px-4 py-3">Env</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 font-mono text-xs">
-              {events.map((e) => (
-                <tr key={e.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-2 text-gray-400 whitespace-nowrap">
-                    {new Date(e.created_at).toISOString()}
-                  </td>
-                  <td className="px-4 py-2">{e.event_type}</td>
-                  <td className="px-4 py-2">{e.summary}</td>
-                  <td className="px-4 py-2 capitalize">{e.environment ?? "—"}</td>
+        <section className="table-panel">
+          {!events?.length ? (
+            <p className="muted">No events logged yet.</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Type</th>
+                  <th>Summary</th>
+                  <th>Env</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              </thead>
+              <tbody>
+                {events.map((e) => (
+                  <tr key={e.id}>
+                    <td className="muted"><code>{new Date(e.created_at).toISOString()}</code></td>
+                    <td><code>{e.event_type}</code></td>
+                    <td>{e.summary}</td>
+                    <td className="muted">{e.environment ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
       </div>
     </AppShell>
   );

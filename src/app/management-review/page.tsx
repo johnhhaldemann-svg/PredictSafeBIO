@@ -1,141 +1,337 @@
+export const dynamic = "force-dynamic";
+
 import type { Metadata } from "next";
-import { BarChart3, ArrowRight, CheckCircle } from "lucide-react";
+import { AlertTriangle, BarChart3, CheckCircle, Plus, RefreshCw, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
+import {
+  listReviews,
+  listActionItems,
+  reviewTypeLabels,
+  reviewStatusLabels,
+} from "@/lib/supabase/management-review-service";
+import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
+import {
+  createReviewAction,
+  createActionItemAction,
+  closeActionItemAction,
+  feedFindingToHazardRegisterAction,
+} from "./actions";
+import { DataLoadError } from "@/components/DataLoadError";
 
 export const metadata: Metadata = { title: "Management Review – PredictSafeBIO" };
 
-const REVIEW_INPUTS = [
-  "Results of internal and external audits",
-  "Incident trends — TRIR, near miss rate, CAPA backlog",
-  "CAPA effectiveness — recurrence rate, on-time closure",
-  "Training completion rate by role and department",
-  "Regulatory changes and new compliance obligations",
-  "Resource adequacy — staffing, equipment, budget",
-  "Risk register updates — new hazards, residual risk changes",
-  "Corrective actions from the previous review",
-  "Stakeholder feedback — employees, regulators, customers",
-  "Objectives and KPIs performance vs. targets",
-];
+type Props = {
+  searchParams: Promise<{ message?: string; success?: string }>;
+};
 
-const REVIEW_OUTPUTS = [
-  "Decisions on opportunities for continual improvement",
-  "Any need for changes to the EHS management system",
-  "Resource requirements for the next period",
-  "Updated EHS objectives and targets",
-  "Risk register revisions feeding back to Phase 1 (Assess)",
-];
+export default async function ManagementReviewPage({ searchParams }: Props) {
+  const params = await searchParams;
 
-export default function ManagementReviewPage() {
+  const [reviewsResult, actionItemsResult, adminAccess] = await Promise.all([
+    listReviews().catch(() => null),
+    listActionItems().catch(() => null),
+    getFoundationAdminAccessSummary().catch(() => ({
+      configured: false, signedIn: false, isOwner: false, message: "",
+    })),
+  ]);
+
+  const loadFailed   = reviewsResult === null;
+  const reviews      = reviewsResult ?? [];
+  const actionItems  = actionItemsResult ?? [];
+
+  const thisYear       = new Date().getFullYear();
+  const reviewsYear    = reviews.filter((r) => new Date(r.reviewDate).getFullYear() === thisYear).length;
+  const openItems      = actionItems.filter((a) => a.status === "open").length;
+  const overdueItems   = actionItems.filter((a) => a.isOverdue).length;
+
+  // Most recent review for the action-item form default
+  const latestReview   = reviews[0] ?? null;
+
   return (
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Monitor · Management Review</p>
-          <h1>Management Review</h1>
-          <p className="muted">
-            Formal quarterly and annual review of the EHS management system by senior leadership.
-            This is the Phase 6 close-the-loop mechanism — findings feed directly back into
-            risk assessments and the improvement plan. Required under ISO 45001 and ICH Q10.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Monitor · Management Review</p>
+            <h1>Management Review</h1>
+            <p className="muted">
+              Formal quarterly and annual review of the EHS management system by senior leadership.
+              Closes the PDCA loop — findings feed back into risk assessments and the improvement plan.
+              Required under ISO 45001 Clause 9.3 and ICH Q10.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/trends">Trend Analysis →</Link>
         </header>
 
-        {/* Module status */}
-        <div style={{
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderLeft: "4px solid var(--brand)",
-          borderRadius: "10px",
-          padding: "20px 24px",
-          maxWidth: "680px",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-            <BarChart3 size={18} style={{ color: "var(--brand)" }} />
-            <span style={{ fontWeight: 700 }}>Module in Development</span>
+        {/* KPI strip */}
+        <section className="command-card-grid" aria-label="Management review summary">
+          <article className={`command-card ${reviewsYear > 0 ? "platform-green" : "platform-blue"}`}>
+            <div><span><BarChart3 size={16} /></span><strong>Reviews this year</strong></div>
+            <small>{reviewsYear}</small>
+            <em>{reviewsYear > 0 ? "Reviews on record." : "No reviews recorded yet this year."}</em>
+          </article>
+          <article className={`command-card ${openItems > 0 ? "platform-blue" : "platform-green"}`}>
+            <div><span><CheckCircle size={16} /></span><strong>Open action items</strong></div>
+            <small>{openItems}</small>
+            <em>{openItems > 0 ? `${openItems} item${openItems !== 1 ? "s" : ""} in progress.` : "All action items closed."}</em>
+          </article>
+          <article className={`command-card ${overdueItems > 0 ? "platform-red" : "platform-green"}`}>
+            <div><span><AlertTriangle size={16} /></span><strong>Overdue action items</strong></div>
+            <small>{overdueItems}</small>
+            <em>
+              {overdueItems > 0
+                ? `${overdueItems} item${overdueItems !== 1 ? "s" : ""} past due date.`
+                : "No overdue action items."}
+            </em>
+          </article>
+        </section>
+
+        {overdueItems > 0 && (
+          <div className="ai-context-bar ai-context-bar--danger">
+            <AlertTriangle size={15} />
+            <span>
+              <strong>{overdueItems} action item{overdueItems !== 1 ? "s" : ""} overdue.</strong>{" "}
+              Close or reassign overdue items before the next review cycle.
+            </span>
           </div>
-          <p style={{ fontSize: ".85rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "16px" }}>
-            Structured management review workflows — agenda builder, auto-populated KPI summaries,
-            action item tracking, and signed meeting records — are on the roadmap. Today, use the
-            Risk Monitor and Predictive Engine dashboards to assemble your review inputs.
+        )}
+
+        {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
+        {params.message && <p className="form-message">{params.message}</p>}
+
+        {/* Reviews list */}
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Review records</p>
+              <h2>{reviews.length} review{reviews.length !== 1 ? "s" : ""} on record</h2>
+            </div>
+          </div>
+          {loadFailed ? (
+            <DataLoadError resource="management reviews" />
+          ) : reviews.length === 0 ? (
+            <p className="muted">No reviews recorded yet. Create your first review below.</p>
+          ) : (
+            <div className="action-list">
+              {reviews.map((rev) => (
+                <article className="action-row" key={rev.id}>
+                  <div>
+                    <strong>{reviewTypeLabels[rev.reviewType]}</strong>
+                    <span className={rev.status === "completed" ? "status-current" : "status-needs-review"}>
+                      {reviewStatusLabels[rev.status]}
+                    </span>
+                    <span>{new Date(rev.reviewDate).toLocaleDateString()}</span>
+                  </div>
+                  {rev.attendees && <p className="muted">Attendees: {rev.attendees}</p>}
+                  {rev.agendaSummary && <p className="muted">{rev.agendaSummary}</p>}
+                  {rev.kpiSnapshot && (
+                    <p className="muted">
+                      KPI snapshot:{" "}
+                      {Object.entries(rev.kpiSnapshot)
+                        .map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`)
+                        .join(" · ")}
+                    </p>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Action items list */}
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Action items</p>
+              <h2>{actionItems.length} total · {openItems} open</h2>
+            </div>
+          </div>
+          {actionItems.length === 0 ? (
+            <p className="muted">No action items yet. Add one after recording a review.</p>
+          ) : (
+            <div className="action-list">
+              {actionItems.map((item) => (
+                <article className="action-row" key={item.id}>
+                  <div>
+                    <strong>{item.description}</strong>
+                    <span className={item.status === "closed" ? "status-current" : item.isOverdue ? "status-overdue" : "status-needs-review"}>
+                      {item.status === "closed" ? "Closed" : item.isOverdue ? "Overdue" : "Open"}
+                    </span>
+                    {item.ownerRole && <span>{item.ownerRole}</span>}
+                    {item.dueDate && (
+                      <span className={item.isOverdue ? "status-overdue" : "muted"}>
+                        Due: {new Date(item.dueDate).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                  {adminAccess.signedIn && item.status === "open" && (
+                    <form action={closeActionItemAction} className="inline-form">
+                      <input type="hidden" name="id" value={item.id} />
+                      <button className="button-secondary compact" type="submit">Mark closed</button>
+                    </form>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Create review form */}
+        {adminAccess.signedIn && (
+          <section className="panel">
+            <div className="panel-heading">
+              <div>
+                <p className="section-label">Record a review</p>
+                <h2>Create review record</h2>
+              </div>
+              <Plus size={22} />
+            </div>
+            <form action={createReviewAction} className="stacked-form">
+              <div className="form-grid">
+                <label>
+                  Review type <span aria-hidden="true">*</span>
+                  <select name="reviewType" defaultValue="quarterly" required>
+                    <option value="quarterly">Quarterly Review</option>
+                    <option value="annual">Annual Review</option>
+                    <option value="special">Special Review</option>
+                  </select>
+                </label>
+                <label>
+                  Review date <span aria-hidden="true">*</span>
+                  <input name="reviewDate" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} />
+                </label>
+                <label>
+                  Period start
+                  <input name="reviewPeriodStart" type="date" />
+                </label>
+                <label>
+                  Period end
+                  <input name="reviewPeriodEnd" type="date" />
+                </label>
+              </div>
+              <label>
+                Attendees
+                <input name="attendees" type="text" placeholder="e.g. EHS Manager, Lab Director, Operations Lead" />
+              </label>
+              <label>
+                Agenda / summary
+                <textarea name="agendaSummary" rows={2} placeholder="Key topics covered in this review" />
+              </label>
+              <button className="button-primary" type="submit">Create review record</button>
+            </form>
+          </section>
+        )}
+
+        {/* Add action item form */}
+        {adminAccess.signedIn && latestReview && (
+          <section className="panel">
+            <div className="panel-heading">
+              <div>
+                <p className="section-label">Add action item</p>
+                <h2>Assign follow-up from review</h2>
+              </div>
+              <Plus size={22} />
+            </div>
+            <p className="muted">
+              Adding to: <strong>{reviewTypeLabels[latestReview.reviewType]}</strong> —{" "}
+              {new Date(latestReview.reviewDate).toLocaleDateString()}
+            </p>
+            <form action={createActionItemAction} className="stacked-form">
+              <input type="hidden" name="reviewId" value={latestReview.id} />
+              <div className="form-grid">
+                <label>
+                  Description <span aria-hidden="true">*</span>
+                  <input name="description" type="text" placeholder="e.g. Update chemical inventory SOP" required />
+                </label>
+                <label>
+                  Owner / role
+                  <input name="ownerRole" type="text" placeholder="e.g. EHS Manager" />
+                </label>
+                <label>
+                  Due date
+                  <input name="dueDate" type="date" />
+                </label>
+              </div>
+              <button className="button-primary" type="submit">Add action item</button>
+            </form>
+          </section>
+        )}
+
+        {/* Phase 6 → Phase 1 loop-back */}
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="section-label">Phase 6 → Phase 1 Loop-back</p>
+              <h2>Feed finding to Hazard Register</h2>
+            </div>
+            <RefreshCw size={22} />
+          </div>
+          <p className="muted">
+            When this review surfaces a new or uncontrolled risk, log it directly into the
+            Hazard Register. It will be scored by the Predictive Engine as a leading indicator.
           </p>
-          <a
-            href="/risk-command-center"
-            style={{
-              display: "inline-flex", alignItems: "center", gap: "6px",
-              fontSize: ".83rem", fontWeight: 600, color: "var(--brand)", textDecoration: "none"
-            }}
-          >
-            Open Risk Monitor <ArrowRight size={13} />
-          </a>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", maxWidth: "860px" }}>
-          {/* Inputs */}
-          <section>
-            <h2 style={{ fontSize: ".95rem", fontWeight: 700, marginBottom: "12px", color: "var(--brand)" }}>
-              📥 Review Inputs
-            </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              {REVIEW_INPUTS.map((item) => (
-                <div
-                  key={item}
-                  style={{
-                    display: "flex", alignItems: "flex-start", gap: "8px",
-                    padding: "8px 12px",
-                    background: "var(--surface)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "6px",
-                    fontSize: ".80rem",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  <CheckCircle size={13} style={{ color: "var(--brand)", marginTop: "2px", flexShrink: 0 }} />
-                  {item}
-                </div>
-              ))}
+          <form action={feedFindingToHazardRegisterAction} className="stacked-form">
+            <div className="form-grid">
+              <label>
+                Finding / Hazard name
+                <input name="name" type="text" placeholder="e.g. Inadequate fume hood maintenance schedule" required />
+              </label>
+              <label>
+                Hazard type
+                <select name="hazardType" defaultValue="other">
+                  <option value="biological">Biological</option>
+                  <option value="chemical">Chemical</option>
+                  <option value="ergonomic">Ergonomic</option>
+                  <option value="radiation">Radiation</option>
+                  <option value="equipment">Equipment</option>
+                  <option value="environmental">Environmental</option>
+                  <option value="fire">Fire / flammable</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+              <label>
+                Location (optional)
+                <input name="location" type="text" placeholder="e.g. Lab 101" />
+              </label>
             </div>
-          </section>
+            <label>
+              Description
+              <textarea name="description" rows={2} placeholder="What was found during review and why it needs reassessment" />
+            </label>
+            <button className="button-primary" type="submit">Add to Hazard Register</button>
+          </form>
+          <p className="muted">
+            Created as <strong>Identified — Draft, Human Review Required</strong> and linked to
+            the risk scoring engine. A qualified reviewer must assess and classify it.
+          </p>
+        </section>
 
-          {/* Outputs */}
-          <section>
-            <h2 style={{ fontSize: ".95rem", fontWeight: 700, marginBottom: "12px", color: "#2e7d32" }}>
-              📤 Review Outputs
-            </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              {REVIEW_OUTPUTS.map((item) => (
-                <div
-                  key={item}
-                  style={{
-                    display: "flex", alignItems: "flex-start", gap: "8px",
-                    padding: "8px 12px",
-                    background: "var(--surface)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "6px",
-                    fontSize: ".80rem",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  <ArrowRight size={13} style={{ color: "#2e7d32", marginTop: "2px", flexShrink: 0 }} />
-                  {item}
-                </div>
-              ))}
-            </div>
+        {/* KPI quick links */}
+        <section className="panel inline-action-panel">
+          <div>
+            <p className="section-label">Before your review</p>
+            <h2>Pull current trend data</h2>
+            <p className="muted">
+              View CAPA backlog, training completion, and audit readiness score to populate your KPI inputs.
+            </p>
+          </div>
+          <Link href="/trends" className="button-secondary">Open Trend Analysis</Link>
+        </section>
 
-            <div style={{
-              marginTop: "16px",
-              background: "#f0fdf4",
-              border: "1px solid #86efac",
-              borderRadius: "8px",
-              padding: "12px 16px",
-              fontSize: ".80rem",
-              color: "#14532d",
-              lineHeight: 1.6,
-            }}>
-              <strong>ISO 45001 Clause 9.3:</strong> Management review outputs must include decisions
-              related to continual improvement opportunities, changes to the OH&S management system,
-              and resource needs. Records must be retained as documented information.
-            </div>
-          </section>
-        </div>
+        {/* AI guardrail */}
+        <section className="panel inline-action-panel">
+          <div>
+            <p className="section-label">AI Guardrail</p>
+            <h2>Management review outputs require senior leadership sign-off</h2>
+            <p className="muted">
+              ISO 45001 Clause 9.3 requires that management review records be retained as documented
+              information and that outputs include decisions on continual improvement. AI may surface
+              KPI signals, but review decisions and resource commitments require human authority.
+            </p>
+          </div>
+          <ShieldCheck size={24} />
+        </section>
       </div>
     </AppShell>
   );

@@ -44,26 +44,26 @@ export default async function ProjectDashboardPage({ params }: Props) {
 
   return (
     <AppShell>
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold">{project.name}</h1>
-          <p className="text-sm text-gray-400 capitalize">
-            {project.environment} · {project.status}
-          </p>
-        </div>
+      <div className="page-stack">
+        <header className="page-header">
+          <div className="page-header-left">
+            <p className="section-label">Project · <span className="capitalize">{project.environment}</span></p>
+            <h1>{project.name}</h1>
+            <p className="muted capitalize">{project.status}</p>
+          </div>
+        </header>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <section className="command-card-grid" aria-label="Project modules">
           {PROJECT_MODULES.map((m) => (
-            <a
-              key={m.href}
-              href={`/project/${projectId}/${m.href}`}
-              className="rounded-lg border px-5 py-4 hover:bg-gray-50 transition-colors"
-            >
-              <p className="font-medium text-sm mb-1">{m.label}</p>
-              <p className="text-xs text-gray-400">{m.description}</p>
-            </a>
+            <article key={m.href} className="command-card platform-blue">
+              <div><strong>{m.label}</strong></div>
+              <em>{m.description}</em>
+              <a className="button-secondary compact" href={`/project/${projectId}/${m.href}`}>
+                Open →
+              </a>
+            </article>
           ))}
-        </div>
+        </section>
       </div>
     </AppShell>
   );

@@ -102,9 +102,12 @@ export default async function AnalyticsPage() {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Admin</p>
-          <h1>Analytics &amp; Metrics</h1>
-          <p className="muted">Aggregate counts only — no PHI on this page. For compliance audit exports, see below.</p>
+          <div className="page-header-left">
+            <p className="section-label">Platform Admin</p>
+            <h1>Analytics &amp; Metrics</h1>
+            <p className="muted">Aggregate counts only — no PHI on this page. For compliance audit exports, see below.</p>
+          </div>
+          <Link className="button-secondary" href="/admin/dashboard">← Command Center</Link>
         </header>
 
         {/* ── 1. Signup & Growth ─────────────────────────────────────────── */}

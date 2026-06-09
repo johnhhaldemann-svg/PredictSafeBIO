@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Activity, AlertTriangle, CheckCircle2, ShieldCheck, Zap } from "lucide-react";
+import { Activity, AlertTriangle, ShieldCheck, Zap } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { createServerClient } from "@/lib/supabase/server";
 import {
@@ -55,11 +55,14 @@ export default async function ProjectRiskCellsPage({ params }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">{project.name}</p>
-          <h1>Risk Cells</h1>
-          <p className="muted">
-            AMAYA precursor / control / failure / behavior / event intelligence — live feed.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Project · {project.name}</p>
+            <h1>Risk Cells</h1>
+            <p className="muted">
+              AMAYA precursor / control / failure / behavior / event intelligence — live feed.
+            </p>
+          </div>
+          <Link href={`/project/${projectId}/dashboard`} className="button-secondary">← Dashboard</Link>
         </header>
 
         {!summary ? (
@@ -100,8 +103,8 @@ export default async function ProjectRiskCellsPage({ params }: Props) {
                 </div>
               </div>
               {summary.recentCells.length === 0 ? (
-                <div style={{ padding: "2rem 0", textAlign: "center" }}>
-                  <CheckCircle2 size={32} style={{ margin: "0 auto 0.75rem", opacity: 0.4 }} />
+                <div className="empty-state-card">
+                  <p className="empty-state-title">All clear</p>
                   <p className="muted">No active risk signals. All controls are in good standing.</p>
                 </div>
               ) : (
@@ -119,9 +122,7 @@ export default async function ProjectRiskCellsPage({ params }: Props) {
                             )}
                           </strong>
                           <span className={SEVERITY_BADGE[cell.severity]}>{cell.severity}</span>
-                          <span style={{ fontSize: "0.78em", opacity: 0.7 }}>
-                            {cellTypeLabels[cell.cellType]}
-                          </span>
+                          <span className="muted">{cellTypeLabels[cell.cellType]}</span>
                         </div>
                         <p>
                           {cell.linkedRecordType?.replace(/_/g, " ") ?? ""}
@@ -151,7 +152,7 @@ export default async function ProjectRiskCellsPage({ params }: Props) {
 
             {/* Link to full command center */}
             <section className="panel">
-              <p className="muted" style={{ fontSize: "0.85rem" }}>
+              <p className="muted">
                 For the full cross-org risk dashboard, visit the{" "}
                 <Link href="/risk-command-center" className="text-link">AI Risk Command Center</Link>.
               </p>

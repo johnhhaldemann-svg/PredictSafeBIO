@@ -116,8 +116,11 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Plan</p>
+          <p className="section-label">Assess · Plan</p>
           <h1>Compliance Map & AI Guardrails</h1>
+          <p className="muted">
+            Converts assessed risks and source intelligence into source-traced compliance tasks, verification status, and audit-ready evidence.
+          </p>
         </header>
 
         <section className="panel inline-action-panel command-center-lane">

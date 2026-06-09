@@ -23,32 +23,47 @@ export default async function PesticidePage({ searchParams }: Props) {
   const params = await searchParams;
   const filter = params.filter ?? "all";
 
-  const [recordsResult, adminAccess] = await Promise.all([
-    listPesticideRecords(
-      filter === "deviations"    ? { deviationOnly: true } :
-      filter === "missing-label" ? { missingLabel: true } :
-      filter === "pesticide"     ? { productType: "pesticide" as ProductType } :
-      filter === "disinfectant"  ? { productType: "disinfectant" as ProductType } :
-      undefined
-    ).catch(() => null),
+  const [allRecordsResult, adminAccess] = await Promise.all([
+    listPesticideRecords().catch(() => null),
     getFoundationAdminAccessSummary().catch(() => ({
       configured: false, signedIn: false, isOwner: false, message: ""
     }))
   ]);
 
-  const loadFailed     = recordsResult === null;
-  const records        = recordsResult ?? [];
-  const totalCount      = records.length;
-  const deviationCount  = records.filter((r) => r.deviationNoted).length;
-  const missingLabel    = records.filter((r) => !r.hasLabel).length;
-  const cleanCount      = records.filter((r) => !r.needsAttention).length;
+  const loadFailed    = allRecordsResult === null;
+  const allRecords    = allRecordsResult ?? [];
+  const records       = allRecords.filter((r) => {
+    if (filter === "deviations")    return r.deviationNoted;
+    if (filter === "missing-label") return !r.hasLabel;
+    if (filter === "pesticide")     return r.productType === "pesticide";
+    if (filter === "disinfectant")  return r.productType === "disinfectant";
+    return true;
+  });
+
+  const totalCount     = allRecords.length;
+  const deviationCount = allRecords.filter((r) => r.deviationNoted).length;
+  const missingLabel   = allRecords.filter((r) => !r.hasLabel).length;
+  const filterCounts   = {
+    all: totalCount,
+    deviations: deviationCount,
+    "missing-label": missingLabel,
+    pesticide: allRecords.filter((r) => r.productType === "pesticide").length,
+    disinfectant: allRecords.filter((r) => r.productType === "disinfectant").length,
+  };
 
   return (
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Operate</p>
-          <h1>Pesticide &amp; Disinfectant Control</h1>
+          <div className="page-header-left">
+            <p className="section-label">Operate · Application Log</p>
+            <h1>Pesticide &amp; Disinfectant Control</h1>
+            <p className="muted">
+              EPA label compliance, application logging, deviation tracking, and re-entry intervals.
+              The label is the law — all use must follow the EPA-registered label.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/chemical-inventory">Chemical &amp; SDS →</Link>
         </header>
 
         {/* KPI strip */}
@@ -70,6 +85,17 @@ export default async function PesticidePage({ searchParams }: Props) {
           </article>
         </section>
 
+        {deviationCount > 0 && (
+          <div className="ai-context-bar ai-context-bar--danger">
+            <AlertTriangle size={15} />
+            <span>
+              <strong>{deviationCount} application{deviationCount !== 1 ? "s" : ""} with noted deviations.</strong>{" "}
+              Off-label use requires immediate EHS review and deviation resolution.
+            </span>
+            <Link className="ai-fill-btn ai-fill-btn--danger" href="/pesticide?filter=deviations">Review</Link>
+          </div>
+        )}
+
         {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message && <p className="form-message">{params.message}</p>}
 
@@ -85,6 +111,7 @@ export default async function PesticidePage({ searchParams }: Props) {
                f === "deviations" ? "Deviations" :
                f === "missing-label" ? "Missing label" :
                f === "pesticide" ? "Pesticides" : "Disinfectants"}
+              <span className="filter-count-badge">{filterCounts[f] ?? 0}</span>
             </Link>
           ))}
         </nav>
@@ -94,7 +121,11 @@ export default async function PesticidePage({ searchParams }: Props) {
           <div className="panel-heading">
             <div>
               <p className="section-label">Application log</p>
-              <h2>{totalCount} record{totalCount !== 1 ? "s" : ""}</h2>
+              <h2>
+                {records.length === allRecords.length
+                  ? `${totalCount} record${totalCount !== 1 ? "s" : ""}`
+                  : `${records.length} of ${totalCount} shown`}
+              </h2>
             </div>
           </div>
 
@@ -132,19 +163,18 @@ export default async function PesticidePage({ searchParams }: Props) {
                     {rec.reentryTimeMinutes != null ? ` · Re-entry: ${rec.reentryTimeMinutes} min` : ""}
                   </p>
                   {rec.deviationNoted && rec.deviationNotes && (
-                    <p className="muted" style={{ fontSize: "0.82em" }}>
+                    <p className="muted">
                       Deviation: {rec.deviationNotes}
                     </p>
                   )}
 
                   {adminAccess.signedIn && rec.deviationNoted && (
-                    <form action={resolveDeviationAction} style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.4rem" }}>
+                    <form action={resolveDeviationAction} className="form-action-row">
                       <input type="hidden" name="id" value={rec.id} />
                       <input
                         name="resolutionNote"
                         type="text"
                         placeholder="Resolution note — what was corrected"
-                        style={{ flex: 1, minWidth: "200px" }}
                       />
                       <button className="button-secondary compact" type="submit">Resolve deviation</button>
                     </form>
@@ -217,7 +247,7 @@ export default async function PesticidePage({ searchParams }: Props) {
                 Deviation details (if applicable)
                 <textarea name="deviationNotes" rows={2} placeholder="Describe the deviation from the approved label or SOP" />
               </label>
-              <p className="muted" style={{ fontSize: "0.82em" }}>
+              <p className="muted">
                 All pesticide applications must follow the EPA-approved label. Use only in approved locations and at
                 approved concentrations. Upload the product label to document control after logging.
               </p>

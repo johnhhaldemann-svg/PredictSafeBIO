@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Palette, ShieldAlert, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Palette, ShieldAlert, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { createServerClient } from "@/lib/supabase/server";
 import { canViewPlatform } from "@/lib/role-permissions";
@@ -47,14 +47,13 @@ export default async function BrandingPage({ searchParams }: Props) {
   return (
     <AppShell>
       <div className="page-stack">
-        <Link href="/admin/config" className="text-link" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.85rem" }}>
-          <ArrowLeft size={14} /> Back to Config
-        </Link>
-
         <header className="page-header">
-          <p className="section-label">Admin › Config</p>
-          <h1>Platform Branding</h1>
-          <p className="muted">Update name, colors, logo, and contact info — live, no code deploy needed.</p>
+          <div className="page-header-left">
+            <p className="section-label">Admin › Config</p>
+            <h1>Platform Branding</h1>
+            <p className="muted">Update name, colors, logo, and contact info — live, no code deploy needed.</p>
+          </div>
+          <Link href="/admin/config" className="button-secondary">← Config</Link>
         </header>
 
         {sp.success && (
@@ -64,53 +63,51 @@ export default async function BrandingPage({ searchParams }: Props) {
           <div className="verification-fail-box"><ShieldAlert size={15} /><span>{decodeURIComponent(sp.error)}</span></div>
         )}
 
-        <form action={saveBrandingAction}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+        <form action={saveBrandingAction} className="stacked-form">
 
-            <section className="panel">
-              <div className="panel-heading">
-                <div><p className="section-label">Identity</p><h2>Brand</h2></div>
-                <Palette size={20} />
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem 1.5rem" }}>
-                {brandingFields.map(({ name, label, hint, type, value }) => (
-                  <label key={name} style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem", gridColumn: name === "footer_text" ? "1 / -1" : undefined }}>
-                    {label}
-                    {hint && <span className="muted" style={{ fontSize: "0.75rem" }}>{hint}</span>}
-                    <input
-                      name={name}
-                      type={type}
-                      defaultValue={value}
-                      style={{ width: "100%", fontFamily: name === "logo_url" ? "monospace" : undefined }}
-                    />
-                  </label>
-                ))}
-              </div>
-            </section>
-
-            <section className="panel">
-              <div className="panel-heading">
-                <div><p className="section-label">Contact & legal</p><h2>Links</h2></div>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem 1.5rem" }}>
-                {contactFields.map(({ name, label, hint, value }) => (
-                  <label key={name} style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85rem" }}>
-                    {label}
-                    {hint && <span className="muted" style={{ fontSize: "0.75rem" }}>{hint}</span>}
-                    <input name={name} defaultValue={value} style={{ width: "100%", fontFamily: "monospace" }} />
-                  </label>
-                ))}
-              </div>
-            </section>
-
-            <div className="guardrail-box">
-              <ShieldCheck size={16} />
-              <span>Branding changes take effect immediately and are recorded in the audit log.</span>
+          <section className="panel">
+            <div className="panel-heading">
+              <div><p className="section-label">Identity</p><h2>Brand</h2></div>
+              <Palette size={20} />
             </div>
+            <div className="form-grid">
+              {brandingFields.map(({ name, label, hint, type, value }) => (
+                <label key={name} style={name === "footer_text" ? { gridColumn: "1 / -1" } : undefined}>
+                  {label}
+                  {hint && <span className="muted">{hint}</span>}
+                  <input
+                    name={name}
+                    type={type}
+                    defaultValue={value}
+                    style={name === "logo_url" ? { fontFamily: "monospace" } : undefined}
+                  />
+                </label>
+              ))}
+            </div>
+          </section>
 
-            <button className="button-primary" type="submit" style={{ alignSelf: "flex-start" }}>
-              Save branding
-            </button>
+          <section className="panel">
+            <div className="panel-heading">
+              <div><p className="section-label">Contact &amp; legal</p><h2>Links</h2></div>
+            </div>
+            <div className="form-grid">
+              {contactFields.map(({ name, label, hint, value }) => (
+                <label key={name}>
+                  {label}
+                  {hint && <span className="muted">{hint}</span>}
+                  <input name={name} defaultValue={value} style={{ fontFamily: "monospace" }} />
+                </label>
+              ))}
+            </div>
+          </section>
+
+          <div className="guardrail-box">
+            <ShieldCheck size={16} />
+            <span>Branding changes take effect immediately and are recorded in the audit log.</span>
+          </div>
+
+          <div className="form-action-row">
+            <button className="button-primary" type="submit">Save branding</button>
           </div>
         </form>
       </div>

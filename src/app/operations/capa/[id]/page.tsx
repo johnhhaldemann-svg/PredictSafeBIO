@@ -53,9 +53,19 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label"><Link href="/operations/capa">CAPA Register</Link> / Detail</p>
-          <h1>{capa.title}</h1>
+          <div className="page-header-left">
+            <p className="section-label"><Link href="/operations/capa">CAPA Register</Link> / Detail</p>
+            <h1>{capa.title}</h1>
+          </div>
+          <Link className="button-secondary" href="/operations/capa">← All CAPAs</Link>
         </header>
+
+        {overdue && (
+          <div className="ai-context-bar ai-context-bar--danger">
+            <span>⚠</span>
+            <span><strong>This CAPA is past its due date.</strong> Update status or extend the due date.</span>
+          </div>
+        )}
 
         {sp.message && <p className="form-message">{sp.message}</p>}
 
@@ -83,7 +93,7 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
             <article><span>Owner role</span><strong>{capa.ownerRole ?? "Not assigned"}</strong></article>
             <article>
               <span>Due date</span>
-              <strong className={overdue ? "text-danger" : ""}>{capa.dueDate ? new Date(capa.dueDate).toLocaleDateString() : "Not set"}</strong>
+              <strong className={overdue ? "overdue-cell" : ""}>{capa.dueDate ? new Date(capa.dueDate).toLocaleDateString() : "Not set"}</strong>
             </article>
             <article><span>Effectiveness check</span><strong>{capa.effectivenessCheckDue ? new Date(capa.effectivenessCheckDue).toLocaleDateString() : "Not set"}</strong></article>
             <article>
@@ -164,7 +174,7 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
                     {action.completedAt ? ` · Completed ${new Date(action.completedAt).toLocaleDateString()}` : ""}
                   </p>
                   {adminAccess.signedIn && action.status !== "complete" && (
-                    <form action={updateCapaActionStatusAction} style={{ display: "inline-flex", gap: 8, marginTop: 6 }}>
+                    <form action={updateCapaActionStatusAction} className="form-action-row">
                       <input type="hidden" name="actionId" value={action.id} />
                       <input type="hidden" name="capaId" value={capa.id} />
                       <select name="status" defaultValue={action.status}>
@@ -185,9 +195,9 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
 
           {/* Add action form */}
           {adminAccess.signedIn && isActive && (
-            <details className="stacked-form" style={{ marginTop: 18 }}>
-              <summary style={{ cursor: "pointer", fontWeight: 600, marginBottom: 12 }}>
-                <Plus size={14} style={{ display: "inline", marginRight: 4 }} />
+            <details className="stacked-form">
+              <summary>
+                <Plus size={14} />
                 Add action
               </summary>
               <form action={addCapaActionAction} className="stacked-form">
@@ -279,12 +289,12 @@ export default async function CapaDetailPage({ params, searchParams }: Props) {
             </p>
           </div>
           {capa.sourceIncidentId ? (
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div className="command-center-link-strip">
               <a className="button-primary" href={`/api/reports/incident/${capa.sourceIncidentId}?format=pdf`} target="_blank" rel="noopener noreferrer">Download PDF</a>
               <a className="button-secondary" href={`/api/reports/incident/${capa.sourceIncidentId}?format=docx`}>Download DOCX</a>
             </div>
           ) : capa.sourceAssessmentId ? (
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div className="command-center-link-strip">
               <a className="button-primary" href={`/api/reports/assessment/${capa.sourceAssessmentId}?format=pdf`} target="_blank" rel="noopener noreferrer">Download PDF</a>
               <a className="button-secondary" href={`/api/reports/assessment/${capa.sourceAssessmentId}?format=docx`}>Download DOCX</a>
             </div>

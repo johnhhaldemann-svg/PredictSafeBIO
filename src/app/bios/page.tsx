@@ -45,8 +45,11 @@ export default async function BiosListPage({ searchParams }: Props) {
       <AppShell>
         <div className="page-stack">
           <header className="page-header">
-            <p className="section-label">Personnel Records</p>
-            <h1>Personnel records</h1>
+            <div className="page-header-left">
+              <p className="section-label">Operate · Personnel</p>
+              <h1>Personnel Records</h1>
+            </div>
+            <Link className="button-secondary" href="/plan/qualified-persons">Qualified Persons →</Link>
           </header>
           <DataLoadError resource="personnel records" />
         </div>
@@ -65,28 +68,31 @@ export default async function BiosListPage({ searchParams }: Props) {
     getOrgUsage(orgId),
   ]);
 
-
   const allBios = ((biosResult?.data ?? []) as any[]).map((b: any) => ({
-    id:                b.id as string,
-    display_name:      b.display_name as string,
-    is_active:         b.is_active as boolean,
-    created_at:        b.created_at as string,
+    id:           b.id as string,
+    display_name: b.display_name as string,
+    is_active:    b.is_active as boolean,
+    created_at:   b.created_at as string,
   }));
 
-  const activeBios = allBios.filter(b => b.is_active);
-  const pct = usagePct(usage.patient_count, usage.max_patients);
-  const atLimit = pct >= 100;
-  const nearLimit = pct >= 80 && !atLimit;
+  const activeBios  = allBios.filter(b => b.is_active);
+  const deactivated = allBios.filter(b => !b.is_active);
+  const pct         = usagePct(usage.patient_count, usage.max_patients);
+  const atLimit     = pct >= 100;
+  const nearLimit   = pct >= 80 && !atLimit;
 
   return (
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <p className="section-label">Personnel Records</p>
-          <h1>Personnel records</h1>
-          <p className="muted">
-            Personnel records for your organization. All records use display names only.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Operate · <a href="/plan/qualified-persons">Qualified Persons</a> / Personnel</p>
+            <h1>Personnel Records</h1>
+            <p className="muted">
+              Display-name records for your organization. No legal names, SSNs, contact information, or health data stored.
+            </p>
+          </div>
+          <Link className="button-secondary" href="/plan/qualified-persons">← Qualified Persons</Link>
         </header>
 
         {sp.success && (
@@ -96,96 +102,81 @@ export default async function BiosListPage({ searchParams }: Props) {
           <div className="verification-fail-box"><ShieldAlert size={15} /><span>{decodeURIComponent(sp.error)}</span></div>
         )}
 
-        {/* Usage + add button */}
-        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
-          <Link href="/bios/new" className={atLimit ? "button-secondary" : "button-primary"}
-            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.85rem", opacity: atLimit ? 0.5 : 1, pointerEvents: atLimit ? "none" : "auto" }}>
-            <PlusCircle size={14} /> Add personnel record
+        <div className="command-center-link-strip">
+          <Link
+            href="/bios/new"
+            className={atLimit ? "button-secondary" : "button-primary"}
+            aria-disabled={atLimit}
+          >
+            <PlusCircle size={14} className="icon-mr" /> Add personnel record
           </Link>
-
-          {/* Usage meter */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Users size={14} style={{ color: atLimit ? "#dc2626" : nearLimit ? "#d97706" : "#6b7280" }} />
-            <span style={{ fontSize: "0.82rem", color: atLimit ? "#dc2626" : "var(--muted)" }}>
-              {usage.patient_count}{usage.max_patients !== null ? ` / ${usage.max_patients}` : ""} records
-              {atLimit && " — limit reached"}
-              {nearLimit && " — nearing limit"}
-            </span>
-            {usage.max_patients !== null && (
-              <div style={{ width: 80, height: 4, background: "var(--border)", borderRadius: 2, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${pct}%`, background: atLimit ? "#dc2626" : nearLimit ? "#d97706" : "#16a34a", borderRadius: 2 }} />
-              </div>
-            )}
-            {atLimit && (
-              <Link href="/account/billing" className="text-link" style={{ fontSize: "0.78rem" }}>Upgrade →</Link>
-            )}
-          </div>
+          <span className={atLimit ? "status-overdue" : "muted"}>
+            <Users size={13} className="icon-mr" />
+            {usage.patient_count}{usage.max_patients !== null ? ` / ${usage.max_patients}` : ""} records
+            {atLimit && " — limit reached"}
+            {nearLimit && " — nearing limit"}
+          </span>
+          {atLimit && (
+            <Link href="/account/billing" className="button-secondary compact">Upgrade plan →</Link>
+          )}
         </div>
 
         <div className="verification-pending-box">
           <ShieldCheck size={14} />
-          <span style={{ fontSize: "0.78rem" }}>
+          <span>
             Display names only — no legal names, SSNs, contact information, or health data stored.
             Records are encrypted at rest. Deactivated records are soft-deleted and retained for audit purposes.
           </span>
         </div>
 
         {activeBios.length === 0 ? (
-          <section className="panel" style={{ textAlign: "center", padding: "2.5rem" }}>
-            <Users size={32} style={{ color: "var(--muted)", margin: "0 auto 1rem" }} />
-            <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>No personnel records yet</p>
-            <p className="muted" style={{ fontSize: "0.85rem", marginBottom: "1.25rem" }}>
-              Create your first personnel record to get started.
-            </p>
-            <Link href="/bios/new" className="button-primary"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <PlusCircle size={14} /> Add first record
-            </Link>
+          <section className="panel">
+            <div className="empty-state-card">
+              <Users size={32} className="muted" />
+              <p className="empty-state-title">No personnel records yet</p>
+              <p className="muted">Create your first personnel record to get started.</p>
+              <Link href="/bios/new" className="button-primary">
+                <PlusCircle size={14} className="icon-mr" /> Add first record
+              </Link>
+            </div>
           </section>
         ) : (
-          <section className="panel" style={{ padding: 0, overflow: "hidden" }}>
-            <div className="panel-heading" style={{ padding: "1rem 1.25rem 0.75rem" }}>
+          <section className="table-panel">
+            <div className="panel-heading">
               <div>
-                <p className="section-label">Active bios</p>
+                <p className="section-label">Active records</p>
                 <h2>{activeBios.length} record{activeBios.length !== 1 ? "s" : ""}</h2>
               </div>
             </div>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.83rem" }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                    {["Display name", "Added", ""].map(h => (
-                      <th key={h} style={{ padding: "0.5rem 1rem", textAlign: "left", fontWeight: 600, color: "var(--muted)", whiteSpace: "nowrap" }}>{h}</th>
-                    ))}
+            <table>
+              <thead>
+                <tr>
+                  <th>Display name</th>
+                  <th>Added</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeBios.map(bio => (
+                  <tr key={bio.id}>
+                    <td><strong>{bio.display_name}</strong></td>
+                    <td className="muted">{new Date(bio.created_at).toLocaleDateString()}</td>
+                    <td>
+                      <form action={deactivateBioAction}>
+                        <input type="hidden" name="bioId" value={bio.id} />
+                        <button className="button-secondary compact" type="submit">Remove</button>
+                      </form>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {activeBios.map(bio => (
-                    <tr key={bio.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                      <td style={{ padding: "0.6rem 1rem", fontWeight: 500 }}>{bio.display_name}</td>
-                      <td style={{ padding: "0.6rem 1rem", color: "var(--muted)", whiteSpace: "nowrap", fontSize: "0.75rem" }}>
-                        {new Date(bio.created_at).toLocaleDateString()}
-                      </td>
-                      <td style={{ padding: "0.6rem 1rem" }}>
-                        <form action={deactivateBioAction}>
-                          <input type="hidden" name="bioId" value={bio.id} />
-                          <button className="button-secondary" type="submit"
-                            style={{ fontSize: "0.75rem", padding: "0.2rem 0.6rem", color: "#dc2626" }}>
-                            Remove
-                          </button>
-                        </form>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </section>
         )}
 
-        {allBios.filter(b => !b.is_active).length > 0 && (
-          <p className="muted" style={{ fontSize: "0.78rem" }}>
-            {allBios.filter(b => !b.is_active).length} deactivated record{allBios.filter(b => !b.is_active).length !== 1 ? "s" : ""} retained for audit trail.
+        {deactivated.length > 0 && (
+          <p className="muted">
+            {deactivated.length} deactivated record{deactivated.length !== 1 ? "s" : ""} retained for audit trail.
           </p>
         )}
       </div>

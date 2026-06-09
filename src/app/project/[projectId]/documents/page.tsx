@@ -45,9 +45,9 @@ export default async function ProjectDocumentsPage({ params }: Props) {
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
-          <div>
+          <div className="page-header-left">
             <p className="section-label">
-              <Link href={`/project/${projectId}/dashboard`}>{project.name}</Link> / Documents
+              Project · <Link href={`/project/${projectId}/dashboard`}>{project.name}</Link> / Documents
             </p>
             <h1>Documents</h1>
           </div>
@@ -77,23 +77,23 @@ export default async function ProjectDocumentsPage({ params }: Props) {
               <table className="role-matrix-table">
                 <thead>
                   <tr>
-                    <th style={{ textAlign: "left" }}>Title</th>
-                    <th style={{ textAlign: "left" }}>Type</th>
-                    <th style={{ textAlign: "left" }}>Status</th>
-                    <th style={{ textAlign: "left" }}>Rev</th>
-                    <th style={{ textAlign: "left" }}>Updated</th>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Rev</th>
+                    <th>Updated</th>
                   </tr>
                 </thead>
                 <tbody>
                   {projectDocs.map((d) => (
                     <tr key={d.id}>
-                      <td style={{ textAlign: "left" }}>
+                      <td>
                         <Link href={`/documents/${d.id}`} className="text-link">{d.title}</Link>
                       </td>
-                      <td style={{ textAlign: "left" }}>{formatDocumentType(d.document_type)}</td>
-                      <td style={{ textAlign: "left" }}>{formatDocumentStatus(d.status)}</td>
-                      <td style={{ textAlign: "left" }}>{d.revision ?? "—"}</td>
-                      <td style={{ textAlign: "left" }} className="muted">
+                      <td>{formatDocumentType(d.document_type)}</td>
+                      <td>{formatDocumentStatus(d.status)}</td>
+                      <td>{d.revision ?? "—"}</td>
+                      <td className="muted">
                         {d.updated_at ? new Date(d.updated_at).toLocaleDateString() : "—"}
                       </td>
                     </tr>
@@ -118,21 +118,21 @@ export default async function ProjectDocumentsPage({ params }: Props) {
               <table className="role-matrix-table">
                 <thead>
                   <tr>
-                    <th style={{ textAlign: "left" }}>Title</th>
-                    <th style={{ textAlign: "left" }}>Type</th>
-                    <th style={{ textAlign: "left" }}>Status</th>
-                    <th style={{ textAlign: "left" }}>Rev</th>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Rev</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orgDocs.map((d) => (
                     <tr key={d.id}>
-                      <td style={{ textAlign: "left" }}>
+                      <td>
                         <Link href={`/documents/${d.id}`} className="text-link">{d.title}</Link>
                       </td>
-                      <td style={{ textAlign: "left" }}>{formatDocumentType(d.document_type)}</td>
-                      <td style={{ textAlign: "left" }}>{formatDocumentStatus(d.status)}</td>
-                      <td style={{ textAlign: "left" }}>{d.revision ?? "—"}</td>
+                      <td>{formatDocumentType(d.document_type)}</td>
+                      <td>{formatDocumentStatus(d.status)}</td>
+                      <td>{d.revision ?? "—"}</td>
                     </tr>
                   ))}
                 </tbody>
