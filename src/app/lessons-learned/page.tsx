@@ -1,111 +1,242 @@
+export const dynamic = "force-dynamic";
+
 import type { Metadata } from "next";
+import { BookOpen, Plus, RefreshCw, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { BookOpen, RefreshCw, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { feedLessonToHazardRegisterAction } from "./actions";
+import {
+  listLessons,
+  sourceTypeLabels,
+  lessonPhaseLabels,
+  lessonStatusLabels,
+  type LessonStatus,
+  type LessonPhase,
+} from "@/lib/supabase/lessons-learned-service";
+import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
+import {
+  createLessonAction,
+  publishLessonAction,
+  feedLessonToHazardRegisterAction,
+} from "./actions";
+import { DataLoadError } from "@/components/DataLoadError";
 
 export const metadata: Metadata = { title: "Lessons Learned – PredictSafeBIO" };
 
-const LESSON_SOURCES = [
-  { label: "Incident investigations",       desc: "Root cause findings that reveal systemic issues beyond the immediate event" },
-  { label: "CAPA closures",                 desc: "What worked, what needed adjustment, and why the issue recurred (or did not)" },
-  { label: "Audit observations",            desc: "Patterns across audits that point to process or culture gaps" },
-  { label: "Near misses",                   desc: "High-value signals — the near miss that did not become a recordable" },
-  { label: "Regulatory changes",            desc: "How rule changes forced a process update and what the transition revealed" },
-  { label: "Management review outputs",     desc: "Strategic insights from leadership that should propagate to the team" },
-  { label: "External benchmarking",         desc: "Industry incidents (OSHA enforcement actions, EPA enforcement) relevant to your operations" },
-];
+const STATUS_CLASS: Record<LessonStatus, string> = {
+  draft:     "status-needs-review",
+  published: "status-current",
+  archived:  "status-current",
+};
 
-const LOOP_BACK = [
-  { phase: "Phase 1 — Assess",   action: "New hazard identified → add to Hazard Register and re-score Risk Register" },
-  { phase: "Phase 2 — Plan",     action: "Control gaps found → update Control Register and SOP library" },
-  { phase: "Phase 3 — Operate",  action: "Procedural failures → revise work instructions and retrain" },
-  { phase: "Phase 4 — Monitor",  action: "KPI weakness surfaced → add monitoring frequency or new leading indicator" },
-  { phase: "Phase 5 — CAPA",     action: "Recurring issue pattern → systemic CAPA targeting root system" },
-];
-
-type Props = { searchParams: Promise<{ message?: string }> };
+type Props = {
+  searchParams: Promise<{
+    message?: string;
+    success?: string;
+    filter?: string;
+    phase?: string;
+  }>;
+};
 
 export default async function LessonsLearnedPage({ searchParams }: Props) {
-  const { message } = await searchParams;
+  const params      = await searchParams;
+  const filter      = params.filter ?? "all";
+  const phaseFilter = params.phase as LessonPhase | undefined;
+
+  const [allLessonsResult, adminAccess] = await Promise.all([
+    listLessons().catch(() => null),
+    getFoundationAdminAccessSummary().catch(() => ({
+      configured: false, signedIn: false, isOwner: false, message: "",
+    })),
+  ]);
+
+  const loadFailed  = allLessonsResult === null;
+  const allLessons  = allLessonsResult ?? [];
+
+  const published   = allLessons.filter((l) => l.status === "published");
+  const drafts      = allLessons.filter((l) => l.status === "draft");
+
+  const lessons = allLessons.filter((l) => {
+    if (filter === "draft"     && l.status !== "draft")     return false;
+    if (filter === "published" && l.status !== "published") return false;
+    if (phaseFilter && l.phase !== phaseFilter)             return false;
+    return l.status !== "archived";
+  });
+
+  const filterCounts = {
+    all:       allLessons.filter((l) => l.status !== "archived").length,
+    draft:     drafts.length,
+    published: published.length,
+  };
+
+  const PHASES: LessonPhase[] = ["assess", "plan", "operate", "monitor"];
+
   return (
     <AppShell>
       <div className="page-stack">
         <header className="page-header">
           <div className="page-header-left">
-            <p className="section-label">Monitor · Phase 6 — Review &amp; Improve</p>
+            <p className="section-label">Monitor · Lessons Learned</p>
             <h1>Lessons Learned</h1>
             <p className="muted">
               Capture, share, and act on insights from incidents, CAPAs, audits, and near misses.
-              Lessons Learned closes the loop — every insight feeds back into Phase 1 to make the
-              next cycle smarter. Required documentation under ICH Q10 and ISO 45001.
+              Every lesson feeds back into Phase 1 to make the next cycle smarter.
+              Required under ICH Q10 §2.7 and ISO 45001.
             </p>
           </div>
           <Link className="button-secondary" href="/management-review">Management Review →</Link>
         </header>
 
-        <div className="ai-context-bar ai-context-bar--warning">
-          <BookOpen size={15} />
-          <span>
-            <strong>Module in Development.</strong>{" "}
-            A structured lessons learned registry — tagging entries by phase, hazard type, and affected
-            program, with auto-distribution to relevant team members — is on the roadmap. Today, capture
-            lessons as CAPA notes or in the Documents library and share in Management Review.
-          </span>
-        </div>
+        {/* KPI strip */}
+        <section className="command-card-grid" aria-label="Lessons summary">
+          <article className={`command-card ${published.length > 0 ? "platform-green" : "platform-blue"}`}>
+            <div><span><BookOpen size={16} /></span><strong>Published lessons</strong></div>
+            <small>{published.length}</small>
+            <em>{published.length > 0 ? "Shared with the team." : "No published lessons yet."}</em>
+          </article>
+          <article className={`command-card ${drafts.length > 0 ? "platform-blue" : "platform-green"}`}>
+            <div><span><BookOpen size={16} /></span><strong>Drafts pending review</strong></div>
+            <small>{drafts.length}</small>
+            <em>{drafts.length > 0 ? `${drafts.length} lesson${drafts.length !== 1 ? "s" : ""} awaiting publish.` : "No drafts."}</em>
+          </article>
+          <article className="command-card platform-blue">
+            <div><span><BookOpen size={16} /></span><strong>Total captured</strong></div>
+            <small>{filterCounts.all}</small>
+            <em>Lessons from all sources.</em>
+          </article>
+        </section>
 
-        <nav className="command-center-link-strip" aria-label="Related modules">
-          <Link className="button-secondary compact" href="/operations/capa">Open CAPA →</Link>
-          <Link className="button-secondary compact" href="/management-review">Management Review →</Link>
+        {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
+        {params.message && <p className="form-message">{params.message}</p>}
+
+        {/* Filter strip */}
+        <nav className="command-center-link-strip" aria-label="Lessons filter">
+          {(["all", "draft", "published"] as const).map((f) => (
+            <Link
+              key={f}
+              href={f === "all" ? "/lessons-learned" : `/lessons-learned?filter=${f}`}
+              className={`button-secondary compact ${filter === f && !phaseFilter ? "active-filter" : ""}`}
+            >
+              {f === "all" ? "All" : f === "draft" ? "Drafts" : "Published"}
+              <span className="filter-count-badge">{filterCounts[f] ?? 0}</span>
+            </Link>
+          ))}
+          <span className="muted" style={{ alignSelf: "center", fontSize: 12, marginLeft: 8 }}>Phase:</span>
+          {PHASES.map((p) => (
+            <Link
+              key={p}
+              href={`/lessons-learned?phase=${p}`}
+              className={`button-secondary compact ${phaseFilter === p ? "active-filter" : ""}`}
+            >
+              {lessonPhaseLabels[p]}
+            </Link>
+          ))}
         </nav>
 
+        {/* Lessons list */}
         <section className="panel">
           <div className="panel-heading">
             <div>
-              <p className="section-label">Inputs</p>
-              <h2>Where Lessons Come From</h2>
+              <p className="section-label">Lessons registry</p>
+              <h2>
+                {lessons.length === filterCounts.all
+                  ? `${filterCounts.all} lesson${filterCounts.all !== 1 ? "s" : ""}`
+                  : `${lessons.length} of ${filterCounts.all} shown`}
+              </h2>
             </div>
           </div>
-          <div className="action-list">
-            {LESSON_SOURCES.map((s) => (
-              <article className="action-row" key={s.label}>
-                <div>
-                  <strong>{s.label}</strong>
-                  <small className="muted">{s.desc}</small>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
 
-        <section className="panel">
-          <div className="panel-heading">
-            <div>
-              <p className="section-label">Loop-back</p>
-              <h2>How Lessons Feed Back into the Cycle</h2>
+          {loadFailed ? (
+            <DataLoadError resource="lessons learned" />
+          ) : lessons.length === 0 ? (
+            <p className="muted">No lessons found for this filter. Capture one below.</p>
+          ) : (
+            <div className="action-list">
+              {lessons.map((lesson) => (
+                <article className="action-row" key={lesson.id}>
+                  <div>
+                    <strong>{lesson.title}</strong>
+                    <span className={STATUS_CLASS[lesson.status]}>{lessonStatusLabels[lesson.status]}</span>
+                    <span>{sourceTypeLabels[lesson.sourceType]}</span>
+                    <span className="muted">{lessonPhaseLabels[lesson.phase]}</span>
+                    {lesson.hazardType && <span className="muted">{lesson.hazardType}</span>}
+                  </div>
+                  <p className="muted">{lesson.description}</p>
+                  {lesson.programTags.length > 0 && (
+                    <p className="muted">Tags: {lesson.programTags.join(", ")}</p>
+                  )}
+                  {adminAccess.signedIn && lesson.status === "draft" && (
+                    <form action={publishLessonAction} className="inline-form">
+                      <input type="hidden" name="id" value={lesson.id} />
+                      <button className="button-secondary compact" type="submit">Publish</button>
+                    </form>
+                  )}
+                </article>
+              ))}
             </div>
-            <RefreshCw size={20} />
-          </div>
-          <div className="action-list">
-            {LOOP_BACK.map((l) => (
-              <article className="action-row" key={l.phase}>
-                <div>
-                  <strong>{l.phase}</strong>
-                  <small className="muted">{l.action}</small>
-                </div>
-              </article>
-            ))}
-          </div>
-          <div className="ai-context-bar ai-context-bar--success">
-            <ShieldCheck size={14} />
-            <span>
-              <strong>ICH Q10 §2.7:</strong> The pharmaceutical quality system should include a process
-              for knowledge management, including the sharing of knowledge and lessons learned across
-              products, processes, and sites.
-            </span>
-          </div>
+          )}
         </section>
 
+        {/* Capture lesson form */}
+        {adminAccess.signedIn && (
+          <section className="panel">
+            <div className="panel-heading">
+              <div>
+                <p className="section-label">Capture a lesson</p>
+                <h2>Add to the lessons registry</h2>
+              </div>
+              <Plus size={22} />
+            </div>
+            <form action={createLessonAction} className="stacked-form">
+              <div className="form-grid">
+                <label>
+                  Title <span aria-hidden="true">*</span>
+                  <input name="title" type="text" placeholder="e.g. Cryogen vessel inspection gap" required />
+                </label>
+                <label>
+                  Source type <span aria-hidden="true">*</span>
+                  <select name="sourceType" defaultValue="other" required>
+                    <option value="incident">Incident Investigation</option>
+                    <option value="capa">CAPA Closure</option>
+                    <option value="inspection">Inspection Observation</option>
+                    <option value="audit">Audit Finding</option>
+                    <option value="near_miss">Near Miss</option>
+                    <option value="external">External / Industry</option>
+                    <option value="other">Other</option>
+                  </select>
+                </label>
+                <label>
+                  PDCA phase <span aria-hidden="true">*</span>
+                  <select name="phase" defaultValue="operate" required>
+                    <option value="assess">Assess</option>
+                    <option value="plan">Plan</option>
+                    <option value="operate">Operate</option>
+                    <option value="monitor">Monitor</option>
+                  </select>
+                </label>
+                <label>
+                  Hazard type (optional)
+                  <input name="hazardType" type="text" placeholder="e.g. chemical, biological" />
+                </label>
+                <label>
+                  Source reference (optional)
+                  <input name="sourceId" type="text" placeholder="e.g. INC-2024-045 or CAPA-083" />
+                </label>
+              </div>
+              <label>
+                Description &amp; insight <span aria-hidden="true">*</span>
+                <textarea
+                  name="description"
+                  rows={3}
+                  placeholder="What happened, what was learned, and what change it triggered"
+                  required
+                />
+              </label>
+              <button className="button-primary" type="submit">Capture lesson (saved as draft)</button>
+            </form>
+          </section>
+        )}
+
+        {/* Phase 6 → Phase 1 loop-back */}
         <section className="panel">
           <div className="panel-heading">
             <div>
@@ -118,7 +249,6 @@ export default async function LessonsLearnedPage({ searchParams }: Props) {
             When a lesson identifies an uncontrolled or new risk, push it directly into Phase 1.
             The Predictive Engine will score it as a leading indicator immediately on creation.
           </p>
-          {message && <p className="form-message">{message}</p>}
           <form action={feedLessonToHazardRegisterAction} className="stacked-form">
             <div className="form-grid">
               <label>
@@ -145,16 +275,29 @@ export default async function LessonsLearnedPage({ searchParams }: Props) {
             </div>
             <label>
               Lesson / context
-              <textarea name="description" rows={2} placeholder="What was learned and why this risk needs to be formally assessed" />
+              <textarea name="description" rows={2} placeholder="What was learned and why this risk needs formal assessment" />
             </label>
-            <button className="button-primary" type="submit">
-              Add to Hazard Register
-            </button>
+            <button className="button-primary" type="submit">Add to Hazard Register</button>
           </form>
           <p className="muted">
             Created as <strong>Identified — Draft, Human Review Required</strong>. A qualified
             reviewer must confirm and classify before it enters the risk scoring cycle.
           </p>
+        </section>
+
+        {/* AI guardrail */}
+        <section className="panel inline-action-panel">
+          <div>
+            <p className="section-label">AI Guardrail</p>
+            <h2>Knowledge sharing requires human judgment and review</h2>
+            <p className="muted">
+              Lessons are captured as <strong>Draft</strong> and must be reviewed before publishing.
+              ICH Q10 §2.7 requires that knowledge management includes sharing across products,
+              processes, and sites. AI may surface patterns but cannot determine which lessons are
+              material or require regulatory notification.
+            </p>
+          </div>
+          <ShieldCheck size={24} />
         </section>
       </div>
     </AppShell>
