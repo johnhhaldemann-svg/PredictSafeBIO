@@ -9,6 +9,12 @@ import { createSupabaseServerClient } from "./server";
 import { isSupabaseConfigured } from "./env";
 
 // ---------------------------------------------------------------------------
+// Shared result type
+// ---------------------------------------------------------------------------
+
+export type FoundationActionResult = { ok: true; message: string } | { ok: false; message: string };
+
+// ---------------------------------------------------------------------------
 // Profile context
 // ---------------------------------------------------------------------------
 
@@ -141,4 +147,15 @@ export function mapDocument(document: Record<string, unknown>): DocumentMetadata
 
 export function normalizeOptionalText(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim().toLowerCase() : "";
+}
+
+export function summarizeJson(value: unknown) {
+  if (Array.isArray(value)) return value.slice(0, 3).join(", ") || "none";
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>).slice(0, 3);
+    return entries.map(([key, item]) => `${key}: ${String(item)}`).join(", ");
+  }
+  if (value == null) return "none";
+  return String(value);
 }
