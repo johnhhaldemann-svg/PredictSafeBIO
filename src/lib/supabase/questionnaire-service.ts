@@ -42,6 +42,28 @@ export async function listQuestionnaireResponses(): Promise<QuestionnaireRespons
   }
 }
 
+/**
+ * Cheap gate check: has this org saved any questionnaire answers yet? Used to
+ * require first-time setup before the workspace opens. Fails open — a missing
+ * connection or transient error never traps the user behind the gate.
+ */
+export async function hasCompletedSetupQuestionnaire(): Promise<boolean> {
+  if (!isSupabaseConfigured()) return true;
+  try {
+    const ctx = await getProfileContext();
+    if (!ctx) return true; // not signed in / no org — other guards handle this
+    const supabase = await createSupabaseServerClient();
+    const { count, error } = await supabase
+      .from("client_setup_questionnaire_responses")
+      .select("question_number", { count: "exact", head: true })
+      .eq("organization_id", ctx.organizationId);
+    if (error) throw error;
+    return (count ?? 0) > 0;
+  } catch {
+    return true;
+  }
+}
+
 /** Upsert all answers from a submitted questionnaire (one row per question). */
 export async function saveQuestionnaireResponses(
   answers: { questionNumber: number; answer: string; notes?: string }[]

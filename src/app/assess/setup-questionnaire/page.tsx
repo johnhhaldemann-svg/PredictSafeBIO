@@ -33,7 +33,7 @@ export default async function SetupQuestionnairePage({ searchParams }: Props) {
   const domains = DOMAIN_ORDER.filter((d) => SETUP_QUESTIONS.some((q) => q.domain === d));
 
   return (
-    <AppShell>
+    <AppShell bypassSetupGate>
       <div className="page-stack">
         <header className="page-header">
           <div className="page-header-left">

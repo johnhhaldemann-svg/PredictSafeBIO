@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   Bell,
   Brain,
@@ -9,7 +10,8 @@ import { Suspense, type ReactNode } from "react";
 import { signOutAction } from "@/app/auth/actions";
 import { getAuthSummary } from "@/lib/supabase/data";
 import { getKnowledgePendingCount } from "@/lib/supabase/knowledge-service";
-import { getNavTier, getRoleLabel, getRoleBadgeClass } from "@/lib/role-permissions";
+import { hasCompletedSetupQuestionnaire } from "@/lib/supabase/questionnaire-service";
+import { getNavTier, getRoleLabel, getRoleBadgeClass, isPlatformRole } from "@/lib/role-permissions";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseServiceConfigured } from "@/lib/supabase/env";
 import { PlatformCategoryNav } from "./PlatformCategoryNav";
@@ -23,7 +25,15 @@ function getInitials(email: string | null | undefined): string {
   return email.slice(0, 2).toUpperCase();
 }
 
-export async function AppShell({ children }: { children: ReactNode }) {
+export async function AppShell({
+  children,
+  // The Setup Questionnaire page passes this so the first-login gate below does
+  // not redirect onto itself. Everywhere else it stays false.
+  bypassSetupGate = false,
+}: {
+  children: ReactNode;
+  bypassSetupGate?: boolean;
+}) {
   const auth = await getAuthSummary();
   const initials = getInitials(auth.userEmail);
   const tier = getNavTier(auth.role);
@@ -101,6 +111,20 @@ export async function AppShell({ children }: { children: ReactNode }) {
         </div>
       </div>
     );
+  }
+
+  // ── First-login requirement: complete the Setup Questionnaire ─────────────
+  // A signed-in org user (non-platform) must answer the questionnaire before the
+  // workspace opens. The questionnaire page bypasses this so it can render and
+  // still offer sign-out — the user is never trapped without an exit.
+  if (
+    !bypassSetupGate &&
+    auth.signedIn &&
+    auth.organizationId &&
+    !isPlatformRole(auth.role) &&
+    !(await hasCompletedSetupQuestionnaire())
+  ) {
+    redirect("/assess/setup-questionnaire");
   }
 
   // ── Standard shell with sidebar ───────────────────────────────────────────
