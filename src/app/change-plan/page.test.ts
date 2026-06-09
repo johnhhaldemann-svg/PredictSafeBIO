@@ -9,6 +9,8 @@ const workbenchClient = readFileSync(join(process.cwd(), "src/components/Workben
 const workbenchPage = readFileSync(join(process.cwd(), "src/app/workbench/page.tsx"), "utf8");
 const changePlanActions = readFileSync(join(process.cwd(), "src/app/change-plan/actions.ts"), "utf8");
 const dataLayer = readFileSync(join(process.cwd(), "src/lib/supabase/data.ts"), "utf8");
+const changePlanService = readFileSync(join(process.cwd(), "src/lib/supabase/change-plan-service.ts"), "utf8");
+const trainingMatrixService = readFileSync(join(process.cwd(), "src/lib/supabase/training-matrix-service.ts"), "utf8");
 const versionControlPage = readFileSync(join(process.cwd(), "src/app/documents/version-control/page.tsx"), "utf8");
 const trainingMatrixPage = readFileSync(join(process.cwd(), "src/app/training-matrix/page.tsx"), "utf8");
 const reviewWorkflow = readFileSync(join(process.cwd(), "src/lib/review-workflow.ts"), "utf8");
@@ -40,7 +42,7 @@ describe("command center and change plan", () => {
     expect(dataLayer).toContain("listChangePlanItems");
     expect(dataLayer).toContain("createChangePlanItem");
     expect(dataLayer).toContain("updateChangePlanItem");
-    expect(dataLayer).toContain('from("change_plan_items")');
+    expect(changePlanService).toContain('from("change_plan_items")');
   });
 
   it("renders the additions and change plan table with owner-only language", () => {
@@ -63,7 +65,7 @@ describe("command center and change plan", () => {
     expect(changePlanActions).toContain("seedDefaultChangePlanItems");
     expect(changePlanActions).toContain("createChangePlanItem");
     expect(changePlanActions).toContain("updateChangePlanItem");
-    expect(dataLayer).toContain("Only organization owners can manage Change Plan rows.");
+    expect(changePlanService).toContain("Only organization owners can manage Change Plan rows.");
   });
 
   it("adds Change Plan navigation and visible gap module cards", () => {
@@ -92,8 +94,8 @@ describe("command center and change plan", () => {
     expect(trainingMatrixPage).toContain("BioType, document, and change-impact training readiness");
     expect(trainingMatrixPage).toContain("Training remains human validated");
     expect(dataLayer).toContain("getTrainingMatrixSummary");
-    expect(dataLayer).toContain('from("training_assignments")');
-    expect(dataLayer).toContain('from("training_requirements")');
+    expect(trainingMatrixService).toContain('"training_assignments"');
+    expect(trainingMatrixService).toContain('"training_requirements"');
     expect(reviewWorkflow).toContain("/training-matrix");
   });
 });
