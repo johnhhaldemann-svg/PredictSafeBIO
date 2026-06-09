@@ -79,7 +79,6 @@ export default async function LessonsLearnedPage({ searchParams }: Props) {
             <h1>Lessons Learned</h1>
             <p className="muted">
               Capture, share, and act on insights from incidents, CAPAs, audits, and near misses.
-              Every lesson feeds back into Phase 1 to make the next cycle smarter.
               Required under ICH Q10 §2.7 and ISO 45001.
             </p>
           </div>

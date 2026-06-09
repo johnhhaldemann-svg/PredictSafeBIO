@@ -74,9 +74,8 @@ export default async function ExposureMapPage({ searchParams }: Props) {
             <p className="section-label">Monitor · <Link href="/monitoring/exposure">Exposure Monitoring</Link></p>
             <h1>Exposure Map</h1>
             <p className="muted">
-              Map who works with what, where, and by which <strong>exposure route</strong> — inhalation,
-              skin, injection, ingestion. The <strong>Predictive AI Safety Engine</strong> raises an{" "}
-              <strong>early warning</strong> when high-route, routine exposures accumulate in a lab.
+              Map who works with what, where, and by which exposure route. The engine flags labs where
+              high-route, routine exposures accumulate.
             </p>
           </div>
           <Link className="button-secondary" href="/monitoring/exposure">← Exposure Monitoring</Link>
@@ -246,9 +245,8 @@ export default async function ExposureMapPage({ searchParams }: Props) {
             <p className="section-label">AI Guardrail</p>
             <h2>Exposure early warnings are indicators, not verdicts</h2>
             <p className="muted">
-              The engine flags accumulating high-route, routine exposures, but exposure assessment,
-              route determination, and control adequacy must be confirmed by a qualified biosafety or
-              industrial-hygiene professional. All pathways are{" "}
+              Exposure assessment, route determination, and control adequacy must be confirmed by a
+              qualified biosafety or industrial-hygiene professional. All pathways are{" "}
               <strong>Draft — Human Review Required</strong>.
             </p>
           </div>

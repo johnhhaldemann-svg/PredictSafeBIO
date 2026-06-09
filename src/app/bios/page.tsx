@@ -88,9 +88,7 @@ export default async function BiosListPage({ searchParams }: Props) {
           <div className="page-header-left">
             <p className="section-label">Operate · <a href="/plan/qualified-persons">Qualified Persons</a> / Personnel</p>
             <h1>Personnel Records</h1>
-            <p className="muted">
-              Display-name records for your organization. No legal names, SSNs, contact information, or health data stored.
-            </p>
+            <p className="muted">Display-name records used in risk scoring.</p>
           </div>
           <Link className="button-secondary" href="/plan/qualified-persons">← Qualified Persons</Link>
         </header>

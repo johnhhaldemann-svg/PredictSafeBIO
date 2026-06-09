@@ -98,8 +98,8 @@ export default async function IncidentReportingPage({ searchParams }: Props) {
             <p className="section-label">Operate · Incident Reporting</p>
             <h1>Incident Register</h1>
             <p className="muted">
-              Log safety incidents within 24 hours. Every report auto-creates a CAPA entry for root
-              cause investigation and feeds trend data into the Predictive Engine.
+              Log safety incidents within 24 hours. Every report auto-creates a CAPA for root-cause
+              investigation.
             </p>
           </div>
           <Link className="button-secondary" href="/operations/capa">CAPA Records →</Link>

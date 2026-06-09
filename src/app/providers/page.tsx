@@ -144,7 +144,7 @@ export default async function ProvidersDirectoryPage({ searchParams }: Props) {
             <h1>Provider Directory</h1>
             <p className="muted">
               Credentialed biosafety, EHS, and occupational-health experts (CIH, CSP, CBSP, and more).
-              Documents qualified coverage for auditors and puts the right specialist one click away during an incident.
+              Documents qualified coverage for auditors.
             </p>
           </div>
           <Link className="button-secondary" href="/plan/qualified-persons">Qualified Persons →</Link>

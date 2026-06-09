@@ -62,9 +62,8 @@ export default async function SetupQuestionnairePage({ searchParams }: Props) {
                 <CheckCircle2 size={22} />
               </div>
               <p className="muted">
-                Setup is complete and your safety programs are active. Answers are kept read-only so your
-                Risk Register and Compliance Calendar stay stable. Update them only when your operations,
-                materials, equipment, or scale change.
+                Answers are read-only to keep your Risk Register and Compliance Calendar stable. Update
+                them when your operations, materials, equipment, or scale change.
               </p>
               <div className="form-action-row">
                 <Link className="button-primary" href="/assess/setup-questionnaire?edit=1">

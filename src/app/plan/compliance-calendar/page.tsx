@@ -46,8 +46,7 @@ export default async function ComplianceCalendarPage({ searchParams }: Props) {
             <p className="section-label">Plan · Stage 2</p>
             <h1>Compliance Calendar</h1>
             <p className="muted">
-              Dated work generated from your Risk Register frequencies. Overdue in red, due this week
-              in amber, completed in green.
+              Dated work generated from your Risk Register frequencies.
             </p>
           </div>
           <Link className="button-secondary" href="/plan/risk-register">Risk Register →</Link>

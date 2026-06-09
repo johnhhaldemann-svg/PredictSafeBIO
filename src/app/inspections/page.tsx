@@ -111,8 +111,8 @@ export default async function InspectionsPage({ searchParams }: Props) {
             <p className="section-label">Operate · Inspections &amp; Audits</p>
             <h1>Inspection Management</h1>
             <p className="muted">
-              AI-scheduled required inspections, manual scheduling, findings tracking, and
-              ergonomic hazard screening. Overdue inspections raise predicted risk.
+              AI-scheduled inspections, manual scheduling, and findings tracking. Overdue inspections
+              raise predicted risk.
             </p>
           </div>
           <Link className="button-secondary" href="/permits">Work Permits →</Link>

@@ -32,8 +32,7 @@ export default async function PredictiveEnginePage() {
             <p className="section-label">Monitor · Predictive AI Safety Engine</p>
             <h1>Predictive Engine</h1>
             <p className="muted">
-              A forward-looking read of your safety data. The engine aggregates the leading indicators
-              from your hazards, controls, and exposure pathways into a single{" "}
+              Leading indicators from your hazards, controls, and exposure pathways rolled into a single{" "}
               <strong>predicted pressure</strong>, with a trend and a suggested review horizon. These
               are <strong>early indicators for human review</strong> — not validated incident forecasts.
             </p>

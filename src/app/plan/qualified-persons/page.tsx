@@ -45,8 +45,8 @@ export default async function QualifiedPersonsPage({ searchParams }: Props) {
             <p className="section-label">Plan · <a href="/plan/risk-register">Risk Register</a> / Governance</p>
             <h1>Qualified Person Registry</h1>
             <p className="muted">
-              Who is qualified to approve restricted decisions — register status changes, CAPA closure,
-              chemical approvals, manifests, and changes. Restricted actions are blocked unless the user is listed here.
+              Who may approve restricted decisions — register changes, CAPA closure, chemical approvals,
+              and manifests. Restricted actions are blocked unless the user is listed here.
             </p>
           </div>
           <a className="button-secondary" href="/plan/risk-register">← Risk Register</a>

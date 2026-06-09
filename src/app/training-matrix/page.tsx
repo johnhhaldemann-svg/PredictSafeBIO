@@ -38,8 +38,8 @@ export default async function TrainingMatrixPage({ searchParams }: { searchParam
             <p className="section-label">Operate · Training &amp; Competency</p>
             <h1>Training Matrix</h1>
             <p className="muted">
-              Required training from BioType branches, controlled document changes, and live assignment evidence.
-              Completion must be verified by a qualified reviewer — AI does not authorize training closure.
+              Role-based training, document-change refreshers, and assignment evidence. Completion must
+              be verified by a qualified reviewer — AI does not authorize training closure.
             </p>
           </div>
           <Link className="button-secondary" href="/plan/qualified-persons">Qualified Persons →</Link>
