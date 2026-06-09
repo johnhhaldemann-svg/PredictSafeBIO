@@ -47,7 +47,6 @@ const categories: Category[] = [
     href: "/workbench",
     icon: ShieldCheck,
     subItems: [
-      { href: "/assess/setup-questionnaire",  label: "Setup Questionnaire", icon: ClipboardList, desc: "26-question intake that activates programs" },
       { href: "/workbench",                   label: "BioRisk Workbench",   icon: Gauge,         desc: "Score and review your biosafety risks" },
       { href: "/workbench?tab=risk-register", label: "Risk Register",       icon: ShieldCheck,   desc: "All assessed risks and their status" },
       { href: "/hazards",                     label: "Hazard Register",     icon: AlertCircle,   desc: "Identify hazards; feeds the Predictive Engine" },
@@ -111,6 +110,7 @@ const categories: Category[] = [
     icon: Settings,
     subItems: [
       { href: "/my-work",         label: "My Work",           icon: ClipboardList, desc: "Tasks and follow-ups assigned to you" },
+      { href: "/assess/setup-questionnaire", label: "Setup Questionnaire", icon: ClipboardList, desc: "26-question intake that activates programs & seeds your registers" },
       { href: "/account/company", label: "Company Settings",  icon: Building2,  desc: "Operating context, programs, review owners" },
       { href: "/account/team",    label: "Team",              icon: Users,       desc: "Members, roles, and invitations" },
       { href: "/providers",       label: "Provider Directory",icon: Briefcase,   desc: "Biosafety & EHS consultants and experts" },
