@@ -32,7 +32,7 @@ export async function submitPersonnelRecordAction(formData: FormData) {
 
   const admin = getSupabaseAdminClient();
 
-  const { error } = await (admin as any).from("patient_bios").insert({
+  const { error } = await (admin as any).from("personnel_records").insert({
     organization_id:   orgId,
     user_id:           user.id,
     display_name,
