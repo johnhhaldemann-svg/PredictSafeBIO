@@ -95,7 +95,10 @@ export function calculateWeightedScore(input: BioAiInput, signals: BioAiSignal[]
 }
 
 export function detectMissingInformation(input: BioAiInput, signals: BioAiSignal[] = input.signals ?? []): string[] {
-  const missing = new Set(input.missingData ?? []);
+  // missingInformation is rendered directly as a React child, so guard against a
+  // non-string slipping in via input.missingData (e.g. an unnormalized readiness
+  // gap object) — a raw object here would throw "Objects are not valid as a React child".
+  const missing = new Set((input.missingData ?? []).map((entry) => (typeof entry === "string" ? entry : String(entry))));
 
   if (!input.siteName && !input.siteId) missing.add("site or facility");
   if (!input.area && !input.labId) missing.add("lab, cleanroom, suite, or operating area");
