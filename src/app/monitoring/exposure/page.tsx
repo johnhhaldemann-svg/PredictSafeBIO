@@ -84,7 +84,7 @@ export default async function ExposureMonitoringPage({ searchParams }: Props) {
             <h1>Exposure Monitoring</h1>
             <p className="muted">
               Log and track personnel exposure pathways — by material, route, and frequency. High-route
-              routine exposures fire early-warning signals to the Predictive Engine before an incident occurs.
+              routine exposures fire early-warning signals.
             </p>
           </div>
           <Link className="button-secondary" href="/exposure-map">

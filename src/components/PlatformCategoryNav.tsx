@@ -211,12 +211,10 @@ export function PlatformCategoryNav({ canViewPlatform = false }: { canViewPlatfo
                       <Link
                         href={sub.href}
                         className={`snav-subitem${isSubActive ? " snav-subitem--active" : ""}`}
+                        title={sub.desc}
                       >
                         <SubIcon size={13} aria-hidden="true" />
-                        <span className="snav-subitem-text">
-                          <span className="snav-subitem-label">{sub.label}</span>
-                          <span className="snav-subitem-desc">{sub.desc}</span>
-                        </span>
+                        <span className="snav-subitem-label">{sub.label}</span>
                       </Link>
                     </li>
                   );

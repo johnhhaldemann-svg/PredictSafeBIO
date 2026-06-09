@@ -46,8 +46,7 @@ export default async function MyWorkPage({
           <p className="section-label">Assigned operating work</p>
           <h1>My Work</h1>
           <p className="muted">
-            Foundation-generated review tasks, source traces, notes, due dates, and closeout activity are gathered here without scrolling through
-            the full Workbench.
+            Your review tasks, source traces, notes, and due dates — gathered in one place.
           </p>
         </header>
 

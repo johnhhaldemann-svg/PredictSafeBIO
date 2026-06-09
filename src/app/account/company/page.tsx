@@ -39,8 +39,7 @@ export default async function CompanySettingsPage({ searchParams }: Props) {
             <p className="section-label">Company Settings</p>
             <h1>{companyProfile.companyName}</h1>
             <p className="muted">
-              Your company&rsquo;s configuration — operating context, programs, and review owners. This
-              feeds the AI scoring context across the workspace.
+              Your company&rsquo;s configuration — operating context, programs, and review owners.
             </p>
           </div>
         </header>

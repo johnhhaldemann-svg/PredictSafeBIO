@@ -57,7 +57,6 @@ export default async function ManagementReviewPage({ searchParams }: Props) {
             <h1>Management Review</h1>
             <p className="muted">
               Formal quarterly and annual review of the EHS management system by senior leadership.
-              Closes the PDCA loop — findings feed back into risk assessments and the improvement plan.
               Required under ISO 45001 Clause 9.3 and ICH Q10.
             </p>
           </div>

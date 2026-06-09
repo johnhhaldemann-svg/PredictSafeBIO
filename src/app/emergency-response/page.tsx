@@ -56,8 +56,8 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
             <p className="section-label">Plan · Emergency Response</p>
             <h1>Emergency Response Plans</h1>
             <p className="muted">
-              Documented, drilled, and readily accessible response plans for every foreseeable
-              emergency in your facility. Required under OSHA 29 CFR 1910.38 and NFPA 45.
+              Documented, drilled, accessible response plans for every foreseeable emergency.
+              Required under OSHA 29 CFR 1910.38 and NFPA 45.
             </p>
           </div>
           <Link className="button-secondary" href="/documents">Documents →</Link>

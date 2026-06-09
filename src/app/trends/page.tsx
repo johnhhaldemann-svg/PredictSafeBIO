@@ -66,8 +66,8 @@ export default async function TrendsPage() {
             <p className="section-label">Monitor · Phase 6 — Review &amp; Improve</p>
             <h1>Trend Analysis</h1>
             <p className="muted">
-              KPI trends across CAPAs, training completion, and audit readiness — the data inputs
-              for Management Review and the trigger for looping findings back into Phase 1.
+              KPI trends across CAPAs, training completion, and audit readiness — the inputs for
+              Management Review.
             </p>
           </div>
           <Link className="button-secondary" href="/risk-command-center">Risk Monitor →</Link>

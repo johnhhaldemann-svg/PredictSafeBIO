@@ -28,9 +28,8 @@ export default async function ChangeManagementPage() {
             <p className="section-label">Plan · Change Management</p>
             <h1>Change Management</h1>
             <p className="muted">
-              Manage your improvement roadmap and operational change control from one place.
-              Use the Change Plan for strategic improvements; use Management of Change when
-              processes, materials, or equipment are being modified and controls must be revalidated.
+              Use the Change Plan for strategic improvements; use Management of Change when processes,
+              materials, or equipment change and controls must be revalidated.
             </p>
           </div>
         </header>

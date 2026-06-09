@@ -67,9 +67,8 @@ export default async function HazardRegisterPage({ searchParams }: Props) {
             <p className="section-label">Assess · Stage 3</p>
             <h1>Hazard Register</h1>
             <p className="muted">
-              Identify and track the biological, chemical, physical, and ergonomic hazards in your
-              operation. Each hazard you add feeds the <strong>Predictive AI Safety Engine</strong> as a
-              leading indicator — uncontrolled hazards raise predicted risk before an incident occurs.
+              Identify and track biological, chemical, physical, and ergonomic hazards. Uncontrolled
+              hazards feed the Predictive Engine as leading indicators.
             </p>
           </div>
         </header>
@@ -267,10 +266,8 @@ export default async function HazardRegisterPage({ searchParams }: Props) {
             <p className="section-label">AI Guardrail</p>
             <h2>Hazard identification supports — it does not replace — the safety officer</h2>
             <p className="muted">
-              The Predictive Engine treats uncontrolled hazards as leading indicators and raises
-              predicted risk, but containment level, BSL assignment, and control adequacy must be
-              verified by a qualified biosafety professional. New hazards are{" "}
-              <strong>Draft — Human Review Required</strong>.
+              Containment level, BSL assignment, and control adequacy must be verified by a qualified
+              biosafety professional. New hazards are <strong>Draft — Human Review Required</strong>.
             </p>
           </div>
           <Brain size={24} />

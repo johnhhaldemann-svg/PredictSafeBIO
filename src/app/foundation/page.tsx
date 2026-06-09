@@ -119,7 +119,7 @@ export default async function FoundationPage({ searchParams }: { searchParams: P
           <p className="section-label">Assess · Plan</p>
           <h1>Compliance Map & AI Guardrails</h1>
           <p className="muted">
-            Converts assessed risks and source intelligence into source-traced compliance tasks, verification status, and audit-ready evidence.
+            Turns assessed risks into source-traced compliance tasks with audit-ready evidence.
           </p>
         </header>
 

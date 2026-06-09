@@ -239,10 +239,9 @@ export default async function HomePage() {
           <p className="section-label">PredictSafeBIO</p>
           <h1>Safety &amp; compliance loop</h1>
           <p className="muted">
-            One closed-loop system: your safety <strong>data inputs</strong> feed an{" "}
-            <strong>AI engine</strong> that scores risk and drafts actions, which flow through an
-            eight-stage cycle and come back out as <strong>automated outputs</strong> — alerts,
-            schedules, CAPA, and audit-ready evidence. People stay accountable for every decision.
+            Your safety <strong>data inputs</strong> feed an <strong>AI engine</strong> that scores
+            risk and drafts <strong>actions</strong> — alerts, schedules, CAPA, and audit-ready
+            evidence. People stay accountable for every decision.
           </p>
         </header>
 

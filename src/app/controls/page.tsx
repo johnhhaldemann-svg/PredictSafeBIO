@@ -67,9 +67,8 @@ export default async function ControlRegisterPage({ searchParams }: Props) {
             <h1>Control Register</h1>
             <p className="muted">
               Select controls for each hazard using the <strong>hierarchy of controls</strong> —
-              elimination first, PPE last. The <strong>Predictive AI Safety Engine</strong> forecasts
-              each hazard&apos;s <strong>residual risk</strong> after its controls; overdue verification
-              raises that forecast back up.
+              elimination first, PPE last. The engine forecasts each hazard&apos;s residual risk after
+              its controls; overdue verification raises it.
             </p>
           </div>
         </header>
