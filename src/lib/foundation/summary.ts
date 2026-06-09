@@ -63,7 +63,7 @@ export function isFoundationGapStatus(status: unknown) {
 
 export function demoIntelligenceFoundationSummary(): IntelligenceFoundationSummary {
   const demo = northStarFoundationDemo();
-  const biotypeContext = buildBioTypeAiContext("rd_biotech", ["diagnostics_clinical_lab", "academic_university_research"]);
+  const biotypeContext = buildBioTypeAiContext("rd_biotech", ["cro_lab_services", "academic_university_research"]);
   const assessmentInput = applyBioTypeContext(demo.aiInput, biotypeContext);
 
   return {
@@ -89,14 +89,14 @@ export function demoIntelligenceFoundationSummary(): IntelligenceFoundationSumma
       role:
         foundation.key === "rd_biotech"
           ? "primary"
-          : ["diagnostics_clinical_lab", "academic_university_research"].includes(foundation.key)
+          : ["cro_lab_services", "academic_university_research"].includes(foundation.key)
             ? "secondary"
             : "available",
       requirements: [...foundation.documents.slice(0, 2), ...foundation.training.slice(0, 2)].join(", ")
     })),
     biotypeSelection: {
       primaryBioType: "rd_biotech" as BioTypeKey,
-      secondaryBioTypes: ["diagnostics_clinical_lab", "academic_university_research"] as BioTypeKey[],
+      secondaryBioTypes: ["cro_lab_services", "academic_university_research"] as BioTypeKey[],
       status: "draft_human_review_required"
     },
     intake: [

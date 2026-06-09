@@ -26,10 +26,10 @@ const companyProfile = {
   primary_site: "Demo Biotech Site",
   operating_areas: ["QC Microbiology Lab", "Cell Therapy Suite", "GMP Warehouse"],
   programs: ["BIO-001", "BIO-002"],
-  quality_system_scope: ["SOPs", "Deviations", "CAPA", "Change Control", "Training"],
+  quality_system_scope: ["SOPs", "Hazard Assessments", "Incidents", "Corrective Actions", "Training"],
   biosafety_levels: ["BSL-1", "BSL-2"],
-  review_owner_roles: ["qa", "quality_unit", "biosafety_officer", "responsible_scientist"],
-  document_families: ["SOP", "Batch record", "Protocol", "Training", "Validation"]
+  review_owner_roles: ["ehs", "biosafety_officer", "responsible_scientist"],
+  document_families: ["SOP", "Safe-Work Procedure", "Hazard Assessment", "Training", "Inspection"]
 };
 
 const assessmentInput = {
@@ -42,16 +42,12 @@ const assessmentInput = {
   controlEffectiveness: "partial",
   dataCompleteness: 0.68,
   contaminationSuspected: true,
-  productQualityImpactPotential: true,
-  gxpImpact: true,
   signals: [
     {
       type: "contamination_event",
       label: "Unexpected microbial growth in assay control",
       severity: "high",
       status: "open",
-      productQualityImpactPotential: true,
-      gxpImpact: true,
       controls: ["Initial lab notification completed"],
       evidence: "Assay control showed unexpected growth; investigation not complete."
     },
@@ -75,7 +71,7 @@ const assessmentOutput = {
       label: "Suspected or confirmed contamination",
       category: "quality",
       impact: "critical",
-      explanation: "Suspected or confirmed contamination requires QA/quality unit review before disposition."
+      explanation: "Suspected or confirmed contamination requires EHS/biosafety review before disposition."
     },
     {
       label: "Data integrity concern",
@@ -85,18 +81,18 @@ const assessmentOutput = {
     }
   ],
   missingInformation: ["QA assessment", "batch/sample impact assessment", "investigation status", "final disposition"],
-  criticalControlGaps: ["Contamination / sterility risk: QA review, investigation status, batch impact assessment"],
+  criticalControlGaps: ["Contamination / exposure risk: EHS review, investigation status, exposure and area impact assessment"],
   recommendedActions: [
     {
-      title: "Consider hold or quarantine review",
+      title: "Consider stop-work or isolation review",
       priority: "urgent",
-      ownerRole: "quality_unit",
+      ownerRole: "ehs",
       actionType: "hold_or_quarantine_review",
-      reason: "Suspected contamination remains critical until assessed by QA or the quality unit."
+      reason: "Suspected contamination or release remains critical until assessed by EHS or biosafety."
     }
   ],
   explanation:
-    "Based on available data, this is a potential critical biotech risk with low confidence. Human review is required before relying on next steps. This draft assessment does not replace quality, regulatory, biosafety, clinical, validation, or scientific judgment.",
+    "Based on available data, this is a potential critical biotech risk with low confidence. Human review is required before relying on next steps. This draft assessment does not replace EHS, biosafety, industrial hygiene, regulatory, or qualified safety judgment.",
   escalationRequired: true,
   holdOrQuarantineReviewRecommended: true,
   humanReviewRequired: true,

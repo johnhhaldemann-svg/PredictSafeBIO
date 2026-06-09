@@ -309,7 +309,7 @@ export const INSPECTION_SCHEDULE_RULES: Record<InspectionType, InspectionSchedul
   internal: {
     frequencyDays: 365,
     frequencyLabel: "Annual",
-    rationale: "ISO 45001 and GxP best practices require at least one annual internal EHS management system audit.",
+    rationale: "ISO 45001 best practice requires at least one annual internal EHS management system audit.",
     category: "Audit"
   },
   regulatory: {
@@ -644,7 +644,7 @@ function demoInspections(): Inspection[] {
     {
       id: "demo-insp-002",
       organizationId: "demo-org",
-      title: "GxP document control review",
+      title: "EHS document control review",
       auditType: "internal",
       status: "in_progress",
       scheduledFor: d(-3),
@@ -710,7 +710,7 @@ function demoInspectionDetail(id: string): InspectionDetail | null {
     ...record,
     findings: id === "demo-insp-002"
       ? [
-          { id: "demo-finding-1", organizationId: "demo-org", auditId: id, findingLevel: "minor", title: "SOP-GxP-003 not current — revision pending since Q1", status: "open", createdAt: record.createdAt },
+          { id: "demo-finding-1", organizationId: "demo-org", auditId: id, findingLevel: "minor", title: "SOP-EHS-003 not current — revision pending since Q1", status: "open", createdAt: record.createdAt },
           { id: "demo-finding-2", organizationId: "demo-org", auditId: id, findingLevel: "major", title: "Training evidence missing for 2 staff on critical SOP", status: "in_progress", createdAt: record.createdAt },
           { id: "demo-finding-3", organizationId: "demo-org", auditId: id, findingLevel: "observation", title: "Document log missing date-of-approval field", status: "closed", createdAt: record.createdAt }
         ]

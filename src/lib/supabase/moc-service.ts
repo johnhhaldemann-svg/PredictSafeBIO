@@ -40,8 +40,6 @@ export function deriveRouting(affectedPrograms: string[], flags: string[]): stri
   if (all.includes("laser")) roles.add("Laser Safety Officer");
   if (all.includes("chemical")) roles.add("Chemical Hygiene Officer");
   if (all.includes("psm") || all.includes("process safety") || all.includes("scale")) roles.add("Process Safety Reviewer");
-  if (all.includes("gxp") || all.includes("part 11") || all.includes("quality") || all.includes("data integrity")) roles.add("Quality / Data Integrity Reviewer");
-  if (all.includes("clia") || all.includes("hipaa") || all.includes("diagnostic")) roles.add("Quality / Data Integrity Reviewer");
   if (all.includes("select agent") || all.includes("biosecurity")) roles.add("Responsible Official / Biosecurity Reviewer");
   if (all.includes("controlled subst") || all.includes("dea")) roles.add("Controlled Substance Custodian");
   return Array.from(roles);

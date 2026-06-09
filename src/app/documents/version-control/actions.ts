@@ -24,7 +24,7 @@ export async function logVersionAction(formData: FormData) {
 export async function requestApprovalAction(formData: FormData) {
   const documentId = String(formData.get("documentId") ?? "").trim();
   const documentVersionId = String(formData.get("documentVersionId") ?? "").trim() || undefined;
-  const reviewerRole = String(formData.get("reviewerRole") ?? "quality_unit").trim();
+  const reviewerRole = String(formData.get("reviewerRole") ?? "ehs").trim();
   const notes = String(formData.get("notes") ?? "").trim() || undefined;
 
   if (!documentId) redirect(authMessage("/documents/version-control", "Document ID required."));

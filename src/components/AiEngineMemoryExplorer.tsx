@@ -337,8 +337,8 @@ export function AiEngineMemoryExplorer() {
                 AI will never replace human judgment
               </strong>
               <span>
-                Every assessment is draft-only. Human review is required before any clinical,
-                regulatory, or quality decision. The engine assists — it does not approve.
+                Every assessment is draft-only. Human review is required before any
+                regulatory or safety decision. The engine assists — it does not approve.
               </span>
             </div>
           </div>

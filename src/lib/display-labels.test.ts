@@ -4,7 +4,6 @@ import { formatDocumentStatus, formatDocumentType, formatOwnerRole } from "./dis
 describe("display-labels", () => {
   it("formatDocumentType converts known values to human-readable labels", () => {
     expect(formatDocumentType("sop")).toBe("SOP");
-    expect(formatDocumentType("batch_record")).toBe("Batch Record");
     expect(formatDocumentType("protocol")).toBe("Protocol");
     expect(formatDocumentType("validation")).toBe("Validation");
     expect(formatDocumentType("other")).toBe("Other");
@@ -23,7 +22,6 @@ describe("display-labels", () => {
   });
 
   it("formatOwnerRole converts known values to human-readable labels", () => {
-    expect(formatOwnerRole("quality_unit")).toBe("Quality Unit");
     expect(formatOwnerRole("biosafety_officer")).toBe("Biosafety Officer");
     expect(formatOwnerRole("responsible_scientist")).toBe("Responsible Scientist");
     expect(formatOwnerRole("qa")).toBe("QA");

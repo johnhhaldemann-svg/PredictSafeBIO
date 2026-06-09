@@ -20,12 +20,7 @@ export type BioSignalType =
   | "equipment_event"
   | "ergonomic_risk_signal"
   | "sample_chain_of_custody"
-  | "data_integrity"
-  | "batch_record"
-  | "assay_qc"
-  | "supplier_material"
-  | "clinical_study"
-  | "regulatory_commitment";
+  | "data_integrity";
 
 export type DriverCategory =
   | "severity"
@@ -45,13 +40,11 @@ export type ReviewOwnerRole =
   | "responsible_scientist"
   | "principal_investigator"
   | "qa"
-  | "quality_unit"
   | "biosafety_officer"
   | "ehs"
   | "manufacturing_lead"
   | "validation_lead"
-  | "regulatory_affairs"
-  | "clinical_operations";
+  | "regulatory_affairs";
 
 export type RecommendedActionType =
   | "hold_or_quarantine_review"
@@ -177,10 +170,8 @@ export type BioAiSignal = {
   overdue?: boolean | null;
   repeatFinding?: boolean | null;
   patientImpactPotential?: boolean | null;
-  productQualityImpactPotential?: boolean | null;
   biosafetyImpactPotential?: boolean | null;
   regulatoryImpactPotential?: boolean | null;
-  gxpImpact?: boolean | null;
   controls?: string[] | null;
   evidence?: string | null;
   sourceRecords?: BioSourceRecord[] | null;
@@ -209,10 +200,8 @@ export type BioAiInput = BioTypeContextFields & {
   missingData?: string[];
   signals?: BioAiSignal[];
   patientImpactPotential?: boolean | null;
-  productQualityImpactPotential?: boolean | null;
   biosafetyImpactPotential?: boolean | null;
   regulatoryImpactPotential?: boolean | null;
-  gxpImpact?: boolean | null;
   missingRequiredTraining?: boolean | null;
   missingRequiredSop?: boolean | null;
   missingQaReview?: boolean | null;
@@ -287,7 +276,7 @@ export type DocumentMetadata = {
   id?: string;
   organizationId?: string;
   title: string;
-  documentType: "sop" | "batch_record" | "protocol" | "training" | "validation" | "policy" | "other";
+  documentType: "sop" | "protocol" | "training" | "validation" | "policy" | "other";
   status: "draft" | "in_review" | "approved" | "obsolete" | "unknown";
   ownerRole: ReviewOwnerRole;
   area?: string | null;

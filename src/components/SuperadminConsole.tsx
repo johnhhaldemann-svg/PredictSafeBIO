@@ -33,7 +33,7 @@ const CATEGORY_LABELS: Record<DbTableStat["category"], string> = {
 const SIGNAL_TYPE_OPTIONS = [
   "contamination_event", "biosafety_event", "deviation", "capa", "audit_finding",
   "data_integrity", "environmental_monitoring", "equipment_event", "training_gap",
-  "sop_gap", "sample_chain_of_custody", "assay_qc",
+  "sop_gap", "sample_chain_of_custody", "change_control", "ergonomic_risk_signal",
 ];
 
 function statusIcon(status: PlatformChecklistItem["status"]) {
@@ -395,7 +395,7 @@ export function SuperadminConsole({ initialPlatform, initialAiEngine, initialDbS
         <p className="muted" style={{ fontSize: "0.72rem" }}>
           <Cpu size={12} style={{ verticalAlign: "-2px", marginRight: 4 }} />
           Superadmin console — authorized operators only. All checks run against live production state.
-          AI Engine results are draft — human review required before clinical or regulatory use.
+          AI Engine results are draft — human review required before regulatory or safety use.
           <Activity size={12} style={{ verticalAlign: "-2px", margin: "0 4px 0 8px" }} />
           <BarChart2 size={12} style={{ verticalAlign: "-2px" }} />
         </p>

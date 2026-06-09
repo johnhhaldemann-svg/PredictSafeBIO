@@ -300,11 +300,10 @@ export function RiskCellReviewCard({
           </p>
           <label className="risk-cell-form-label">
             Assign owner role
-            <select name="ownerRole" defaultValue={payload.ai_recommended_actions?.[0]?.owner ?? "qa"} className="risk-cell-form-input-mt">
-              <option value="qa">QA</option>
-              <option value="quality_unit">Quality Unit</option>
-              <option value="biosafety_officer">Biosafety Officer</option>
+            <select name="ownerRole" defaultValue={payload.ai_recommended_actions?.[0]?.owner ?? "ehs"} className="risk-cell-form-input-mt">
               <option value="ehs">EHS</option>
+              <option value="biosafety_officer">Biosafety Officer</option>
+              <option value="qa">QA</option>
               <option value="validation_lead">Validation Lead</option>
               <option value="responsible_scientist">Responsible Scientist</option>
             </select>

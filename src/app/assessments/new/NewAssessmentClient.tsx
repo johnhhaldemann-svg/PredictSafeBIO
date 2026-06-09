@@ -19,7 +19,6 @@ const emptyInput: BioAiInput = {
   siteName: "",
   area: "",
   workflow: "",
-  batchOrLot: "",
   controlEffectiveness: "unknown",
   dataCompleteness: 0.75,
   signals: [],
@@ -53,7 +52,7 @@ function signalLabel(type: BioSignalType) {
 
 const signalPresets = [
   { type: "contamination_event"  as BioSignalType, label: "Microbial growth in control sample",          evidence: "Unexpected growth observed in assay control; investigation not complete." },
-  { type: "data_integrity"       as BioSignalType, label: "Missing second-person review signature",      evidence: "Review signature absent from assay worksheet or batch record." },
+  { type: "data_integrity"       as BioSignalType, label: "Missing second-person review signature",      evidence: "Review signature absent from the incident, exposure, or inspection record." },
   { type: "equipment_event"      as BioSignalType, label: "Equipment out of calibration tolerance",      evidence: "Calibration certificate expired or instrument reading outside tolerance." },
   { type: "training_gap"         as BioSignalType, label: "Expired critical SOP training record",        evidence: "Staff training record for critical procedure has lapsed." },
   { type: "sop_gap"              as BioSignalType, label: "Procedure deviation identified",              evidence: "Step was performed out of sequence or SOP not followed as written." },
@@ -223,17 +222,9 @@ export function NewAssessmentClient() {
               <label>
                 Workflow / Process
                 <input
-                  placeholder="e.g. Sterility assay review"
+                  placeholder="e.g. Aseptic work and containment review"
                   value={input.workflow ?? ""}
                   onChange={(e) => set("workflow", e.target.value)}
-                />
-              </label>
-              <label>
-                Batch or Lot #
-                <input
-                  placeholder="e.g. LOT-0001"
-                  value={input.batchOrLot ?? ""}
-                  onChange={(e) => set("batchOrLot", e.target.value)}
                 />
               </label>
 
@@ -267,8 +258,7 @@ export function NewAssessmentClient() {
             {/* Risk flags */}
             <div className="toggle-grid">
               {([
-                ["contaminationSuspected",       "Contamination suspected"],
-                ["patientImpactPotential",        "Patient impact potential"],
+                ["contaminationSuspected",       "Contamination / release suspected"],
                 ["biosafetyImpactPotential",      "Biosafety impact potential"],
                 ["regulatoryImpactPotential",     "Regulatory impact potential"],
                 ["missingRequiredTraining",       "Expired critical training"],

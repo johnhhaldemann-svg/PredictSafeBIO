@@ -3,26 +3,26 @@ import type { AuditEvent, CompanyProfile, DocumentMetadata } from "@/lib/bio-ai/
 export const demoCompanyProfile: CompanyProfile = {
   companyName: "PredictSafeBIO Demo Biotech",
   primarySite: "Demo Biotech Site",
-  operatingAreas: ["QC Microbiology Lab", "Cell Therapy Suite", "GMP Warehouse"],
+  operatingAreas: ["BSL-2 Research Lab", "Cell Therapy Suite", "Chemical Storage & Warehouse"],
   programs: ["BIO-001", "BIO-002"],
-  qualitySystemScope: ["SOPs", "Deviations", "CAPA", "Change Control", "Training"],
+  qualitySystemScope: ["SOPs", "Hazard Assessments", "Incidents", "Corrective Actions", "Training"],
   biosafetyLevels: ["BSL-1", "BSL-2"],
-  reviewOwnerRoles: ["qa", "quality_unit", "biosafety_officer", "responsible_scientist"],
-  documentFamilies: ["SOP", "Batch record", "Protocol", "Training", "Validation"]
+  reviewOwnerRoles: ["ehs", "biosafety_officer", "responsible_scientist"],
+  documentFamilies: ["SOP", "Safe-Work Procedure", "Hazard Assessment", "Training", "Inspection"]
 };
 
 export const demoDocuments: DocumentMetadata[] = [
   {
     id: "doc-sterility-001",
-    title: "Sterility Assay Review SOP",
+    title: "Aseptic Work & Containment SOP",
     documentType: "sop",
     status: "in_review",
-    ownerRole: "qa",
-    area: "QC Microbiology Lab",
-    relatedProcess: "Sterility assay review",
+    ownerRole: "ehs",
+    area: "BSL-2 Research Lab",
+    relatedProcess: "Aseptic work and containment review",
     revision: "0.3",
     nextReviewDate: "2026-06-30",
-    gaps: ["QA assessment timing not explicit", "Batch impact language needs owner review"]
+    gaps: ["EHS review timing not explicit", "Exposure-control language needs owner review"]
   },
   {
     id: "doc-chain-001",
@@ -40,12 +40,12 @@ export const demoDocuments: DocumentMetadata[] = [
 export const demoAuditEvents: AuditEvent[] = [
   {
     eventType: "assessment_run",
-    summary: "Demo contamination assessment generated a critical draft result.",
+    summary: "Demo exposure/contamination assessment generated a critical draft result.",
     createdAt: "2026-05-27T14:00:00.000Z"
   },
   {
     eventType: "document_recommendation_generated",
-    summary: "Document gap recommendations generated for Sterility Assay Review SOP.",
+    summary: "Document gap recommendations generated for Aseptic Work & Containment SOP.",
     createdAt: "2026-05-27T14:04:00.000Z"
   }
 ];

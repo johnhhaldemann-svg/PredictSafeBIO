@@ -10,7 +10,7 @@ import { createMocAction } from "./actions";
 export const metadata: Metadata = { title: "Management of Change – PredictSafeBIO" };
 
 const CHANGE_TYPES = ["material", "process", "equipment", "location", "scale", "product", "work_method", "facility", "supplier", "organization"];
-const SCREEN_FLAGS = ["PSM", "GxP", "Part 11", "CLIA", "HIPAA", "HPAPI", "Cold Chain", "Select Agents", "Security"];
+const SCREEN_FLAGS = ["PSM", "HPAPI", "Cold Chain", "Select Agents", "Security"];
 
 type Props = { searchParams: Promise<{ message?: string; success?: string }> };
 

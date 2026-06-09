@@ -62,7 +62,7 @@ export async function getVersionHistories(): Promise<Map<string, DocumentVersion
         { id: "demo-v2", documentId: "demo-doc-001", versionLabel: "v2.1", changeSummary: "Minor correction to Section 4.2", createdAt: new Date(Date.now() - 180 * 86400000).toISOString() },
         { id: "demo-v1", documentId: "demo-doc-001", versionLabel: "v2.0", changeSummary: "Initial approved version", createdAt: new Date(Date.now() - 365 * 86400000).toISOString() }
       ],
-      latestApproval: { id: "demo-appr-1", documentId: "demo-doc-001", approvalStatus: "approved", reviewerRole: "quality_unit", createdAt: new Date(Date.now() - 30 * 86400000).toISOString() }
+      latestApproval: { id: "demo-appr-1", documentId: "demo-doc-001", approvalStatus: "approved", reviewerRole: "ehs", createdAt: new Date(Date.now() - 30 * 86400000).toISOString() }
     });
     return result;
   }

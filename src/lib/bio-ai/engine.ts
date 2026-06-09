@@ -134,8 +134,8 @@ export function detectMissingInformation(input: BioAiInput, signals: BioAiSignal
   if (isGapStatus(input.auditReadinessStatus)) missing.add("audit evidence package readiness");
 
   if (input.contaminationSuspected) {
-    missing.add("QA assessment");
-    missing.add("batch/sample impact assessment");
+    missing.add("EHS assessment");
+    missing.add("exposure and area impact assessment");
     missing.add("investigation status");
     missing.add("final disposition");
   }
@@ -187,11 +187,11 @@ function applyEscalationOverrides(input: BioAiInput, signals: BioAiSignal[], bas
   };
 
   if (input.contaminationSuspected || signals.some((signal) => signal.type === "contamination_event")) {
-    raiseTo("critical", "Suspected or confirmed contamination requires QA/quality unit review before disposition.");
+    raiseTo("critical", "Suspected or confirmed contamination or release requires EHS/biosafety review before work continues.");
   }
 
   if (input.patientImpactPotential || signals.some((signal) => signal.patientImpactPotential)) {
-    raiseTo("high", "Potential patient-impacting quality issue must be escalated for human review.");
+    raiseTo("high", "Potential serious worker-injury or environmental-release issue must be escalated for human review.");
   }
 
   if (input.biosafetyImpactPotential || signals.some((signal) => signal.type === "biosafety_event" || signal.biosafetyImpactPotential)) {
@@ -200,19 +200,19 @@ function applyEscalationOverrides(input: BioAiInput, signals: BioAiSignal[], bas
   }
 
   if (input.chainOfCustodyGap || signals.some((signal) => signal.type === "sample_chain_of_custody")) {
-    raiseTo(input.productQualityImpactPotential || input.gxpImpact ? "critical" : "high", "Missing chain of custody for critical samples requires sample owner and QA review.");
+    raiseTo(input.biosafetyImpactPotential ? "critical" : "high", "Missing chain of custody for critical samples requires sample owner and EHS review.");
   }
 
   if (signals.some((signal) => signal.type === "data_integrity") || input.regulatoryImpactPotential) {
-    raiseTo(input.productQualityImpactPotential || input.regulatoryImpactPotential ? "critical" : "high", "Data integrity concern could affect release, endpoint, submission, or batch records.");
+    raiseTo(input.regulatoryImpactPotential ? "critical" : "high", "Data integrity concern could affect an incident record, exposure record, or regulatory submission.");
   }
 
   if (input.outOfToleranceEquipment || signals.some((signal) => signal.type === "equipment_event")) {
-    raiseTo(input.gxpImpact || input.productQualityImpactPotential ? "critical" : "high", "Critical equipment out of tolerance affecting active work requires stop-use or impact review.");
+    raiseTo(input.biosafetyImpactPotential ? "critical" : "high", "Critical equipment out of tolerance affecting active work requires stop-use or impact review.");
   }
 
   if (input.unapprovedChange || signals.some((signal) => signal.type === "change_control")) {
-    raiseTo("high", "Unapproved change affecting a validated process, method, system, assay, cleanroom, or batch requires change-control review.");
+    raiseTo("high", "Unapproved change affecting a validated process, control, system, or cleanroom requires change-management review.");
   }
 
   if (input.missingRequiredTraining || input.missingRequiredSop || input.missingQaReview || input.missingBiosafetyReview || input.missingDeviationOrCapa) {
@@ -249,7 +249,7 @@ function applyEscalationOverrides(input: BioAiInput, signals: BioAiSignal[], bas
 
   if (signals.some((signal) => signal.repeatFinding) || input.incidentContext?.repeatPattern) {
     level = increaseOneBand(level);
-    reasons.push("Repeat deviation pattern increases likelihood and escalation pressure.");
+    reasons.push("Repeat incident or finding pattern increases likelihood and escalation pressure.");
   }
 
   return { level, reasons };
@@ -346,7 +346,7 @@ function buildTopDrivers(
     drivers.push({
       label: family.label,
       category: familyCategory(family.id),
-      impact: input.contaminationSuspected || family.id.includes("clinical") ? "critical" : "high",
+      impact: input.contaminationSuspected ? "critical" : "high",
       explanation: `Matched biotech risk family from local engine blueprint: ${family.label}.`
     });
   }
@@ -423,11 +423,11 @@ function buildRecommendedActions(
 
   if (input.contaminationSuspected) {
     actions.unshift({
-      title: "Consider hold or quarantine review",
+      title: "Consider stop-work or isolation review",
       priority: "urgent",
-      ownerRole: "quality_unit",
+      ownerRole: "ehs",
       actionType: "hold_or_quarantine_review",
-      reason: "Suspected contamination remains critical until assessed by QA or the quality unit.",
+      reason: "Suspected contamination or release remains critical until assessed by EHS or biosafety.",
       sourceRecords: sourceTrace.sourceRecords,
       referenceRuleIds: sourceTrace.referenceRuleIds
     });
@@ -459,11 +459,11 @@ function buildRecommendedActions(
 
   if (input.incidentContext?.capaRequired || signalsRequireCapa(input)) {
     actions.push({
-      title: "Screen for CAPA",
+      title: "Screen for corrective action",
       priority,
-      ownerRole: "quality_unit",
+      ownerRole: "ehs",
       actionType: "deviation_or_capa",
-      reason: "Incident, repeat finding, audit finding, equipment, or sample context indicates CAPA screening may be required.",
+      reason: "Incident, repeat finding, audit finding, equipment, or sample context indicates corrective-action screening may be required.",
       sourceRecords: sourceTrace.sourceRecords,
       referenceRuleIds: sourceTrace.referenceRuleIds
     });
@@ -562,12 +562,12 @@ function buildGuardedExplanation(
   return `Based on available data, this is a potential ${level} biotech risk with ${confidence} confidence. Primary drivers include ${topDrivers
     .slice(0, 3)
     .map((driver) => driver.label)
-    .join(", ")}.${missingText} ${reviewText} ${draftAiRecommendationGuardrail} This draft assessment does not replace quality, regulatory, biosafety, clinical, validation, or scientific judgment.`;
+    .join(", ")}.${missingText} ${reviewText} ${draftAiRecommendationGuardrail} This draft assessment does not replace EHS, biosafety, industrial hygiene, regulatory, or qualified safety judgment.`;
 }
 
 function buildHumanReviewReason(level: BioRiskLevel, overrideReasons: string[], criticalControlGaps: string[]) {
-  if (level === "critical") return "Critical risk requires immediate human review and possible hold, quarantine, stop-use, or escalation evaluation.";
-  if (level === "high") return "High risk requires responsible owner review before work, batch, study, sample, or change continues.";
+  if (level === "critical") return "Critical risk requires immediate human review and possible stop-work, isolation, lockout, or escalation evaluation.";
+  if (level === "high") return "High risk requires responsible owner review before work, task, sample, or change continues.";
   if (overrideReasons.length > 0) return overrideReasons[0];
   if (criticalControlGaps.length > 0) return "Critical controls are missing or unverified.";
   return "Human review is required by platform rule.";
@@ -734,7 +734,7 @@ function signalsRequireCapa(input: BioAiInput) {
 
 function fallbackSeverity(input: BioAiInput) {
   if (input.contaminationSuspected || input.patientImpactPotential) return 5;
-  if (input.productQualityImpactPotential || input.biosafetyImpactPotential || input.gxpImpact) return 4;
+  if (input.biosafetyImpactPotential) return 4;
   return 2;
 }
 
@@ -796,7 +796,7 @@ function familyCategory(familyId: string): DriverCategory {
   if (familyId.includes("equipment")) return "equipment";
   if (familyId.includes("sample")) return "sample";
   if (familyId.includes("training")) return "training";
-  if (familyId.includes("clinical")) return "regulatory";
+  if (familyId.includes("regulatory")) return "regulatory";
   return "quality";
 }
 

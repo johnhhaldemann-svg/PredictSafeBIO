@@ -75,7 +75,7 @@ export const programData: ProgramData[] = [
     additionalRegs: ["ISO 45001", "ANSI Z10"],
     frequency: "Annual",
     owner: "EHS Manager / VP of Operations",
-    biotechNote: "Biotech EHS programs must integrate biosafety (IBC), chemical safety (CHO), and GxP quality requirements. EHS documentation must be audit-ready for FDA, EPA, OSHA, and local fire authority inspections.",
+    biotechNote: "Biotech EHS programs must integrate biosafety (IBC), chemical safety (CHO), and process safety requirements. EHS documentation must be audit-ready for EPA, OSHA, and local fire authority inspections.",
     overview: "The overarching EHS management framework covering program structure, policy, roles/responsibilities, training, incident management, CAPA, audits, and continuous improvement. This is the umbrella under which all other programs operate.",
     requirements: [
       "Written EHS policy signed by executive leadership",

@@ -71,15 +71,11 @@ describe("biotech deterministic AI Engine", () => {
       batchOrLot: "LOT-0001",
       controlEffectiveness: "partial",
       contaminationSuspected: true,
-      productQualityImpactPotential: true,
-      gxpImpact: true,
       signals: [
         {
           type: "contamination_event",
           label: "Unexpected microbial growth in assay control",
           severity: "high",
-          productQualityImpactPotential: true,
-          gxpImpact: true,
           controls: ["Initial lab notification completed"],
           evidence: "Assay control showed unexpected growth; investigation not complete."
         }
@@ -90,7 +86,7 @@ describe("biotech deterministic AI Engine", () => {
     expect(assessment.humanReviewRequired).toBe(true);
     expect(assessment.holdOrQuarantineReviewRecommended).toBe(true);
     expect(assessment.missingInformation).toEqual(
-      expect.arrayContaining(["QA assessment", "batch/sample impact assessment", "investigation status", "final disposition"])
+      expect.arrayContaining(["EHS assessment", "exposure and area impact assessment", "investigation status", "final disposition"])
     );
   });
 
@@ -104,16 +100,12 @@ describe("biotech deterministic AI Engine", () => {
       batchOrLot: "LOT-0001",
       controlEffectiveness: "partial",
       contaminationSuspected: true,
-      productQualityImpactPotential: true,
-      gxpImpact: true,
       signals: [
         {
           type: "contamination_event",
           label: "Unexpected microbial growth in assay control",
           severity: "high",
           status: "open",
-          productQualityImpactPotential: true,
-          gxpImpact: true,
           controls: ["Initial lab notification completed"],
           evidence: "Assay control showed unexpected growth; investigation not complete."
         },
@@ -135,9 +127,9 @@ describe("biotech deterministic AI Engine", () => {
       expect.arrayContaining(["quality", "data_integrity", "controls"])
     );
     expect(assessment.missingInformation).toEqual(
-      expect.arrayContaining(["investigation status", "QA assessment", "batch/sample impact assessment", "final disposition"])
+      expect.arrayContaining(["investigation status", "EHS assessment", "exposure and area impact assessment", "final disposition"])
     );
-    expect(assessment.recommendedActions.map((action) => action.ownerRole)).toEqual(expect.arrayContaining(["quality_unit", "qa"]));
+    expect(assessment.recommendedActions.map((action) => action.ownerRole)).toEqual(expect.arrayContaining(["ehs"]));
   });
 
   it("escalates biosafety events to high or critical", () => {
@@ -161,11 +153,10 @@ describe("biotech deterministic AI Engine", () => {
     expect(assessment.escalationRequired).toBe(true);
   });
 
-  it("makes patient-impacting quality issues at least high", () => {
+  it("makes serious worker-injury / environmental-release potential at least high", () => {
     const assessment = assessBioRisk({
       ...baseLowRiskInput,
-      patientImpactPotential: true,
-      productQualityImpactPotential: true
+      patientImpactPotential: true
     });
 
     expect(["high", "critical"]).toContain(assessment.level);
@@ -175,7 +166,6 @@ describe("biotech deterministic AI Engine", () => {
     const assessment = assessBioRisk({
       ...baseLowRiskInput,
       regulatoryImpactPotential: true,
-      productQualityImpactPotential: true,
       signals: [
         {
           type: "data_integrity",
@@ -194,7 +184,7 @@ describe("biotech deterministic AI Engine", () => {
       ...baseLowRiskInput,
       sampleId: "S-001",
       chainOfCustodyGap: true,
-      gxpImpact: true
+      biosafetyImpactPotential: true
     });
 
     expect(assessment.level).toBe("critical");
@@ -205,7 +195,7 @@ describe("biotech deterministic AI Engine", () => {
     const assessment = assessBioRisk({
       ...baseLowRiskInput,
       outOfToleranceEquipment: true,
-      gxpImpact: true,
+      biosafetyImpactPotential: true,
       equipment: ["Incubator INC-04"]
     });
 
@@ -235,7 +225,7 @@ describe("biotech deterministic AI Engine", () => {
   it("raises likelihood for repeat deviation patterns", () => {
     const assessment = assessBioRisk({
       ...baseLowRiskInput,
-      signals: [{ type: "deviation", label: "Repeat batch record discrepancy", repeatFinding: true, severity: "medium" }]
+      signals: [{ type: "deviation", label: "Repeat inspection finding discrepancy", repeatFinding: true, severity: "medium" }]
     });
 
     expect(["moderate", "high"]).toContain(assessment.level);
@@ -282,7 +272,7 @@ describe("biotech deterministic AI Engine", () => {
           sourceRecords: expect.arrayContaining([expect.objectContaining({ module: "document", recordId: "doc-1" })])
         }),
         expect.objectContaining({ title: "Review training impact" }),
-        expect.objectContaining({ title: "Screen for CAPA" }),
+        expect.objectContaining({ title: "Screen for corrective action" }),
         expect.objectContaining({ title: "Review sample/material traceability" })
       ])
     );

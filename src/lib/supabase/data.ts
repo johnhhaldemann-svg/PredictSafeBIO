@@ -1428,7 +1428,7 @@ export async function getFoundationSourceDrilldownSummary(): Promise<FoundationS
               sourceModule: "evidence_map",
               sourceRecordId: row.id,
               recommendedAction: "Review mapped evidence and update readiness status.",
-              ownerRole: "quality_unit"
+              ownerRole: "ehs"
             }))
         },
         {
@@ -1466,7 +1466,7 @@ export async function getFoundationSourceDrilldownSummary(): Promise<FoundationS
               sourceModule: "incident",
               sourceRecordId: row.id,
               recommendedAction: "Complete incident/CAPA screening and link evidence.",
-              ownerRole: "quality_unit"
+              ownerRole: "ehs"
             }))
         },
         {
@@ -3617,7 +3617,7 @@ export async function createMapOperationsBundle(
         source_incident_id: incident.id,
         title: `CAPA screening for ${input.incidentTitle}`,
         status: "draft_human_review_required",
-        owner_role: "quality_unit",
+        owner_role: "ehs",
         due_date: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
         created_by: context.userId
       })
@@ -3814,7 +3814,7 @@ export async function seedIntelligenceFoundation(): Promise<{ ok: true; seedLabe
           program_type: "pilot_mvp",
           description: `${programName} pilot program generated from the PredictSafeBIO Intelligence Foundation packet.`,
           owner_role: programName.includes("Biosafety") || programName.includes("Bloodborne") ? "biosafety_officer" : "qa",
-          reviewer_role: "quality_unit",
+          reviewer_role: "ehs",
           status: "draft_human_review_required",
           review_frequency_months: 12,
           linked_documents: demo.applicability.requiredDocuments.filter((document) => document.toLowerCase().includes(programName.split(" ")[0].toLowerCase())),
@@ -4065,7 +4065,7 @@ export async function seedIntelligenceFoundation(): Promise<{ ok: true; seedLabe
         source_incident_id: incident.id,
         title: `${seedLabel} CAPA screening`,
         status: "draft_human_review_required",
-        owner_role: "quality_unit",
+        owner_role: "ehs",
         due_date: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
         created_by: context.userId
       })
@@ -4156,7 +4156,7 @@ export async function seedIntelligenceFoundation(): Promise<{ ok: true; seedLabe
       .select("id,biotype_key,display_name,applicable_programs,required_documents,required_records,required_training,risk_drivers");
 
     const selectedPrimary: BioTypeKey = "rd_biotech";
-    const selectedSecondary: BioTypeKey[] = ["diagnostics_clinical_lab", "academic_university_research"];
+    const selectedSecondary: BioTypeKey[] = ["cro_lab_services", "academic_university_research"];
     const { data: biotypeSelection } = await supabase
       .from("organization_biotype_selections")
       .insert({
@@ -4165,7 +4165,7 @@ export async function seedIntelligenceFoundation(): Promise<{ ok: true; seedLabe
         primary_biotype_key: selectedPrimary,
         secondary_biotype_keys: selectedSecondary,
         selection_status: "draft_human_review_required",
-        selection_reason: "NorthStar BioLabs pilot combines R&D biotech with diagnostics/sample handling and academic-style biosafety oversight.",
+        selection_reason: "NorthStar BioLabs pilot combines R&D biotech with sample-handling lab services and academic-style biosafety oversight.",
         human_review_required: true,
         created_by: context.userId
       })
@@ -4249,8 +4249,6 @@ export async function seedDemoWorkspace(): Promise<
     batchOrLot: seedLabel.toUpperCase().replace(/\s+/g, "-"),
     controlEffectiveness: "partial",
     contaminationSuspected: true,
-    productQualityImpactPotential: true,
-    gxpImpact: true,
     signals: [{ type: "contamination_event", label: "Seeded unexpected microbial growth", severity: "high" }]
   };
   const assessment = assessBioRisk(input);
@@ -4860,7 +4858,7 @@ function demoFoundationSourceDrilldownSummary(): FoundationSourceDrilldownSummar
             sourceModule: "evidence_map",
             sourceRecordId: item.id ?? `demo-evidence-${index}`,
             recommendedAction: "Review mapped evidence and update readiness status.",
-            ownerRole: "quality_unit"
+            ownerRole: "ehs"
           }))
       },
       {
@@ -5217,8 +5215,6 @@ function demoAssessmentDetail(id: string): SavedAssessmentDetail | null {
       batchOrLot: "LOT-0001",
       controlEffectiveness: "partial",
       contaminationSuspected: true,
-      productQualityImpactPotential: true,
-      gxpImpact: true,
       signals: [{ type: "contamination_event", label: "Unexpected microbial growth", severity: "high" }]
     },
     "demo-training-gap": {

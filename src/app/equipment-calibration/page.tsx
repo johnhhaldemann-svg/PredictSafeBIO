@@ -63,8 +63,8 @@ export default async function EquipmentCalibrationPage({ searchParams }: Props) 
     { label: "Autoclaves / Sterilizers",      freq: "Weekly spore test + annual PM",       reg: "ANSI/AAMI ST8" },
     { label: "Centrifuges",                   freq: "Annual service; rotor inspection",    reg: "Manufacturer spec" },
     { label: "Analytical Balances",           freq: "Daily check + 6-month calibration",  reg: "USP 41" },
-    { label: "Temperature-controlled units",  freq: "Continuous monitoring + quarterly",   reg: "21 CFR Part 11" },
-    { label: "pH Meters",                     freq: "Before each use (2-point cal)",       reg: "GxP requirement" },
+    { label: "Temperature-controlled units",  freq: "Continuous monitoring + quarterly",   reg: "Manufacturer spec" },
+    { label: "pH Meters",                     freq: "Before each use (2-point cal)",       reg: "Manufacturer spec" },
     { label: "Pipettes",                      freq: "Annual gravimetric calibration",      reg: "ISO 8655" },
     { label: "Gas Detectors / PID",           freq: "Before each use + annual cert",      reg: "OSHA 1910.119" },
     { label: "Eye Wash Stations",             freq: "Weekly activation test",              reg: "ANSI Z358.1" },
@@ -79,7 +79,7 @@ export default async function EquipmentCalibrationPage({ searchParams }: Props) 
             <h1>Equipment &amp; Calibration</h1>
             <p className="muted">
               Preventive maintenance schedules, calibration records, and certification logs for
-              safety-critical and GxP-controlled equipment. Overdue items surface in the Risk Monitor.
+              safety-critical and monitored equipment. Overdue items surface in the Risk Monitor.
             </p>
           </div>
           <Link className="button-secondary" href="/plan/compliance-calendar">Compliance Calendar →</Link>
@@ -117,7 +117,7 @@ export default async function EquipmentCalibrationPage({ searchParams }: Props) 
             <AlertTriangle size={15} />
             <span>
               <strong>{overdueList.length} item{overdueList.length !== 1 ? "s" : ""} overdue.</strong>{" "}
-              Overdue calibrations may indicate GxP compliance gaps. Log calibrations or retire retired items.
+              Overdue calibrations may indicate safety or compliance gaps. Log calibrations or retire retired items.
             </span>
             <Link className="ai-fill-btn ai-fill-btn--danger" href="/equipment-calibration?filter=overdue">View overdue</Link>
           </div>
@@ -301,7 +301,7 @@ export default async function EquipmentCalibrationPage({ searchParams }: Props) 
             <h2>Calibration requires certified technicians and traceable standards</h2>
             <p className="muted">
               Calibration records logged here are <strong>Draft — Human Review Required</strong> until
-              confirmed by a qualified metrology or instrument technician. GxP-regulated equipment
+              confirmed by a qualified metrology or instrument technician. Safety-critical equipment
               (balances, temperature units, pH meters) requires traceability to NIST or equivalent
               national standards. AI may surface overdue alerts but cannot substitute for
               physical calibration or certification.
