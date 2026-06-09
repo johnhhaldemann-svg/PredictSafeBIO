@@ -15,3 +15,12 @@ PredictSafeBIO_Full_Document_Library_CSEP_Standard/
 
 # Local Claude Code editor/session config — not part of the app
 .claude/launch.json
+
+# Investor / showcase deliverables — local-only, not part of the app
+PredictSafeBIO-Deck-Brief.md
+PredictSafeBIO-Investor-Walkthrough-Script.md
+PredictSafeBIO-Section-Rationale.docx
+PredictSafeBIO-Showcase.zip
+screenshots/
+showcase/
+scripts/capture-mockups.mjs
