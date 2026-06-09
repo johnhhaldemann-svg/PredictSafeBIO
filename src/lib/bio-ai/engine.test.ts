@@ -46,6 +46,23 @@ describe("biotech deterministic AI Engine", () => {
     expect(assessment.missingInformation).toContain("risk signals or evidence");
   });
 
+  it("keeps missingInformation as strings even if a readiness gap object leaks into missingData", () => {
+    // Regression: audit_readiness_scores.top_gaps can be { gap, severity } objects.
+    // If one reaches missingData, missingInformation must still be all strings —
+    // it is rendered directly as a React child and an object there crashes the page.
+    const assessment = assessBioRisk({
+      workflow: "Foundation readiness review",
+      dataCompleteness: 0.6,
+      signals: [],
+      missingData: [
+        "complete source data",
+        { gap: "LN2 cryogenic training overdue for active lab staff", severity: "high" } as unknown as string
+      ]
+    });
+
+    expect(assessment.missingInformation.every((item) => typeof item === "string")).toBe(true);
+  });
+
   it("escalates suspected contamination to critical", () => {
     const assessment = assessBioRisk({
       siteName: "Demo Biotech Site",

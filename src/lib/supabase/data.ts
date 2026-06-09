@@ -777,7 +777,7 @@ export async function getIntelligenceFoundationSummary(): Promise<IntelligenceFo
           incidentsScore: score.incidents_score,
           equipmentScore: score.equipment_score,
           evidenceScore: score.evidence_score,
-          topGaps: score.top_gaps ?? []
+          topGaps: (Array.isArray(score.top_gaps) ? score.top_gaps : []).map(normalizeReadinessGap)
         }
       : demoIntelligenceFoundationSummary().readiness;
 
@@ -1546,7 +1546,7 @@ export async function getAuditReadinessConsoleSummary(): Promise<AuditReadinessC
         sourceHref: getFoundationSourceTarget("evidence_map").href
       }));
     const topGaps = scoreTopGaps.map((gap) => ({
-      label: String(gap),
+      label: normalizeReadinessGap(gap),
       status: "readiness_gap",
       sourceHref: getFoundationSourceTarget("audit_readiness").href
     }));
@@ -4576,6 +4576,23 @@ function getReadinessTrend(latest: number, previous?: number) {
   if (latest > previous) return "improving" as const;
   if (latest < previous) return "declining" as const;
   return "steady" as const;
+}
+
+// audit_readiness_scores.top_gaps may be stored as plain strings (demo/seed data)
+// or as { gap, severity } objects (scoring engine output). The rest of the
+// pipeline — foundationContext.evidenceGaps → input.missingData →
+// assessment.missingInformation, which is rendered directly in JSX — assumes
+// string[]. Coerce every element to a string here so an object never reaches a
+// React child (which throws "Objects are not valid as a React child").
+function normalizeReadinessGap(gap: unknown): string {
+  if (typeof gap === "string") return gap;
+  if (gap && typeof gap === "object") {
+    const record = gap as Record<string, unknown>;
+    for (const key of ["gap", "label", "description", "summary", "title"]) {
+      if (typeof record[key] === "string") return record[key] as string;
+    }
+  }
+  return String(gap);
 }
 
 function dedupeReadinessGaps(gaps: Array<{ label: string; status: string; sourceHref: string }>) {
