@@ -102,7 +102,6 @@ const categories: Category[] = [
       { href: "/trends",              label: "Trend Analysis",      icon: TrendingUp,    desc: "CAPA backlog, training completion & audit readiness over time" },
       { href: "/management-review",   label: "Management Review",   icon: BarChart3,     desc: "Quarterly & annual review; trend analysis" },
       { href: "/lessons-learned",     label: "Lessons Learned",     icon: BookOpen,      desc: "Capture and share insights from incidents and CAPAs" },
-      { href: "/my-work",             label: "My Work",             icon: ClipboardList, desc: "Tasks and follow-ups assigned to you" },
     ]
   },
   {
@@ -111,6 +110,7 @@ const categories: Category[] = [
     href: "/account/company",
     icon: Settings,
     subItems: [
+      { href: "/my-work",         label: "My Work",           icon: ClipboardList, desc: "Tasks and follow-ups assigned to you" },
       { href: "/account/company", label: "Company Settings",  icon: Building2,  desc: "Operating context, programs, review owners" },
       { href: "/account/team",    label: "Team",              icon: Users,       desc: "Members, roles, and invitations" },
       { href: "/providers",       label: "Provider Directory",icon: Briefcase,   desc: "Biosafety & EHS consultants and experts" },
