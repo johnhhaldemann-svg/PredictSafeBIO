@@ -36,7 +36,6 @@ describe("AppShell, documents form, and admin demo customer copy", () => {
 
   it("documents form dropdowns use human-readable labels", () => {
     expect(documentsPage).toContain(">SOP<");
-    expect(documentsPage).toContain(">Batch Record<");
     expect(documentsPage).toContain(">In Review<");
     expect(documentsPage).toContain(">Responsible Scientist<");
     expect(documentsPage).toContain(">Principal Investigator<");

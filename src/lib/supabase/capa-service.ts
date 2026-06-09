@@ -105,9 +105,9 @@ function demoCapaRecords(): CapaRecord[] {
     {
       id: "demo-capa-001",
       organizationId: "demo-org",
-      title: "Sterility assay deviation — corrective action",
+      title: "Aseptic-work exposure — corrective action",
       status: "in_progress",
-      ownerRole: "quality_unit",
+      ownerRole: "ehs",
       dueDate: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
       effectivenessCheckDue: new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10),
       sourceAssessmentId: "demo-critical-contamination",

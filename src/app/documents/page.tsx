@@ -69,7 +69,6 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
                   Document type
                   <select name="documentType" defaultValue="sop">
                     <option value="sop">SOP</option>
-                    <option value="batch_record">Batch Record</option>
                     <option value="protocol">Protocol</option>
                     <option value="training">Training</option>
                     <option value="validation">Validation</option>
@@ -89,17 +88,15 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
                 </label>
                 <label>
                   Owner role
-                  <select name="ownerRole" defaultValue="qa">
+                  <select name="ownerRole" defaultValue="ehs">
+                    <option value="ehs">EHS</option>
+                    <option value="biosafety_officer">Biosafety Officer</option>
                     <option value="responsible_scientist">Responsible Scientist</option>
                     <option value="principal_investigator">Principal Investigator</option>
                     <option value="qa">QA</option>
-                    <option value="quality_unit">Quality Unit</option>
-                    <option value="biosafety_officer">Biosafety Officer</option>
-                    <option value="ehs">EHS</option>
                     <option value="manufacturing_lead">Manufacturing Lead</option>
                     <option value="validation_lead">Validation Lead</option>
                     <option value="regulatory_affairs">Regulatory Affairs</option>
-                    <option value="clinical_operations">Clinical Operations</option>
                   </select>
                 </label>
                 <label>

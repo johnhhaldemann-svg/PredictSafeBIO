@@ -10,9 +10,9 @@ import {
 
 describe("foundation action input helpers", () => {
   it("normalizes BioType key arrays and drops unknown values", () => {
-    expect(normalizeBioTypeKeys(["rd_biotech", "unknown", "diagnostics_clinical_lab"])).toEqual([
+    expect(normalizeBioTypeKeys(["rd_biotech", "unknown", "cro_lab_services"])).toEqual([
       "rd_biotech",
-      "diagnostics_clinical_lab"
+      "cro_lab_services"
     ]);
     expect(normalizeBioTypeKeys("cell_gene_therapy")).toEqual(["cell_gene_therapy"]);
     expect(normalizeBioTypeKeys(null)).toEqual([]);

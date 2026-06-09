@@ -172,7 +172,7 @@ export default async function ProviderAccountPage({ searchParams }: Props) {
                   <label>
                     NPI Number <span className="muted">— if applicable</span>
                     <input name="npi_number" defaultValue={profile.npi_number ?? ""}
-                      placeholder="Optional — for clinical/occupational-health providers"
+                      placeholder="Optional — for occupational-health providers"
                       style={{ fontFamily: "monospace" }} />
                   </label>
 

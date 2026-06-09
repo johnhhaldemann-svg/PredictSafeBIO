@@ -219,12 +219,11 @@ export default async function CapaListPage({ searchParams }: Props) {
               <div className="form-grid">
                 <label>
                   Owner role
-                  <select name="ownerRole" defaultValue="quality_unit">
-                    <option value="quality_unit">Quality Unit</option>
-                    <option value="qa">QA</option>
-                    <option value="biosafety_officer">Biosafety Officer</option>
-                    <option value="validation_lead">Validation Lead</option>
+                  <select name="ownerRole" defaultValue="ehs">
                     <option value="ehs">EHS</option>
+                    <option value="biosafety_officer">Biosafety Officer</option>
+                    <option value="qa">QA</option>
+                    <option value="validation_lead">Validation Lead</option>
                     <option value="responsible_scientist">Responsible Scientist</option>
                     <option value="regulatory_affairs">Regulatory Affairs</option>
                   </select>
@@ -291,9 +290,9 @@ export default async function CapaListPage({ searchParams }: Props) {
             <p className="muted">
               AI may recommend CAPA screening from assessments and incidents, but root-cause
               determination, corrective action selection, effectiveness verification, and closure
-              decisions are the sole responsibility of qualified quality personnel.
+              decisions are the sole responsibility of qualified EHS reviewers.
               All records are <strong>Draft — Human Review Required</strong> until closed by
-              the quality unit.
+              a qualified reviewer.
             </p>
           </div>
           <ShieldCheck size={24} />

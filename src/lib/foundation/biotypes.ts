@@ -2,10 +2,7 @@ import type { BioAiInput, BioSourceRecord } from "@/lib/bio-ai/types";
 
 export type BioTypeKey =
   | "rd_biotech"
-  | "diagnostics_clinical_lab"
   | "cell_gene_therapy"
-  | "biologics_pharma_manufacturing"
-  | "medical_device_diagnostics_manufacturing"
   | "cleanroom_controlled_environment"
   | "cro_lab_services"
   | "academic_university_research"
@@ -60,47 +57,14 @@ export const canonicalBioTypeFoundations: BioTypeFoundation[] = [
     commonTools: sharedTools
   },
   {
-    key: "diagnostics_clinical_lab",
-    name: "Diagnostics / Clinical Lab Support",
-    focus: "Sample handling, chain-of-custody, specimen labeling, calibration, deviations, and training competency.",
-    programs: ["Sample Management", "Equipment/Calibration", "Training & Competency", "Document Control"],
-    documents: ["Sample Chain-of-Custody SOP", "Specimen Labeling SOP", "Calibration SOP", "Deviation SOP"],
-    records: ["Sample Chain of Custody", "Calibration Record", "Specimen Label Review", "Competency Evidence"],
-    training: ["Sample Handling Training", "Specimen Labeling Training", "Equipment Use Training"],
-    riskDrivers: ["sample identity", "chain-of-custody", "calibration readiness", "competency evidence"],
-    commonTools: sharedTools
-  },
-  {
     key: "cell_gene_therapy",
     name: "Cell & Gene Therapy",
-    focus: "Cleanroom, aseptic technique, chain-of-identity, chain-of-custody, deviation/CAPA, and change control.",
-    programs: ["Cleanroom / Controlled Environment", "CAPA", "Change Control", "Training & Competency"],
-    documents: ["Aseptic Technique SOP", "Chain-of-Identity SOP", "Chain-of-Custody SOP", "Change Control SOP"],
-    records: ["Chain-of-Identity Record", "Chain-of-Custody Record", "Deviation Record", "CAPA Record"],
-    training: ["Aseptic Technique Training", "Cleanroom Gowning Training", "Chain-of-Identity Training"],
-    riskDrivers: ["aseptic control", "identity traceability", "custody traceability", "change control readiness"],
-    commonTools: sharedTools
-  },
-  {
-    key: "biologics_pharma_manufacturing",
-    name: "Biologics / Pharma Manufacturing Support",
-    focus: "Quality system, document control, deviation, CAPA, equipment qualification, calibration, and audits.",
-    programs: ["Document Control", "CAPA", "Equipment/Calibration", "Audit & Inspection"],
-    documents: ["Document Control SOP", "Deviation SOP", "CAPA SOP", "Equipment Qualification SOP"],
-    records: ["Deviation Record", "CAPA Record", "Qualification Record", "Audit Evidence"],
-    training: ["Quality System Training", "Deviation/CAPA Training", "Equipment Qualification Training"],
-    riskDrivers: ["quality system readiness", "CAPA screening", "equipment qualification", "audit evidence"],
-    commonTools: sharedTools
-  },
-  {
-    key: "medical_device_diagnostics_manufacturing",
-    name: "Medical Device / Diagnostics Manufacturing",
-    focus: "Quality records, supplier controls, nonconformance, CAPA, training control, and traceability.",
-    programs: ["Supplier Controls", "CAPA", "Document Control", "Training & Competency"],
-    documents: ["Supplier Control SOP", "Nonconformance SOP", "Traceability SOP", "Training Control SOP"],
-    records: ["Supplier Qualification Record", "Nonconformance Record", "Traceability Record", "Training Record"],
-    training: ["Supplier Quality Training", "Nonconformance Training", "Traceability Training"],
-    riskDrivers: ["supplier quality", "nonconformance response", "traceability", "training control"],
+    focus: "Cleanroom worker safety, aseptic technique, biosafety, exposure control, and incident/corrective-action readiness.",
+    programs: ["Cleanroom / Controlled Environment", "Biosafety", "Incident / Corrective Action", "Training & Competency"],
+    documents: ["Aseptic Technique SOP", "Biosafety Manual", "Exposure Response SOP", "Incident Response SOP"],
+    records: ["Biological Material Inventory", "Exposure Record", "Incident Record", "Corrective Action Record"],
+    training: ["Aseptic Technique Training", "Cleanroom Gowning Training", "Biosafety Training"],
+    riskDrivers: ["aseptic worker safety", "biosafety control", "exposure readiness", "incident response readiness"],
     commonTools: sharedTools
   },
   {

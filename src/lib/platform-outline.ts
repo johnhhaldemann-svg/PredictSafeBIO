@@ -133,7 +133,7 @@ export const changePlanRows: ChangePlanRow[] = [
   {
     category: "Controlled Documents",
     feature: "Version Control",
-    owner: "Quality Unit",
+    owner: "EHS Manager",
     priority: "High",
     status: "Planned",
     notes: "Expose document version history and review state beside SOP metadata without replacing controlled-document approval.",

@@ -5,7 +5,6 @@
 
 const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   sop: "SOP",
-  batch_record: "Batch Record",
   protocol: "Protocol",
   training: "Training",
   validation: "Validation",
@@ -27,13 +26,11 @@ const OWNER_ROLE_LABELS: Record<string, string> = {
   responsible_scientist: "Responsible Scientist",
   principal_investigator: "Principal Investigator",
   qa: "QA",
-  quality_unit: "Quality Unit",
   biosafety_officer: "Biosafety Officer",
   ehs: "EHS",
   manufacturing_lead: "Manufacturing Lead",
   validation_lead: "Validation Lead",
-  regulatory_affairs: "Regulatory Affairs",
-  clinical_operations: "Clinical Operations"
+  regulatory_affairs: "Regulatory Affairs"
 };
 
 /** Formats a raw document type value for display. */

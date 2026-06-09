@@ -206,10 +206,10 @@ export default async function VersionControlPage({ searchParams }: Props) {
                               <div className="form-grid">
                                 <label style={{ fontSize: 12 }}>
                                   Reviewer role
-                                  <select name="reviewerRole" defaultValue="quality_unit" style={{ fontSize: 12 }}>
-                                    <option value="quality_unit">Quality Unit</option>
-                                    <option value="qa">QA</option>
+                                  <select name="reviewerRole" defaultValue="ehs" style={{ fontSize: 12 }}>
+                                    <option value="ehs">EHS</option>
                                     <option value="biosafety_officer">Biosafety Officer</option>
+                                    <option value="qa">QA</option>
                                     <option value="regulatory_affairs">Regulatory Affairs</option>
                                   </select>
                                 </label>

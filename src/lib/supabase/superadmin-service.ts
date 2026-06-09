@@ -72,8 +72,7 @@ const SIGNAL_TYPES = [
   "deviation", "capa", "change_control", "audit_finding", "training_gap",
   "sop_gap", "biosafety_event", "contamination_event", "environmental_monitoring",
   "equipment_event", "ergonomic_risk_signal", "sample_chain_of_custody",
-  "data_integrity", "batch_record", "assay_qc", "supplier_material",
-  "clinical_study", "regulatory_commitment"
+  "data_integrity"
 ];
 
 export async function getAiEngineStatus(): Promise<AiEngineStatus> {

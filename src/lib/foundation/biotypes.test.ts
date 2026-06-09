@@ -4,13 +4,10 @@ import { draftAiRecommendationGuardrail } from "@/lib/bio-ai/source-artifacts";
 import { applyBioTypeContext, buildBioTypeAiContext, canonicalBioTypeFoundations } from "./biotypes";
 
 describe("BioType Foundation Packages", () => {
-  it("defines the 9 canonical BioType branches from the reformat packet", () => {
+  it("defines the canonical HSE BioType branches", () => {
     expect(canonicalBioTypeFoundations.map((foundation) => foundation.name)).toEqual([
       "R&D Biotech",
-      "Diagnostics / Clinical Lab Support",
       "Cell & Gene Therapy",
-      "Biologics / Pharma Manufacturing Support",
-      "Medical Device / Diagnostics Manufacturing",
       "Cleanroom / Controlled Environment",
       "CRO / Lab Services",
       "Academic / University Research",
@@ -29,10 +26,10 @@ describe("BioType Foundation Packages", () => {
   });
 
   it("merges primary and secondary BioTypes without duplicates", () => {
-    const context = buildBioTypeAiContext("rd_biotech", ["diagnostics_clinical_lab", "rd_biotech", "academic_university_research"]);
+    const context = buildBioTypeAiContext("rd_biotech", ["cro_lab_services", "rd_biotech", "academic_university_research"]);
 
     expect(context.primaryBioType).toBe("rd_biotech");
-    expect(context.secondaryBioTypes).toEqual(["diagnostics_clinical_lab", "academic_university_research"]);
+    expect(context.secondaryBioTypes).toEqual(["cro_lab_services", "academic_university_research"]);
     expect(context.biotypePrograms).toEqual(expect.arrayContaining(["Biosafety", "Sample Management", "Document Control"]));
     expect(new Set(context.biotypePrograms).size).toBe(context.biotypePrograms.length);
     expect(context.biotypeSourceRecords.map((record) => record.module)).toEqual(expect.arrayContaining(["biotype_foundation"]));

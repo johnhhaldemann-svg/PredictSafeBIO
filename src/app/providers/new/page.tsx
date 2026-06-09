@@ -140,7 +140,7 @@ export default async function ProviderNewPage({ searchParams }: Props) {
 
                 <label>
                   NPI Number <span className="muted">— optional</span>
-                  <span className="muted">10-digit ID for clinical / occupational-health providers</span>
+                  <span className="muted">10-digit ID for occupational-health providers</span>
                   <input name="npi_number" placeholder="Optional" maxLength={10}
                     pattern="\d{10}" title="Must be a 10-digit number" style={{ fontFamily: "monospace" }} />
                 </label>

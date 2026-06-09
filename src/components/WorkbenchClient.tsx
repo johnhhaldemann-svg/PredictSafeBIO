@@ -64,16 +64,12 @@ const starterInput: BioAiInput = {
   controlEffectiveness: "partial",
   dataCompleteness: 0.68,
   contaminationSuspected: true,
-  productQualityImpactPotential: true,
-  gxpImpact: true,
   signals: [
     {
       type: "contamination_event",
       label: "Unexpected microbial growth in assay control",
       severity: "high",
       status: "open",
-      productQualityImpactPotential: true,
-      gxpImpact: true,
       controls: ["Initial lab notification completed"],
       evidence: "Assay control showed unexpected growth; investigation not complete."
     },
@@ -116,11 +112,6 @@ const signalTypeLabels: Partial<Record<BioSignalType, string>> = {
   audit_finding: "Audit Finding",
   environmental_monitoring: "Environmental Monitoring",
   ergonomic_risk_signal: "Ergonomic Risk Signal",
-  batch_record: "Batch Record",
-  assay_qc: "Assay QC",
-  supplier_material: "Supplier / Material",
-  clinical_study: "Clinical Study",
-  regulatory_commitment: "Regulatory Commitment",
 };
 
 /** Returns a trend string with a directional arrow prefix. */
@@ -142,7 +133,7 @@ const signalPresets: Array<{
   evidence: string;
 }> = [
   { type: "contamination_event", label: "Microbial growth in control sample", evidence: "Unexpected growth observed in assay control; investigation not complete." },
-  { type: "data_integrity", label: "Missing second-person review signature", evidence: "Review signature absent from assay worksheet or batch record." },
+  { type: "data_integrity", label: "Missing second-person review signature", evidence: "Review signature absent from the incident, exposure, or inspection record." },
   { type: "equipment_event", label: "Equipment out of calibration tolerance", evidence: "Calibration certificate expired or instrument reading outside tolerance." },
   { type: "training_gap", label: "Expired critical SOP training record", evidence: "Staff training record for critical procedure has lapsed." },
   { type: "sop_gap", label: "Procedure deviation identified", evidence: "Step was performed out of sequence or SOP not followed as written." },

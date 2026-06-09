@@ -6,18 +6,18 @@ export const sourceArtifacts = [
 ] as const;
 
 export const doNotClaim = [
-  "Do not claim a batch is released.",
-  "Do not claim a product is safe.",
-  "Do not claim a study is compliant.",
-  "Do not claim a deviation is closed.",
-  "Do not claim a CAPA is adequate.",
-  "Do not claim an SOP is approved.",
+  "Do not claim an area or task is safe.",
+  "Do not claim an exposure is within limits without monitoring data.",
+  "Do not claim a hazard is controlled.",
+  "Do not claim a corrective action is closed.",
+  "Do not claim a corrective/preventive action is adequate.",
+  "Do not claim an SOP or safe-work procedure is approved.",
   "Do not claim a change is approved.",
-  "Do not claim data is valid for submission.",
-  "Do not claim a clinical decision is appropriate.",
+  "Do not claim an incident is fully investigated.",
+  "Do not certify return-to-work or clearance.",
   "Do not guarantee regulatory compliance."
 ];
 
 export const draftHumanReviewLabel = "Draft - Human Review Required";
 export const draftAiRecommendationGuardrail =
-  "Draft AI recommendation - human review required. This does not certify compliance, approve documents, close CAPAs, validate systems, or replace qualified review.";
+  "Draft AI recommendation - human review required. This does not certify compliance, approve documents, close corrective actions, clear hazards, or replace qualified EHS review.";

@@ -80,8 +80,6 @@ function demoAssessmentDetail(id: string): SavedAssessmentDetail | null {
       batchOrLot: "LOT-0001",
       controlEffectiveness: "partial",
       contaminationSuspected: true,
-      productQualityImpactPotential: true,
-      gxpImpact: true,
       signals: [{ type: "contamination_event", label: "Unexpected microbial growth", severity: "high" }]
     },
     "demo-training-gap": {
@@ -125,8 +123,6 @@ export async function listAssessments(): Promise<SavedAssessmentSummary[]> {
         batchOrLot: "LOT-0001",
         controlEffectiveness: "partial",
         contaminationSuspected: true,
-        productQualityImpactPotential: true,
-        gxpImpact: true,
         signals: [{ type: "contamination_event", label: "Unexpected microbial growth", severity: "high" }]
       }),
       demoAssessmentSummary("demo-training-gap", {
