@@ -39,7 +39,7 @@ export default async function ConfigHubPage() {
       icon:        Flag,
       description: "Toggle features on/off without redeploying code.",
       meta:        `${enabledCount} enabled · ${disabledCount} disabled`,
-      color:       "#2563eb",
+      variant:     "platform-blue",
     },
     {
       href:        "/admin/config/branding",
@@ -47,7 +47,7 @@ export default async function ConfigHubPage() {
       label:       "Platform Branding",
       description: "Update the platform name, colors, logo, and footer.",
       meta:        `Name: ${branding.platform_name}`,
-      color:       "#7c3aed",
+      variant:     "platform-navy",
     },
     {
       href:        "/admin/config/emails",
@@ -55,7 +55,7 @@ export default async function ConfigHubPage() {
       label:       "Email Templates",
       description: "Edit subject lines and body copy for all system emails.",
       meta:        "Welcome · Bio approved · Bio flagged · Trial expiring · Payment failed",
-      color:       "#16a34a",
+      variant:     "platform-green",
     },
   ];
 
@@ -72,11 +72,11 @@ export default async function ConfigHubPage() {
         </header>
 
         <div className="command-card-grid">
-          {sections.map(({ href, label, icon: Icon, description, meta, color }) => (
+          {sections.map(({ href, label, icon: Icon, description, meta, variant }) => (
             <Link key={href} href={href} className="provider-card-link">
-              <article className="command-card" style={{ borderTop: `3px solid ${color}` }}>
-                <div className="inline-icon-group">
-                  <Icon size={16} style={{ color }} />
+              <article className={`command-card ${variant}`}>
+                <div>
+                  <span><Icon size={16} /></span>
                   <strong>{label}</strong>
                 </div>
                 <p className="muted">{description}</p>

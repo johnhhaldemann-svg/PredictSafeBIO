@@ -139,7 +139,10 @@ export default async function AdminUsersPage({ searchParams }: Props) {
           </div>
 
           {users.length === 0 ? (
-            <p className="muted">No users match your filters.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No users match your filters</p>
+              <p className="muted">Adjust your search, role, or status filters to see results.</p>
+            </div>
           ) : (
             <table>
               <thead>

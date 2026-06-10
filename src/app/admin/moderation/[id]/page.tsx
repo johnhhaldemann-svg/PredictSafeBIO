@@ -102,7 +102,7 @@ export default async function BioReviewPage({ params, searchParams }: Props) {
                 ? <span className="status-chip status-current">NPI Verified ✓</span>
                 : <span className="status-chip status-needs-review">NPI Unverified</span>}
               {bio.report_count > 0 && (
-                <span className="status-missing">
+                <span className="status-chip status-missing">
                   🚩 {bio.report_count} open report{bio.report_count !== 1 ? "s" : ""}
                 </span>
               )}

@@ -179,7 +179,10 @@ export default async function AiKnowledgePage({
             <h2>Knowledge entries ({entries.length})</h2>
           </div>
           {entries.length === 0 ? (
-            <p className="muted">No entries match the selected filters.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No entries match the selected filters</p>
+              <p className="muted">Adjust the filters above to widen the review queue.</p>
+            </div>
           ) : (
             <div className="knowledge-review-list">
               {entries.map((entry) => (

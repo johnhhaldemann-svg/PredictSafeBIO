@@ -118,23 +118,30 @@ export default async function AuditPage({
             </Link>
           </form>
         </section>
-        <section className="timeline">
-          {auditEvents.map((event, index) => {
-            const target = getAuditEventTarget(event);
-            return (
-              <article className="timeline-row" key={`${event.eventType}-${index}`}>
-                <span>{event.createdAt}</span>
-                <strong>{event.eventType}</strong>
-                <p>{event.summary}</p>
-                {target ? (
-                  <Link className="text-link" href={target.href}>
-                    {target.label}
-                  </Link>
-                ) : null}
-              </article>
-            );
-          })}
-        </section>
+        {auditEvents.length === 0 ? (
+          <div className="empty-state-card">
+            <p className="empty-state-title">No audit events match these filters</p>
+            <p className="muted">Foundation actions appear here as they are logged. Adjust the filters above to widen the trace.</p>
+          </div>
+        ) : (
+          <section className="timeline">
+            {auditEvents.map((event, index) => {
+              const target = getAuditEventTarget(event);
+              return (
+                <article className="timeline-row" key={`${event.eventType}-${index}`}>
+                  <span>{event.createdAt}</span>
+                  <strong>{event.eventType}</strong>
+                  <p>{event.summary}</p>
+                  {target ? (
+                    <Link className="text-link" href={target.href}>
+                      {target.label}
+                    </Link>
+                  ) : null}
+                </article>
+              );
+            })}
+          </section>
+        )}
       </div>
     </AppShell>
   );
