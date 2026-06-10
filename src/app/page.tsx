@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ShieldCheck, ClipboardCheck, HardHat, Activity, ArrowRight } from "lucide-react";
+import { ShieldCheck, ClipboardCheck, HardHat, Activity, ArrowRight, Sparkles, RefreshCw } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import {
   getAuditReadinessConsoleSummary,
@@ -234,8 +234,11 @@ export default async function HomePage() {
 
   return (
     <AppShell>
-      <div className="page-stack">
-        <header className="page-header">
+      <div className="page-stack home-loop">
+        <header className="page-header home-hero">
+          <span className="home-hero-badge">
+            <Sparkles size={13} aria-hidden="true" /> Predictive AI engine · live
+          </span>
           <p className="section-label">PredictSafeBIO</p>
           <h1>Safety &amp; compliance loop</h1>
           <p className="muted">
@@ -333,6 +336,15 @@ export default async function HomePage() {
             );
           })}
         </ol>
+
+        <div className="lifecycle-loopback">
+          <span className="lifecycle-loopback-line" aria-hidden="true" />
+          <span className="lifecycle-loopback-label">
+            <RefreshCw size={13} aria-hidden="true" />
+            Insights from Monitor feed the next Assess — the loop repeats
+          </span>
+          <span className="lifecycle-loopback-line" aria-hidden="true" />
+        </div>
       </div>
     </AppShell>
   );

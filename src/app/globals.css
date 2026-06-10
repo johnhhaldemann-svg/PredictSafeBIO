@@ -8082,3 +8082,172 @@ pre {
 .provider-verified-icon { color: var(--green); flex-shrink: 0; }
 .provider-filter-form { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end; }
 .provider-filter-form label { display: flex; flex-direction: column; gap: 4px; font-size: 0.83rem; flex: 1 1 180px; }
+
+/* ══════════════════════════════════════════════════════════════
+   Home "safety loop" visual enhancement — scoped to .home-loop
+   A loop-map flow · B lifecycle loop+cards · C hero · D polish
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── C · Hero header ── */
+.home-loop .home-hero {
+  position: relative;
+  overflow: hidden;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 22px 24px;
+  border-radius: 14px;
+  background:
+    radial-gradient(130% 150% at 95% -30%, rgba(55, 138, 221, 0.18) 0%, rgba(55, 138, 221, 0) 55%),
+    linear-gradient(135deg, #ffffff 0%, #f1f7fd 100%);
+  box-shadow: 0 10px 28px rgba(13, 43, 78, 0.07);
+}
+.home-loop .home-hero::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--blue-mid), var(--blue));
+}
+.home-loop .home-hero h1 {
+  font-size: 26px;
+  line-height: 1.15;
+  margin-top: 2px;
+}
+.home-loop .home-hero .muted { max-width: 68ch; }
+
+.home-loop .home-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 5px 11px 5px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--blue-lt);
+  background: #ffffff;
+  color: var(--blue);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 0 1px 3px rgba(13, 43, 78, 0.06);
+}
+.home-loop .home-hero-badge svg { color: var(--blue-mid); }
+
+/* ── A · Loop-map flow (Inputs → Engine → Outputs) ── */
+.home-loop .loopmap-band { position: relative; }
+.home-loop .loopmap-rail { position: relative; }
+
+/* Connector badge sitting in the gap between rails */
+.home-loop .loopmap-rail:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -21px;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23185FA5' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E") center / 14px no-repeat;
+  border: 1px solid var(--blue-lt);
+  box-shadow: 0 2px 6px rgba(13, 43, 78, 0.12);
+}
+
+/* Engine panel: richer gradient + presence */
+.home-loop .loopmap-rail--engine {
+  background: linear-gradient(160deg, #123a6b 0%, var(--navy) 65%);
+  box-shadow: 0 10px 30px rgba(13, 43, 78, 0.18);
+}
+
+/* ── B · Lifecycle cards ── */
+.home-loop .lifecycle-card {
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+.home-loop .lifecycle-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px rgba(16, 32, 60, 0.13);
+}
+
+/* Tone-tint the step number + icon (was always navy/grey) */
+.home-loop .lifecycle-card--ok      .lifecycle-number { background: #16a34a; }
+.home-loop .lifecycle-card--warn    .lifecycle-number { background: #d97706; }
+.home-loop .lifecycle-card--alert   .lifecycle-number { background: #dc2626; }
+.home-loop .lifecycle-card--neutral .lifecycle-number { background: #94a3b8; }
+.home-loop .lifecycle-card--ok      .lifecycle-icon { color: #16a34a; }
+.home-loop .lifecycle-card--warn    .lifecycle-icon { color: #d97706; }
+.home-loop .lifecycle-card--alert   .lifecycle-icon { color: #dc2626; }
+.home-loop .lifecycle-card--neutral .lifecycle-icon { color: #94a3b8; }
+
+/* Brand-fill the between-card loop arrows for a stronger "flow" read */
+.home-loop .lifecycle-arrow {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(13, 43, 78, 0.18);
+}
+
+/* ── B · Close the loop (Monitor → Assess return) ── */
+.home-loop .lifecycle-loopback {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 2px;
+}
+.home-loop .lifecycle-loopback-line {
+  flex: 1;
+  height: 0;
+  border-top: 2px dashed var(--blue-lt);
+}
+.home-loop .lifecycle-loopback-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--blue-lt);
+  background: var(--blue-bg);
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.home-loop .lifecycle-loopback-label svg { color: var(--blue-mid); }
+
+/* Loop-map connector points down when the band stacks */
+@media (max-width: 860px) {
+  .home-loop .loopmap-rail:not(:last-child)::after {
+    top: auto;
+    bottom: -21px;
+    right: 50%;
+    transform: translateX(50%) rotate(90deg);
+  }
+}
+@media (max-width: 720px) {
+  .home-loop .lifecycle-loopback-label { white-space: normal; text-align: center; }
+}
+
+/* ── D · Motion polish (opt-in; respects reduced-motion) ── */
+@media (prefers-reduced-motion: no-preference) {
+  .home-loop .loopmap-rail--engine {
+    animation: psbEngineGlow 3.4s ease-in-out infinite;
+  }
+  .home-loop .loopmap-band,
+  .home-loop .lifecycle-card,
+  .home-loop .lifecycle-loopback {
+    animation: psbHomeRise 0.5s ease both;
+  }
+  .home-loop .lifecycle-card:nth-child(1) { animation-delay: 0.05s; }
+  .home-loop .lifecycle-card:nth-child(2) { animation-delay: 0.10s; }
+  .home-loop .lifecycle-card:nth-child(3) { animation-delay: 0.15s; }
+  .home-loop .lifecycle-card:nth-child(4) { animation-delay: 0.20s; }
+  .home-loop .lifecycle-loopback { animation-delay: 0.26s; }
+}
+
+@keyframes psbEngineGlow {
+  0%, 100% { box-shadow: 0 10px 30px rgba(13, 43, 78, 0.18), 0 0 0 0 rgba(55, 138, 221, 0); }
+  50%      { box-shadow: 0 10px 34px rgba(13, 43, 78, 0.22), 0 0 0 3px rgba(55, 138, 221, 0.25); }
+}
+@keyframes psbHomeRise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
