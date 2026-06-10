@@ -9,6 +9,12 @@ import { createSupabaseServerClient } from "./server";
 import { isSupabaseConfigured } from "./env";
 
 // ---------------------------------------------------------------------------
+// Shared result type
+// ---------------------------------------------------------------------------
+
+export type FoundationActionResult = { ok: true; message: string } | { ok: false; message: string };
+
+// ---------------------------------------------------------------------------
 // Profile context
 // ---------------------------------------------------------------------------
 
@@ -141,4 +147,32 @@ export function mapDocument(document: Record<string, unknown>): DocumentMetadata
 
 export function normalizeOptionalText(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim().toLowerCase() : "";
+}
+
+// audit_readiness_scores.top_gaps may be stored as plain strings (demo/seed data)
+// or as { gap, severity } objects (scoring engine output). The rest of the
+// pipeline — foundationContext.evidenceGaps → input.missingData →
+// assessment.missingInformation, which is rendered directly in JSX — assumes
+// string[]. Coerce every element to a string here so an object never reaches a
+// React child (which throws "Objects are not valid as a React child").
+export function normalizeReadinessGap(gap: unknown): string {
+  if (typeof gap === "string") return gap;
+  if (gap && typeof gap === "object") {
+    const record = gap as Record<string, unknown>;
+    for (const key of ["gap", "label", "description", "summary", "title"]) {
+      if (typeof record[key] === "string") return record[key] as string;
+    }
+  }
+  return String(gap);
+}
+
+export function summarizeJson(value: unknown) {
+  if (Array.isArray(value)) return value.slice(0, 3).join(", ") || "none";
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>).slice(0, 3);
+    return entries.map(([key, item]) => `${key}: ${String(item)}`).join(", ");
+  }
+  if (value == null) return "none";
+  return String(value);
 }

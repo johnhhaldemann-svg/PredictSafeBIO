@@ -159,7 +159,7 @@ export default async function AssessmentDetailPage({
       <div className="page-stack">
         <header className="page-header">
           <div className="page-header-left">
-            <p className="section-label">Assess · <a href="/assessments">Risk Register</a> / Detail</p>
+            <p className="section-label">Assess · <Link href="/assessments">Risk Register</Link> / Detail</p>
             <h1>{assessment.workflow}</h1>
             <p className="muted">BioRisk assessment — human review required before action.</p>
           </div>
