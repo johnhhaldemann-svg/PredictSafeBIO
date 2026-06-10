@@ -111,7 +111,10 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
           {loadFailed ? (
             <DataLoadError resource="emergency response plans" />
           ) : plans.length === 0 ? (
-            <p className="muted">No emergency response plans yet. Add one below.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No emergency response plans yet</p>
+              <p className="muted">Add your first plan below to begin tracking review and drill status.</p>
+            </div>
           ) : (
             <div className="action-list">
               {plans.map((plan) => (
@@ -192,7 +195,10 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
             </div>
           </div>
           {drills.length === 0 ? (
-            <p className="muted">No drills logged yet. Document your first drill below.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No drills logged yet</p>
+              <p className="muted">Document your first drill below to build a drill history.</p>
+            </div>
           ) : (
             <div className="action-list">
               {drills.map((drill) => (

@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = { title: "Documents – PredictSafeBIO" };
-import { Bot, FileText } from "lucide-react";
+import { Bot, FileText, FileCheck2, AlertTriangle } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { createDocumentMetadataAction } from "@/app/documents/actions";
 import { generateDocumentGapRecommendations } from "@/lib/documents/recommendations";
@@ -23,6 +23,9 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
   const documents = documentsResult ?? [];
   const canCreateDocuments = canCreateWorkspaceRecord(auth);
   const totalDocumentGaps = documents.reduce((sum, doc) => sum + generateDocumentGapRecommendations(doc).length, 0);
+  const totalDocuments = documents.length;
+  const approvedCount = documents.filter((doc) => doc.status === "approved").length;
+  const docsWithGaps = documents.filter((doc) => generateDocumentGapRecommendations(doc).length > 0).length;
 
   return (
     <AppShell>
@@ -31,12 +34,36 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
           <div className="page-header-left">
             <p className="section-label">Plan</p>
             <h1>SOPs, Forms &amp; Templates</h1>
+            <p className="muted">
+              Register and track controlled documents — SOPs, protocols, and policies. The engine
+              flags missing evidence and overdue reviews as document gaps.
+            </p>
           </div>
           <Link className="button-primary" href="/documents">
             <FileText size={14} />
             Register document
           </Link>
         </header>
+
+        {totalDocuments > 0 ? (
+          <section className="command-card-grid" aria-label="Document register summary">
+            <article className="command-card platform-blue">
+              <div><span><FileText size={16} /></span><strong>Controlled documents</strong></div>
+              <small>{totalDocuments}</small>
+              <em>Records tracked in the register.</em>
+            </article>
+            <article className="command-card platform-green">
+              <div><span><FileCheck2 size={16} /></span><strong>Approved</strong></div>
+              <small>{approvedCount}</small>
+              <em>Documents in approved status.</em>
+            </article>
+            <article className={`command-card ${docsWithGaps > 0 ? "platform-red" : "platform-green"}`}>
+              <div><span><AlertTriangle size={16} /></span><strong>With open gaps</strong></div>
+              <small>{docsWithGaps}</small>
+              <em>{docsWithGaps > 0 ? "Documents needing evidence or updates." : "No open document gaps."}</em>
+            </article>
+          </section>
+        ) : null}
 
         {documents.length > 0 && totalDocumentGaps > 0 ? (
           <div className="ai-context-bar ai-context-bar--warning">
@@ -140,13 +167,13 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
           )}
         </section>
         {loadFailed && <DataLoadError resource="documents" />}
+        {!loadFailed && documents.length === 0 ? (
+          <div className="empty-state-card">
+            <p className="empty-state-title">No document metadata saved yet</p>
+            <p className="muted">Create a controlled metadata record above to generate draft gap and AI-assisted update recommendations.</p>
+          </div>
+        ) : null}
         <section className="document-grid">
-          {!loadFailed && documents.length === 0 ? (
-            <article className="document-card">
-              <strong>No document metadata saved yet</strong>
-              <p>Create a controlled metadata record above to generate draft gap and AI-assisted update recommendations.</p>
-            </article>
-          ) : null}
           {documents.map((document) => {
             const gaps = generateDocumentGapRecommendations(document);
             return (

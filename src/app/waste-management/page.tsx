@@ -140,7 +140,10 @@ export default async function WasteManagementPage({ searchParams }: Props) {
           {loadFailed ? (
             <DataLoadError resource="waste records" />
           ) : records.length === 0 ? (
-            <p className="muted">No waste containers found. Add one below.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No waste containers found</p>
+              <p className="muted">No containers match this filter. Register a container below to begin tracking.</p>
+            </div>
           ) : (
             <div className="action-list">
               {records.map((rec) => (
