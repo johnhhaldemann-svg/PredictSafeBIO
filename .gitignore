@@ -15,3 +15,14 @@ PredictSafeBIO_Full_Document_Library_CSEP_Standard/
 
 # Local Claude Code editor/session config — not part of the app
 .claude/launch.json
+
+# Marketing / investor / sales assets — stored in file share, not git
+*.pptx
+*.docx
+*.pdf
+*.zip
+*.png
+PredictSafeBIO-*.md
+screenshots/
+showcase/
+scripts/capture-mockups.mjs
