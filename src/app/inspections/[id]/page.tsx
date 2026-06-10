@@ -68,6 +68,7 @@ export default async function InspectionDetailPage({ params, searchParams }: Pro
               Operate · <Link href="/inspections">Inspection Register</Link> / Detail
             </p>
             <h1>{inspection.title}</h1>
+            <p className="muted">Inspection record — findings and status tracked below.</p>
           </div>
           <Link className="button-secondary" href="/inspections">← All Inspections</Link>
         </header>
@@ -147,7 +148,10 @@ export default async function InspectionDetailPage({ params, searchParams }: Pro
           </div>
 
           {inspection.findings.length === 0 ? (
-            <p className="muted">No findings yet. Add one below during the inspection.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No findings recorded yet</p>
+              <p className="muted">Add one below during the inspection.</p>
+            </div>
           ) : (
             <div className="action-list">
               {inspection.findings.map((finding) => (
