@@ -59,14 +59,21 @@ export default async function BiosListPage({ searchParams }: Props) {
 
   const admin = getSupabaseAdminClient();
   const [biosResult, usage] = await Promise.all([
+    // NOTE: the Supabase query builder is a thenable but does NOT implement
+    // `.catch()` — chaining it throws `TypeError: ...catch is not a function`.
+    // The builder never rejects on query errors; it resolves to { data, error },
+    // so we read `error` below instead of catching.
     (admin as any)
       .from("personnel_records")
       .select("id, display_name, is_active, created_at")
       .eq("organization_id", orgId)
-      .order("created_at", { ascending: false })
-      .catch(() => ({ data: null })),
+      .order("created_at", { ascending: false }),
     getOrgUsage(orgId),
   ]);
+
+  if (biosResult?.error) {
+    console.error("[/bios] failed to load personnel_records:", biosResult.error.message);
+  }
 
   const allBios = ((biosResult?.data ?? []) as any[]).map((b: any) => ({
     id:           b.id as string,

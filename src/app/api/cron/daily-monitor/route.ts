@@ -8,6 +8,12 @@
  *   3. AI response logging — detect gaps (no records in last 24 h when activity expected)
  *   4. Error rate — count audit_logs ERROR entries in last 24 h
  *
+ * Honesty note: checks 2–4 depend on tables (ai_drafts, audit_logs) that are
+ * not yet provisioned, and AI drafts are not currently persisted at all. When a
+ * source table is missing or unqueryable, the check reports `monitored: false`
+ * (degraded) rather than a silent `ok: true` — so the daily summary never shows
+ * a false-green for monitoring that isn't actually wired up.
+ *
  * Auth: protected by CRON_SECRET header.
  */
 
@@ -59,8 +65,9 @@ export async function GET(req: NextRequest) {
       oversized_responses: oversized.length,
     };
   } catch (e: any) {
-    // Table may not exist yet — treat as skipped, not failed
-    results.ai_output_validator = { ok: true, skipped: true, detail: e?.message };
+    // Source table missing/unqueryable — surface as degraded, not silent-ok,
+    // so the daily summary doesn't show a false-green for unwired monitoring.
+    results.ai_output_validator = { ok: false, monitored: false, detail: e?.message };
   }
 
   // ── 3. AI response logging ───────────────────────────────────────────────
@@ -77,7 +84,7 @@ export async function GET(req: NextRequest) {
       records_last_24h: count ?? 0,
     };
   } catch (e: any) {
-    results.ai_response_logging = { ok: true, skipped: true, detail: e?.message };
+    results.ai_response_logging = { ok: false, monitored: false, detail: e?.message };
   }
 
   // ── 4. Error rate ────────────────────────────────────────────────────────
@@ -99,12 +106,15 @@ export async function GET(req: NextRequest) {
       threshold: HIGH_ERROR_THRESHOLD,
     };
   } catch (e: any) {
-    results.error_rate = { ok: true, skipped: true, detail: e?.message };
+    results.error_rate = { ok: false, monitored: false, detail: e?.message };
   }
 
   const allOk = Object.values(results).every((r: any) => r.ok !== false);
+  // `degraded` = a check couldn't run because its data source isn't wired up
+  // (distinct from a genuine production failure). Lets alerting tell the two apart.
+  const degraded = Object.values(results).some((r: any) => r.monitored === false);
 
-  console.info("[cron/daily-monitor]", JSON.stringify({ allOk, results }));
+  console.info("[cron/daily-monitor]", JSON.stringify({ allOk, degraded, results }));
 
-  return NextResponse.json({ ok: allOk, timestamp: new Date().toISOString(), results });
+  return NextResponse.json({ ok: allOk, degraded, timestamp: new Date().toISOString(), results });
 }

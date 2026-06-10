@@ -2,19 +2,25 @@
  * GET /api/health
  *
  * Lightweight health check for pre-deploy verification and uptime monitoring.
- * Checks: env vars, DB connection, AI API key presence.
  *
- * Returns 200 if all checks pass, 503 if any critical check fails.
- * Optional ?secret=<PLATFORM_ADMIN_KEY> to include detailed output.
+ * Critical checks (gate the 200/503 status): core env vars + DB connection.
+ * Warning checks (reported but non-blocking): AI API key presence — the app
+ * still serves users without it; only AI-draft features degrade, so an AI-only
+ * outage should not turn the uptime monitor red.
+ *
+ * Returns 200 if all *critical* checks pass, 503 otherwise.
+ * Optional ?secret=<PLATFORM_ADMIN_KEY> to include the per-check breakdown.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
+// Critical env vars — absence breaks core serving, so a miss fails the gate.
+// ANTHROPIC_API_KEY is intentionally NOT here: it only powers AI-draft
+// features and is reported as a non-blocking warning below.
 const REQUIRED_ENV_VARS = [
   "NEXT_PUBLIC_SUPABASE_URL",
   "SUPABASE_SERVICE_ROLE_KEY",
-  "ANTHROPIC_API_KEY",
   "CRON_SECRET",
 ];
 
@@ -50,23 +56,30 @@ export async function GET(req: NextRequest) {
     checks.database = { ok: false, detail: e?.message ?? "unknown error" };
   }
 
-  // 3. AI API key presence (no live call — avoid token spend on health checks)
-  const anthropicKeySet = Boolean(process.env.ANTHROPIC_API_KEY?.startsWith("sk-ant-"));
-  checks.ai_api = anthropicKeySet
-    ? { ok: true }
-    : { ok: false, detail: "ANTHROPIC_API_KEY missing or malformed" };
-
+  // Critical checks gate the 200/503 status.
   const allOk = Object.values(checks).every((c) => c.ok);
+
+  // ── Warning checks (non-blocking — reported but do NOT affect the status) ──
+  const warnings: Record<string, { ok: boolean; detail?: string }> = {};
+
+  // AI API key presence (no live call — avoid token spend on health checks).
+  // Non-blocking: the app serves users without it; only AI features degrade.
+  const anthropicKeySet = Boolean(process.env.ANTHROPIC_API_KEY?.startsWith("sk-ant-"));
+  warnings.ai_api = anthropicKeySet
+    ? { ok: true }
+    : { ok: false, detail: "ANTHROPIC_API_KEY missing or malformed — AI-draft features degraded" };
+
+  const degraded = Object.values(warnings).some((w) => !w.ok);
   const elapsed = Date.now() - start;
 
-  // Only expose details to admin callers
+  // Only expose the per-check breakdown to admin callers
   const adminKey = process.env.PLATFORM_ADMIN_KEY;
   const reqSecret = req.nextUrl.searchParams.get("secret");
   const isAdmin = adminKey && reqSecret === adminKey;
 
   const body = isAdmin
-    ? { ok: allOk, elapsed_ms: elapsed, checks }
-    : { ok: allOk, elapsed_ms: elapsed };
+    ? { ok: allOk, degraded, elapsed_ms: elapsed, checks, warnings }
+    : { ok: allOk, degraded, elapsed_ms: elapsed };
 
   return NextResponse.json(body, { status: allOk ? 200 : 503 });
 }
