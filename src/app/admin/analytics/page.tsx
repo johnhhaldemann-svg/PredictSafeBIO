@@ -58,14 +58,14 @@ function Sparkline({ values, color = "#2563eb" }: { values: number[]; color?: st
 }
 
 // ── KPI card ──────────────────────────────────────────────────────────────────
-function KpiCard({ label, value, sub, color }: {
-  label: string; value: string | number; sub?: string; color?: string;
+function KpiCard({ label, value, sub, variant }: {
+  label: string; value: string | number; sub?: string; variant?: string;
 }) {
   return (
-    <article className="command-card" style={{ borderTop: `3px solid ${color ?? "var(--primary, #2563eb)"}` }}>
+    <article className={`command-card ${variant ?? "platform-blue"}`}>
       <div><strong>{label}</strong></div>
-      <small style={{ fontSize: "1.5rem", fontWeight: 700 }}>{value}</small>
-      {sub && <em style={{ fontSize: "0.78rem" }}>{sub}</em>}
+      <small>{value}</small>
+      {sub && <em>{sub}</em>}
     </article>
   );
 }
@@ -118,11 +118,11 @@ export default async function AnalyticsPage() {
           </div>
 
           {/* KPI row */}
-          <div className="command-card-grid" style={{ marginBottom: "1.25rem" }}>
-            <KpiCard label="All time" value={growth.totals.all_time} sub="total users" color="#2563eb" />
-            <KpiCard label="Last 7 days" value={growth.totals.last_7d} sub="new signups" color="#16a34a" />
-            <KpiCard label="Last 30 days" value={growth.totals.last_30d} sub="new signups" color="#d97706" />
-            <KpiCard label="Most common role" value={topRole ? getDbRoleLabel(topRole[0]) : "—"} sub={topRole ? `${topRole[1]} users` : ""} color="#7c3aed" />
+          <div className="command-card-grid">
+            <KpiCard label="All time" value={growth.totals.all_time} sub="total users" variant="platform-blue" />
+            <KpiCard label="Last 7 days" value={growth.totals.last_7d} sub="new signups" variant="platform-green" />
+            <KpiCard label="Last 30 days" value={growth.totals.last_30d} sub="new signups" variant="platform-amber" />
+            <KpiCard label="Most common role" value={topRole ? getDbRoleLabel(topRole[0]) : "—"} sub={topRole ? `${topRole[1]} users` : ""} variant="platform-navy" />
           </div>
 
           {/* Sparkline */}
@@ -135,52 +135,56 @@ export default async function AnalyticsPage() {
 
           {/* Role breakdown table */}
           <p className="section-label" style={{ marginBottom: "0.4rem" }}>Breakdown by role</p>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
-              <thead>
-                <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                  <th style={{ padding: "0.4rem 0.75rem", textAlign: "left", fontWeight: 600, color: "var(--muted)" }}>Role</th>
-                  <th style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontWeight: 600, color: "var(--muted)" }}>Count</th>
-                  <th style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontWeight: 600, color: "var(--muted)" }}>% of total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(growth.totals.by_role)
-                  .sort(([, a], [, b]) => b - a)
-                  .map(([role, count]) => (
-                    <tr key={role} style={{ borderBottom: "1px solid var(--border)" }}>
-                      <td style={{ padding: "0.5rem 0.75rem" }}>{getDbRoleLabel(role)}</td>
-                      <td style={{ padding: "0.5rem 0.75rem", textAlign: "right", fontWeight: 600 }}>{count}</td>
-                      <td style={{ padding: "0.5rem 0.75rem", textAlign: "right", color: "var(--muted)" }}>
-                        {growth.totals.all_time > 0 ? Math.round(count / growth.totals.all_time * 100) : 0}%
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+          <div className="table-panel">
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Role</th>
+                    <th style={{ textAlign: "right" }}>Count</th>
+                    <th style={{ textAlign: "right" }}>% of total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(growth.totals.by_role)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([role, count]) => (
+                      <tr key={role}>
+                        <td>{getDbRoleLabel(role)}</td>
+                        <td style={{ textAlign: "right", fontWeight: 600 }}>{count}</td>
+                        <td style={{ textAlign: "right", color: "var(--muted)" }}>
+                          {growth.totals.all_time > 0 ? Math.round(count / growth.totals.all_time * 100) : 0}%
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Monthly trend mini-table */}
           {growth.monthly.length > 0 && (
             <>
               <p className="section-label" style={{ marginTop: "1rem", marginBottom: "0.4rem" }}>Monthly trend</p>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                      <th style={{ padding: "0.4rem 0.75rem", textAlign: "left", fontWeight: 600, color: "var(--muted)" }}>Month</th>
-                      <th style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontWeight: 600, color: "var(--muted)" }}>Signups</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {growth.monthly.slice(-6).reverse().map(m => (
-                      <tr key={m.period} style={{ borderBottom: "1px solid var(--border)" }}>
-                        <td style={{ padding: "0.4rem 0.75rem", color: "var(--muted)" }}>{m.period.slice(0, 7)}</td>
-                        <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", fontWeight: 500 }}>{m.total}</td>
+              <div className="table-panel">
+                <div className="table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Month</th>
+                        <th style={{ textAlign: "right" }}>Signups</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {growth.monthly.slice(-6).reverse().map(m => (
+                        <tr key={m.period}>
+                          <td style={{ color: "var(--muted)" }}>{m.period.slice(0, 7)}</td>
+                          <td style={{ textAlign: "right" }}>{m.total}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </>
           )}
@@ -196,36 +200,41 @@ export default async function AnalyticsPage() {
             View counts only — no individual visitor tracking. PHI-free by design.
           </p>
           {topProfiles.length === 0 ? (
-            <p className="muted" style={{ fontStyle: "italic" }}>No profile views recorded yet. Views are logged when a patient or provider accesses a bio.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No profile views recorded yet</p>
+              <p className="muted">Views are logged when a patient or provider accesses a bio.</p>
+            </div>
           ) : (
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                    {["Provider", "Specialty", "NPI", "Organization", "Views", "Last viewed"].map(h => (
-                      <th key={h} style={{ padding: "0.4rem 0.75rem", textAlign: h === "Views" ? "right" : "left", fontWeight: 600, color: "var(--muted)", whiteSpace: "nowrap" }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {topProfiles.map(p => (
-                    <tr key={p.profile_id} style={{ borderBottom: "1px solid var(--border)" }}>
-                      <td style={{ padding: "0.5rem 0.75rem", fontWeight: 500 }}>
-                        <Link href={`/admin/moderation/${p.profile_id}`} className="text-link">
-                          {p.provider_name ?? "—"}
-                        </Link>
-                      </td>
-                      <td style={{ padding: "0.5rem 0.75rem", color: "var(--muted)" }}>{p.specialty ?? "—"}</td>
-                      <td style={{ padding: "0.5rem 0.75rem", fontFamily: "monospace", fontSize: "0.78rem" }}>{p.npi_number ?? "—"}</td>
-                      <td style={{ padding: "0.5rem 0.75rem", color: "var(--muted)" }}>{p.organization_name ?? "—"}</td>
-                      <td style={{ padding: "0.5rem 0.75rem", textAlign: "right", fontWeight: 700 }}>{p.view_count}</td>
-                      <td style={{ padding: "0.5rem 0.75rem", color: "var(--muted)", whiteSpace: "nowrap" }}>
-                        {p.last_viewed_at ? new Date(p.last_viewed_at).toLocaleDateString() : "—"}
-                      </td>
+            <div className="table-panel">
+              <div className="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      {["Provider", "Specialty", "NPI", "Organization", "Views", "Last viewed"].map(h => (
+                        <th key={h} style={{ textAlign: h === "Views" ? "right" : "left", whiteSpace: "nowrap" }}>{h}</th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {topProfiles.map(p => (
+                      <tr key={p.profile_id}>
+                        <td style={{ fontWeight: 500 }}>
+                          <Link href={`/admin/moderation/${p.profile_id}`} className="text-link">
+                            {p.provider_name ?? "—"}
+                          </Link>
+                        </td>
+                        <td style={{ color: "var(--muted)" }}>{p.specialty ?? "—"}</td>
+                        <td style={{ fontFamily: "monospace", fontSize: "0.78rem" }}>{p.npi_number ?? "—"}</td>
+                        <td style={{ color: "var(--muted)" }}>{p.organization_name ?? "—"}</td>
+                        <td style={{ textAlign: "right", fontWeight: 700 }}>{p.view_count}</td>
+                        <td style={{ color: "var(--muted)", whiteSpace: "nowrap" }}>
+                          {p.last_viewed_at ? new Date(p.last_viewed_at).toLocaleDateString() : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </section>
@@ -237,11 +246,11 @@ export default async function AnalyticsPage() {
             <ShieldCheck size={20} />
           </div>
 
-          <div className="command-card-grid" style={{ marginBottom: "1.25rem" }}>
-            <KpiCard label="Total submitted" value={modStats.total_submitted} sub="provider bios" color="#2563eb" />
-            <KpiCard label="Approved" value={modStats.total_approved} sub={`${modStats.approval_rate_pct}% approval rate`} color="#16a34a" />
-            <KpiCard label="Pending" value={modStats.total_pending} sub="awaiting review" color="#d97706" />
-            <KpiCard label="Avg review time" value={modStats.avg_review_hours !== null ? `${modStats.avg_review_hours}h` : "—"} sub="submitted → decision" color="#7c3aed" />
+          <div className="command-card-grid">
+            <KpiCard label="Total submitted" value={modStats.total_submitted} sub="provider bios" variant="platform-blue" />
+            <KpiCard label="Approved" value={modStats.total_approved} sub={`${modStats.approval_rate_pct}% approval rate`} variant="platform-green" />
+            <KpiCard label="Pending" value={modStats.total_pending} sub="awaiting review" variant="platform-amber" />
+            <KpiCard label="Avg review time" value={modStats.avg_review_hours !== null ? `${modStats.avg_review_hours}h` : "—"} sub="submitted → decision" variant="platform-navy" />
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
@@ -319,50 +328,46 @@ export default async function AnalyticsPage() {
               Suitable for compliance audits. Each download is logged server-side.
             </span>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
+          <div className="command-card-grid">
             {[
               {
                 type: "users",
                 icon: Users,
                 label: "User list",
                 desc: "ID, role, status, org, joined date",
-                color: "#2563eb",
+                variant: "platform-blue",
               },
               {
                 type: "bios",
                 icon: Activity,
                 label: "Provider bios",
                 desc: "Profile ID, specialty, credentials, review status, NPI verified",
-                color: "#7c3aed",
+                variant: "platform-navy",
               },
               {
                 type: "flags",
                 icon: Flag,
                 label: "Flags & reports",
                 desc: "Report ID, reason, status, timestamps",
-                color: "#dc2626",
+                variant: "platform-red",
               },
-            ].map(({ type, icon: Icon, label, desc, color }) => (
-              <a
+            ].map(({ type, icon: Icon, label, desc, variant }) => (
+              <Link
                 key={type}
                 href={`/api/admin/export/${type}`}
                 download
-                style={{
-                  display: "flex", flexDirection: "column", gap: 6,
-                  padding: "1rem", borderRadius: 8,
-                  border: "1px solid var(--border)",
-                  textDecoration: "none", color: "inherit",
-                  transition: "border-color 0.15s",
-                }}
+                className="provider-card-link"
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Icon size={16} style={{ color }} />
-                  <strong style={{ fontSize: "0.9rem" }}>{label}</strong>
-                  <Download size={13} style={{ marginLeft: "auto", color: "var(--muted)" }} />
-                </div>
-                <p className="muted" style={{ fontSize: "0.78rem", margin: 0 }}>{desc}</p>
-                <span style={{ fontSize: "0.75rem", color, fontWeight: 600 }}>Download CSV</span>
-              </a>
+                <article className={`command-card ${variant}`}>
+                  <div>
+                    <span><Icon size={16} /></span>
+                    <strong>{label}</strong>
+                    <Download size={13} style={{ marginLeft: "auto" }} />
+                  </div>
+                  <p className="muted">{desc}</p>
+                  <em>Download CSV</em>
+                </article>
+              </Link>
             ))}
           </div>
         </section>

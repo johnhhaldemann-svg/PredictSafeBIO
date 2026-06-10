@@ -93,13 +93,13 @@ export default async function BillingPage() {
           </div>
           <div className="command-card-grid">
             {[
-              { label: "MRR",           value: formatCents(summary.mrr_cents),         sub: "Monthly recurring revenue",    color: "#16a34a", Icon: DollarSign },
-              { label: "ARR",           value: formatCents(summary.arr_cents),         sub: "Annual run rate (MRR x 12)",   color: "#2563eb", Icon: TrendingUp },
-              { label: "Revenue (30d)", value: formatCents(summary.revenue_30d_cents), sub: "Actual payments last 30 days", color: "#7c3aed", Icon: Activity },
-              { label: "Churn rate",    value: summary.churn_rate_pct + "%",           sub: "Canceled this month",          color: "#dc2626", Icon: Users },
-            ].map(({ label, value, sub, color, Icon }) => (
-              <article key={label} className="command-card" style={{ borderTop: "3px solid " + color }}>
-                <div><Icon size={14} style={{ color }} /><strong>{label}</strong></div>
+              { label: "MRR",           value: formatCents(summary.mrr_cents),         sub: "Monthly recurring revenue",    tone: "platform-green", Icon: DollarSign },
+              { label: "ARR",           value: formatCents(summary.arr_cents),         sub: "Annual run rate (MRR x 12)",   tone: "platform-blue",  Icon: TrendingUp },
+              { label: "Revenue (30d)", value: formatCents(summary.revenue_30d_cents), sub: "Actual payments last 30 days", tone: "platform-navy",  Icon: Activity },
+              { label: "Churn rate",    value: summary.churn_rate_pct + "%",           sub: "Canceled this month",          tone: "platform-red",   Icon: Users },
+            ].map(({ label, value, sub, tone, Icon }) => (
+              <article key={label} className={`command-card ${tone}`}>
+                <div><span><Icon size={16} /></span><strong>{label}</strong></div>
                 <small>{value}</small>
                 <em>{sub}</em>
               </article>
@@ -134,8 +134,12 @@ export default async function BillingPage() {
             <CreditCard size={20} />
           </div>
           {subscriptions.length === 0 ? (
-            <p className="muted">No subscriptions yet.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No subscriptions yet</p>
+              <p className="muted">Subscriptions appear here once organizations begin paid plans.</p>
+            </div>
           ) : (
+            <div className="table-scroll">
             <table>
               <thead>
                 <tr>
@@ -175,6 +179,7 @@ export default async function BillingPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </section>
 

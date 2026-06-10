@@ -119,7 +119,8 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
             </div>
             <Users size={22} />
           </div>
-          <div className="table-scroll">
+          <div className="table-panel">
+            <div className="table-scroll">
             <table className="role-matrix-table">
               <thead>
                 <tr>
@@ -138,6 +139,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </section>
 
@@ -192,7 +194,10 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
             </div>
           </div>
           {invitations.length === 0 ? (
-            <p className="muted">No invitations yet. Send an invite above to add team members.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No invitations yet</p>
+              <p className="muted">Send an invite above to add team members.</p>
+            </div>
           ) : (
             <div className="action-list">
               {invitations.map((invite) => {

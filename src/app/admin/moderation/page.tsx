@@ -86,6 +86,25 @@ export default async function ModerationPage({ searchParams }: Props) {
           <Link className="button-secondary" href="/admin/dashboard">← Command Center</Link>
         </header>
 
+        {/* KPI strip */}
+        <section className="command-card-grid" aria-label="Moderation queue summary">
+          <article className={`command-card ${pendingBios.length > 0 ? "platform-blue" : "platform-green"}`}>
+            <div><span><Clock size={16} /></span><strong>Pending review</strong></div>
+            <small>{pendingBios.length}</small>
+            <em>{pendingBios.length > 0 ? "Provider bios awaiting a decision." : "Review queue is clear."}</em>
+          </article>
+          <article className={`command-card ${pendingReports.length > 0 ? "platform-red" : "platform-green"}`}>
+            <div><span><Flag size={16} /></span><strong>Open reports</strong></div>
+            <small>{pendingReports.length}</small>
+            <em>{pendingReports.length > 0 ? "User flags awaiting triage." : "No pending reports."}</em>
+          </article>
+          <article className="command-card platform-navy">
+            <div><span><EyeOff size={16} /></span><strong>Taken down</strong></div>
+            <small>{takenDownBios.length}</small>
+            <em>Bios hidden from public view.</em>
+          </article>
+        </section>
+
         {/* Tab bar */}
         <nav className="tab-nav" aria-label="Moderation tabs">
           {tabs.map(({ id, label, count, icon: Icon }) => (
@@ -103,8 +122,8 @@ export default async function ModerationPage({ searchParams }: Props) {
 
         {/* ── Pending Review Tab ────────────────────────────────────────── */}
         {tab === "pending" && (
-          <section className="panel" style={{ padding: 0, overflow: "hidden" }}>
-            <div className="panel-heading" style={{ padding: "1rem 1.25rem 0.75rem" }}>
+          <section className="table-panel">
+            <div className="panel-heading">
               <div>
                 <p className="section-label">Provider Bios</p>
                 <h2>{pendingBios.length} awaiting review</h2>
@@ -112,50 +131,48 @@ export default async function ModerationPage({ searchParams }: Props) {
               <ShieldCheck size={20} />
             </div>
             {pendingBios.length === 0 ? (
-              <div style={{ padding: "2rem", textAlign: "center" }}>
-                <CheckCircle2 size={28} style={{ margin: "0 auto 0.5rem", color: "var(--success, #16a34a)" }} />
-                <p className="muted">Queue is clear — no bios pending review.</p>
+              <div className="empty-state-card">
+                <p className="empty-state-title">Queue is clear</p>
+                <p className="muted">No bios pending review.</p>
               </div>
             ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
+              <div className="table-scroll">
+                <table>
                   <thead>
-                    <tr style={{ borderBottom: "1px solid var(--border)", textAlign: "left" }}>
+                    <tr>
                       {["Provider", "Specialty", "NPI", "Status", "NPI ✓", "Reports", "Submitted", ""].map((h) => (
-                        <th key={h} style={{ padding: "0.6rem 1rem", fontWeight: 600, color: "var(--muted)", whiteSpace: "nowrap" }}>{h}</th>
+                        <th key={h}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {pendingBios.map((bio) => (
-                      <tr key={bio.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                        <td style={{ padding: "0.65rem 1rem", fontWeight: 500 }}>
+                      <tr key={bio.id}>
+                        <td>
                           {bio.provider_name ?? <em className="muted">Unnamed</em>}
                         </td>
-                        <td style={{ padding: "0.65rem 1rem", color: "var(--muted)" }}>{bio.specialty ?? "—"}</td>
-                        <td style={{ padding: "0.65rem 1rem", fontFamily: "monospace", fontSize: "0.8rem" }}>
-                          {bio.npi_number ?? <span className="muted">Not provided</span>}
-                        </td>
-                        <td style={{ padding: "0.65rem 1rem" }}>
-                          <span className={`status-chip ${REVIEW_STATUS_CLASS[bio.review_status]}`} style={{ fontSize: "0.75rem" }}>
+                        <td className="muted">{bio.specialty ?? "—"}</td>
+                        <td><code>{bio.npi_number ?? <span className="muted">Not provided</span>}</code></td>
+                        <td>
+                          <span className={`status-chip ${REVIEW_STATUS_CLASS[bio.review_status]}`}>
                             {REVIEW_STATUS_LABELS[bio.review_status]}
                           </span>
                         </td>
-                        <td style={{ padding: "0.65rem 1rem" }}>
+                        <td>
                           {bio.npi_verified
-                            ? <CheckCircle2 size={16} style={{ color: "var(--success, #16a34a)" }} />
-                            : <AlertTriangle size={16} style={{ color: "var(--warn, #d97706)" }} />}
+                            ? <CheckCircle2 size={16} style={{ color: "var(--green)" }} />
+                            : <AlertTriangle size={16} style={{ color: "var(--amber)" }} />}
                         </td>
-                        <td style={{ padding: "0.65rem 1rem" }}>
+                        <td>
                           {bio.report_count > 0
-                            ? <span style={{ color: "var(--error, #dc2626)", fontWeight: 600 }}>{bio.report_count} 🚩</span>
+                            ? <strong style={{ color: "var(--red)" }}>{bio.report_count} 🚩</strong>
                             : <span className="muted">—</span>}
                         </td>
-                        <td style={{ padding: "0.65rem 1rem", color: "var(--muted)", whiteSpace: "nowrap" }}>
+                        <td className="muted">
                           {bio.submitted_at ? new Date(bio.submitted_at).toLocaleDateString() : "—"}
                         </td>
-                        <td style={{ padding: "0.65rem 1rem" }}>
-                          <Link href={`/admin/moderation/${bio.id}`} className="button-secondary" style={{ fontSize: "0.8rem", padding: "0.25rem 0.75rem" }}>
+                        <td>
+                          <Link href={`/admin/moderation/${bio.id}`} className="button-secondary compact">
                             Review →
                           </Link>
                         </td>
@@ -170,8 +187,8 @@ export default async function ModerationPage({ searchParams }: Props) {
 
         {/* ── Flags & Reports Tab ───────────────────────────────────────── */}
         {tab === "reports" && (
-          <section className="panel" style={{ padding: 0, overflow: "hidden" }}>
-            <div className="panel-heading" style={{ padding: "1rem 1.25rem 0.75rem" }}>
+          <section className="panel">
+            <div className="panel-heading">
               <div>
                 <p className="section-label">User Reports</p>
                 <h2>{pendingReports.length} pending</h2>
@@ -179,25 +196,25 @@ export default async function ModerationPage({ searchParams }: Props) {
               <Flag size={20} />
             </div>
             {pendingReports.length === 0 ? (
-              <div style={{ padding: "2rem", textAlign: "center" }}>
-                <CheckCircle2 size={28} style={{ margin: "0 auto 0.5rem", color: "var(--success, #16a34a)" }} />
-                <p className="muted">No pending reports.</p>
+              <div className="empty-state-card">
+                <p className="empty-state-title">No pending reports</p>
+                <p className="muted">Reports raised by users will appear here for triage.</p>
               </div>
             ) : (
-              <div className="action-list" style={{ padding: "0.5rem 1rem" }}>
+              <div className="action-list">
                 {pendingReports.map((report) => (
                   <article className="action-row" key={report.id}>
                     <div>
-                      <Flag size={14} style={{ color: "var(--error, #dc2626)" }} />
+                      <Flag size={14} style={{ color: "var(--red)" }} />
                       <strong>{REPORT_REASON_LABELS[report.reason] ?? report.reason}</strong>
-                      <span className="status-needs-review" style={{ fontSize: "0.75rem" }}>Pending</span>
+                      <span className="status-chip status-needs-review">Pending</span>
                     </div>
-                    <p style={{ fontSize: "0.85rem" }}>
+                    <p>
                       Reported by <strong>{report.reporter_name ?? "Unknown"}</strong>
                       {" · "}{new Date(report.created_at).toLocaleString()}
                     </p>
-                    {report.details && <p className="muted" style={{ fontSize: "0.82rem" }}>{report.details}</p>}
-                    <Link href={`/admin/moderation/${report.target_id}?tab=reports`} className="text-link" style={{ fontSize: "0.82rem" }}>
+                    {report.details && <p className="muted">{report.details}</p>}
+                    <Link href={`/admin/moderation/${report.target_id}?tab=reports`} className="text-link">
                       View bio & triage →
                     </Link>
                   </article>
@@ -209,34 +226,37 @@ export default async function ModerationPage({ searchParams }: Props) {
 
         {/* ── Taken Down Tab ────────────────────────────────────────────── */}
         {tab === "takendown" && (
-          <section className="panel" style={{ padding: 0, overflow: "hidden" }}>
-            <div className="panel-heading" style={{ padding: "1rem 1.25rem 0.75rem" }}>
+          <section className="panel">
+            <div className="panel-heading">
               <div>
                 <p className="section-label">Hidden Bios</p>
                 <h2>{takenDownBios.length} taken down</h2>
               </div>
               <EyeOff size={20} />
             </div>
-            <div className="verification-pending-box" style={{ margin: "0 1.25rem 1rem" }}>
+            <div className="verification-pending-box">
               <EyeOff size={14} />
               <span>Data is preserved and audit-safe. Takedowns are reversible — click a row to restore.</span>
             </div>
             {takenDownBios.length === 0 ? (
-              <p className="muted" style={{ padding: "1.5rem" }}>No bios are currently taken down.</p>
+              <div className="empty-state-card">
+                <p className="empty-state-title">Nothing taken down</p>
+                <p className="muted">No bios are currently hidden from public view.</p>
+              </div>
             ) : (
-              <div className="action-list" style={{ padding: "0.5rem 1rem" }}>
+              <div className="action-list">
                 {takenDownBios.map((bio) => (
                   <article className="action-row" key={bio.id}>
                     <div>
                       <EyeOff size={14} />
                       <strong>{bio.provider_name ?? "Unnamed provider"}</strong>
-                      <span className="status-critical" style={{ fontSize: "0.75rem" }}>Taken down</span>
+                      <span className="status-chip status-critical">Taken down</span>
                     </div>
-                    <p className="muted" style={{ fontSize: "0.85rem" }}>
+                    <p className="muted">
                       {bio.specialty ?? "No specialty"} · NPI: {bio.npi_number ?? "—"}
                       {bio.reviewed_at && ` · Taken down ${new Date(bio.reviewed_at).toLocaleDateString()}`}
                     </p>
-                    <Link href={`/admin/moderation/${bio.id}`} className="text-link" style={{ fontSize: "0.82rem" }}>
+                    <Link href={`/admin/moderation/${bio.id}`} className="text-link">
                       View & restore →
                     </Link>
                   </article>

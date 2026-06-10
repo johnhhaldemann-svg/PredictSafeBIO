@@ -132,7 +132,10 @@ export default async function BillingOverridesPage({ searchParams }: Props) {
             <div><p className="section-label">Active overrides</p><h2>{overrides.filter(o => o.is_active).length} active</h2></div>
           </div>
           {overrides.length === 0 ? (
-            <p className="muted">No overrides yet.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No overrides yet</p>
+              <p className="muted">Grant a free trial, discount, or extension above to see it listed here.</p>
+            </div>
           ) : (
             <div className="action-list">
               {overrides.map(o => (
