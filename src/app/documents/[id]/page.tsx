@@ -137,7 +137,10 @@ export default async function DocumentDetailPage({
             <div><p className="section-label">Audit history</p><h2>Persisted recommendation history</h2></div>
           </div>
           {history.length === 0 ? (
-            <p className="muted">No persisted recommendation runs found yet. Use Save draft recommendations to create immutable draft history.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No persisted recommendation runs yet</p>
+              <p className="muted">Use Save draft recommendations to create immutable draft history.</p>
+            </div>
           ) : null}
           <div className="history-list">
             {history.map((run) => (
