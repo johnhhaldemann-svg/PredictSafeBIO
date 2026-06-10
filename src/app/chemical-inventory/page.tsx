@@ -139,7 +139,10 @@ export default async function ChemicalInventoryPage({ searchParams }: Props) {
           {loadFailed ? (
             <DataLoadError resource="chemical inventory" />
           ) : chemicals.length === 0 ? (
-            <p className="muted">No chemicals found. Add your first chemical below.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No chemicals found</p>
+              <p className="muted">Add your first chemical below to begin tracking SDS and expiry.</p>
+            </div>
           ) : (
             <div className="action-list">
               {chemicals.map((chem) => (

@@ -86,6 +86,7 @@ export default async function IncidentDetailPage({ params, searchParams }: Props
               <Link href="/incidents">Incident Register</Link> / Detail
             </p>
             <h1>{incident.title}</h1>
+            <p className="muted">Incident record — investigation and corrective action tracked below.</p>
             <div className="form-action-row">
               <span className={STATUS_CLASS[incident.status]}>
                 <StatusIcon size={13} className="icon-mr" />

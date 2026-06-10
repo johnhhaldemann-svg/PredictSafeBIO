@@ -156,7 +156,10 @@ export default async function EquipmentCalibrationPage({ searchParams }: Props) 
           {loadFailed ? (
             <DataLoadError resource="equipment records" />
           ) : records.length === 0 ? (
-            <p className="muted">No equipment found for this filter. Add equipment below.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No equipment found</p>
+              <p className="muted">No equipment matches this filter. Add equipment below to start tracking calibration.</p>
+            </div>
           ) : (
             <div className="action-list">
               {records.map((rec) => (

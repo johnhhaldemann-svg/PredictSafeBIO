@@ -50,11 +50,11 @@ export default async function TrendsPage() {
 
   // Status breakdown for CAPA
   const statusBreakdown = [
-    { label: "Draft / Pending Review", count: capas.filter((c) => c.status === "draft_human_review_required").length, color: "#e65100" },
-    { label: "Open",        count: capas.filter((c) => c.status === "open").length,        color: "#1565c0" },
-    { label: "In Progress", count: capas.filter((c) => c.status === "in_progress").length, color: "#6a1b9a" },
-    { label: "Closed",      count: capas.filter((c) => c.status === "closed").length,      color: "#2e7d32" },
-    { label: "Void",        count: capas.filter((c) => c.status === "void").length,         color: "#78909c" },
+    { label: "Draft / Pending Review", count: capas.filter((c) => c.status === "draft_human_review_required").length, color: "var(--amber)" },
+    { label: "Open",        count: capas.filter((c) => c.status === "open").length,        color: "var(--blue)" },
+    { label: "In Progress", count: capas.filter((c) => c.status === "in_progress").length, color: "var(--blue-mid)" },
+    { label: "Closed",      count: capas.filter((c) => c.status === "closed").length,      color: "var(--green-dk)" },
+    { label: "Void",        count: capas.filter((c) => c.status === "void").length,         color: "var(--muted)" },
   ];
   const totalCapas = capas.length;
 
@@ -119,7 +119,10 @@ export default async function TrendsPage() {
               <Link href="/operations/capa" className="button-secondary compact">View all</Link>
             </div>
             {totalCapas === 0 ? (
-              <p className="muted">No CAPA records yet.</p>
+              <div className="empty-state-card">
+                <p className="empty-state-title">No CAPA records yet</p>
+                <p className="muted">Open and closed CAPAs will appear here as they are logged.</p>
+              </div>
             ) : (
               <div className="trend-bar-list">
                 {statusBreakdown.map((s) => (
@@ -147,7 +150,10 @@ export default async function TrendsPage() {
               </div>
             </div>
             {auditGaps.length === 0 && overdueTraining === 0 && overdue === 0 ? (
-              <p className="muted">No critical gaps detected.</p>
+              <div className="empty-state-card">
+                <p className="empty-state-title">No critical gaps detected</p>
+                <p className="muted">Overdue CAPAs, training lapses, and audit gaps will surface here.</p>
+              </div>
             ) : (
               <div className="action-list">
                 {overdue > 0 && (

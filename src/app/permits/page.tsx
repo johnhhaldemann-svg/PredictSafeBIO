@@ -137,7 +137,10 @@ export default async function PermitsPage({ searchParams }: Props) {
           {loadFailed ? (
             <DataLoadError resource="work permits" />
           ) : permits.length === 0 ? (
-            <p className="muted">No permits found. Create one below.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No permits found</p>
+              <p className="muted">Create a controlled work permit below to begin tracking permit-to-work activity.</p>
+            </div>
           ) : (
             <div className="action-list">
               {permits.map((permit) => (
