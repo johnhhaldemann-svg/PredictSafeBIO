@@ -154,7 +154,10 @@ export default async function CapaListPage({ searchParams }: Props) {
           {loadFailed ? (
             <DataLoadError resource="CAPA records" />
           ) : records.length === 0 ? (
-            <p className="muted">No CAPA records found. Create one below.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No CAPA records found</p>
+              <p className="muted">Create a CAPA record below to begin tracking corrective and preventive actions.</p>
+            </div>
           ) : (
             <div className="action-list">
               {records.map((record) => {

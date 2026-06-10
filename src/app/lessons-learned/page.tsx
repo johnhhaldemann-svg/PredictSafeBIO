@@ -147,7 +147,10 @@ export default async function LessonsLearnedPage({ searchParams }: Props) {
           {loadFailed ? (
             <DataLoadError resource="lessons learned" />
           ) : lessons.length === 0 ? (
-            <p className="muted">No lessons found for this filter. Capture one below.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No lessons found for this filter</p>
+              <p className="muted">Capture one below to start building the registry.</p>
+            </div>
           ) : (
             <div className="action-list">
               {lessons.map((lesson) => (
