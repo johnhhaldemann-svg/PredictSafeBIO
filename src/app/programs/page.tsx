@@ -25,12 +25,14 @@ export default function ProgramsPage() {
       <div className="page-stack">
 
         <header className="page-header">
-          <p className="section-label">Plan</p>
-          <h1>Safety Programs Library</h1>
-          <p className="muted">
-            All {totalCount} required EHS / biosafety program areas. Open any program for its
-            requirements, guidance, and inspection checklist.
-          </p>
+          <div className="page-header-left">
+            <p className="section-label">Plan</p>
+            <h1>Safety Programs Library</h1>
+            <p className="muted">
+              All {totalCount} required EHS / biosafety program areas. Open any program for its
+              requirements, guidance, and inspection checklist.
+            </p>
+          </div>
         </header>
 
         {/* Summary */}

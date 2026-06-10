@@ -120,7 +120,10 @@ export default async function ControlRegisterPage({ searchParams }: Props) {
           {loadFailed ? (
             <DataLoadError resource="control register" />
           ) : controls.length === 0 ? (
-            <p className="muted">No controls yet. Add the first control below.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No controls yet</p>
+              <p className="muted">Add the first control below to begin reducing residual risk on your hazards.</p>
+            </div>
           ) : (
             TIER_ORDER.filter((tier) => controls.some((c) => c.controlType === tier)).map((tier) => (
               <div key={tier} className="tier-group">

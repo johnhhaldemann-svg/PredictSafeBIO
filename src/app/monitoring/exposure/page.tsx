@@ -154,7 +154,7 @@ export default async function ExposureMonitoringPage({ searchParams }: Props) {
         </nav>
 
         {/* Exposure table */}
-        <section className="table-panel">
+        <section className="panel">
           <div className="panel-heading">
             <div>
               <p className="section-label">Exposure register</p>
@@ -173,11 +173,12 @@ export default async function ExposureMonitoringPage({ searchParams }: Props) {
           {loadFailed ? (
             <DataLoadError resource="exposure register" />
           ) : exposures.length === 0 ? (
-            <div className="empty-action-state">
-              <strong>No exposure pathways logged yet.</strong>
-              <p>Use the form below to log your first exposure pathway.</p>
+            <div className="empty-state-card">
+              <p className="empty-state-title">No exposure pathways logged yet</p>
+              <p className="muted">Use the form below to log your first exposure pathway.</p>
             </div>
           ) : (
+            <div className="table-scroll">
             <table>
               <thead>
                 <tr>
@@ -238,6 +239,7 @@ export default async function ExposureMonitoringPage({ searchParams }: Props) {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </section>
 
