@@ -3898,6 +3898,7 @@ h3 {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  color: var(--text);
   margin-bottom: 20px;
   padding: 18px 22px;
   border-radius: 12px;
@@ -3915,7 +3916,7 @@ h3 {
 .page-header h1 {
   font-size: 22px;
   font-weight: 700;
-  color: var(--navy);
+  color: var(--text);
   margin: 0;
   letter-spacing: -0.02em;
 }
@@ -3924,15 +3925,6 @@ h3 {
   margin: 3px 0 0;
   font-size: 13px;
   color: var(--muted);
-}
-
-/* Standalone page-header (no page-header-left wrapper) */
-.page-header > h1 {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--navy);
-  margin: 0;
-  letter-spacing: -0.02em;
 }
 
 .page-header > .section-label {
@@ -4209,7 +4201,7 @@ textarea {
   padding: 0 16px;
   font-size: 13px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.01em;
   cursor: pointer;
   text-decoration: none;
   transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
@@ -4610,14 +4602,6 @@ a.button-secondary.active-filter {
 .page-stack {
   display: grid;
   gap: 16px;
-}
-
-.page-header {
-  color: var(--text);
-}
-
-.page-header h1 {
-  color: var(--text);
 }
 
 .command-center {
@@ -6002,14 +5986,6 @@ pre {
   font-size: 10px;
   font-weight: 700;
   line-height: 1;
-}
-
-/* Button refinements */
-.button-primary,
-.button-secondary {
-  font-weight: 600;
-  white-space: nowrap;
-  letter-spacing: 0.01em;
 }
 
 /* Signal builder section */
