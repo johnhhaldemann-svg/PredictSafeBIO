@@ -29,7 +29,11 @@ export type BioSignalType =
   | "data_integrity"
   // general_manufacturing (PredictSafe MFG) signals — additive, do not affect bio
   | "machine_guarding_event"
-  | "loto_event";
+  | "loto_event"
+  | "powered_industrial_truck_event"
+  | "fall_hazard_event"
+  | "chemical_exposure_event"
+  | "confined_space_event";
 
 export type DriverCategory =
   | "severity"

@@ -54,6 +54,35 @@ describe("Vertical registry (Phase 1 abstraction)", () => {
     }
   });
 
+  it("manufacturing pack covers the core OSHA 1910 hazard families", () => {
+    const ids = resolvePack("general_manufacturing").riskFamilies.map((family) => family.id);
+    expect(ids).toEqual(
+      expect.arrayContaining([
+        "machine_safety_energy_control",
+        "powered_industrial_trucks_material_handling",
+        "falls_walking_working_surfaces",
+        "hazard_communication_chemical_exposure",
+        "ppe_and_respiratory_protection",
+        "ergonomics_manual_handling",
+        "confined_space_hot_work_permits"
+      ])
+    );
+  });
+
+  it("routes a manufacturing assessment to a manufacturing family, not a bio one", () => {
+    const assessment = assessBioRisk({
+      vertical: "general_manufacturing",
+      siteName: "Line 3",
+      area: "Assembly cell",
+      workflow: "Unguarded press lockout review",
+      controlEffectiveness: "missing",
+      signals: [{ type: "machine_guarding_event", label: "Unguarded nip point on press", severity: "high" }]
+    });
+    const drivers = assessment.topDrivers.map((d) => d.label);
+    expect(drivers).toContain("Machine safeguarding and energy control");
+    expect(drivers).not.toContain("Biosafety and containment");
+  });
+
   it("locks biotech engine output against drift (regression gate for existing orgs)", () => {
     // If the abstraction ever changes bio behavior, this snapshot breaks.
     expect(assessBioRisk(bioInput)).toMatchSnapshot();
