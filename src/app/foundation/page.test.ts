@@ -257,7 +257,7 @@ describe("foundation UI alignment", () => {
     expect(workbenchClient).toContain("Operating Work");
     expect(workbenchClient).toContain("Workspace Activity");
     expect(notificationCenter).toContain("Notifications");
-    expect(workbenchClient).toContain("BioRisk Engine");
+    expect(workbenchClient).toContain("Risk Engine");
     expect(workbenchClient).toContain("command-center-link-strip");
     expect(workbenchClient).toContain("Foundation task lanes");
     expect(workbenchClient).toContain("Completed this week");

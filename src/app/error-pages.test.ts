@@ -9,8 +9,8 @@ const assessmentsPage = readFileSync(join(process.cwd(), "src/app/assessments/pa
 
 describe("error pages and empty states", () => {
   it("404 page is branded and links back to key routes", () => {
-    expect(notFoundPage).toContain("PredictSafeBIO");
-    expect(notFoundPage).toContain("Biosafety Intelligence");
+    expect(notFoundPage).toContain("PredictSafe");
+    expect(notFoundPage).toContain("Safety Intelligence");
     expect(notFoundPage).toContain("Page not found");
     expect(notFoundPage).toContain("404");
     expect(notFoundPage).toContain('href="/workbench"');
@@ -30,7 +30,7 @@ describe("error pages and empty states", () => {
   it("My Work shows a getting-started guide when there are no tasks", () => {
     expect(myWorkPage).toContain("Getting started");
     expect(myWorkPage).toContain("Your workspace is ready");
-    expect(myWorkPage).toContain("Run a BioRisk assessment");
+    expect(myWorkPage).toContain("Run a Risk assessment");
     expect(myWorkPage).toContain("Open the Compliance Map");
     expect(myWorkPage).toContain("Add controlled documents");
     expect(myWorkPage).toContain("Invite your team");
@@ -38,14 +38,14 @@ describe("error pages and empty states", () => {
   });
 
   it("My Work empty task message guides the user rather than just saying empty", () => {
-    expect(myWorkPage).toContain("Run a BioRisk assessment on the Workbench");
+    expect(myWorkPage).toContain("Run a Risk assessment on the Workbench");
     expect(myWorkPage).toContain("open the Compliance Map to generate source-traced tasks");
     expect(myWorkPage).not.toContain("No generated Foundation review tasks are available yet.");
   });
 
   it("Assessments shows getting-started guidance when workspace has no saved assessments", () => {
     expect(assessmentsPage).toContain("No risk assessments saved yet");
-    expect(assessmentsPage).toContain("Run a BioRisk assessment");
+    expect(assessmentsPage).toContain("Run a Risk assessment");
     expect(assessmentsPage).toContain("assessments.length === 0");
     expect(assessmentsPage).toContain("Clear filters");
   });

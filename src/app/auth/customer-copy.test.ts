@@ -8,7 +8,7 @@ const onboardingPage = readFileSync(join(process.cwd(), "src/app/onboarding/page
 
 describe("customer-facing copy", () => {
   it("login page uses customer language and correct brand tagline", () => {
-    expect(loginPage).toContain("Biosafety Intelligence");
+    expect(loginPage).toContain("Safety Intelligence");
     expect(loginPage).toContain("Sign in to access your organization");
     expect(loginPage).toContain("Workspace access");
     // No internal dev language
@@ -18,7 +18,7 @@ describe("customer-facing copy", () => {
   });
 
   it("signup page uses customer language and correct brand tagline", () => {
-    expect(signupPage).toContain("Biosafety Intelligence");
+    expect(signupPage).toContain("Safety Intelligence");
     expect(signupPage).toContain("Get started");
     expect(signupPage).toContain("biosafety management workspace");
     expect(signupPage).toContain("confirmation email");
