@@ -106,12 +106,26 @@ export const TRAINING_BY_ID = new Map(TRAINING_CATALOG.map((course) => [course.i
 
 // ── Retraining triggers ─────────────────────────────────────────────────────
 
-export type RetrainingTrigger = "incident" | "risk";
+export type RetrainingTrigger = "incident" | "risk" | "return_to_work";
 
 /** Courses that should be re-issued when a triggering event occurs. */
 export function coursesTriggeredBy(trigger: RetrainingTrigger): TrainingCourse[] {
+  if (trigger === "return_to_work") {
+    // After an extended absence, re-verify every role-qualifying (authorized) course.
+    return TRAINING_CATALOG.filter((course) => course.competencyLevel === "authorized");
+  }
   const frequency: TrainingFrequency = trigger === "incident" ? "incident_triggered" : "risk_triggered";
   return TRAINING_CATALOG.filter((course) => course.frequencies.includes(frequency));
+}
+
+// ── Competency scoring ──────────────────────────────────────────────────────
+// The reference matrix captures a numeric score per course, not just completion.
+
+export const DEFAULT_COMPETENCY_PASS_THRESHOLD = 80;
+
+/** Whether a recorded competency score meets the pass threshold. */
+export function meetsCompetency(score: number, threshold: number = DEFAULT_COMPETENCY_PASS_THRESHOLD): boolean {
+  return score >= threshold;
 }
 
 // ── Due / overdue calculation ───────────────────────────────────────────────
