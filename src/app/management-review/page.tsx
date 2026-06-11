@@ -19,7 +19,7 @@ import {
 } from "./actions";
 import { DataLoadError } from "@/components/DataLoadError";
 
-export const metadata: Metadata = { title: "Management Review – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Management Review – PredictSafe" };
 
 type Props = {
   searchParams: Promise<{ message?: string; success?: string }>;

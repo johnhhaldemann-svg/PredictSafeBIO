@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "Inspections – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Inspections – PredictSafe" };
 import {
   AlertTriangle,
   BellRing,

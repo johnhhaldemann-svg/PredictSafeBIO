@@ -16,7 +16,7 @@ import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
 import { createPlanAction, createDrillAction } from "./actions";
 import { DataLoadError } from "@/components/DataLoadError";
 
-export const metadata: Metadata = { title: "Emergency Response – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Emergency Response – PredictSafe" };
 
 const PLAN_STATUS_CLASS: Record<PlanStatus, string> = {
   draft:        "status-needs-review",

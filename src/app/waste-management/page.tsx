@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { AlertTriangle, Plus, ShieldCheck, Trash2, Truck } from "lucide-react";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "Waste Management – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Waste Management – PredictSafe" };
 import { AppShell } from "@/components/AppShell";
 import {
   listWasteRecords,

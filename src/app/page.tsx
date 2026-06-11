@@ -17,7 +17,7 @@ import { getRiskSummary } from "@/lib/supabase/risk-dashboard-service";
 import { getAiInspectionRecommendations } from "@/lib/supabase/inspection-service";
 import { listCapaRecords } from "@/lib/supabase/capa-service";
 
-export const metadata: Metadata = { title: "Home – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Home – PredictSafe" };
 
 function safeSettle<T>(promise: Promise<T>, fallback: T): Promise<T> {
   return promise.catch(() => fallback);

@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "Documents – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Documents – PredictSafe" };
 import { Bot, FileText, FileCheck2, AlertTriangle } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { createDocumentMetadataAction } from "@/app/documents/actions";

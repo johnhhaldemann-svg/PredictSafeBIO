@@ -150,6 +150,7 @@ export function WorkbenchClient({
   commandCenter,
   assessments = [],
   initialTab = "command-center",
+  scoreLabel = "BioRisk score",
 }: {
   assignees?: FoundationAssigneeOption[];
   canManageFoundationActions?: boolean;
@@ -160,6 +161,8 @@ export function WorkbenchClient({
   commandCenter?: CommandCenterSummary;
   assessments?: Array<{ id: string; workflow: string; area: string; level: string; score: number; humanReviewStatus: string; reviewedAt?: string | null; assignedReviewerName?: string | null; reviewDueDate?: string | null }>;
   initialTab?: "command-center" | "risk-register";
+  /** Vertical-aware risk-score label from the active VerticalPack. */
+  scoreLabel?: string;
 }) {
   const [activeTab, setActiveTab] = useState<"command-center" | "risk-register">(initialTab);
   const [input, setInput] = useState<BioAiInput>(initialInput);
@@ -406,8 +409,8 @@ export function WorkbenchClient({
         <button className="button-primary compact" type="button" onClick={() => setActiveTab("command-center")}>Overview</button>
         <button className="button-secondary compact" type="button" onClick={() => setActiveTab("risk-register")}>Risk Register</button>
       </nav>
-      <EnterpriseKPIStrip commandSummary={commandSummary} assessment={assessment} />
-      <EnterpriseWidgetRow commandSummary={commandSummary} assessment={assessment} foundationActions={foundationActions} />
+      <EnterpriseKPIStrip commandSummary={commandSummary} assessment={assessment} scoreLabel={scoreLabel} />
+      <EnterpriseWidgetRow commandSummary={commandSummary} assessment={assessment} foundationActions={foundationActions} scoreLabel={scoreLabel} />
       <EnterpriseHeatMapRow />
 
       <section className="command-center panel" aria-labelledby="command-center-title">
@@ -527,7 +530,7 @@ export function WorkbenchClient({
         <div className="panel command-risk-panel">
           <div className="panel-heading">
             <div>
-              <p className="section-label">BioRisk Score</p>
+              <p className="section-label">{scoreLabel}</p>
               <h2>Current workbench signal</h2>
             </div>
             <StatusBadge level={assessment.level} />
@@ -1229,10 +1232,12 @@ export function WorkbenchClient({
 /* ── Enterprise KPI Strip ── */
 function EnterpriseKPIStrip({
   commandSummary,
-  assessment
+  assessment,
+  scoreLabel
 }: {
   commandSummary: CommandCenterSummary;
   assessment: ReturnType<typeof assessBioRisk>;
+  scoreLabel: string;
 }) {
   const scoreColor =
     assessment.level === "critical" ? "#E24B4A" :
@@ -1256,8 +1261,8 @@ function EnterpriseKPIStrip({
     trendDir: "up" | "dn" | "neutral";
   }> = [
     {
-      label: "BioRisk Score",
-      tip: "Composite risk score 0-100 from biosafety signals, training gaps, equipment status, and SOP coverage. Above 70 = Critical.",
+      label: scoreLabel,
+      tip: "Composite risk score 0-100 from safety signals, training gaps, equipment status, and SOP coverage. Above 70 = Critical.",
       value: String(assessment.score),
       Icon: ShieldCheck,
       iconBg: scoreBg,
@@ -1323,7 +1328,7 @@ function EnterpriseKPIStrip({
               <HelpTip tip={kpi.tip} side="above" />
             </div>
             <div className="kpi-row">
-              <span className="kpi-val" style={kpi.label === "BioRisk Score" ? { color: scoreColor } : undefined}>
+              <span className="kpi-val" style={kpi.label === scoreLabel ? { color: scoreColor } : undefined}>
                 {kpi.value}
               </span>
               {kpi.badge && kpi.badgeBg && kpi.badgeColor && (
@@ -1346,11 +1351,13 @@ function EnterpriseKPIStrip({
 function EnterpriseWidgetRow({
   commandSummary,
   assessment,
-  foundationActions
+  foundationActions,
+  scoreLabel
 }: {
   commandSummary: CommandCenterSummary;
   assessment: ReturnType<typeof assessBioRisk>;
   foundationActions: FoundationReviewActionSummary[];
+  scoreLabel: string;
 }) {
   const dashArray = 135;
   const dashOffset = dashArray - (assessment.score / 100) * dashArray;
@@ -1363,8 +1370,8 @@ function EnterpriseWidgetRow({
       <div className="widget">
         <div className="wh">
           <span className="wh-left" style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-            Biosafety Risk Overview
-            <HelpTip tip="Gradient gauge showing your current BioRisk score. Top drivers are ranked by impact. Click View all to open the full assessment list." side="right" />
+            Risk Overview
+            <HelpTip tip={`Gradient gauge showing your current ${scoreLabel}. Top drivers are ranked by impact. Click View all to open the full assessment list.`} side="right" />
           </span>
           <Link href="/assessments" className="wh-more">View all</Link>
         </div>
@@ -1382,7 +1389,7 @@ function EnterpriseWidgetRow({
               <path d="M12 62 A43 43 0 0 1 98 62" fill="none" stroke="#F0F4F8" strokeWidth="12" strokeLinecap="round" />
               <path d="M12 62 A43 43 0 0 1 98 62" fill="none" stroke="url(#rg1)" strokeWidth="12" strokeLinecap="round" strokeDasharray={dashArray} strokeDashoffset={dashOffset} />
               <text x="55" y="56" textAnchor="middle" fontSize="20" fontWeight="500" fill={scoreColor}>{assessment.score}</text>
-              <text x="55" y="68" textAnchor="middle" fontSize="9" fill="#8FA8C0">BioRisk Score</text>
+              <text x="55" y="68" textAnchor="middle" fontSize="9" fill="#8FA8C0">{scoreLabel}</text>
               <text x="14" y="70" fontSize="8" fill="#8FA8C0">0</text>
               <text x="88" y="70" fontSize="8" fill="#8FA8C0">100</text>
             </svg>

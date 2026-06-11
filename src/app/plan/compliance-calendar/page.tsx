@@ -8,7 +8,7 @@ import { listCalendarItems } from "@/lib/supabase/compliance-calendar-service";
 import { completeCalendarItemAction } from "./actions";
 import ComplianceCalendarGrid from "./ComplianceCalendarGrid";
 
-export const metadata: Metadata = { title: "Compliance Calendar – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Compliance Calendar – PredictSafe" };
 
 const TASK_TYPES = ["inspection", "training", "certification", "committee_meeting", "permit", "capa", "equipment_check", "waste_pickup", "event_triggered"];
 

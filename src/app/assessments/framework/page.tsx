@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 
-export const metadata: Metadata = { title: "Risk Trigger Framework – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Risk Trigger Framework – PredictSafe" };
 
 // ── Tier data ────────────────────────────────────────────────────────────────
 

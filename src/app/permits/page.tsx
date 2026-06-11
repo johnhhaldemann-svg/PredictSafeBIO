@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { AlertTriangle, ClipboardCheck, Lock, Plus, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "Permits – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Permits – PredictSafe" };
 import { AppShell } from "@/components/AppShell";
 import {
   listPermits,
