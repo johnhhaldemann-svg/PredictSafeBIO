@@ -5514,6 +5514,55 @@ pre {
   margin-top: 0.5rem;
 }
 
+.onboarding-vertical-choice {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.onboarding-vertical-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.onboarding-vertical-option:hover {
+  border-color: var(--accent, #2563eb);
+}
+
+.onboarding-vertical-option:has(input:checked) {
+  border-color: var(--accent, #2563eb);
+  background: var(--accent-soft, #eff6ff);
+}
+
+.onboarding-vertical-option input {
+  margin-top: 0.2rem;
+  width: auto;
+}
+
+.onboarding-vertical-option span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.onboarding-vertical-option small {
+  color: var(--muted, #64748b);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 640px) {
+  .onboarding-vertical-choice {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 1200px) {
   .command-card-grid,
   .gap-card-grid {
