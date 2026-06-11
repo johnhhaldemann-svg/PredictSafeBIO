@@ -250,9 +250,14 @@ export async function completeOnboardingAction(formData: FormData) {
   const companyName = field(formData, "companyName") || organizationName;
   const fullName = field(formData, "fullName") || user.email || "PredictSafeBIO user";
 
+  // Industry vertical selects the org's VerticalPack (labels, risk families).
+  // Anything other than general_manufacturing falls back to the bio default.
+  const vertical = field(formData, "vertical") === "general_manufacturing" ? "general_manufacturing" : "biotech_pharma";
+
   const { error: organizationError } = await supabase.from("organizations").insert({
     id: organizationId,
-    name: organizationName
+    name: organizationName,
+    industry_vertical: vertical
   });
 
   if (organizationError) {

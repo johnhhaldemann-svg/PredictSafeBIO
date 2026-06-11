@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { getProgramById, frequencyBadge } from "@/lib/programs/program-data";
+import { getAuthSummary } from "@/lib/supabase/account-service";
+import { resolvePack } from "@/lib/foundation/vertical-registry";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -23,6 +25,7 @@ export default async function ProgramToolPage({ params }: Props) {
   if (!program) notFound();
 
   const freq = frequencyBadge[program.frequency];
+  const pack = resolvePack((await getAuthSummary()).vertical);
 
   return (
     <AppShell>
@@ -67,7 +70,7 @@ export default async function ProgramToolPage({ params }: Props) {
           {program.relatedHref ? (
             <article className="command-card platform-green">
               <div><span><Zap size={16} /></span><strong>Platform Module</strong></div>
-              <em>This program has a dedicated tool in PredictSafeBIO.</em>
+              <em>This program has a dedicated tool in {pack.brandLabel}.</em>
               <Link className="button-primary compact" href={program.relatedHref}>
                 {program.relatedLabel ?? "Open Module"}
               </Link>
@@ -82,16 +85,23 @@ export default async function ProgramToolPage({ params }: Props) {
           </article>
         </section>
 
-        {/* Biotech-specific note */}
+        {/* Vertical-specific note */}
         <section className="panel">
           <div className="panel-heading">
             <div>
-              <p className="section-label">Biotech Context</p>
-              <h2>Program guidance for life science facilities</h2>
+              <p className="section-label">{pack.contextLabel}</p>
+              <h2>{pack.contextHeading}</h2>
             </div>
             <BookOpen size={22} />
           </div>
-          <p>{program.biotechNote}</p>
+          {pack.key === "biotech_pharma" ? (
+            <p>{program.biotechNote}</p>
+          ) : (
+            <p className="muted">
+              Vertical-specific guidance for this program is being finalized. Refer to the primary
+              regulation and the compliance requirements below.
+            </p>
+          )}
           <div className="summary-strip">
             <span>Primary regulation: <strong>{program.regulation}</strong></span>
           </div>

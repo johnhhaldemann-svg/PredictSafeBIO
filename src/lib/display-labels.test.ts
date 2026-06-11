@@ -50,7 +50,7 @@ describe("display-labels", () => {
     const { readFileSync } = require("node:fs");
     const { join } = require("node:path");
     const layout = readFileSync(join(process.cwd(), "src/app/layout.tsx"), "utf8");
-    expect(layout).toContain("AI-powered biosafety intelligence platform");
+    expect(layout).toContain("AI-powered safety intelligence platform");
     expect(layout).not.toContain("AI Engine MVP foundation");
   });
 });

@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "PredictSafeBIO",
-  description: "AI-powered biosafety intelligence platform for biotech EHS, compliance, and audit readiness."
+  title: "PredictSafe",
+  description: "AI-powered safety intelligence platform for EHS, compliance, and audit readiness."
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

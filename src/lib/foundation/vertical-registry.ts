@@ -9,6 +9,9 @@ export const VERTICAL_PACKS: Record<VerticalKey, VerticalPack> = {
     key: "biotech_pharma",
     brandLabel: "PredictSafe BIO",
     scoreLabel: "BioRisk score",
+    tagline: "Biosafety Intelligence",
+    contextLabel: "Biotech Context",
+    contextHeading: "Program guidance for life science facilities",
     regulator: ["FDA 21 CFR", "OSHA 29 CFR 1910", "CDC BMBL"],
     priorityHSLFactor: "Psychological Safety",
     // Existing canonical content, wrapped verbatim — same array references the
@@ -20,6 +23,9 @@ export const VERTICAL_PACKS: Record<VerticalKey, VerticalPack> = {
     key: "general_manufacturing",
     brandLabel: "PredictSafe MFG",
     scoreLabel: "Safety risk score",
+    tagline: "Safety Intelligence",
+    contextLabel: "Manufacturing Context",
+    contextHeading: "Program guidance for manufacturing facilities",
     regulator: ["OSHA 29 CFR 1910"],
     priorityHSLFactor: "Complacency",
     // industryProfiles (per-vertical foundation profiles) are populated when

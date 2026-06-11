@@ -19,6 +19,12 @@ export type VerticalPack = {
   brandLabel: string;
   /** Risk-score noun used in copy, e.g. "BioRisk score" vs "Safety risk score". */
   scoreLabel: string;
+  /** Nav wordmark subtitle, e.g. "Biosafety Intelligence" vs "Safety Intelligence". */
+  tagline: string;
+  /** Program-page context section label, e.g. "Biotech Context" vs "Manufacturing Context". */
+  contextLabel: string;
+  /** Program-page context heading, e.g. "Program guidance for life science facilities". */
+  contextHeading: string;
   /** Regulatory bodies/standards this vertical maps to (display + applicability). */
   regulator: string[];
   /** Highest-weighted ARC Human Signal Layer factor for this vertical. */

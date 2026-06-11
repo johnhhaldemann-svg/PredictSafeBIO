@@ -1,5 +1,6 @@
 import { withAuditTrace } from "@/lib/audit-trace";
-import type { CompanyProfile } from "@/lib/bio-ai/types";
+import type { CompanyProfile, VerticalKey } from "@/lib/bio-ai/types";
+import { VERTICAL_PACKS } from "@/lib/foundation/vertical-registry";
 import { demoCompanyProfile } from "@/lib/demo-data";
 import {
   changedCompanyProfileFields,
@@ -25,8 +26,15 @@ export type AuthSummary = {
   fullName?: string | null;
   organizationId?: string;
   role?: string;
+  /** Active org's industry vertical; null/undefined → DEFAULT_VERTICAL (bio). */
+  vertical?: VerticalKey | null;
   needsOnboarding: boolean;
 };
+
+/** Coerce a raw DB value to a known VerticalKey, else null (→ bio default). */
+function normalizeVertical(value: unknown): VerticalKey | null {
+  return typeof value === "string" && value in VERTICAL_PACKS ? (value as VerticalKey) : null;
+}
 
 export type AccountSummary = AuthSummary & {
   companyProfile: CompanyProfile | null;
@@ -47,7 +55,15 @@ export async function getAuthSummary(): Promise<AuthSummary> {
       return { configured: true, signedIn: false, needsOnboarding: false };
     }
 
-    const { data } = await supabase.from("profiles").select("organization_id,role,full_name").eq("id", user.id).maybeSingle();
+    const { data } = await supabase
+      .from("profiles")
+      .select("organization_id,role,full_name,organizations(industry_vertical)")
+      .eq("id", user.id)
+      .maybeSingle();
+    // profiles → organizations is to-one; the embed may arrive as an object or a
+    // single-element array depending on PostgREST cardinality detection.
+    const org = (data as { organizations?: unknown } | null)?.organizations;
+    const orgRow = (Array.isArray(org) ? org[0] : org) as { industry_vertical?: string } | undefined;
     return {
       configured: true,
       signedIn: true,
@@ -56,6 +72,7 @@ export async function getAuthSummary(): Promise<AuthSummary> {
       fullName: data?.full_name ?? null,
       organizationId: data?.organization_id ?? undefined,
       role: data?.role ?? undefined,
+      vertical: normalizeVertical(orgRow?.industry_vertical),
       needsOnboarding: !data?.organization_id
     };
   } catch {

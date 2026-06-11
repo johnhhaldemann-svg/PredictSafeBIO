@@ -156,6 +156,26 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
           {!isJoiningAsInvitee && (
             <>
               <div className="onboarding-section-divider">
+                <p className="section-label">Industry — sets your workspace labels and risk model</p>
+              </div>
+              <div className="onboarding-vertical-choice" role="radiogroup" aria-label="Industry vertical">
+                <label className="onboarding-vertical-option">
+                  <input type="radio" name="vertical" value="biotech_pharma" defaultChecked />
+                  <span>
+                    <strong>Biotech / Pharma</strong>
+                    <small>Labs, cleanrooms, biosafety — PredictSafe BIO</small>
+                  </span>
+                </label>
+                <label className="onboarding-vertical-option">
+                  <input type="radio" name="vertical" value="general_manufacturing" />
+                  <span>
+                    <strong>General Manufacturing</strong>
+                    <small>Production, assembly, warehousing — PredictSafe MFG</small>
+                  </span>
+                </label>
+              </div>
+
+              <div className="onboarding-section-divider">
                 <p className="section-label">Operating context — optional, helps personalize your workspace</p>
               </div>
 
