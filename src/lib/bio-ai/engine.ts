@@ -1,5 +1,5 @@
 import { doNotClaim, draftAiRecommendationGuardrail } from "./source-artifacts";
-import { bioRiskFamilies } from "./risk-families";
+import { resolvePack } from "@/lib/foundation/vertical-registry";
 import type {
   BioAiAssessment,
   BioAiConfidence,
@@ -290,7 +290,7 @@ function matchRiskFamilies(input: BioAiInput, signals: BioAiSignal[] = input.sig
     .join(" ")
     .toLowerCase();
 
-  return bioRiskFamilies.filter((family) => {
+  return resolvePack(input.vertical).riskFamilies.filter((family) => {
     const typeMatch = signals.some((signal) => family.signalTypes.includes(signal.type));
     const keywordMatch = family.keywords.some((keyword) => text.includes(keyword));
     return typeMatch || keywordMatch;
