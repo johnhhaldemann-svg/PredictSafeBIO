@@ -30,8 +30,8 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             <ShieldCheck size={18} />
           </span>
           <div>
-            <strong>PredictSafeBIO</strong>
-            <span>Biosafety Intelligence</span>
+            <strong>PredictSafe</strong>
+            <span>Safety Intelligence</span>
           </div>
         </div>
         <div>

@@ -69,7 +69,7 @@ export async function AppShell({
           {/* Left rail: brand block + grouped console nav */}
           <aside className="psb-aside" aria-label="Superadmin navigation">
             <div className="psb-brand">
-              <Link href="/admin/dashboard" className="psb-logo" aria-label="PredictSafeBIO platform console">
+              <Link href="/admin/dashboard" className="psb-logo" aria-label="PredictSafe platform console">
                 PREDICTSAFE
               </Link>
               <div className="psb-sub">Platform Console v2.4</div>
