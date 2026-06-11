@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { AlertTriangle, FlaskConical, Plus, ShieldCheck, FileWarning, Clock } from "lucide-react";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "Chemical & SDS – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Chemical & SDS – PredictSafe" };
 import { AppShell } from "@/components/AppShell";
 import { listChemicals, hazardClassLabels, type HazardClass } from "@/lib/supabase/chemical-service";
 import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";

@@ -20,7 +20,7 @@ import {
 } from "./actions";
 import { DataLoadError } from "@/components/DataLoadError";
 
-export const metadata: Metadata = { title: "Lessons Learned – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Lessons Learned – PredictSafe" };
 
 const STATUS_CLASS: Record<LessonStatus, string> = {
   draft:     "status-needs-review",

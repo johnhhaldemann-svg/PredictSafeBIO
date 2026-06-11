@@ -19,7 +19,7 @@ import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
 import { createExposureAction, updateExposureStatusAction } from "./actions";
 import { DataLoadError } from "@/components/DataLoadError";
 
-export const metadata: Metadata = { title: "Exposure Map – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Exposure Map – PredictSafe" };
 
 const STATUS_CLASS: Record<ExposureStatus, string> = {
   active: "status-overdue",

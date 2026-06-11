@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "Risk Register – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Risk Register – PredictSafe" };
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { listAssessments } from "@/lib/supabase/data";

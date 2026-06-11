@@ -17,7 +17,7 @@ import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
 import { createHazardAction, archiveHazardAction } from "./actions";
 import { DataLoadError } from "@/components/DataLoadError";
 
-export const metadata: Metadata = { title: "Hazard Register – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Hazard Register – PredictSafe" };
 
 const STATUS_CLASS: Record<HazardStatus, string> = {
   identified: "status-overdue",

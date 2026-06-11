@@ -23,7 +23,7 @@ const exposureRouteOptions: ExposureRoute[] = [
 ];
 const exposureFrequencyOptions: ExposureFrequency[] = ["routine", "occasional", "rare"];
 
-export const metadata: Metadata = { title: "Exposure Monitoring – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Exposure Monitoring – PredictSafe" };
 
 const STATUS_CLASS: Record<ExposureStatus, string> = {
   active: "status-needs-review",

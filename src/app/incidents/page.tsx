@@ -27,7 +27,7 @@ import {
 } from "@/lib/supabase/incident-service";
 import { createIncidentAction } from "./actions";
 
-export const metadata: Metadata = { title: "Incident Reporting – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Incident Reporting – PredictSafe" };
 
 const STATUS_CLASS: Record<IncidentStatus, string> = {
   open:          "status-missing",

@@ -6,7 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { getSafetyForecast } from "@/lib/supabase/predictive-service";
 import { pressureBandLabels, trendLabels, type PressureBand, type TrendDirection } from "@/lib/bio-ai/forecast";
 
-export const metadata: Metadata = { title: "Predictive Engine – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Predictive Engine – PredictSafe" };
 
 const BAND_CLASS: Record<PressureBand, string> = {
   low: "platform-green",

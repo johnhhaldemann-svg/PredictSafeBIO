@@ -19,7 +19,7 @@ import {
 } from "@/lib/supabase/incident-service";
 import { updateIncidentStatusAction } from "../actions";
 
-export const metadata: Metadata = { title: "Incident Detail – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Incident Detail – PredictSafe" };
 
 const STATUS_ICON: Record<IncidentStatus, typeof AlertCircle> = {
   open:          AlertCircle,

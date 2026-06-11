@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "CAPA Records – PredictSafeBIO" };
+export const metadata: Metadata = { title: "CAPA Records – PredictSafe" };
 import { AlertTriangle, CheckCircle2, CircleDot, Clock, Plus, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { formatOwnerRole } from "@/lib/display-labels";

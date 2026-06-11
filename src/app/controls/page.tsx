@@ -17,7 +17,7 @@ import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
 import { createControlAction, updateControlStatusAction, archiveControlAction } from "./actions";
 import { DataLoadError } from "@/components/DataLoadError";
 
-export const metadata: Metadata = { title: "Control Register – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Control Register – PredictSafe" };
 
 const STATUS_CLASS: Record<ControlStatus, string> = {
   planned: "status-needs-review",

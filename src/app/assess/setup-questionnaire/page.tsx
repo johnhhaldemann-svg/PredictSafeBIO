@@ -9,7 +9,7 @@ import { SETUP_QUESTIONS } from "@/lib/manual/setup-questions";
 import { listQuestionnaireResponses } from "@/lib/supabase/questionnaire-service";
 import { saveQuestionnaireAction } from "./actions";
 
-export const metadata: Metadata = { title: "Setup Questionnaire – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Setup Questionnaire – PredictSafe" };
 
 type Props = { searchParams: Promise<{ message?: string; success?: string; edit?: string }> };
 

@@ -17,9 +17,10 @@ import {
   listDocuments,
 } from "@/lib/supabase/data";
 import { getAuthSummary } from "@/lib/supabase/account-service";
+import { resolvePack } from "@/lib/foundation/vertical-registry";
 import { isPlatformRole } from "@/lib/role-permissions";
 
-export const metadata: Metadata = { title: "Workbench – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Workbench – PredictSafe" };
 
 function safeSettle<T>(promise: Promise<T>, fallback: T): Promise<T> {
   return promise.catch(() => fallback);
@@ -153,6 +154,7 @@ export default async function WorkbenchPage({
           commandCenter={commandCenter}
           assessments={assessments}
           initialTab={initialTab}
+          scoreLabel={resolvePack(auth.vertical).scoreLabel}
         />
       </div>
     </AppShell>
