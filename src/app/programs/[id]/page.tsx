@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { getProgramById, frequencyBadge } from "@/lib/programs/program-data";
+import { manufacturingProgramNotes } from "@/lib/programs/manufacturing-notes";
 import { getAuthSummary } from "@/lib/supabase/account-service";
 import { resolvePack } from "@/lib/foundation/vertical-registry";
 
@@ -26,6 +27,9 @@ export default async function ProgramToolPage({ params }: Props) {
 
   const freq = frequencyBadge[program.frequency];
   const pack = resolvePack((await getAuthSummary()).vertical);
+  // Bio orgs always have a note; MFG orgs use the manufacturing note when authored,
+  // otherwise the section falls back to a neutral placeholder below.
+  const verticalNote = pack.key === "biotech_pharma" ? program.biotechNote : manufacturingProgramNotes[program.id];
 
   return (
     <AppShell>
@@ -94,8 +98,8 @@ export default async function ProgramToolPage({ params }: Props) {
             </div>
             <BookOpen size={22} />
           </div>
-          {pack.key === "biotech_pharma" ? (
-            <p>{program.biotechNote}</p>
+          {verticalNote ? (
+            <p>{verticalNote}</p>
           ) : (
             <p className="muted">
               Vertical-specific guidance for this program is being finalized. Refer to the primary
