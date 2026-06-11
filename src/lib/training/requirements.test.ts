@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   coursesTriggeredBy,
+  DEFAULT_COMPETENCY_PASS_THRESHOLD,
   FREQUENCY_MONTHS,
+  meetsCompetency,
   TRAINING_BY_ID,
   TRAINING_CATALOG,
   trainerCoversTopic,
@@ -34,6 +36,26 @@ describe("coursesTriggeredBy", () => {
   it("returns risk-triggered courses", () => {
     const ids = coursesTriggeredBy("risk").map((c) => c.id);
     expect(ids).toContain("sop_equipment_specific");
+  });
+
+  it("re-verifies authorized-level courses on return-to-work", () => {
+    const courses = coursesTriggeredBy("return_to_work");
+    expect(courses.length).toBeGreaterThan(0);
+    expect(courses.every((c) => c.competencyLevel === "authorized")).toBe(true);
+    expect(courses.map((c) => c.id)).toContain("loto_authorized");
+  });
+});
+
+describe("meetsCompetency", () => {
+  it("passes at or above the threshold", () => {
+    expect(meetsCompetency(DEFAULT_COMPETENCY_PASS_THRESHOLD)).toBe(true);
+    expect(meetsCompetency(95)).toBe(true);
+    expect(meetsCompetency(79)).toBe(false);
+  });
+
+  it("respects a custom threshold", () => {
+    expect(meetsCompetency(70, 70)).toBe(true);
+    expect(meetsCompetency(69, 70)).toBe(false);
   });
 });
 
