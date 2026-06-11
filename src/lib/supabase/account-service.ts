@@ -36,6 +36,29 @@ function normalizeVertical(value: unknown): VerticalKey | null {
   return typeof value === "string" && value in VERTICAL_PACKS ? (value as VerticalKey) : null;
 }
 
+/**
+ * Resolve an org's vertical without ever throwing. If the column is missing
+ * (migration not yet applied) or the query errors, returns null so resolvePack
+ * falls back to the bio default — the org stays usable rather than the page
+ * blanking. Keep this isolated from the core profiles query.
+ */
+async function getOrganizationVertical(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  organizationId: string
+): Promise<VerticalKey | null> {
+  try {
+    const { data, error } = await supabase
+      .from("organizations")
+      .select("industry_vertical")
+      .eq("id", organizationId)
+      .maybeSingle();
+    if (error) return null;
+    return normalizeVertical((data as { industry_vertical?: string } | null)?.industry_vertical);
+  } catch {
+    return null;
+  }
+}
+
 export type AccountSummary = AuthSummary & {
   companyProfile: CompanyProfile | null;
 };
@@ -57,22 +80,22 @@ export async function getAuthSummary(): Promise<AuthSummary> {
 
     const { data } = await supabase
       .from("profiles")
-      .select("organization_id,role,full_name,organizations(industry_vertical)")
+      .select("organization_id,role,full_name")
       .eq("id", user.id)
       .maybeSingle();
-    // profiles → organizations is to-one; the embed may arrive as an object or a
-    // single-element array depending on PostgREST cardinality detection.
-    const org = (data as { organizations?: unknown } | null)?.organizations;
-    const orgRow = (Array.isArray(org) ? org[0] : org) as { industry_vertical?: string } | undefined;
+    const organizationId = data?.organization_id ?? undefined;
     return {
       configured: true,
       signedIn: true,
       userId: user.id,
       userEmail: user.email ?? undefined,
       fullName: data?.full_name ?? null,
-      organizationId: data?.organization_id ?? undefined,
+      organizationId,
       role: data?.role ?? undefined,
-      vertical: normalizeVertical(orgRow?.industry_vertical),
+      // Looked up separately (not embedded) so a missing column or query error
+      // degrades to null (→ bio default) instead of breaking the core auth
+      // summary — a code-before-migration gap must not blank the whole app.
+      vertical: organizationId ? await getOrganizationVertical(supabase, organizationId) : null,
       needsOnboarding: !data?.organization_id
     };
   } catch {
