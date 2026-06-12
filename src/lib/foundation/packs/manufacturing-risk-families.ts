@@ -5,11 +5,11 @@ import type { BioRiskFamily } from "@/lib/bio-ai/risk-families";
 // vertical is general_manufacturing (via the VerticalPack registry), so they
 // can never affect PredictSafe BIO behavior.
 //
-// DRAFT — hazard families, critical controls, and owner-role naming still need
-// John's domain sign-off. The shared program catalog (src/lib/programs/
-// program-data.ts) already covers these areas (LOTO, Machine Guarding, Fall
-// Protection, Forklift/PIT, HazCom, PPE, Confined Space); these families are
-// the engine-facing signal/keyword matchers that drive risk scoring + actions.
+// Reviewed and approved by the domain owner (2026-06-11). The shared program
+// catalog (src/lib/programs/program-data.ts) already covers these areas (LOTO,
+// Machine Guarding, Fall Protection, Forklift/PIT, HazCom, PPE, Confined Space);
+// these families are the engine-facing signal/keyword matchers that drive risk
+// scoring + actions.
 export const generalManufacturingRiskFamilies: BioRiskFamily[] = [
   {
     id: "machine_safety_energy_control",
