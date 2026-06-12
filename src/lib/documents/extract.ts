@@ -131,9 +131,8 @@ const defaultPdfParser: BinaryParser = async (buffer) => {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const loadingTask = pdfjs.getDocument({
     data: buffer,
-    // No worker / no eval in serverless.
+    // No worker in serverless.
     useWorkerFetch: false,
-    isEvalSupported: false,
     useSystemFonts: true
   });
   const pdf = await loadingTask.promise;
