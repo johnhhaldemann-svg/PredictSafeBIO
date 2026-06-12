@@ -3,11 +3,11 @@
 // `biotechNote`; this map supplies the manufacturing equivalent so an MFG org sees
 // OSHA 1910 general-industry context instead of lab/biosafety language.
 //
-// DRAFT — authored from OSHA 29 CFR 1910 general industry; still needs John's
-// domain sign-off (same review gate as the MFG risk families). Lab/biosafety-only
-// programs (biosafety, bloodborne-pathogens, chemical-hygiene/CHO, vivarium) are
-// intentionally omitted — the program detail page falls back to a neutral
-// placeholder for any id not present here.
+// Reviewed and approved by the domain owner (2026-06-11), authored from OSHA
+// 29 CFR 1910 general industry. Lab/biosafety-only programs (biosafety,
+// bloodborne-pathogens, chemical-hygiene/CHO, vivarium) are intentionally
+// omitted — the program detail page falls back to a neutral placeholder for any
+// id not present here.
 export const manufacturingProgramNotes: Record<string, string> = {
   communication:
     "Manufacturing sites must post HazCom labeling, machine-specific hazard signage, PPE requirements, and emergency contacts at production lines and entrances. Shift-handover communication and multilingual postings are common gaps on the plant floor — toolbox talks should reach every shift.",
