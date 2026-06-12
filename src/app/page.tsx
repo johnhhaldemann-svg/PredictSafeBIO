@@ -11,12 +11,13 @@ import {
   listAssessments,
 } from "@/lib/supabase/data";
 import { getAuthSummary } from "@/lib/supabase/account-service";
+import { resolvePack } from "@/lib/foundation/vertical-registry";
 import { isPlatformRole } from "@/lib/role-permissions";
 import { getRiskSummary } from "@/lib/supabase/risk-dashboard-service";
 import { getAiInspectionRecommendations } from "@/lib/supabase/inspection-service";
 import { listCapaRecords } from "@/lib/supabase/capa-service";
 
-export const metadata: Metadata = { title: "Home – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Home – PredictSafe" };
 
 function safeSettle<T>(promise: Promise<T>, fallback: T): Promise<T> {
   return promise.catch(() => fallback);
@@ -96,6 +97,8 @@ export default async function HomePage() {
     redirect("/admin/dashboard");
   }
 
+  const pack = resolvePack(auth.vertical);
+
   const [assessments, readiness, foundationActions, risk, inspectionRecs, capaRecords] =
     await Promise.all([
       safeSettle(listAssessments(), []),
@@ -153,13 +156,13 @@ export default async function HomePage() {
       question: "What are my risks?",
       icon: ShieldCheck,
       value: latestScore !== null ? String(latestScore) : "—",
-      caption: latestScore !== null ? "Latest BioRisk score" : "No assessment yet",
+      caption: latestScore !== null ? `Latest ${pack.scoreLabel}` : "No assessment yet",
       detail:
         latestScore === null
-          ? "Run your first BioRisk assessment to begin."
+          ? "Run your first assessment to begin."
           : `${pendingReview} awaiting review · ${criticalCount} critical`,
       tone: latestScore === null ? "neutral" : criticalCount > 0 || pendingReview > 0 ? "alert" : "ok",
-      ctaLabel: latestScore === null ? "Run an assessment" : "Open BioRisk Workbench",
+      ctaLabel: latestScore === null ? "Run an assessment" : "Open Workbench",
       ctaHref: "/workbench",
       secondaryLabel: "Hazard Register",
       secondaryHref: "/hazards",
@@ -239,7 +242,7 @@ export default async function HomePage() {
           <span className="home-hero-badge">
             <Sparkles size={13} aria-hidden="true" /> Predictive AI engine · live
           </span>
-          <p className="section-label">PredictSafeBIO</p>
+          <p className="section-label">{pack.brandLabel}</p>
           <h1>Safety &amp; compliance loop</h1>
           <p className="muted">
             Your safety <strong>data inputs</strong> feed an <strong>AI engine</strong> that scores

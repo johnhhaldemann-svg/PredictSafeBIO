@@ -16,7 +16,7 @@ import {
 } from "@/lib/supabase/risk-register-service";
 import { createRiskRegisterEntryAction, updateRiskRegisterStatusAction } from "./actions";
 
-export const metadata: Metadata = { title: "Risk Register – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Risk Register – PredictSafe" };
 
 const CONTROL_TYPES: ControlType[] = ["engineering", "administrative", "ppe", "training", "inspection", "permit", "committee"];
 const CONTROL_TYPE_LABELS: Record<ControlType, string> = {

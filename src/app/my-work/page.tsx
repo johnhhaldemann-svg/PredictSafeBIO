@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "My Work – PredictSafeBIO" };
+export const metadata: Metadata = { title: "My Work – PredictSafe" };
 import { ClipboardList, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { FoundationNotificationCenter } from "@/components/FoundationNotificationCenter";
@@ -83,7 +83,7 @@ export default async function MyWorkPage({
           <div>
             <p className="section-label">Assigned Work</p>
             <h2>{visibleActions.length} source-traced task(s) in this view</h2>
-            <p className="muted">Use this page for daily follow-through, then jump back to the source map or BioRisk workspace when needed.</p>
+            <p className="muted">Use this page for daily follow-through, then jump back to the source map or Risk workspace when needed.</p>
           </div>
           <div className="quick-filter-row">
             <Link className="button-secondary compact" href="/foundation">
@@ -166,7 +166,7 @@ export default async function MyWorkPage({
                 </div>
                 <div className="action-list">
                   <article className="action-row">
-                    <div><strong>1. Run a BioRisk assessment</strong></div>
+                    <div><strong>1. Run a Risk assessment</strong></div>
                     <p>Go to the <Link href="/workbench" className="text-link">Workbench</Link>, enter your site details and signals, then save the result to your risk register.</p>
                   </article>
                   <article className="action-row">
@@ -193,7 +193,7 @@ export default async function MyWorkPage({
               canEditPriority={adminAccess.isOwner}
               emptyMessage={
                 adminAccess.isOwner
-                  ? "No review tasks yet. Run a BioRisk assessment on the Workbench, then open the Compliance Map to generate source-traced tasks."
+                  ? "No review tasks yet. Run a Risk assessment on the Workbench, then open the Compliance Map to generate source-traced tasks."
                   : "No tasks assigned to you yet. Your owner will assign Foundation review tasks when they are generated from the compliance map."
               }
               initialSavedView={requestedView ?? (adminAccess.isOwner ? "all" : "my_open")}

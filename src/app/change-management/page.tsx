@@ -7,7 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { listChangePlanItems } from "@/lib/supabase/data";
 import { listMocRecords } from "@/lib/supabase/moc-service";
 
-export const metadata: Metadata = { title: "Change Management – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Change Management – PredictSafe" };
 
 export default async function ChangeManagementPage() {
   const [plan, mocRecords] = await Promise.all([

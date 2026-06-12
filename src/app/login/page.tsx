@@ -21,8 +21,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <ShieldCheck size={18} />
           </span>
           <div>
-            <strong>PredictSafeBIO</strong>
-            <span>Biosafety Intelligence</span>
+            <strong>PredictSafe</strong>
+            <span>Safety Intelligence</span>
           </div>
         </div>
         <div>
@@ -57,7 +57,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               Forgot your password? <Link href="/forgot-password">Send a reset link</Link>
             </p>
             <p className="auth-switch">
-              New to PredictSafeBIO? <Link href={`/signup?next=${encodeURIComponent(next)}`}>Create an account</Link>
+              New to PredictSafe? <Link href={`/signup?next=${encodeURIComponent(next)}`}>Create an account</Link>
             </p>
           </>
         )}

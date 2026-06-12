@@ -150,6 +150,7 @@ export function WorkbenchClient({
   commandCenter,
   assessments = [],
   initialTab = "command-center",
+  scoreLabel = "BioRisk score",
 }: {
   assignees?: FoundationAssigneeOption[];
   canManageFoundationActions?: boolean;
@@ -160,6 +161,8 @@ export function WorkbenchClient({
   commandCenter?: CommandCenterSummary;
   assessments?: Array<{ id: string; workflow: string; area: string; level: string; score: number; humanReviewStatus: string; reviewedAt?: string | null; assignedReviewerName?: string | null; reviewDueDate?: string | null }>;
   initialTab?: "command-center" | "risk-register";
+  /** Vertical-aware risk-score label from the active VerticalPack. */
+  scoreLabel?: string;
 }) {
   const [activeTab, setActiveTab] = useState<"command-center" | "risk-register">(initialTab);
   const [input, setInput] = useState<BioAiInput>(initialInput);
@@ -205,7 +208,7 @@ export function WorkbenchClient({
       value: String(commandSummary.documentCount),
       detail: "SOP metadata and draft update records"
     },
-    "BioRisk Assessment": {
+    "Risk Assessment": {
       value: String(commandSummary.assessmentCount),
       detail: `${commandSummary.criticalRiskCount} critical / ${commandSummary.pendingReviewCount} pending review`
     },
@@ -390,7 +393,7 @@ export function WorkbenchClient({
           {assessments.length === 0 && (
             <div className="empty-action-state">
               <strong>No risk assessments saved yet.</strong>
-              <p>Run a BioRisk assessment and save it to start building your risk register.</p>
+              <p>Run a Risk assessment and save it to start building your risk register.</p>
             </div>
           )}
         </section>
@@ -406,8 +409,8 @@ export function WorkbenchClient({
         <button className="button-primary compact" type="button" onClick={() => setActiveTab("command-center")}>Overview</button>
         <button className="button-secondary compact" type="button" onClick={() => setActiveTab("risk-register")}>Risk Register</button>
       </nav>
-      <EnterpriseKPIStrip commandSummary={commandSummary} assessment={assessment} />
-      <EnterpriseWidgetRow commandSummary={commandSummary} assessment={assessment} foundationActions={foundationActions} />
+      <EnterpriseKPIStrip commandSummary={commandSummary} assessment={assessment} scoreLabel={scoreLabel} />
+      <EnterpriseWidgetRow commandSummary={commandSummary} assessment={assessment} foundationActions={foundationActions} scoreLabel={scoreLabel} />
       <EnterpriseHeatMapRow />
 
       <section className="command-center panel" aria-labelledby="command-center-title">
@@ -415,7 +418,7 @@ export function WorkbenchClient({
           <div>
             <p className="section-label">Command Summary</p>
             <h2>Connected operating command center</h2>
-            <p className="muted">Move from source intelligence to assigned work, production verification, notifications, and BioRisk review without losing context.</p>
+            <p className="muted">Move from source intelligence to assigned work, production verification, notifications, and Risk review without losing context.</p>
           </div>
           <nav className="command-center-link-strip" aria-label="Workbench command center navigation">
             <Link className="button-primary compact" href="/workbench">
@@ -431,7 +434,7 @@ export function WorkbenchClient({
         </div>
         <div className="command-hero">
           <div>
-            <p className="section-label">BioRisk Workbench</p>
+            <p className="section-label">Risk Workbench</p>
             <h2 id="command-center-title">One platform for biotech safety, compliance, and biosafety operations</h2>
             <p>
               Category status, risk intelligence, action planning, audit readiness, and AI guardrails are gathered here before users move into
@@ -527,7 +530,7 @@ export function WorkbenchClient({
         <div className="panel command-risk-panel">
           <div className="panel-heading">
             <div>
-              <p className="section-label">BioRisk Score</p>
+              <p className="section-label">{scoreLabel}</p>
               <h2>Current workbench signal</h2>
             </div>
             <StatusBadge level={assessment.level} />
@@ -535,7 +538,7 @@ export function WorkbenchClient({
           <div className="score-wrap compact-score">
             <span className="score">{assessment.score}</span>
             <div>
-              <p className="score-label">{assessment.level} BioRisk</p>
+              <p className="score-label">{assessment.level} Risk</p>
               <p className="muted">Confidence: {assessment.confidence}</p>
             </div>
           </div>
@@ -595,7 +598,7 @@ export function WorkbenchClient({
           </div>
           <div className="trend-list">
             <article>
-              <span>BioRisk trend</span>
+              <span>Risk trend</span>
               <strong>{trendLabel(commandSummary.bioRiskTrend)}</strong>
             </article>
             <article>
@@ -831,8 +834,8 @@ export function WorkbenchClient({
       <section className="platform-map panel" aria-labelledby="platform-map-title">
         <div className="platform-map-heading">
           <div>
-            <p className="section-label">PredictSafeBIO Intelligence Platform Architecture</p>
-            <h2 id="platform-map-title">AI-powered biotech safety, compliance, and biosafety operations platform</h2>
+            <p className="section-label">PredictSafe Intelligence Platform Architecture</p>
+            <h2 id="platform-map-title">AI-powered safety, compliance, and EHS operations platform</h2>
           </div>
           <span className="platform-promise">Connected. Intelligent. Compliant. Audit Ready.</span>
         </div>
@@ -879,8 +882,8 @@ export function WorkbenchClient({
         <section className="panel intake-panel command-center-lane" aria-labelledby="intake-title">
         <div className="panel-heading">
           <div>
-            <p className="section-label">BioRisk Engine</p>
-            <h2 id="intake-title">BioRisk Assessment</h2>
+            <p className="section-label">Risk Engine</p>
+            <h2 id="intake-title">Risk Assessment</h2>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {isAnalyzing && (
@@ -1229,10 +1232,12 @@ export function WorkbenchClient({
 /* ── Enterprise KPI Strip ── */
 function EnterpriseKPIStrip({
   commandSummary,
-  assessment
+  assessment,
+  scoreLabel
 }: {
   commandSummary: CommandCenterSummary;
   assessment: ReturnType<typeof assessBioRisk>;
+  scoreLabel: string;
 }) {
   const scoreColor =
     assessment.level === "critical" ? "#E24B4A" :
@@ -1256,8 +1261,8 @@ function EnterpriseKPIStrip({
     trendDir: "up" | "dn" | "neutral";
   }> = [
     {
-      label: "BioRisk Score",
-      tip: "Composite risk score 0-100 from biosafety signals, training gaps, equipment status, and SOP coverage. Above 70 = Critical.",
+      label: scoreLabel,
+      tip: "Composite risk score 0-100 from safety signals, training gaps, equipment status, and SOP coverage. Above 70 = Critical.",
       value: String(assessment.score),
       Icon: ShieldCheck,
       iconBg: scoreBg,
@@ -1280,7 +1285,7 @@ function EnterpriseKPIStrip({
     },
     {
       label: "Assessments",
-      tip: "Total BioRisk assessments saved in your workspace. Each is immutably logged with score, confidence, and human review status.",
+      tip: "Total Risk assessments saved in your workspace. Each is immutably logged with score, confidence, and human review status.",
       value: String(commandSummary.assessmentCount),
       Icon: ClipboardList,
       iconBg: "#E6F1FB",
@@ -1323,7 +1328,7 @@ function EnterpriseKPIStrip({
               <HelpTip tip={kpi.tip} side="above" />
             </div>
             <div className="kpi-row">
-              <span className="kpi-val" style={kpi.label === "BioRisk Score" ? { color: scoreColor } : undefined}>
+              <span className="kpi-val" style={kpi.label === scoreLabel ? { color: scoreColor } : undefined}>
                 {kpi.value}
               </span>
               {kpi.badge && kpi.badgeBg && kpi.badgeColor && (
@@ -1346,11 +1351,13 @@ function EnterpriseKPIStrip({
 function EnterpriseWidgetRow({
   commandSummary,
   assessment,
-  foundationActions
+  foundationActions,
+  scoreLabel
 }: {
   commandSummary: CommandCenterSummary;
   assessment: ReturnType<typeof assessBioRisk>;
   foundationActions: FoundationReviewActionSummary[];
+  scoreLabel: string;
 }) {
   const dashArray = 135;
   const dashOffset = dashArray - (assessment.score / 100) * dashArray;
@@ -1363,8 +1370,8 @@ function EnterpriseWidgetRow({
       <div className="widget">
         <div className="wh">
           <span className="wh-left" style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-            Biosafety Risk Overview
-            <HelpTip tip="Gradient gauge showing your current BioRisk score. Top drivers are ranked by impact. Click View all to open the full assessment list." side="right" />
+            Risk Overview
+            <HelpTip tip={`Gradient gauge showing your current ${scoreLabel}. Top drivers are ranked by impact. Click View all to open the full assessment list.`} side="right" />
           </span>
           <Link href="/assessments" className="wh-more">View all</Link>
         </div>
@@ -1382,7 +1389,7 @@ function EnterpriseWidgetRow({
               <path d="M12 62 A43 43 0 0 1 98 62" fill="none" stroke="#F0F4F8" strokeWidth="12" strokeLinecap="round" />
               <path d="M12 62 A43 43 0 0 1 98 62" fill="none" stroke="url(#rg1)" strokeWidth="12" strokeLinecap="round" strokeDasharray={dashArray} strokeDashoffset={dashOffset} />
               <text x="55" y="56" textAnchor="middle" fontSize="20" fontWeight="500" fill={scoreColor}>{assessment.score}</text>
-              <text x="55" y="68" textAnchor="middle" fontSize="9" fill="#8FA8C0">BioRisk Score</text>
+              <text x="55" y="68" textAnchor="middle" fontSize="9" fill="#8FA8C0">{scoreLabel}</text>
               <text x="14" y="70" fontSize="8" fill="#8FA8C0">0</text>
               <text x="88" y="70" fontSize="8" fill="#8FA8C0">100</text>
             </svg>
@@ -1491,7 +1498,7 @@ function EnterpriseWidgetRow({
               <div className="alert-item" key={signal}>
                 <div className="alert-head">
                   <div className="alert-icon"><AlertCircle size={13} color="#A32D2D" aria-hidden="true" /></div>
-                  <span className="alert-title">Critical BioRisk Alert</span>
+                  <span className="alert-title">Critical Risk Alert</span>
                 </div>
                 <div className="alert-body">{signal}<div className="alert-time">Recent</div></div>
               </div>
@@ -1525,7 +1532,7 @@ function EnterpriseWidgetRow({
           {foundationActions.length === 0 && (
             <div className="act-item">
               <div className="act-dot" />
-              <div className="act-txt">Demo assessment run<div className="act-sub">BioRisk scoring engine</div></div>
+              <div className="act-txt">Demo assessment run<div className="act-sub">Risk scoring engine</div></div>
               <div className="act-tm">now</div>
             </div>
           )}
@@ -1553,7 +1560,7 @@ const HEATMAP_COLS = ["V.Low","Low","Med","High","V.High"] as const;
 
 function EnterpriseHeatMapRow() {
   const quickActions = [
-    { label: "New assessment",  sub: "Run BioRisk scoring",   icon: "ti-shield",        bg: "#FCEBEB", color: "#A32D2D", href: "/workbench" },
+    { label: "New assessment",  sub: "Run Risk scoring",   icon: "ti-shield",        bg: "#FCEBEB", color: "#A32D2D", href: "/workbench" },
     { label: "Add document",    sub: "Register SOP or record", icon: "ti-file-plus",     bg: "#E6F1FB", color: "#185FA5", href: "/documents" },
     { label: "Create CAPA",     sub: "Log corrective action",  icon: "ti-clipboard-list",bg: "#FAEEDA", color: "#854F0B", href: "/operations/capa" },
     { label: "Invite member",   sub: "Add team access",        icon: "ti-user-plus",     bg: "#EAF3DE", color: "#3B6D11", href: "/account/team" },
@@ -1636,7 +1643,7 @@ function AiWorkflowActions({
   const topDriver = assessment.topDrivers[0];
   const capaTitle = topDriver
     ? `${topDriver.label} — ${input.workflow ?? "Workflow"} risk corrective action`
-    : `${assessment.level.charAt(0).toUpperCase() + assessment.level.slice(1)} BioRisk finding — corrective action`;
+    : `${assessment.level.charAt(0).toUpperCase() + assessment.level.slice(1)} Risk finding — corrective action`;
 
   const rootCause = topDriver?.explanation ?? assessment.explanation;
 
@@ -1650,7 +1657,7 @@ function AiWorkflowActions({
 
   function copyBrief() {
     const brief = [
-      `BioRisk Assessment Brief`,
+      `Risk Assessment Brief`,
       `Score: ${assessment.score} (${assessment.level})`,
       `Confidence: ${assessment.confidence}`,
       `Site: ${input.siteName ?? "—"} | Area: ${input.area ?? "—"} | Workflow: ${input.workflow ?? "—"}`,

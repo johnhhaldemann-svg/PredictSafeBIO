@@ -1,3 +1,9 @@
+// Industry vertical keys. The platform (PredictSafe) hosts one engine that is
+// configured per-vertical via a VerticalPack (see lib/foundation/vertical-pack.ts).
+// biotech_pharma is the original PredictSafe BIO product; general_manufacturing
+// (PredictSafe MFG) is the first non-bio vertical. Adding a key here is additive.
+export type VerticalKey = "biotech_pharma" | "general_manufacturing";
+
 export type BioRiskLevel = "low" | "moderate" | "high" | "critical";
 export type BioAiConfidence = "low" | "medium" | "high";
 export type HumanReviewStatus =
@@ -20,7 +26,14 @@ export type BioSignalType =
   | "equipment_event"
   | "ergonomic_risk_signal"
   | "sample_chain_of_custody"
-  | "data_integrity";
+  | "data_integrity"
+  // general_manufacturing (PredictSafe MFG) signals — additive, do not affect bio
+  | "machine_guarding_event"
+  | "loto_event"
+  | "powered_industrial_truck_event"
+  | "fall_hazard_event"
+  | "chemical_exposure_event"
+  | "confined_space_event";
 
 export type DriverCategory =
   | "severity"
@@ -44,7 +57,11 @@ export type ReviewOwnerRole =
   | "ehs"
   | "manufacturing_lead"
   | "validation_lead"
-  | "regulatory_affairs";
+  | "regulatory_affairs"
+  // general_manufacturing (PredictSafe MFG) owner roles — additive
+  | "plant_manager"
+  | "production_supervisor"
+  | "maintenance_lead";
 
 export type RecommendedActionType =
   | "hold_or_quarantine_review"
@@ -180,6 +197,9 @@ export type BioAiSignal = {
 };
 
 export type BioAiInput = BioTypeContextFields & {
+  // Selects which VerticalPack the engine resolves risk families from.
+  // Omitted/null → DEFAULT_VERTICAL (biotech_pharma), preserving legacy behavior.
+  vertical?: VerticalKey | null;
   organizationId?: string | null;
   siteId?: string | null;
   labId?: string | null;

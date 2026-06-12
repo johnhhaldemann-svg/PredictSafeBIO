@@ -7,7 +7,7 @@ import { AiDraftBanner } from "@/components/AiDraftBanner";
 import { listQualifiedPersons, listOrgMembers } from "@/lib/supabase/qualified-person-service";
 import { addQualifiedPersonAction, toggleQualifiedPersonAction } from "./actions";
 
-export const metadata: Metadata = { title: "Qualified Persons – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Qualified Persons – PredictSafe" };
 
 type Props = { searchParams: Promise<{ message?: string; success?: string }> };
 

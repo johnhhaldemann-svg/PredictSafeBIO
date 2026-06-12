@@ -5,7 +5,7 @@ import { AlertTriangle, CheckCircle2, Plus, ShieldCheck, Sprout } from "lucide-r
 import Link from "next/link";
 import { DataLoadError } from "@/components/DataLoadError";
 
-export const metadata: Metadata = { title: "Pesticide & Disinfectant – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Pesticide & Disinfectant – PredictSafe" };
 import { AppShell } from "@/components/AppShell";
 import {
   listPesticideRecords,

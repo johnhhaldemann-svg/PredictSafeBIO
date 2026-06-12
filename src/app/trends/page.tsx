@@ -8,7 +8,7 @@ import { listCapaRecords } from "@/lib/supabase/capa-service";
 import { getTrainingMatrixSummary } from "@/lib/supabase/data";
 import { getAuditReadinessConsoleSummary } from "@/lib/supabase/data";
 
-export const metadata: Metadata = { title: "Trend Analysis – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Trend Analysis – PredictSafe" };
 
 function trendIcon(value: number, goodDirection: "up" | "down") {
   if (value === 0) return <Minus size={14} className="muted" />;

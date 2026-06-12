@@ -11,7 +11,7 @@ import {
 describe("foundation summary helpers", () => {
   it("keeps static workflow and component summaries available outside Supabase data access", () => {
     expect(coreComplianceComponents.map((component) => component.name)).toContain("BioType Branching Engine");
-    expect(aiWorkflowSteps).toContain("BioRisk scoring");
+    expect(aiWorkflowSteps).toContain("Risk scoring");
     expect(humanValidationWorkflowSteps).toContain("Approve/reject/request changes");
   });
 

@@ -19,7 +19,7 @@ export default async function ForgotPasswordPage({ searchParams }: ForgotPasswor
             <ShieldCheck size={18} />
           </span>
           <div>
-            <strong>PredictSafeBIO</strong>
+            <strong>PredictSafe</strong>
             <span>Account recovery</span>
           </div>
         </div>

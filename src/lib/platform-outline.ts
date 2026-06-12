@@ -50,20 +50,20 @@ export const platformCategories: PlatformCategory[] = [
   },
   {
     number: "2",
-    title: "BioRisk Assessment",
-    shortTitle: "BioRisk Assessment",
+    title: "Risk Assessment",
+    shortTitle: "Risk Assessment",
     href: "/workbench",
     accent: "blue",
     features: [
-      "BioRisk Scoring Engine",
+      "Risk Scoring Engine",
       "Hazard & Exposure Tracking",
       "Predictive Risk Alerts",
       "Trend Analysis",
       "Risk Register / Risk Factors",
       "Action Planning"
     ],
-    primaryWorkflow: "Score BioRisk, track risk register records, and surface owner action planning.",
-    statusLabel: "BioRisk records"
+    primaryWorkflow: "Score Risk, track risk register records, and surface owner action planning.",
+    statusLabel: "Risk records"
   },
   {
     number: "3",
@@ -158,12 +158,12 @@ export const changePlanRows: ChangePlanRow[] = [
     href: "/admin/demo"
   },
   {
-    category: "BioRisk Assessment",
+    category: "Risk Assessment",
     feature: "Trend Analysis",
     owner: "Biosafety Officer",
     priority: "Medium",
     status: "Ready for demo",
-    notes: "Use saved BioRisk records and audit readiness score history to show directional risk and readiness movement.",
+    notes: "Use saved Risk records and audit readiness score history to show directional risk and readiness movement.",
     href: "/assessments"
   },
   {
@@ -198,9 +198,9 @@ export const gapModuleCards = [
   },
   {
     title: "Trend Analysis",
-    category: "BioRisk Assessment",
+    category: "Risk Assessment",
     href: "/assessments",
-    summary: "Saved BioRisk records and readiness score history for directional risk movement."
+    summary: "Saved Risk records and readiness score history for directional risk movement."
   },
   {
     title: "Training Matrix",

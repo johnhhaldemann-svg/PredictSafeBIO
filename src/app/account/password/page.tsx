@@ -24,7 +24,7 @@ export default async function PasswordPage({ searchParams }: PasswordPageProps) 
             <ShieldCheck size={18} />
           </span>
           <div>
-            <strong>PredictSafeBIO</strong>
+            <strong>PredictSafe</strong>
             <span>Account security</span>
           </div>
         </div>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 
-export const metadata: Metadata = { title: "Assessment – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Assessment – PredictSafe" };
 import { StatusBadge } from "@/components/StatusBadge";
 import { updateAssessmentReviewAction } from "@/app/assessments/actions";
 import { getAssessmentDetail, getCompanyProfile } from "@/lib/supabase/data";
@@ -140,7 +140,7 @@ export default async function AssessmentDetailPage({
         <div className="page-stack">
           <header className="page-header">
             <p className="section-label">Risk Register</p>
-            <h1>BioRisk record not found</h1>
+            <h1>Risk record not found</h1>
           </header>
           <section className="panel">
             <p>This assessment was not found in the current signed-in workspace.</p>
@@ -161,7 +161,7 @@ export default async function AssessmentDetailPage({
           <div className="page-header-left">
             <p className="section-label">Assess · <Link href="/assessments">Risk Register</Link> / Detail</p>
             <h1>{assessment.workflow}</h1>
-            <p className="muted">BioRisk assessment — human review required before action.</p>
+            <p className="muted">Risk assessment — human review required before action.</p>
           </div>
           <Link className="button-secondary" href="/assessments">← Risk Register</Link>
         </header>
@@ -297,7 +297,7 @@ export default async function AssessmentDetailPage({
         <section className="panel inline-action-panel">
           <div>
             <p className="section-label">Export report</p>
-            <h2>Shareable BioRisk report</h2>
+            <h2>Shareable Risk report</h2>
             <p className="muted">Draft only — for human review. Not a regulatory release or approval record.</p>
           </div>
           <div className="form-action-row">

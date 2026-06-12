@@ -9,6 +9,7 @@ import {
 import { Suspense, type ReactNode } from "react";
 import { signOutAction } from "@/app/auth/actions";
 import { getAuthSummary } from "@/lib/supabase/data";
+import { resolvePack } from "@/lib/foundation/vertical-registry";
 import { getKnowledgePendingCount } from "@/lib/supabase/knowledge-service";
 import { hasCompletedSetupQuestionnaire } from "@/lib/supabase/questionnaire-service";
 import { getNavTier, getRoleLabel, getRoleBadgeClass, isPlatformRole } from "@/lib/role-permissions";
@@ -35,6 +36,7 @@ export async function AppShell({
   bypassSetupGate?: boolean;
 }) {
   const auth = await getAuthSummary();
+  const pack = resolvePack(auth.vertical);
   const initials = getInitials(auth.userEmail);
   const tier = getNavTier(auth.role);
   const roleLabel = getRoleLabel(auth.role);
@@ -67,7 +69,7 @@ export async function AppShell({
           {/* Left rail: brand block + grouped console nav */}
           <aside className="psb-aside" aria-label="Superadmin navigation">
             <div className="psb-brand">
-              <Link href="/admin/dashboard" className="psb-logo" aria-label="PredictSafeBIO platform console">
+              <Link href="/admin/dashboard" className="psb-logo" aria-label="PredictSafe platform console">
                 PREDICTSAFE
               </Link>
               <div className="psb-sub">Platform Console v2.4</div>
@@ -134,13 +136,13 @@ export async function AppShell({
       <a href="#main-content" className="skip-nav">Skip to main content</a>
       {/* ── Top bar ── */}
       <header className="top-nav" aria-label="Primary navigation">
-        <Link href="/workbench" className="logo-area" aria-label="PredictSafeBIO platform">
+        <Link href="/workbench" className="logo-area" aria-label={`${pack.brandLabel} platform`}>
           <div className="logo-box">
             <ShieldCheck size={16} color="#fff" aria-hidden="true" />
           </div>
           <div className="logo-text">
-            <strong>PredictSafeBIO</strong>
-            <small>Biosafety Intelligence</small>
+            <strong>{pack.brandLabel}</strong>
+            <small>{pack.tagline}</small>
           </div>
         </Link>
 

@@ -7,7 +7,7 @@ import { AiDraftBanner } from "@/components/AiDraftBanner";
 import { listMocRecords, MOC_STATUS_LABELS, MOC_STATUS_CLASS, type MocStatus } from "@/lib/supabase/moc-service";
 import { createMocAction } from "./actions";
 
-export const metadata: Metadata = { title: "Management of Change – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Management of Change – PredictSafe" };
 
 const CHANGE_TYPES = ["material", "process", "equipment", "location", "scale", "product", "work_method", "facility", "supplier", "organization"];
 const SCREEN_FLAGS = ["PSM", "HPAPI", "Cold Chain", "Select Agents", "Security"];

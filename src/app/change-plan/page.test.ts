@@ -16,11 +16,11 @@ const trainingMatrixPage = readFileSync(join(process.cwd(), "src/app/training-ma
 const reviewWorkflow = readFileSync(join(process.cwd(), "src/lib/review-workflow.ts"), "utf8");
 
 describe("command center and change plan", () => {
-  it("adds a command-center first screen while preserving BioRisk scoring", () => {
-    expect(workbenchClient).toContain("BioRisk Workbench");
+  it("adds a command-center first screen while preserving Risk scoring", () => {
+    expect(workbenchClient).toContain("Risk Workbench");
     expect(workbenchClient).toContain("category.statusLabel");
-    expect(workbenchClient).toContain("BioRisk Engine");
-    expect(workbenchClient).toContain("PredictSafeBIO Intelligence Platform Architecture");
+    expect(workbenchClient).toContain("Risk Engine");
+    expect(workbenchClient).toContain("PredictSafe Intelligence Platform Architecture");
     expect(workbenchPage).toContain("listAssessments");
     expect(workbenchPage).toContain("getAuditReadinessConsoleSummary");
     expect(workbenchPage).toContain("listChangePlanItems");

@@ -47,7 +47,7 @@ const categories: Category[] = [
     href: "/workbench",
     icon: ShieldCheck,
     subItems: [
-      { href: "/workbench",                   label: "BioRisk Workbench",   icon: Gauge,         desc: "Score and review your biosafety risks" },
+      { href: "/workbench",                   label: "Risk Workbench",   icon: Gauge,         desc: "Score and review your safety risks" },
       { href: "/workbench?tab=risk-register", label: "Risk Register",       icon: ShieldCheck,   desc: "All assessed risks and their status" },
       { href: "/hazards",                     label: "Hazard Register",     icon: AlertCircle,   desc: "Identify hazards; feeds the Predictive Engine" },
       { href: "/exposure-map",                label: "Exposure Map",        icon: Building2,     desc: "People, labs, materials & exposure routes" },

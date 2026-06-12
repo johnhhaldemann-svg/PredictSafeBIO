@@ -15,7 +15,7 @@ import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
 import { createEquipmentAction, logCalibrationAction } from "./actions";
 import { DataLoadError } from "@/components/DataLoadError";
 
-export const metadata: Metadata = { title: "Equipment & Calibration – PredictSafeBIO" };
+export const metadata: Metadata = { title: "Equipment & Calibration – PredictSafe" };
 
 const STATUS_CLASS: Record<EquipmentStatus, string> = {
   current:  "status-current",

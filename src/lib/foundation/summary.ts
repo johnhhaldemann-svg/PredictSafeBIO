@@ -23,7 +23,7 @@ export const coreComplianceComponents = [
   ["Reference Knowledge Base", "Trusted references and company-specific reference mappings."],
   ["Audit Dashboard", "Readiness score built from documents, training, CAPA, incidents, equipment, and evidence."],
   ["Regulatory Mapping", "Determines what programs, documents, records, and controls apply."],
-  ["BioRisk Scoring Engine", "Scores risk using exposure, severity, likelihood, compliance impact, training, and missing data."],
+  ["Risk Scoring Engine", "Scores risk using exposure, severity, likelihood, compliance impact, training, and missing data."],
   ["Controlled Records Linkage", "Proof records for training, equipment, temperature, incidents, chain-of-custody, and waste."],
   ["Programs & Methods Library", "Biotech safety/compliance programs and deterministic AI decision methods."],
   ["Human Validation Workflow", "AI drafts and recommends; humans review, approve, reject, or request changes."]
@@ -33,7 +33,7 @@ export const aiWorkflowSteps = [
   "Company profile intelligence",
   "BioType branching",
   "Regulatory mapping",
-  "BioRisk scoring",
+  "Risk scoring",
   "Document control",
   "Training matrix",
   "Audit dashboard"
