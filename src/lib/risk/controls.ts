@@ -69,6 +69,8 @@ export function hierarchyForControlType(type: RegisterControlType): HierarchyLev
 /**
  * Suggest a control-effectiveness tier (for ./scoring) from the hierarchy levels
  * present. Higher-order controls with redundancy reduce residual risk most.
+ * PPE-alone maps to "none" — OSHA/hierarchy doctrine treats PPE as last resort,
+ * not an independent effective control tier.
  */
 export function suggestControlEffectiveness(levels: HierarchyLevel[]): ControlEffectivenessTier {
   const hasEngineeringOrAbove = levels.some((l) => hierarchyRank(l) <= 3);

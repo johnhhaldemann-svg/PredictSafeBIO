@@ -52,9 +52,15 @@ describe("questionsForProgram", () => {
 });
 
 describe("categoryForGroup", () => {
-  it("maps lab/physical/emergency groups to critical and defaults to management", () => {
+  it("maps lab/physical/emergency/warehouse groups to critical", () => {
     expect(categoryForGroup("laboratory")).toBe("critical");
     expect(categoryForGroup("physical")).toBe("critical");
+    expect(categoryForGroup("emergency")).toBe("critical");
+    expect(categoryForGroup("warehouse")).toBe("critical");
+  });
+
+  it("maps environmental and admin to management and defaults unknown groups", () => {
+    expect(categoryForGroup("environmental")).toBe("management");
     expect(categoryForGroup("admin")).toBe("management");
     expect(categoryForGroup("nonexistent-group")).toBe("management");
   });
