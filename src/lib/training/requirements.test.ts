@@ -66,6 +66,11 @@ describe("trainingDueStatus", () => {
     expect(trainingDueStatus(annual, "2026-01-01", "2026-06-11")).toBe("current");
   });
 
+  it("reports due when exactly on the renewal date", () => {
+    // 2025-06-11 + 12 months = 2026-06-11 exactly
+    expect(trainingDueStatus(annual, "2025-06-11", "2026-06-11")).toBe("due");
+  });
+
   it("reports overdue when past the interval", () => {
     expect(trainingDueStatus(annual, "2025-01-01", "2026-06-11")).toBe("overdue");
   });
