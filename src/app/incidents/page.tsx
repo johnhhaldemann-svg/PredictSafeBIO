@@ -13,6 +13,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { OshaLogExportButton } from "@/components/OshaLogExportButton";
 import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
 import { DataLoadError } from "@/components/DataLoadError";
 import {
@@ -102,7 +103,10 @@ export default async function IncidentReportingPage({ searchParams }: Props) {
               investigation.
             </p>
           </div>
-          <Link className="button-secondary" href="/operations/capa">CAPA Records →</Link>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+            <OshaLogExportButton incidents={allRecords} />
+            <Link className="button-secondary" href="/operations/capa">CAPA Records →</Link>
+          </div>
         </header>
 
         {/* Summary cards */}
