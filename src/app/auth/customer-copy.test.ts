@@ -4,7 +4,8 @@ import { describe, expect, it } from "vitest";
 
 const loginPage = readFileSync(join(process.cwd(), "src/app/login/page.tsx"), "utf8");
 const signupPage = readFileSync(join(process.cwd(), "src/app/signup/page.tsx"), "utf8");
-const onboardingPage = readFileSync(join(process.cwd(), "src/app/onboarding/page.tsx"), "utf8");
+// Form content lives in the wizard component; page.tsx is now just an auth guard.
+const onboardingPage = readFileSync(join(process.cwd(), "src/app/onboarding/OnboardingWizard.tsx"), "utf8");
 
 describe("customer-facing copy", () => {
   it("login page uses customer language and correct brand tagline", () => {
@@ -32,10 +33,11 @@ describe("customer-facing copy", () => {
   });
 
   it("onboarding page uses customer language with no demo references", () => {
-    expect(onboardingPage).toContain("Set up your workspace");
-    expect(onboardingPage).toContain("biosafety assessments");
-    expect(onboardingPage).toContain("Create workspace");
-    expect(onboardingPage).toContain("Operating context");
+    // Wizard welcome & key UI strings
+    expect(onboardingPage).toContain("Welcome to PredictSafe");
+    expect(onboardingPage).toContain("Risk Register");
+    expect(onboardingPage).toContain("Complete Setup");
+    expect(onboardingPage).toContain("Operations questionnaire");
     // No internal dev language
     expect(onboardingPage).not.toContain("Seed your MVP workspace");
     expect(onboardingPage).not.toContain("demo company profile");
