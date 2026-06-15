@@ -74,38 +74,27 @@ export default async function TrendsPage() {
         </header>
 
         {/* KPI cards */}
-        <section className="command-card-grid" aria-label="Trend KPIs">
-          <article className={`command-card ${overdue > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><AlertCircle size={16} /></span><strong>Overdue CAPAs</strong></div>
-            <small>{overdue}</small>
-            <em>{overdue > 0 ? "Past due — immediate action needed" : "No overdue CAPAs"}</em>
-          </article>
-
-          <article className="command-card platform-blue">
-            <div><span><Clock size={16} /></span><strong>Open CAPAs</strong></div>
-            <small>{open}</small>
-            <em>
-              {openedLast30} opened last 30 days{" "}
-              {capaTrend !== 0 && (
-                <span className="inline-icon-group">
-                  {trendIcon(capaTrend, "down")}
-                  {capaTrend > 0 ? `+${capaTrend}` : capaTrend} vs prior 30d
-                </span>
-              )}
-            </em>
-          </article>
-
-          <article className={`command-card ${completionPct >= 95 ? "platform-green" : completionPct >= 80 ? "platform-blue" : "platform-red"}`}>
-            <div><span><CheckCircle size={16} /></span><strong>Training Completion</strong></div>
-            <small>{completionPct}%</small>
-            <em>{overdueTraining} overdue · target ≥ 95%</em>
-          </article>
-
-          <article className={`command-card ${auditScore >= 80 ? "platform-green" : auditScore >= 60 ? "platform-blue" : "platform-red"}`}>
-            <div><span><BarChart3 size={16} /></span><strong>Audit Readiness</strong></div>
-            <small>{auditScore}%</small>
-            <em>{auditGaps.length > 0 ? `${auditGaps.length} gap area${auditGaps.length !== 1 ? "s" : ""}` : "No gaps recorded"}</em>
-          </article>
+        <section className="kpi-grid" aria-label="Trend KPIs">
+          <div className={`kpi-card ${overdue > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Overdue CAPAs</div>
+            <div className="kpi-value">{overdue}</div>
+            <div className="kpi-sub">{overdue > 0 ? "Immediate action needed" : "None overdue"}</div>
+          </div>
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Open CAPAs</div>
+            <div className="kpi-value">{open}</div>
+            <div className="kpi-sub">{openedLast30} opened last 30 days</div>
+          </div>
+          <div className={`kpi-card ${completionPct >= 95 ? "kpi-card--green" : completionPct >= 80 ? "kpi-card--amber" : "kpi-card--red"}`}>
+            <div className="kpi-label">Training Completion</div>
+            <div className="kpi-value">{completionPct}%</div>
+            <div className="kpi-sub">{overdueTraining} overdue · target ≥ 95%</div>
+          </div>
+          <div className={`kpi-card ${auditScore >= 80 ? "kpi-card--green" : auditScore >= 60 ? "kpi-card--amber" : "kpi-card--red"}`}>
+            <div className="kpi-label">Audit Readiness</div>
+            <div className="kpi-value">{auditScore}%</div>
+            <div className="kpi-sub">{auditGaps.length > 0 ? `${auditGaps.length} gap area${auditGaps.length !== 1 ? "s" : ""}` : "No gaps"}</div>
+          </div>
         </section>
 
         <div className="form-grid">
