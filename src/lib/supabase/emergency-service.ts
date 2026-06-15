@@ -33,6 +33,7 @@ export type EmergencyPlan = {
   lastReviewed: string | null;
   nextDrillDate: string | null;
   status: PlanStatus;
+  documentUrl: string | null;
   createdAt: string;
   updatedAt: string;
   needsReview: boolean;
@@ -137,6 +138,7 @@ function mapPlanRow(row: Record<string, unknown>): EmergencyPlan {
     lastReviewed:  row.last_reviewed as string | null,
     nextDrillDate: row.next_drill_date as string | null,
     status:        (row.status as PlanStatus) ?? "draft",
+    documentUrl:   row.document_url as string | null,
     createdAt:     row.created_at as string,
     updatedAt:     row.updated_at as string,
     needsReview:   deriveNeedsReview(row.last_reviewed as string | null),
@@ -205,35 +207,35 @@ function demoPlans(): EmergencyPlan[] {
       planType: "fire", title: "Fire Emergency",
       description: "Alarm activation, evacuation routes, muster points, and fire brigade coordination.",
       lastReviewed: apr25, nextDrillDate: jul14, status: "current",
-      createdAt: apr25, updatedAt: apr25, needsReview: false,
+      documentUrl: null, createdAt: apr25, updatedAt: apr25, needsReview: false,
     },
     {
       id: "demo-erp-002", organizationId: "demo-org",
       planType: "other", title: "Earthquake Response",
       description: "Drop/cover/hold-on protocol, post-event structural inspection, and utility shutoff.",
       lastReviewed: mar25, nextDrillDate: null, status: "current",
-      createdAt: mar25, updatedAt: mar25, needsReview: false,
+      documentUrl: null, createdAt: mar25, updatedAt: mar25, needsReview: false,
     },
     {
       id: "demo-erp-003", organizationId: "demo-org",
       planType: "severe_weather", title: "Severe Weather",
       description: "NWS alert monitoring, shelter-in-place activation, and all-clear procedures.",
       lastReviewed: null, nextDrillDate: null, status: "needs_review",
-      createdAt: today, updatedAt: today, needsReview: true,
+      documentUrl: null, createdAt: today, updatedAt: today, needsReview: true,
     },
     {
       id: "demo-erp-004", organizationId: "demo-org",
       planType: "chemical_spill", title: "Chemical Spill",
       description: "Spill containment, PPE donning, decontamination corridor, and CHEMTREC notification.",
       lastReviewed: mar25, nextDrillDate: overdueDate, status: "current",
-      createdAt: mar25, updatedAt: mar25, needsReview: false,
+      documentUrl: null, createdAt: mar25, updatedAt: mar25, needsReview: false,
     },
     {
       id: "demo-erp-005", organizationId: "demo-org",
       planType: "medical", title: "Medical Emergency",
       description: "First responder activation, AED location, and EMS handoff protocol.",
       lastReviewed: may25, nextDrillDate: null, status: "current",
-      createdAt: may25, updatedAt: may25, needsReview: false,
+      documentUrl: null, createdAt: may25, updatedAt: may25, needsReview: false,
     },
   ];
 }
@@ -546,6 +548,49 @@ export async function deleteContact(id: string): Promise<EmergencyResult> {
     return { ok: true, message: "Contact removed." };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Unexpected error." };
+  }
+}
+
+export async function setPlanDocumentUrl(planId: string, url: string): Promise<EmergencyResult> {
+  if (!isSupabaseConfigured()) return { ok: true, message: "Demo: Document linked." };
+  try {
+    const ctx = await getProfileContext();
+    if (!ctx) return { ok: false, message: "Not authenticated." };
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase
+      .from("emergency_response_plans")
+      .update({ document_url: url })
+      .eq("id", planId)
+      .eq("organization_id", ctx.organizationId);
+    if (error) return { ok: false, message: error.message };
+    return { ok: true, message: "ERP document linked." };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Unexpected error." };
+  }
+}
+
+export async function uploadPlanDocument(planId: string, file: File): Promise<EmergencyResult> {
+  if (!isSupabaseConfigured()) return { ok: true, message: "Demo: Document upload skipped." };
+  try {
+    const ctx = await getProfileContext();
+    if (!ctx) return { ok: false, message: "Not authenticated." };
+    const supabase = await createSupabaseServerClient();
+    const ext  = file.name.split(".").pop()?.toLowerCase() ?? "pdf";
+    const path = `${ctx.organizationId}/${planId}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from("erp-documents")
+      .upload(path, await file.arrayBuffer(), { contentType: file.type || "application/pdf", upsert: true });
+    if (uploadError) return { ok: false, message: uploadError.message };
+    const { data: urlData } = supabase.storage.from("erp-documents").getPublicUrl(path);
+    const { error: updateError } = await supabase
+      .from("emergency_response_plans")
+      .update({ document_url: urlData.publicUrl })
+      .eq("id", planId)
+      .eq("organization_id", ctx.organizationId);
+    if (updateError) return { ok: false, message: updateError.message };
+    return { ok: true, message: "ERP document uploaded and linked." };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Upload failed." };
   }
 }
 

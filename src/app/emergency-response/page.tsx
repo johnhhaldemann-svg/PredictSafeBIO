@@ -25,6 +25,7 @@ import {
   createContactAction,
   deleteContactAction,
   resetStepsAction,
+  uploadPlanDocumentAction,
 } from "./actions";
 import { DataLoadError } from "@/components/DataLoadError";
 
@@ -171,7 +172,7 @@ function getComplianceChecks(
   const recentReview = !!plan.lastReviewed && now.getTime() - new Date(plan.lastReviewed).getTime() < MS_YEAR;
 
   const base: ComplianceCheck[] = [
-    { label: "Written ERP on file",           cite: "29 CFR 1910.38(a)",    pass: true },
+    { label: "Written ERP on file",           cite: "29 CFR 1910.38(a)",    pass: !!plan.documentUrl, tip: plan.documentUrl ? undefined : "Attach the signed ERP document below" },
     { label: "Reviewed within 12 months",     cite: "29 CFR 1910.38(f)",    pass: recentReview,       tip: plan.lastReviewed ? `Last: ${fmtShort(plan.lastReviewed)}` : "Never reviewed — update the plan" },
     { label: "Emergency contacts on file",    cite: "29 CFR 1910.38(c)(4)", pass: contacts.length > 0, tip: "Add at least one contact below" },
     { label: "Response steps documented",     cite: "29 CFR 1910.38(c)",    pass: steps.length > 0,   tip: "Add steps in the step builder" },
@@ -220,7 +221,7 @@ function quickScore(plan: EmergencyPlan, drills: EmergencyDrill[], contacts: Eme
   const MS_YEAR = 365 * 86_400_000;
   const recentDrill  = drills.filter(d => d.planId === plan.id).some(d => now.getTime() - new Date(d.drillDate).getTime() < MS_YEAR);
   const recentReview = !!plan.lastReviewed && now.getTime() - new Date(plan.lastReviewed).getTime() < MS_YEAR;
-  const checks = [true, recentReview, contacts.length > 0, recentDrill];
+  const checks = [!!plan.documentUrl, recentReview, contacts.length > 0, recentDrill];
   return { pass: checks.filter(Boolean).length, total: checks.length };
 }
 
@@ -450,32 +451,45 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
                   "Never reviewed";
 
                 return (
-                  <Link
-                    key={plan.id}
-                    href={`/emergency-response?plan=${plan.id}`}
-                    style={{ textDecoration: "none" }}
-                  >
-                    <div style={{
-                      border: isSelected ? "1px solid var(--blue-mid)" : "1px solid var(--line)",
-                      borderRadius: 8, padding: "12px 14px",
-                      background: isSelected ? "var(--blue-bg)" : "var(--panel-soft)",
-                      cursor: "pointer", height: "100%",
-                    }}>
-                      <div style={{ fontSize: 20, marginBottom: 6 }}>{PLAN_EMOJI[plan.planType]}</div>
-                      <div style={{ fontWeight: 700, fontSize: 13, color: "var(--navy)", marginBottom: 3 }}>{plan.title}</div>
-                      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 8 }}>{metaText}</div>
-                      {plan.needsReview || plan.status === "needs_review" ? (
-                        <span className="status-needs-review" style={{ fontSize: 10 }}>⚠ Review Required</span>
-                      ) : plan.status === "current" ? (
-                        <span className="status-current" style={{ fontSize: 10 }}>✓ Approved</span>
-                      ) : (
-                        <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 10px", borderRadius: 999, fontSize: 10, fontWeight: 700, background: "var(--blue-bg)", color: "var(--blue)" }}>Draft</span>
-                      )}
-                      <div style={{ marginTop: 6, fontSize: 10, fontWeight: 700, color: score.pass === score.total ? "var(--green-dk)" : "var(--amber-dk)" }}>
-                        {score.pass === score.total ? "✓" : "⚠"} {score.pass}/{score.total} OSHA checks
+                  <div key={plan.id} style={{ position: "relative" }}>
+                    <Link
+                      href={`/emergency-response?plan=${plan.id}`}
+                      style={{ textDecoration: "none", display: "block", height: "100%" }}
+                    >
+                      <div style={{
+                        border: isSelected ? "1px solid var(--blue-mid)" : "1px solid var(--line)",
+                        borderRadius: 8, padding: "12px 14px",
+                        background: isSelected ? "var(--blue-bg)" : "var(--panel-soft)",
+                        cursor: "pointer", height: "100%",
+                      }}>
+                        <div style={{ fontSize: 20, marginBottom: 6 }}>{PLAN_EMOJI[plan.planType]}</div>
+                        <div style={{ fontWeight: 700, fontSize: 13, color: "var(--navy)", marginBottom: 3 }}>{plan.title}</div>
+                        <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 8 }}>{metaText}</div>
+                        {plan.needsReview || plan.status === "needs_review" ? (
+                          <span className="status-needs-review" style={{ fontSize: 10 }}>⚠ Review Required</span>
+                        ) : plan.status === "current" ? (
+                          <span className="status-current" style={{ fontSize: 10 }}>✓ Approved</span>
+                        ) : (
+                          <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 10px", borderRadius: 999, fontSize: 10, fontWeight: 700, background: "var(--blue-bg)", color: "var(--blue)" }}>Draft</span>
+                        )}
+                        <div style={{ marginTop: 6, fontSize: 10, fontWeight: 700, color: score.pass === score.total ? "var(--green-dk)" : "var(--amber-dk)" }}>
+                          {score.pass === score.total ? "✓" : "⚠"} {score.pass}/{score.total} OSHA checks
+                        </div>
                       </div>
-                    </div>
-                  </Link>
+                    </Link>
+                    <Link
+                      href={`/emergency-response/respond?plan=${plan.id}`}
+                      title="Open mobile response view"
+                      style={{
+                        position: "absolute", top: 8, right: 8,
+                        fontSize: 10, fontWeight: 800, color: "#C0392B",
+                        background: "#FECACA", borderRadius: 6, padding: "2px 7px",
+                        textDecoration: "none", letterSpacing: "0.04em",
+                      }}
+                    >
+                      ⚡ Respond
+                    </Link>
+                  </div>
                 );
               })}
 
@@ -552,6 +566,58 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
                     ⚠ {complianceChecks.length - compliancePassCount} gap{complianceChecks.length - compliancePassCount !== 1 ? "s" : ""} identified — address these to maintain OSHA 29 CFR 1910.38 compliance.
                   </div>
                 )}
+              </section>
+            )}
+
+            {/* ERP Document */}
+            {selectedPlan && (
+              <section className="panel" style={{ marginBottom: 16 }}>
+                <div className="panel-heading" style={{ marginBottom: 0, paddingBottom: 12 }}>
+                  <div>
+                    <p className="section-label">ERP document</p>
+                    <h2 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      Written Plan on File
+                      {selectedPlan.documentUrl ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 10px", borderRadius: 999, fontSize: 10, fontWeight: 800, background: "var(--green-bg)", color: "var(--green-dk)" }}>✓ Attached</span>
+                      ) : (
+                        <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 10px", borderRadius: 999, fontSize: 10, fontWeight: 800, background: "#FEF2F2", color: "var(--red-dk)" }}>Missing — required by 29 CFR 1910.38(a)</span>
+                      )}
+                    </h2>
+                  </div>
+                </div>
+                <div style={{ padding: "0 16px 16px" }}>
+                  {selectedPlan.documentUrl && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 6, background: "var(--green-bg)", border: "1px solid var(--green)", marginBottom: 12 }}>
+                      <span style={{ fontSize: 16 }}>📄</span>
+                      <a href={selectedPlan.documentUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, fontSize: 12, fontWeight: 600, color: "var(--blue)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {selectedPlan.documentUrl.split("/").pop() || "View document"}
+                      </a>
+                      <span style={{ fontSize: 10, color: "var(--green-dk)", fontWeight: 700 }}>on file</span>
+                    </div>
+                  )}
+                  {adminAccess.signedIn && (
+                    <form action={uploadPlanDocumentAction} encType="multipart/form-data" style={{ display: "grid", gap: 8 }}>
+                      <input type="hidden" name="planId" value={selectedPlan.id} />
+                      <p style={{ fontSize: 11, color: "var(--muted)", margin: 0 }}>
+                        {selectedPlan.documentUrl ? "Replace document:" : "Attach the signed ERP document (PDF, DOCX, or link):"}
+                      </p>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "end" }}>
+                        <label>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", display: "block", marginBottom: 4 }}>Document URL</span>
+                          <input name="documentUrl" type="url" placeholder="https://drive.example.com/erp-fire-2026.pdf" style={{ width: "100%" }} />
+                        </label>
+                        <button className="button-secondary" type="submit" style={{ marginBottom: 0, whiteSpace: "nowrap", fontSize: 11 }}>Link</button>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "end" }}>
+                        <label>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", display: "block", marginBottom: 4 }}>— or upload file</span>
+                          <input name="document" type="file" accept=".pdf,.doc,.docx" style={{ width: "100%", fontSize: 12 }} />
+                        </label>
+                        <button className="button-primary" type="submit" style={{ marginBottom: 0, whiteSpace: "nowrap", fontSize: 11 }}>Upload</button>
+                      </div>
+                    </form>
+                  )}
+                </div>
               </section>
             )}
 

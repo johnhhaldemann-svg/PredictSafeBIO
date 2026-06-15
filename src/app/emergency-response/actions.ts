@@ -9,6 +9,8 @@ import {
   createContact,
   deleteContact,
   resetSteps,
+  uploadPlanDocument,
+  setPlanDocumentUrl,
   type PlanType,
   type DrillOutcome,
   type ContactType,
@@ -123,6 +125,26 @@ export async function deleteContactAction(formData: FormData) {
   if (!id) redirect(authMessage("/emergency-response", "Invalid contact."));
   await deleteContact(id);
   redirect("/emergency-response");
+}
+
+export async function uploadPlanDocumentAction(formData: FormData) {
+  const planId  = String(formData.get("planId") ?? "").trim();
+  const docUrl  = String(formData.get("documentUrl") ?? "").trim();
+  const file    = formData.get("document") as File | null;
+  const back    = planId ? `/emergency-response?plan=${planId}` : "/emergency-response";
+
+  if (!planId) redirect(authMessage("/emergency-response", "Invalid plan."));
+
+  let result;
+  if (docUrl) {
+    result = await setPlanDocumentUrl(planId, docUrl);
+  } else if (file && file.size > 0) {
+    result = await uploadPlanDocument(planId, file);
+  } else {
+    redirect(authMessage(back, "Provide a document URL or select a file."));
+  }
+
+  redirect(result.ok ? authSuccess(back, result.message) : authMessage(back, result.message));
 }
 
 export async function resetStepsAction(formData: FormData) {
