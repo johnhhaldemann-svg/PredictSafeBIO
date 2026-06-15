@@ -63,31 +63,28 @@ export default async function ProgramToolPage({ params }: Props) {
         </section>
 
         {/* Quick actions */}
-        <section className="command-card-grid" aria-label="Quick actions">
-          <article className="command-card platform-blue">
-            <div><span><ClipboardList size={16} /></span><strong>Log Inspection</strong></div>
-            <em>Record a completed inspection or audit for this program.</em>
-            <Link className="button-primary compact" href={program.inspectionHref}>
-              Schedule / Log
-            </Link>
-          </article>
+        <div className="plan-grid" aria-label="Quick actions">
+          <Link href={program.inspectionHref} className="plan-card plan-card--active">
+            <div className="plan-card-icon">📋</div>
+            <div className="plan-card-name">Log Inspection</div>
+            <div className="plan-card-meta">Record completed inspection or audit</div>
+            <span className="badge badge--blue">Schedule / Log →</span>
+          </Link>
           {program.relatedHref ? (
-            <article className="command-card platform-green">
-              <div><span><Zap size={16} /></span><strong>Platform Module</strong></div>
-              <em>This program has a dedicated tool in {pack.brandLabel}.</em>
-              <Link className="button-primary compact" href={program.relatedHref}>
-                {program.relatedLabel ?? "Open Module"}
-              </Link>
-            </article>
-          ) : null}
-          <article className="command-card platform-blue">
-            <div><span><FileText size={16} /></span><strong>Inspections Log</strong></div>
-            <em>Review all past inspections and open findings.</em>
-            <Link className="button-secondary compact" href="/inspections">
-              View Inspections
+            <Link href={program.relatedHref} className="plan-card">
+              <div className="plan-card-icon">⚡</div>
+              <div className="plan-card-name">Platform Module</div>
+              <div className="plan-card-meta">Dedicated tool in {pack.brandLabel}</div>
+              <span className="badge badge--green">{program.relatedLabel ?? "Open Module"} →</span>
             </Link>
-          </article>
-        </section>
+          ) : null}
+          <Link href="/inspections" className="plan-card">
+            <div className="plan-card-icon">📊</div>
+            <div className="plan-card-name">Inspections Log</div>
+            <div className="plan-card-meta">All past inspections &amp; findings</div>
+            <span className="badge badge--blue">View →</span>
+          </Link>
+        </div>
 
         {/* Vertical-specific note */}
         <section className="panel">

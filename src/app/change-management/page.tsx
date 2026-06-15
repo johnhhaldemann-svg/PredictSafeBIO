@@ -59,24 +59,20 @@ export default async function ChangeManagementPage() {
         </section>
 
         {/* Module cards */}
-        <section className="command-card-grid" aria-label="Change management modules">
-          <article className="command-card platform-blue">
-            <div><span><ClipboardList size={16} /></span><strong>Change Plan</strong></div>
-            <em>
-              Strategic improvement roadmap — track planned changes to programs, processes, and
-              compliance gaps. Prioritise by impact and monitor progress to completion.
-            </em>
-            <Link className="button-secondary compact" href="/change-plan">Open Change Plan →</Link>
-          </article>
-          <article className="command-card platform-blue">
-            <div><span><RefreshCw size={16} /></span><strong>Management of Change</strong></div>
-            <em>
-              Operational change control — when materials, processes, equipment, or scale change,
-              controls must be revalidated. Auto-routes to reviewers based on affected programs.
-            </em>
-            <Link className="button-secondary compact" href="/operate/management-of-change">Open MOC →</Link>
-          </article>
-        </section>
+        <div className="plan-grid" aria-label="Change management modules" style={{ padding: 0, gridTemplateColumns: "repeat(2, 1fr)" }}>
+          <Link href="/change-plan" className="plan-card">
+            <div className="plan-card-icon">📋</div>
+            <div className="plan-card-name">Change Plan</div>
+            <div className="plan-card-meta">Strategic improvement roadmap</div>
+            <span className="badge badge--blue">Open →</span>
+          </Link>
+          <Link href="/operate/management-of-change" className="plan-card">
+            <div className="plan-card-icon">🔄</div>
+            <div className="plan-card-name">Management of Change</div>
+            <div className="plan-card-meta">Operational change control & MOC records</div>
+            <span className="badge badge--blue">Open →</span>
+          </Link>
+        </div>
       </div>
     </AppShell>
   );

@@ -121,22 +121,27 @@ export default async function RiskCommandCenterPage() {
                 <h2>Risk register, programs &amp; change signals</h2>
               </div>
             </div>
-            <div className="command-card-grid command-card-grid--tight">
-              <article className={`command-card ${manualSignals.overdueRiskRegister > 0 ? "platform-red" : "platform-green"} command-card--compact`}>
-                <div><strong>Overdue register items</strong></div><small>{manualSignals.overdueRiskRegister}</small><em>Risk register entries past due.</em>
-              </article>
-              <article className={`command-card ${manualSignals.programsPending > 0 ? "platform-blue" : "platform-green"} command-card--compact`}>
-                <div><strong>Programs pending</strong></div><small>{manualSignals.programsPending}</small><em>Awaiting activation decision.</em>
-              </article>
-              <article className={`command-card ${manualSignals.mocAwaitingReview > 0 ? "platform-red" : "platform-green"} command-card--compact`}>
-                <div><strong>Changes awaiting review</strong></div><small>{manualSignals.mocAwaitingReview}</small><em>MOC records in review.</em>
-              </article>
-              <article className={`command-card ${manualSignals.aiPendingReview > 0 ? "platform-blue" : "platform-green"} command-card--compact`}>
-                <div><strong>AI drafts to review</strong></div><small>{manualSignals.aiPendingReview}</small><em>AI recommendations pending human review.</em>
-              </article>
-              <article className={`command-card ${manualSignals.qualifiedExpiring > 0 ? "platform-red" : "platform-green"} command-card--compact`}>
-                <div><strong>Qualified expirations</strong></div><small>{manualSignals.qualifiedExpiring}</small><em>Qualified persons expiring in 30 days.</em>
-              </article>
+            <div className="kpi-grid" style={{ padding: "16px" }}>
+              <div className={`kpi-card ${manualSignals.overdueRiskRegister > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+                <div className="kpi-label">Overdue Register Items</div>
+                <div className="kpi-value">{manualSignals.overdueRiskRegister}</div>
+                <div className="kpi-sub">Risk register past due</div>
+              </div>
+              <div className={`kpi-card ${manualSignals.programsPending > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+                <div className="kpi-label">Programs Pending</div>
+                <div className="kpi-value">{manualSignals.programsPending}</div>
+                <div className="kpi-sub">Awaiting activation</div>
+              </div>
+              <div className={`kpi-card ${manualSignals.mocAwaitingReview > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+                <div className="kpi-label">Changes Awaiting Review</div>
+                <div className="kpi-value">{manualSignals.mocAwaitingReview}</div>
+                <div className="kpi-sub">MOC records in review</div>
+              </div>
+              <div className={`kpi-card ${manualSignals.aiPendingReview > 0 ? "kpi-card--purple" : "kpi-card--green"}`}>
+                <div className="kpi-label">AI Drafts to Review</div>
+                <div className="kpi-value">{manualSignals.aiPendingReview}</div>
+                <div className="kpi-sub">Pending human review</div>
+              </div>
             </div>
           </section>
         )}
@@ -149,15 +154,13 @@ export default async function RiskCommandCenterPage() {
               <h2>Active cells by type</h2>
             </div>
           </div>
-          <div className="command-card-grid command-card-grid--tight">
+          <div className="kpi-grid" style={{ padding: "16px" }}>
             {CELL_TYPE_ORDER.map((type) => (
-              <article key={type} className="command-card platform-blue command-card--compact">
-                <div>
-                  <strong>{cellTypeLabels[type]}</strong>
-                </div>
-                <small>{byType[type]}</small>
-                <em>{cellTypeDescriptions[type]}</em>
-              </article>
+              <div key={type} className={`kpi-card ${byType[type] > 0 ? "kpi-card--blue" : "kpi-card--green"}`}>
+                <div className="kpi-label">{cellTypeLabels[type]}</div>
+                <div className="kpi-value">{byType[type]}</div>
+                <div className="kpi-sub">{cellTypeDescriptions[type]}</div>
+              </div>
             ))}
           </div>
         </section>
