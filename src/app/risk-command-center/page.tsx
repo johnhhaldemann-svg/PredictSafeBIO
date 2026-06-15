@@ -87,31 +87,29 @@ export default async function RiskCommandCenterPage() {
         />
 
         {/* Top KPI strip */}
-        <section className="command-card-grid" aria-label="Risk summary">
-          <article className={`command-card ${criticalCount > 0 ? "platform-red" : highCount > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><AlertTriangle size={16} /></span><strong>Critical / High</strong></div>
-            <small>{criticalCount + highCount}</small>
-            <em>
-              {criticalCount > 0 ? `${criticalCount} critical · ` : ""}
-              {highCount > 0 ? `${highCount} high.` : ""}
-              {criticalCount === 0 && highCount === 0 ? "No critical or high risk cells active." : ""}
-            </em>
-          </article>
-          <article className="command-card platform-blue">
-            <div><span><Activity size={16} /></span><strong>Active signals</strong></div>
-            <small>{totalActive}</small>
-            <em>Total active risk cells across all tools.</em>
-          </article>
-          <article className={`command-card ${byType.failure_cell > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><Zap size={16} /></span><strong>Failures</strong></div>
-            <small>{byType.failure_cell}</small>
-            <em>{byType.failure_cell > 0 ? "Control breakdowns requiring action." : "No active failure cells."}</em>
-          </article>
-          <article className="command-card platform-blue">
-            <div><span><TrendingUp size={16} /></span><strong>Precursors</strong></div>
-            <small>{byType.precursor_cell}</small>
-            <em>Early warning signals detected.</em>
-          </article>
+        <section className="kpi-grid" aria-label="Risk summary">
+          <div className={`kpi-card ${criticalCount > 0 ? "kpi-card--red" : highCount > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+            <div className="kpi-label">Critical / High</div>
+            <div className="kpi-value">{criticalCount + highCount}</div>
+            <div className="kpi-sub">
+              {criticalCount > 0 ? `${criticalCount} critical` : highCount > 0 ? `${highCount} high priority` : "No critical signals"}
+            </div>
+          </div>
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Active Signals</div>
+            <div className="kpi-value">{totalActive}</div>
+            <div className="kpi-sub">Risk cells across all tools</div>
+          </div>
+          <div className={`kpi-card ${byType.failure_cell > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Failures</div>
+            <div className="kpi-value">{byType.failure_cell}</div>
+            <div className="kpi-sub">{byType.failure_cell > 0 ? "Control breakdowns" : "No active failures"}</div>
+          </div>
+          <div className="kpi-card kpi-card--purple">
+            <div className="kpi-label">Precursors</div>
+            <div className="kpi-value">{byType.precursor_cell}</div>
+            <div className="kpi-sub">Early warning signals</div>
+          </div>
         </section>
 
         {/* Manual v1.1 - platform alignment signals */}

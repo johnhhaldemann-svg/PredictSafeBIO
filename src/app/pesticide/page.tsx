@@ -67,22 +67,27 @@ export default async function PesticidePage({ searchParams }: Props) {
         </header>
 
         {/* KPI strip */}
-        <section className="command-card-grid" aria-label="Pesticide summary">
-          <article className="command-card platform-blue">
-            <div><span><Sprout size={16} /></span><strong>Applications logged</strong></div>
-            <small>{totalCount}</small>
-            <em>Total active records on file.</em>
-          </article>
-          <article className={`command-card ${deviationCount > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><AlertTriangle size={16} /></span><strong>Deviations</strong></div>
-            <small>{deviationCount}</small>
-            <em>{deviationCount > 0 ? "Applications with noted deviations — requires EHS review." : "No deviations on record."}</em>
-          </article>
-          <article className={`command-card ${missingLabel > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><CheckCircle2 size={16} /></span><strong>Missing label</strong></div>
-            <small>{missingLabel}</small>
-            <em>{missingLabel > 0 ? "Label document not on file — EPA label required." : "All records have label on file."}</em>
-          </article>
+        <section className="kpi-grid" aria-label="Pesticide summary">
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Applications Logged</div>
+            <div className="kpi-value">{totalCount}</div>
+            <div className="kpi-sub">Active records on file</div>
+          </div>
+          <div className={`kpi-card ${deviationCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Deviations</div>
+            <div className="kpi-value">{deviationCount}</div>
+            <div className="kpi-sub">{deviationCount > 0 ? "Requires EHS review" : "None on record"}</div>
+          </div>
+          <div className={`kpi-card ${missingLabel > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+            <div className="kpi-label">Missing Label</div>
+            <div className="kpi-value">{missingLabel}</div>
+            <div className="kpi-sub">{missingLabel > 0 ? "EPA label required" : "All labels on file"}</div>
+          </div>
+          <div className="kpi-card kpi-card--purple">
+            <div className="kpi-label">This Month</div>
+            <div className="kpi-value">{allRecords.filter(r => r.applicationDate && new Date(r.applicationDate) >= new Date(new Date().getFullYear(), new Date().getMonth(), 1)).length}</div>
+            <div className="kpi-sub">Applications this month</div>
+          </div>
         </section>
 
         {deviationCount > 0 && (

@@ -86,22 +86,27 @@ export default async function LessonsLearnedPage({ searchParams }: Props) {
         </header>
 
         {/* KPI strip */}
-        <section className="command-card-grid" aria-label="Lessons summary">
-          <article className={`command-card ${published.length > 0 ? "platform-green" : "platform-blue"}`}>
-            <div><span><BookOpen size={16} /></span><strong>Published lessons</strong></div>
-            <small>{published.length}</small>
-            <em>{published.length > 0 ? "Shared with the team." : "No published lessons yet."}</em>
-          </article>
-          <article className={`command-card ${drafts.length > 0 ? "platform-blue" : "platform-green"}`}>
-            <div><span><BookOpen size={16} /></span><strong>Drafts pending review</strong></div>
-            <small>{drafts.length}</small>
-            <em>{drafts.length > 0 ? `${drafts.length} lesson${drafts.length !== 1 ? "s" : ""} awaiting publish.` : "No drafts."}</em>
-          </article>
-          <article className="command-card platform-blue">
-            <div><span><BookOpen size={16} /></span><strong>Total captured</strong></div>
-            <small>{filterCounts.all}</small>
-            <em>Lessons from all sources.</em>
-          </article>
+        <section className="kpi-grid" aria-label="Lessons summary">
+          <div className={`kpi-card ${published.length > 0 ? "kpi-card--green" : "kpi-card--blue"}`}>
+            <div className="kpi-label">Published</div>
+            <div className="kpi-value">{published.length}</div>
+            <div className="kpi-sub">{published.length > 0 ? "Shared with team" : "None published yet"}</div>
+          </div>
+          <div className={`kpi-card ${drafts.length > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+            <div className="kpi-label">Drafts</div>
+            <div className="kpi-value">{drafts.length}</div>
+            <div className="kpi-sub">{drafts.length > 0 ? "Awaiting publish" : "No drafts"}</div>
+          </div>
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Total Captured</div>
+            <div className="kpi-value">{filterCounts.all}</div>
+            <div className="kpi-sub">From all sources</div>
+          </div>
+          <div className="kpi-card kpi-card--purple">
+            <div className="kpi-label">Archived</div>
+            <div className="kpi-value">{allLessons.filter(l => l.status === "archived").length}</div>
+            <div className="kpi-sub">Historical record</div>
+          </div>
         </section>
 
         {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}

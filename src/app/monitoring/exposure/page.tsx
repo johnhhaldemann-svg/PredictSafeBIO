@@ -93,22 +93,27 @@ export default async function ExposureMonitoringPage({ searchParams }: Props) {
         </header>
 
         {/* KPI strip */}
-        <section className="command-card-grid" aria-label="Exposure monitoring summary">
-          <article className="command-card platform-blue">
-            <div><span><Activity size={16} /></span><strong>Total pathways</strong></div>
-            <small>{totalCount}</small>
-            <em>Exposure pathways in the register.</em>
-          </article>
-          <article className={`command-card ${highUrgencyCount > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><AlertTriangle size={16} /></span><strong>High urgency — active</strong></div>
-            <small>{highUrgencyCount}</small>
-            <em>{highUrgencyCount > 0 ? "Routine high-route exposures need review." : "No routine high-route exposures."}</em>
-          </article>
-          <article className="command-card platform-green">
-            <div><span><ShieldCheck size={16} /></span><strong>Mitigated</strong></div>
-            <small>{mitigatedCount}</small>
-            <em>Pathways with controls in place.</em>
-          </article>
+        <section className="kpi-grid" aria-label="Exposure monitoring summary">
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Total Pathways</div>
+            <div className="kpi-value">{totalCount}</div>
+            <div className="kpi-sub">In register</div>
+          </div>
+          <div className={`kpi-card ${highUrgencyCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">High Urgency</div>
+            <div className="kpi-value">{highUrgencyCount}</div>
+            <div className="kpi-sub">{highUrgencyCount > 0 ? "Need immediate review" : "None high urgency"}</div>
+          </div>
+          <div className="kpi-card kpi-card--green">
+            <div className="kpi-label">Mitigated</div>
+            <div className="kpi-value">{mitigatedCount}</div>
+            <div className="kpi-sub">Controls in place</div>
+          </div>
+          <div className="kpi-card kpi-card--purple">
+            <div className="kpi-label">Unmitigated</div>
+            <div className="kpi-value">{totalCount - mitigatedCount}</div>
+            <div className="kpi-sub">Without controls</div>
+          </div>
         </section>
 
         {/* Urgency alert */}
