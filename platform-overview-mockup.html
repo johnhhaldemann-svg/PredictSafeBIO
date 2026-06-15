@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PredictSafeBIO — Platform Overview: Existing + Coming Soon</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d2e;
+    --surface2: #222538;
+    --surface3: #2a2d44;
+    --border: #2e3152;
+    --accent: #6366f1;
+    --accent-light: #818cf8;
+    --accent-glow: rgba(99,102,241,0.15);
+    --green: #22c55e;
+    --green-bg: rgba(34,197,94,0.08);
+    --yellow: #eab308;
+    --yellow-bg: rgba(234,179,8,0.1);
+    --red: #ef4444;
+    --red-bg: rgba(239,68,68,0.1);
+    --orange: #f97316;
+    --orange-bg: rgba(249,115,22,0.1);
+    --blue: #3b82f6;
+    --blue-bg: rgba(59,130,246,0.1);
+    --cyan: #06b6d4;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --new: #a855f7;
+    --new-bg: rgba(168,85,247,0.12);
+    --new-border: rgba(168,85,247,0.35);
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  /* ── PRESENTATION HEADER ── */
+  .pres-header {
+    background: linear-gradient(135deg, #111827, #1a1d2e);
+    border-bottom: 1px solid var(--border);
+    padding: 32px 40px 28px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .pres-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 80% at 50% -20%, rgba(99,102,241,0.15), transparent);
+    pointer-events: none;
+  }
+  .pres-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 14px;
+  }
+  .pres-logo-icon {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .pres-subtitle {
+    font-size: 15px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+  }
+
+  /* LEGEND */
+  .legend {
+    display: inline-flex;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 40px;
+    padding: 8px 16px;
+    margin-bottom: 8px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 0 12px;
+    border-right: 1px solid var(--border);
+  }
+  .legend-item:last-child { border-right: none; }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 3px;
+  }
+  .ld-live { background: var(--green); }
+  .ld-inprog { background: var(--yellow); }
+  .ld-new { background: var(--new); }
+
+  .pres-note {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
+  /* ── APP SHELL ── */
+  .app-shell {
+    display: grid;
+    grid-template-columns: 220px 1fr 290px;
+    min-height: calc(100vh - 220px);
+    position: relative;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: 52px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    grid-column: 1 / -1;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: white;
+  }
+  .pill {
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .pill-live { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  .pill-new  { background: var(--new-bg); color: var(--new); border: 1px solid var(--new-border); }
+  .pill-beta { background: var(--accent-glow); color: var(--accent-light); border: 1px solid rgba(99,102,241,0.3); }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    position: relative;
+  }
+  .sidebar-section { margin-bottom: 20px; }
+  .sidebar-label {
+    padding: 0 14px 6px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 14px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+  }
+  .sidebar-item:hover { background: var(--surface2); color: var(--text); }
+  .sidebar-item.active {
+    background: var(--accent-glow);
+    color: var(--accent-light);
+    border-right: 2px solid var(--accent);
+  }
+  .sidebar-item .icon { font-size: 14px; width: 18px; text-align: center; }
+
+  /* Status tags on sidebar items */
+  .si-tag {
+    margin-left: auto;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+  }
+  .si-live { background: rgba(34,197,94,0.12); color: var(--green); }
+  .si-new  { background: var(--new-bg); color: var(--new); }
+  .si-soon { background: var(--yellow-bg); color: var(--yellow); }
+
+  /* ── MAIN ── */
+  .main {
+    padding: 20px;
+    overflow-y: auto;
+    background: var(--bg);
+  }
+
+  /* Section headers */
+  .section-block {
+    margin-bottom: 24px;
+  }
+  .section-flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    letter-spacing: 0.3px;
+  }
+  .sf-live { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  .sf-new  { background: var(--new-bg); color: var(--new); border: 1px solid var(--new-border); }
+  .sf-soon { background: var(--yellow-bg); color: var(--yellow); border: 1px solid rgba(234,179,8,0.3); }
+
+  .section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+  }
+
+  /* ── EXISTING FEATURE CARDS ── */
+  .feature-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .feature-row-2 { grid-template-columns: repeat(2, 1fr); }
+  .feature-row-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .feat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    position: relative;
+  }
+  .feat-card.is-live {
+    border-color: rgba(34,197,94,0.2);
+  }
+  .feat-card.is-new {
+    border-color: var(--new-border);
+    background: linear-gradient(135deg, var(--surface), rgba(168,85,247,0.05));
+    box-shadow: 0 0 0 1px var(--new-border), 0 4px 24px rgba(168,85,247,0.08);
+  }
+  .feat-card.is-soon {
+    border-color: rgba(234,179,8,0.25);
+    background: linear-gradient(135deg, var(--surface), rgba(234,179,8,0.03));
+    opacity: 0.85;
+  }
+
+  /* Corner ribbon */
+  .card-ribbon {
+    position: absolute;
+    top: 10px; right: 10px;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+  }
+  .cr-live { background: rgba(34,197,94,0.12); color: var(--green); }
+  .cr-new  { background: var(--new-bg); color: var(--new); }
+  .cr-soon { background: var(--yellow-bg); color: var(--yellow); }
+
+  .feat-icon { font-size: 22px; margin-bottom: 8px; }
+  .feat-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .feat-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+
+  /* Mini stat row */
+  .feat-stats {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .feat-stat { font-size: 10px; color: var(--text-dim); }
+  .feat-stat strong { color: var(--text); display: block; font-size: 13px; font-weight: 700; }
+
+  /* ── NEW FEATURE HIGHLIGHT BOX ── */
+  .new-feature-box {
+    background: var(--surface);
+    border: 2px solid var(--new-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 12px;
+  }
+  .new-feature-box::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(168,85,247,0.06), transparent);
+    pointer-events: none;
+  }
+  .nfb-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--new-border);
+    background: rgba(168,85,247,0.06);
+  }
+  .nfb-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 700;
+  }
+  .nfb-body { padding: 14px 16px; }
+
+  /* ── PLAN MINI CARDS ── */
+  .plan-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .plan-mini {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .plan-mini::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .pm-fire::before   { background: linear-gradient(90deg,#ef4444,#f97316); }
+  .pm-quake::before  { background: linear-gradient(90deg,#eab308,#f97316); }
+  .pm-weather::before{ background: linear-gradient(90deg,#3b82f6,#06b6d4); }
+  .pm-chem::before   { background: linear-gradient(90deg,#8b5cf6,#06b6d4); }
+  .pm-med::before    { background: linear-gradient(90deg,#22c55e,#06b6d4); }
+  .pm-add::before    { background: var(--border); }
+
+  .plan-mini .pm-icon { font-size: 18px; margin-bottom: 6px; }
+  .plan-mini .pm-name { font-size: 11px; font-weight: 700; margin-bottom: 3px; }
+  .plan-mini .pm-steps { font-size: 10px; color: var(--text-dim); }
+  .plan-mini .pm-tag {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-top: 6px;
+    display: inline-block;
+  }
+
+  /* ── BUILDER STEPS MINI ── */
+  .steps-mini { list-style: none; }
+  .step-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+  }
+  .step-row:last-child { border-bottom: none; }
+  .step-dot {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; flex-shrink: 0;
+  }
+  .sd-done { background: var(--green); color: white; }
+  .sd-prog { border: 2px solid var(--accent); }
+  .sd-pend { border: 2px solid var(--border); }
+
+  /* ── WEATHER MINI ── */
+  .weather-mini {
+    background: linear-gradient(135deg, #1a2d4a, #1e3a5f);
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  .wm-loc { font-size: 10px; color: var(--blue); font-weight: 600; margin-bottom: 6px; }
+  .wm-main { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .wm-temp { font-size: 24px; font-weight: 700; }
+  .wm-icon { font-size: 28px; }
+  .wm-cond { font-size: 10px; color: var(--text-muted); }
+  .wm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding-top: 8px; border-top: 1px solid rgba(59,130,246,0.15); }
+  .wm-stat { font-size: 10px; color: var(--text-muted); }
+  .wm-stat strong { color: var(--text); font-size: 12px; display: block; }
+
+  .alert-strip {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    margin-bottom: 6px;
+  }
+  .as-orange { background: var(--orange-bg); border: 1px solid rgba(249,115,22,0.3); }
+  .as-orange .as-title { color: var(--orange); font-weight: 700; }
+  .as-green  { background: var(--green-bg);  border: 1px solid rgba(34,197,94,0.3); }
+  .as-green  .as-title { color: var(--green); font-weight: 700; }
+
+  .as-text p { color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+
+  /* ── INTEGRATIONS ── */
+  .int-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 6px;
+    font-size: 11px;
+  }
+  .int-icon { font-size: 16px; }
+  .int-name { font-weight: 600; flex: 1; }
+  .int-sub { font-size: 10px; color: var(--text-dim); }
+  .toggle {
+    width: 28px; height: 16px;
+    border-radius: 8px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--green); }
+  .toggle.off { background: var(--surface3); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: white;
+    top: 2px;
+  }
+  .toggle.on::after  { left: 14px; }
+  .toggle.off::after { left: 2px; }
+
+  /* ── RIGHT PANEL ── */
+  .right-panel {
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+  }
+  .rp-section {
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rp-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Mini contacts */
+  .contact-mini {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+  }
+  .contact-mini:last-child { border-bottom: none; }
+  .ca {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; color: white;
+  }
+  .cn { font-size: 11px; font-weight: 600; }
+  .cr { font-size: 10px; color: var(--text-dim); }
+  .cs { margin-left: auto; width: 6px; height: 6px; border-radius: 50%; }
+
+  /* Drill items */
+  .drill-mini {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+  }
+  .drill-mini:last-child { border-bottom: none; }
+  .dm-score {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+
+  /* ── PREDICTIVE ENGINE CARD ── */
+  .predict-card {
+    background: var(--accent-glow);
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    font-size: 11px;
+    margin-bottom: 6px;
+    line-height: 1.5;
+  }
+  .predict-card .pc-label { color: var(--accent-light); font-weight: 700; margin-bottom: 4px; }
+  .predict-card p { color: var(--text-muted); }
+
+  /* ── ANNOTATION CALLOUTS ── */
+  .callout-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    margin-bottom: 10px;
+  }
+  .cb-live { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); }
+  .cb-live strong { color: var(--green); }
+  .cb-live p { color: var(--text-muted); }
+  .cb-new  { background: var(--new-bg); border: 1px solid var(--new-border); }
+  .cb-new  strong { color: var(--new); }
+  .cb-new  p { color: var(--text-muted); }
+
+  /* ── AI RECS MINI ── */
+  .ai-rec {
+    background: var(--accent-glow);
+    border: 1px solid rgba(99,102,241,0.25);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    font-size: 10px;
+    margin-bottom: 6px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .ai-rec strong { color: var(--accent-light); display: block; margin-bottom: 2px; }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0;
+  }
+
+  /* ── BOTTOM FOOTER / ROADMAP STRIP ── */
+  .roadmap-strip {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 20px 40px;
+  }
+  .roadmap-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .roadmap-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .roadmap-phase {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    position: relative;
+  }
+  .roadmap-phase.current { border-color: var(--green); }
+  .roadmap-phase.active  { border-color: var(--accent); }
+  .roadmap-phase.next    { border-color: var(--new-border); }
+  .roadmap-phase.future  { border-color: var(--border); opacity: 0.6; }
+
+  .rp-phase-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .rp-phase-label.c-green   { color: var(--green); }
+  .rp-phase-label.c-accent  { color: var(--accent-light); }
+  .rp-phase-label.c-new     { color: var(--new); }
+  .rp-phase-label.c-dim     { color: var(--text-dim); }
+
+  .rp-phase-name { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+  .rp-phase-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .rp-phase-item .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     PRESENTATION HEADER
+═══════════════════════════════════════════════════ -->
+<div class="pres-header">
+  <div class="pres-logo">
+    <div class="pres-logo-icon">🛡️</div>
+    PredictSafeBIO
+  </div>
+  <div class="pres-subtitle">Platform Overview — What's Live &amp; What's Coming</div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot ld-live"></div>
+      <span style="color:var(--green);">Currently Live</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot ld-inprog"></div>
+      <span style="color:var(--yellow);">In Development</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot ld-new"></div>
+      <span style="color:var(--new);">Adding Now — Emergency Response + Weather</span>
+    </div>
+  </div>
+  <div class="pres-note">All screens are interactive mockups — hover to explore</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     APP SHELL
+═══════════════════════════════════════════════════ -->
+<div style="display:grid;grid-template-rows:auto 1fr;">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-icon">🛡️</div>
+      PredictSafeBIO
+      <span class="pill pill-beta">BETA</span>
+    </div>
+    <div style="font-size:11px;color:var(--text-dim);font-style:italic;">Lilly Site — Indiana &nbsp;·&nbsp; June 2026</div>
+    <div class="topbar-right">
+      <span class="pill pill-live">✓ Platform Live</span>
+      <span class="pill pill-new">+ ERP Launching</span>
+      <div class="avatar">JH</div>
+    </div>
+  </div>
+
+  <div class="app-shell">
+
+    <!-- ── SIDEBAR ── -->
+    <nav class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Core Platform</div>
+        <div class="sidebar-item"><span class="icon">📊</span> Dashboard <span class="si-tag si-live">LIVE</span></div>
+        <div class="sidebar-item"><span class="icon">🔮</span> Predictive Engine <span class="si-tag si-live">LIVE</span></div>
+        <div class="sidebar-item"><span class="icon">📋</span> Audit Readiness <span class="si-tag si-live">LIVE</span></div>
+        <div class="sidebar-item"><span class="icon">📄</span> JSA / DAP Builder <span class="si-tag si-live">LIVE</span></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Safety Operations</div>
+        <div class="sidebar-item active"><span class="icon">🚨</span> Emergency Response <span class="si-tag si-new">NEW</span></div>
+        <div class="sidebar-item"><span class="icon">🔐</span> Permit System <span class="si-tag si-live">LIVE</span></div>
+        <div class="sidebar-item"><span class="icon">✅</span> Cert Tracker <span class="si-tag si-live">LIVE</span></div>
+        <div class="sidebar-item"><span class="icon">🔍</span> Field Audits <span class="si-tag si-live">LIVE</span></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Intelligence</div>
+        <div class="sidebar-item"><span class="icon">⛅</span> Weather Integration <span class="si-tag si-new">NEW</span></div>
+        <div class="sidebar-item"><span class="icon">📈</span> Safety Dashboard <span class="si-tag si-live">LIVE</span></div>
+        <div class="sidebar-item"><span class="icon">📁</span> Incident Log <span class="si-tag si-live">LIVE</span></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Coming Soon</div>
+        <div class="sidebar-item"><span class="icon">🗺️</span> GIS / Site Mapping <span class="si-tag si-soon">SOON</span></div>
+        <div class="sidebar-item"><span class="icon">📡</span> IoT Sensor Feeds <span class="si-tag si-soon">SOON</span></div>
+      </div>
+    </nav>
+
+    <!-- ── MAIN CONTENT ── -->
+    <main class="main">
+
+      <!-- ════ EXISTING FEATURES ════ -->
+      <div class="section-block">
+        <div class="section-flag sf-live">● Currently Live on PredictSafeBIO</div>
+        <div class="callout-bar cb-live">
+          <strong>✓ LIVE</strong>
+          <p>These modules are active on the platform today. Lilly site is using all of these in production.</p>
+        </div>
+
+        <div class="feature-row feature-row-4" style="margin-bottom:10px;">
+          <div class="feat-card is-live">
+            <div class="card-ribbon cr-live">● LIVE</div>
+            <div class="feat-icon">🔮</div>
+            <div class="feat-name">Predictive AI Engine</div>
+            <div class="feat-desc">Leading indicator scoring, hazard forecasting, and AI-driven risk alerts across all site activity.</div>
+            <div class="feat-stats">
+              <div class="feat-stat"><strong>94%</strong>Accuracy</div>
+              <div class="feat-stat"><strong>12</strong>Active Models</div>
+            </div>
+          </div>
+          <div class="feat-card is-live">
+            <div class="card-ribbon cr-live">● LIVE</div>
+            <div class="feat-icon">📋</div>
+            <div class="feat-name">Audit Readiness</div>
+            <div class="feat-desc">Auto-generated compliance reports, OSHA gap analysis, and audit trail documentation.</div>
+            <div class="feat-stats">
+              <div class="feat-stat"><strong>100%</strong>Doc Rate</div>
+              <div class="feat-stat"><strong>3</strong>Frameworks</div>
+            </div>
+          </div>
+          <div class="feat-card is-live">
+            <div class="card-ribbon cr-live">● LIVE</div>
+            <div class="feat-icon">📄</div>
+            <div class="feat-name">JSA / DAP Builder</div>
+            <div class="feat-desc">Digital Job Safety Analyses and Daily Activity Plans with field-ready PDF export.</div>
+            <div class="feat-stats">
+              <div class="feat-stat"><strong>142</strong>Created</div>
+              <div class="feat-stat"><strong>98%</strong>Reviewed</div>
+            </div>
+          </div>
+          <div class="feat-card is-live">
+            <div class="card-ribbon cr-live">● LIVE</div>
+            <div class="feat-icon">🔐</div>
+            <div class="feat-name">Permit System</div>
+            <div class="feat-desc">Hot work, confined space, energized electrical — digital permit workflows with approvals.</div>
+            <div class="feat-stats">
+              <div class="feat-stat"><strong>38</strong>Permits/mo</div>
+              <div class="feat-stat"><strong>0</strong>Overdue</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature-row feature-row-4">
+          <div class="feat-card is-live">
+            <div class="card-ribbon cr-live">● LIVE</div>
+            <div class="feat-icon">✅</div>
+            <div class="feat-name">Certification Tracker</div>
+            <div class="feat-desc">Worker certs, expiry alerts, and coverage reporting by trade and contractor.</div>
+            <div class="feat-stats">
+              <div class="feat-stat"><strong>216</strong>Workers</div>
+              <div class="feat-stat"><strong>4</strong>Expiring</div>
+            </div>
+          </div>
+          <div class="feat-card is-live">
+            <div class="card-ribbon cr-live">● LIVE</div>
+            <div class="feat-icon">🔍</div>
+            <div class="feat-name">Field Audits</div>
+            <div class="feat-desc">Mobile-first safety audit forms, photo capture, corrective action tracking.</div>
+            <div class="feat-stats">
+              <div class="feat-stat"><strong>28</strong>This month</div>
+              <div class="feat-stat"><strong>91%</strong>Closed</div>
+            </div>
+          </div>
+          <div class="feat-card is-live">
+            <div class="card-ribbon cr-live">● LIVE</div>
+            <div class="feat-icon">📁</div>
+            <div class="feat-name">Incident Log</div>
+            <div class="feat-desc">OSHA recordable and near-miss tracking with root cause and corrective action workflow.</div>
+            <div class="feat-stats">
+              <div class="feat-stat"><strong>0</strong>Recordables</div>
+              <div class="feat-stat"><strong>7</strong>Near-miss</div>
+            </div>
+          </div>
+          <div class="feat-card is-live">
+            <div class="card-ribbon cr-live">● LIVE</div>
+            <div class="feat-icon">📈</div>
+            <div class="feat-name">Safety Dashboard</div>
+            <div class="feat-desc">Live KPIs, lagging/leading indicators, contractor scorecards, and executive reporting.</div>
+            <div class="feat-stats">
+              <div class="feat-stat"><strong>Live</strong>Real-time</div>
+              <div class="feat-stat"><strong>5</strong>Reports</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- ════ NEW: EMERGENCY RESPONSE PLAN BUILDER ════ -->
+      <div class="section-block">
+        <div class="section-flag sf-new">★ Adding Now — Emergency Response Plan Builder</div>
+        <div class="callout-bar cb-new">
+          <strong>★ NEW</strong>
+          <p>Emergency Response Plan Builder with live NOAA/NWS weather integration — actively being built into the platform.</p>
+        </div>
+
+        <!-- TOP ALERT (weather-triggered) -->
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--orange-bg);border:1px solid rgba(249,115,22,0.35);border-radius:var(--radius);margin-bottom:14px;animation:blink 2.5s infinite;">
+          <span style="font-size:18px;">⛈️</span>
+          <div>
+            <span style="color:var(--orange);font-weight:700;font-size:12px;">ACTIVE WEATHER ALERT — Severe Thunderstorm Watch</span>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:1px;">NWS Indianapolis · Auto-triggered plan review on 2 response plans · Outdoor elevated work suspended</p>
+          </div>
+          <button style="margin-left:auto;padding:5px 12px;background:var(--orange);color:white;border:none;border-radius:var(--radius-sm);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">View Plans →</button>
+        </div>
+
+        <!-- MAIN NEW FEATURE BOX -->
+        <div class="new-feature-box">
+          <div class="nfb-header">
+            <div class="nfb-title">🚨 Emergency Response Plan Builder <span class="pill pill-new" style="font-size:10px;">★ NEW FEATURE</span></div>
+            <div style="display:flex;gap:6px;">
+              <button style="padding:5px 12px;background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;">📥 Import Template</button>
+              <button style="padding:5px 12px;background:var(--new);color:white;border:none;border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;">+ New Response Plan</button>
+            </div>
+          </div>
+          <div class="nfb-body">
+
+            <!-- Stats row -->
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;">
+                <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Plans Approved</div>
+                <div style="font-size:22px;font-weight:700;color:var(--green);">4</div>
+                <div style="font-size:10px;color:var(--text-dim);">Reviewed &amp; signed off</div>
+              </div>
+              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;">
+                <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Needs Review</div>
+                <div style="font-size:22px;font-weight:700;color:var(--yellow);">2</div>
+                <div style="font-size:10px;color:var(--text-dim);">Weather event triggered</div>
+              </div>
+              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;">
+                <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Drill Compliance</div>
+                <div style="font-size:22px;font-weight:700;color:var(--blue);">87%</div>
+                <div style="font-size:10px;color:var(--text-dim);">2 drills due this month</div>
+              </div>
+              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;">
+                <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Open Actions</div>
+                <div style="font-size:22px;font-weight:700;color:var(--red);">5</div>
+                <div style="font-size:10px;color:var(--text-dim);">3 high priority</div>
+              </div>
+            </div>
+
+            <!-- Plan cards mini grid -->
+            <div style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Response Plans</div>
+            <div class="plan-mini-grid">
+              <div class="plan-mini pm-fire">
+                <div class="pm-icon">🔥</div>
+                <div class="pm-name">Fire Emergency</div>
+                <div class="pm-steps">14 steps · 3 contacts</div>
+                <span class="pm-tag" style="background:var(--green-bg);color:var(--green);">✓ Approved</span>
+              </div>
+              <div class="plan-mini pm-quake">
+                <div class="pm-icon">🌍</div>
+                <div class="pm-name">Earthquake / Seismic</div>
+                <div class="pm-steps">11 steps · 4 contacts</div>
+                <span class="pm-tag" style="background:var(--green-bg);color:var(--green);">✓ Approved</span>
+              </div>
+              <div class="plan-mini pm-weather">
+                <div class="pm-icon">⛈️</div>
+                <div class="pm-name">Severe Weather</div>
+                <div class="pm-steps">12 steps · 3 contacts</div>
+                <span class="pm-tag" style="background:var(--yellow-bg);color:var(--yellow);">⚠ Review Required</span>
+              </div>
+              <div class="plan-mini pm-chem">
+                <div class="pm-icon">☣️</div>
+                <div class="pm-name">Chemical Spill / Release</div>
+                <div class="pm-steps">18 steps · 5 contacts</div>
+                <span class="pm-tag" style="background:var(--green-bg);color:var(--green);">✓ Approved</span>
+              </div>
+              <div class="plan-mini pm-med">
+                <div class="pm-icon">🏥</div>
+                <div class="pm-name">Medical Emergency</div>
+                <div class="pm-steps">9 steps · 4 contacts</div>
+                <span class="pm-tag" style="background:var(--green-bg);color:var(--green);">✓ Approved</span>
+              </div>
+              <div class="plan-mini pm-add" style="border:2px dashed var(--border);background:transparent;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer;min-height:90px;color:var(--text-dim);">
+                <div style="font-size:20px;">＋</div>
+                <div style="font-size:11px;font-weight:600;">Add Plan</div>
+                <div style="font-size:10px;">Power, Flood…</div>
+              </div>
+            </div>
+
+            <!-- Step Builder Preview -->
+            <div style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px;">✏️ Plan Builder — Fire Emergency (Active Edit)</div>
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
+              <ul class="steps-mini">
+                <li class="step-row"><div class="step-dot sd-done">✓</div><span><strong>1.</strong> Activate Fire Alarm &amp; Initiate Evacuation</span><span style="margin-left:auto;font-size:9px;color:var(--green);">Required</span></li>
+                <li class="step-row"><div class="step-dot sd-done">✓</div><span><strong>2.</strong> Call 911 &amp; Notify Site Safety Director</span><span style="margin-left:auto;font-size:9px;color:var(--green);">Required</span></li>
+                <li class="step-row"><div class="step-dot sd-prog"></div><span><strong>3.</strong> Account for All Personnel at Muster Point</span><span style="margin-left:auto;font-size:9px;color:var(--accent-light);">In Draft</span></li>
+                <li class="step-row"><div class="step-dot sd-pend"></div><span><strong>4.</strong> Attempt Suppression — If Safe to Do So</span><span style="margin-left:auto;font-size:9px;color:var(--yellow);">Needs Input</span></li>
+                <li class="step-row"><div class="step-dot sd-pend"></div><span><strong>5.</strong> Meet &amp; Brief Emergency Responders at Site Entrance</span></li>
+                <li class="step-row"><div class="step-dot sd-pend"></div><span><strong>6.</strong> Document &amp; Initiate Corrective Action Within 24 hrs</span></li>
+              </ul>
+            </div>
+
+            <!-- AI rec strip -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+              <div class="ai-rec"><strong>🔮 AI Suggestion</strong>Add chemical spill coordination step before suppression — recommended for your hazmat inventory profile.</div>
+              <div class="ai-rec" style="border-color:rgba(234,179,8,0.25);background:var(--yellow-bg);"><strong style="color:var(--yellow);">📅 Drill Overdue</strong>Fire evacuation — Building 4 is 47 days overdue. OSHA 29 CFR 1910.38 compliance at risk.</div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- WEATHER INTEGRATION CALLOUT -->
+        <div style="background:var(--surface);border:2px solid var(--new-border);border-radius:var(--radius);overflow:hidden;margin-top:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--new-border);background:rgba(168,85,247,0.06);">
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;">⛅ Live Weather Service Integration <span class="pill pill-new" style="font-size:10px;">★ NEW</span></div>
+            <div style="display:flex;gap:8px;font-size:10px;color:var(--text-muted);">
+              <span style="color:var(--green);font-weight:700;">● LIVE DATA</span>
+              <span>NOAA / NWS API</span>
+            </div>
+          </div>
+          <div style="padding:14px;display:grid;grid-template-columns:1fr 2fr;gap:14px;">
+            <!-- Weather widget preview -->
+            <div>
+              <div class="weather-mini">
+                <div class="wm-loc">📍 Indianapolis, IN — Lilly Site</div>
+                <div class="wm-main">
+                  <div><div class="wm-temp">74°F</div><div class="wm-cond">Partly Cloudy</div></div>
+                  <div class="wm-icon">⛅</div>
+                </div>
+                <div class="wm-grid">
+                  <div class="wm-stat"><strong>68%</strong>Humidity</div>
+                  <div class="wm-stat"><strong>12 mph</strong>Wind SW</div>
+                </div>
+              </div>
+              <!-- Forecast strip -->
+              <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;">
+                <div style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:6px 3px;text-align:center;font-size:9px;">
+                  <div style="color:var(--text-dim);">MON</div><div style="font-size:14px;margin:3px 0;">⛈️</div><div style="font-weight:700;">71°</div>
+                </div>
+                <div style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:6px 3px;text-align:center;font-size:9px;">
+                  <div style="color:var(--text-dim);">TUE</div><div style="font-size:14px;margin:3px 0;">🌤️</div><div style="font-weight:700;">78°</div>
+                </div>
+                <div style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:6px 3px;text-align:center;font-size:9px;">
+                  <div style="color:var(--text-dim);">WED</div><div style="font-size:14px;margin:3px 0;">☀️</div><div style="font-weight:700;">83°</div>
+                </div>
+                <div style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:6px 3px;text-align:center;font-size:9px;">
+                  <div style="color:var(--text-dim);">THU</div><div style="font-size:14px;margin:3px 0;">🌧️</div><div style="font-weight:700;">69°</div>
+                </div>
+                <div style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:6px 3px;text-align:center;font-size:9px;">
+                  <div style="color:var(--text-dim);">FRI</div><div style="font-size:14px;margin:3px 0;">🌤️</div><div style="font-weight:700;">75°</div>
+                </div>
+              </div>
+            </div>
+            <!-- What it does -->
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--new);margin-bottom:8px;">What Weather Integration Does:</div>
+              <div class="alert-strip as-orange">
+                <span>⚠️</span>
+                <div class="as-text">
+                  <div class="as-title">Auto-Flags Affected Plans</div>
+                  <p>Active weather alerts auto-move related response plans to "Needs Review" status and notify Safety Director.</p>
+                </div>
+              </div>
+              <div class="alert-strip as-green">
+                <span>✅</span>
+                <div class="as-text">
+                  <div class="as-title">Real-Time All-Clear Monitoring</div>
+                  <p>Continuous monitoring removes alerts and restores plan status when conditions clear.</p>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">
+                <div class="int-item">
+                  <span class="int-icon">🌦️</span>
+                  <div><div class="int-name">NOAA / NWS Alerts</div><div class="int-sub">Auto-triggers plan reviews</div></div>
+                  <div class="toggle on"></div>
+                </div>
+                <div class="int-item">
+                  <span class="int-icon">📱</span>
+                  <div><div class="int-name">SMS Notifications</div><div class="int-sub">Alert all contacts</div></div>
+                  <div class="toggle on"></div>
+                </div>
+                <div class="int-item">
+                  <span class="int-icon">📧</span>
+                  <div><div class="int-name">Email Escalation</div><div class="int-sub">EHS leadership</div></div>
+                  <div class="toggle on"></div>
+                </div>
+                <div class="int-item" style="opacity:.55;">
+                  <span class="int-icon">🗺️</span>
+                  <div><div class="int-name">GIS / Site Mapping</div><div class="int-sub">Evac route overlay</div></div>
+                  <div class="toggle off"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- ── RIGHT PANEL ── -->
+    <aside class="right-panel">
+
+      <!-- PLATFORM STATUS -->
+      <div class="rp-section">
+        <div class="rp-title">📊 Platform Status</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;padding:5px 0;border-bottom:1px solid var(--border);">
+            <span>Predictive Engine</span><span class="pill pill-live" style="font-size:9px;">● LIVE</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;padding:5px 0;border-bottom:1px solid var(--border);">
+            <span>Audit Readiness</span><span class="pill pill-live" style="font-size:9px;">● LIVE</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;padding:5px 0;border-bottom:1px solid var(--border);">
+            <span>JSA / DAP Builder</span><span class="pill pill-live" style="font-size:9px;">● LIVE</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;padding:5px 0;border-bottom:1px solid var(--border);">
+            <span>Permit System</span><span class="pill pill-live" style="font-size:9px;">● LIVE</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;padding:5px 0;border-bottom:1px solid var(--border);">
+            <span>Field Audits</span><span class="pill pill-live" style="font-size:9px;">● LIVE</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;padding:5px 0;border-bottom:1px solid var(--border);">
+            <span style="color:var(--new);font-weight:600;">Emergency Response</span><span class="pill pill-new" style="font-size:9px;">★ ADDING</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;padding:5px 0;border-bottom:1px solid var(--border);">
+            <span style="color:var(--new);font-weight:600;">Weather Integration</span><span class="pill pill-new" style="font-size:9px;">★ ADDING</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;padding:5px 0;">
+            <span style="color:var(--text-dim);">GIS / Site Mapping</span><span style="background:var(--yellow-bg);color:var(--yellow);font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;">SOON</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- EMERGENCY CONTACTS (new feature preview) -->
+      <div class="rp-section">
+        <div class="rp-title">📞 Emergency Contacts <span class="pill pill-new" style="font-size:9px;">★ NEW</span></div>
+        <div class="contact-mini">
+          <div class="ca" style="background:#6366f1;">JH</div>
+          <div><div class="cn">John Haldemann</div><div class="cr">Safety Director · Primary</div></div>
+          <div class="cs" style="background:var(--green);box-shadow:0 0 5px var(--green);"></div>
+        </div>
+        <div class="contact-mini">
+          <div class="ca" style="background:#ef4444;">RM</div>
+          <div><div class="cn">R. Martinez</div><div class="cr">Safety Manager · Backup</div></div>
+          <div class="cs" style="background:var(--green);box-shadow:0 0 5px var(--green);"></div>
+        </div>
+        <div class="contact-mini">
+          <div class="ca" style="background:#f97316;">TC</div>
+          <div><div class="cn">T. Chen</div><div class="cr">EHS Lead · Chemical</div></div>
+          <div class="cs" style="background:var(--yellow);"></div>
+        </div>
+        <div class="contact-mini">
+          <div class="ca" style="background:#22c55e;">911</div>
+          <div><div class="cn">Indianapolis EMS</div><div class="cr">External · 911</div></div>
+          <div class="cs" style="background:var(--green);box-shadow:0 0 5px var(--green);"></div>
+        </div>
+      </div>
+
+      <!-- DRILL HISTORY (new feature preview) -->
+      <div class="rp-section">
+        <div class="rp-title">🏃 Drill History &amp; Compliance <span class="pill pill-new" style="font-size:9px;">★ NEW</span></div>
+        <div class="drill-mini">
+          <span style="font-size:14px;">🔥</span>
+          <div><div style="font-size:11px;font-weight:600;">Fire Evac — Bldg 4</div><div style="font-size:10px;color:var(--text-dim);">Apr 28, 2026 · 38 participants</div></div>
+          <div class="dm-score" style="background:var(--green-bg);color:var(--green);">94%</div>
+        </div>
+        <div class="drill-mini">
+          <span style="font-size:14px;">☣️</span>
+          <div><div style="font-size:11px;font-weight:600;">Chemical Spill Tabletop</div><div style="font-size:10px;color:var(--text-dim);">Mar 15, 2026 · Leadership</div></div>
+          <div class="dm-score" style="background:var(--yellow-bg);color:var(--yellow);">81%</div>
+        </div>
+        <div class="drill-mini">
+          <span style="font-size:14px;">⛈️</span>
+          <div><div style="font-size:11px;font-weight:600;">Severe Weather Shelter</div><div style="font-size:10px;color:var(--text-dim);">Jan 10, 2026 · All-site</div></div>
+          <div class="dm-score" style="background:var(--green-bg);color:var(--green);">91%</div>
+        </div>
+        <div style="margin-top:8px;padding:8px;background:var(--red-bg);border:1px solid rgba(239,68,68,0.25);border-radius:var(--radius-sm);font-size:10px;color:var(--text-muted);">
+          <span style="color:var(--red);font-weight:700;">⚠ OVERDUE:</span> Fire drill — Bldg 4 is 47 days past due. Schedule required.
+        </div>
+      </div>
+
+      <!-- PREDICTIVE ENGINE TIE-IN -->
+      <div class="rp-section">
+        <div class="rp-title">🔮 Predictive Engine — ERP Tie-In <span class="pill pill-live" style="font-size:9px;">LIVE</span></div>
+        <div class="predict-card">
+          <div class="pc-label">⚡ Risk Elevation — Weather</div>
+          <p>Current storm watch elevates site risk score by +22 pts. Outdoor elevated work and crane ops flagged as high-risk until alert clears.</p>
+        </div>
+        <div class="predict-card">
+          <div class="pc-label">📋 Drill Compliance Risk</div>
+          <p>2 upcoming drills missed = OSHA 1910.38 documentation gap. Auto-reminder scheduled for next week.</p>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     ROADMAP STRIP
+═══════════════════════════════════════════════════ -->
+<div class="roadmap-strip">
+  <div class="roadmap-title">📍 Platform Roadmap — Where We Are</div>
+  <div class="roadmap-row">
+
+    <div class="roadmap-phase current">
+      <div class="rp-phase-label c-green">✓ Phase 1 — Live</div>
+      <div class="rp-phase-name">Core Safety Platform</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--green);"></div>Predictive AI Engine</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--green);"></div>Audit Readiness</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--green);"></div>JSA / DAP Builder</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--green);"></div>Permit System</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--green);"></div>Cert Tracker + Field Audits</div>
+    </div>
+
+    <div class="roadmap-phase active">
+      <div class="rp-phase-label c-new">★ Phase 2 — Building Now</div>
+      <div class="rp-phase-name">Emergency Response + Weather</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--new);"></div>ERP Plan Builder (Fire, Quake, Chemical, Weather, Medical)</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--new);"></div>NOAA / NWS Weather Integration</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--new);"></div>Auto-triggered plan reviews</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--new);"></div>Drill Scheduler + Compliance Tracking</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--new);"></div>Emergency Contact Management</div>
+    </div>
+
+    <div class="roadmap-phase next">
+      <div class="rp-phase-label c-accent">↗ Phase 3 — Next</div>
+      <div class="rp-phase-name">Intelligence Expansion</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--accent);"></div>GIS / Site Mapping overlay</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--accent);"></div>IoT Sensor Integration</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--accent);"></div>Multi-site dashboard</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--accent);"></div>Contractor portal self-service</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--accent);"></div>Mobile app (iOS / Android)</div>
+    </div>
+
+    <div class="roadmap-phase future">
+      <div class="rp-phase-label c-dim">○ Phase 4 — Future</div>
+      <div class="rp-phase-name">Enterprise Scale</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--text-dim);"></div>Enterprise SSO / SCIM</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--text-dim);"></div>API / Webhook ecosystem</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--text-dim);"></div>Predictive injury modeling</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--text-dim);"></div">Industry benchmark data</div>
+      <div class="rp-phase-item"><div class="dot" style="background:var(--text-dim);"></div>Regulatory auto-submission</div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+@keyframes blink {
+  0%, 100% { border-color: rgba(249,115,22,0.35); }
+  50%       { border-color: rgba(249,115,22,0.7); }
+}
+</style>
+
+</body>
+</html>

@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PredictSafeBIO — Emergency Response Plan Builder</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d2e;
+    --surface2: #222538;
+    --surface3: #2a2d44;
+    --border: #2e3152;
+    --accent: #6366f1;
+    --accent-light: #818cf8;
+    --accent-glow: rgba(99,102,241,0.15);
+    --green: #22c55e;
+    --green-bg: rgba(34,197,94,0.1);
+    --yellow: #eab308;
+    --yellow-bg: rgba(234,179,8,0.1);
+    --red: #ef4444;
+    --red-bg: rgba(239,68,68,0.1);
+    --orange: #f97316;
+    --orange-bg: rgba(249,115,22,0.1);
+    --blue: #3b82f6;
+    --blue-bg: rgba(59,130,246,0.1);
+    --cyan: #06b6d4;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: 56px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--text);
+  }
+
+  .logo-icon {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .badge-pill {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+  }
+
+  .badge-beta { background: var(--accent-glow); color: var(--accent-light); border: 1px solid rgba(99,102,241,0.3); }
+
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: white;
+  }
+
+  /* ── LAYOUT ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr 300px;
+    min-height: calc(100vh - 56px);
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+  }
+
+  .sidebar-section {
+    margin-bottom: 24px;
+  }
+
+  .sidebar-label {
+    padding: 0 16px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-radius: 0;
+  }
+
+  .sidebar-item:hover { background: var(--surface2); color: var(--text); }
+
+  .sidebar-item.active {
+    background: var(--accent-glow);
+    color: var(--accent-light);
+    border-right: 2px solid var(--accent);
+  }
+
+  .sidebar-item .icon { font-size: 15px; width: 20px; text-align: center; }
+
+  .sidebar-item .count {
+    margin-left: auto;
+    background: var(--surface3);
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  .sidebar-item.active .count {
+    background: var(--accent-glow);
+    color: var(--accent-light);
+  }
+
+  /* ── MAIN ── */
+  .main {
+    padding: 24px;
+    overflow-y: auto;
+    background: var(--bg);
+  }
+
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .page-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .page-sub { font-size: 13px; color: var(--text-muted); }
+
+  .header-actions { display: flex; gap: 10px; }
+
+  .btn {
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--accent-light); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+
+  /* ── ALERT BANNER ── */
+  .alert-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--orange-bg);
+    border: 1px solid rgba(249,115,22,0.3);
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    animation: pulse-border 2s infinite;
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { border-color: rgba(249,115,22,0.3); }
+    50% { border-color: rgba(249,115,22,0.7); }
+  }
+
+  .alert-banner .alert-icon { font-size: 20px; }
+  .alert-banner .alert-text strong { color: var(--orange); }
+  .alert-banner .alert-text { font-size: 13px; line-height: 1.4; }
+  .alert-banner .alert-text p { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+  .alert-banner .alert-action {
+    margin-left: auto;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    background: var(--orange);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    white-space: nowrap;
+  }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .stat-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .stat-value { font-size: 26px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+  .stat-sub { font-size: 11px; color: var(--text-muted); }
+
+  .stat-green .stat-value { color: var(--green); }
+  .stat-yellow .stat-value { color: var(--yellow); }
+  .stat-blue .stat-value { color: var(--blue); }
+  .stat-red .stat-value { color: var(--red); }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── PLAN GRID ── */
+  .plan-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .plan-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .plan-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  .plan-card.active {
+    border-color: var(--accent);
+    background: var(--surface2);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+
+  .plan-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  .plan-card.fire::before { background: linear-gradient(90deg, #ef4444, #f97316); }
+  .plan-card.earthquake::before { background: linear-gradient(90deg, #eab308, #f97316); }
+  .plan-card.chemical::before { background: linear-gradient(90deg, #8b5cf6, #06b6d4); }
+  .plan-card.weather::before { background: linear-gradient(90deg, #3b82f6, #06b6d4); }
+  .plan-card.medical::before { background: linear-gradient(90deg, #22c55e, #06b6d4); }
+  .plan-card.power::before { background: linear-gradient(90deg, #eab308, #f59e0b); }
+
+  .plan-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .plan-icon {
+    width: 40px; height: 40px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+
+  .plan-icon.fire { background: rgba(239,68,68,0.12); }
+  .plan-icon.earthquake { background: rgba(234,179,8,0.12); }
+  .plan-icon.chemical { background: rgba(139,92,246,0.12); }
+  .plan-icon.weather { background: rgba(59,130,246,0.12); }
+  .plan-icon.medical { background: rgba(34,197,94,0.12); }
+  .plan-icon.power { background: rgba(234,179,8,0.12); }
+
+  .plan-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .plan-meta { font-size: 11px; color: var(--text-dim); }
+
+  .plan-status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+
+  .dot-green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot-yellow { background: var(--yellow); }
+  .dot-red { background: var(--red); }
+  .dot-blue { background: var(--blue); }
+
+  .plan-progress-bar {
+    height: 4px;
+    background: var(--surface3);
+    border-radius: 2px;
+    margin: 12px 0 10px;
+    overflow: hidden;
+  }
+
+  .plan-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+
+  .fill-green { background: var(--green); }
+  .fill-yellow { background: var(--yellow); }
+  .fill-blue { background: var(--blue); }
+  .fill-accent { background: var(--accent); }
+
+  .plan-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .plan-footer .tag {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .tag-green { background: var(--green-bg); color: var(--green); }
+  .tag-yellow { background: var(--yellow-bg); color: var(--yellow); }
+  .tag-blue { background: var(--blue-bg); color: var(--blue); }
+  .tag-red { background: var(--red-bg); color: var(--red); }
+  .tag-accent { background: var(--accent-glow); color: var(--accent-light); }
+
+  /* ── BUILDER SECTION ── */
+  .builder-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .builder-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .builder-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .builder-body { padding: 18px; }
+
+  /* ── STEP CHECKLIST ── */
+  .step-list { list-style: none; }
+
+  .step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .step-item:last-child { border-bottom: none; }
+
+  .step-check {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .step-check.done { background: var(--green); border-color: var(--green); color: white; }
+  .step-check.in-progress { border-color: var(--accent); background: var(--accent-glow); }
+  .step-check.pending { border-color: var(--border); }
+
+  .step-content { flex: 1; }
+  .step-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .step-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+
+  .step-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .mini-btn {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface3);
+    color: var(--text-muted);
+    transition: all 0.15s;
+  }
+
+  .mini-btn:hover { background: var(--surface2); color: var(--text); }
+  .mini-btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .mini-btn.primary:hover { background: var(--accent-light); }
+
+  /* ── RIGHT PANEL ── */
+  .right-panel {
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+  }
+
+  .panel-section {
+    border-bottom: 1px solid var(--border);
+    padding: 16px;
+  }
+
+  .panel-section:last-child { border-bottom: none; }
+
+  .panel-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ── WEATHER WIDGET ── */
+  .weather-header {
+    background: linear-gradient(135deg, #1e3a5f, #1a2d4a);
+    border: 1px solid rgba(59,130,246,0.2);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+
+  .weather-location {
+    font-size: 11px;
+    color: var(--blue);
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .weather-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .weather-temp {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .weather-icon-big { font-size: 36px; }
+
+  .weather-condition {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .weather-detail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(59,130,246,0.15);
+  }
+
+  .weather-stat {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .weather-stat strong { color: var(--text); display: block; font-size: 13px; }
+
+  .weather-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(249,115,22,0.3);
+    background: var(--orange-bg);
+    margin-bottom: 8px;
+  }
+
+  .weather-alert .wa-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+  .weather-alert .wa-text strong {
+    font-size: 12px;
+    display: block;
+    color: var(--orange);
+    margin-bottom: 2px;
+  }
+
+  .weather-alert .wa-text p { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+
+  .weather-alert.clear { border-color: rgba(34,197,94,0.3); background: var(--green-bg); }
+  .weather-alert.clear .wa-text strong { color: var(--green); }
+
+  .forecast-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .forecast-day {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 10px;
+  }
+
+  .forecast-day .fd-day { color: var(--text-dim); margin-bottom: 4px; }
+  .forecast-day .fd-icon { font-size: 16px; margin-bottom: 4px; }
+  .forecast-day .fd-temp { font-weight: 700; color: var(--text); }
+
+  /* ── CONTACTS ── */
+  .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .contact-item:last-child { border-bottom: none; }
+
+  .contact-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .contact-name { font-size: 12px; font-weight: 600; }
+  .contact-role { font-size: 10px; color: var(--text-dim); }
+  .contact-status {
+    margin-left: auto;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+  }
+
+  /* ── RECENT DRILLS ── */
+  .drill-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+
+  .drill-item:last-child { border-bottom: none; }
+  .drill-icon { font-size: 16px; flex-shrink: 0; }
+  .drill-info { flex: 1; }
+  .drill-name { font-weight: 600; color: var(--text); }
+  .drill-date { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
+  .drill-score {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  /* ── TEMPLATE SELECTOR ── */
+  .template-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .template-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+
+  .template-card:hover { border-color: var(--accent); background: var(--accent-glow); }
+  .template-card .tc-icon { font-size: 22px; margin-bottom: 6px; }
+  .template-card .tc-name { font-size: 11px; font-weight: 600; }
+  .template-card .tc-sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+  /* ── ADD PLAN MODAL HINT ── */
+  .add-plan-card {
+    background: transparent;
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 160px;
+    color: var(--text-dim);
+  }
+
+  .add-plan-card:hover { border-color: var(--accent); color: var(--accent-light); background: var(--accent-glow); }
+  .add-plan-card .plus { font-size: 24px; }
+  .add-plan-card .label { font-size: 13px; font-weight: 600; }
+  .add-plan-card .sub { font-size: 11px; }
+
+  /* ── INTEGRATIONS ── */
+  .integration-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+  }
+
+  .integration-icon { font-size: 20px; }
+  .integration-name { font-size: 12px; font-weight: 600; flex: 1; }
+  .integration-sub { font-size: 10px; color: var(--text-dim); }
+  .integration-toggle {
+    width: 32px; height: 18px;
+    border-radius: 9px;
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .integration-toggle.on { background: var(--green); }
+  .integration-toggle.off { background: var(--surface3); }
+
+  .integration-toggle::after {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: white;
+    top: 2px;
+    transition: left 0.2s;
+  }
+
+  .integration-toggle.on::after { left: 16px; }
+  .integration-toggle.off::after { left: 2px; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon">🛡️</div>
+    PredictSafeBIO
+    <span class="badge-pill badge-beta">BETA</span>
+  </div>
+  <div class="topbar-right">
+    <span style="font-size:12px;color:var(--text-muted);">Lilly Site — Indiana</span>
+    <div class="avatar">JH</div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Platform</div>
+      <div class="sidebar-item"><span class="icon">📊</span> Dashboard</div>
+      <div class="sidebar-item"><span class="icon">🔮</span> Predictive Engine</div>
+      <div class="sidebar-item"><span class="icon">📋</span> Audit Readiness</div>
+      <div class="sidebar-item"><span class="icon">📄</span> JSA / DAP Builder</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Safety Operations</div>
+      <div class="sidebar-item active"><span class="icon">🚨</span> Emergency Response <span class="count">6</span></div>
+      <div class="sidebar-item"><span class="icon">🔐</span> Permit System</div>
+      <div class="sidebar-item"><span class="icon">✅</span> Certification Tracker</div>
+      <div class="sidebar-item"><span class="icon">🔍</span> Field Audits</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Reporting</div>
+      <div class="sidebar-item"><span class="icon">📈</span> Safety Dashboard</div>
+      <div class="sidebar-item"><span class="icon">📁</span> Incident Log</div>
+      <div class="sidebar-item"><span class="icon">👥</span> Contractor Safety</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Settings</div>
+      <div class="sidebar-item"><span class="icon">⚙️</span> Site Configuration</div>
+      <div class="sidebar-item"><span class="icon">🔗</span> Integrations</div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">🚨 Emergency Response Plan Builder</div>
+        <div class="page-sub">Build, maintain, and drill site-specific emergency response plans with live weather integration</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-ghost">📥 Import Template</button>
+        <button class="btn btn-primary">+ New Response Plan</button>
+      </div>
+    </div>
+
+    <!-- ACTIVE WEATHER ALERT BANNER -->
+    <div class="alert-banner">
+      <span class="alert-icon">⛈️</span>
+      <div class="alert-text">
+        <strong>ACTIVE WEATHER ALERT — Severe Thunderstorm Watch</strong>
+        <p>NWS Indianapolis · Issued 10:42 AM · Valid until 8:00 PM EST · 2 response plans flagged for review</p>
+      </div>
+      <button class="alert-action">View Affected Plans →</button>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card stat-green">
+        <div class="stat-label">Plans — Approved</div>
+        <div class="stat-value">4</div>
+        <div class="stat-sub">Last reviewed 12 days ago</div>
+      </div>
+      <div class="stat-card stat-yellow">
+        <div class="stat-label">Plans — Needs Review</div>
+        <div class="stat-value">2</div>
+        <div class="stat-sub">Weather event triggered</div>
+      </div>
+      <div class="stat-card stat-blue">
+        <div class="stat-label">Drill Compliance</div>
+        <div class="stat-value">87%</div>
+        <div class="stat-sub">2 drills due this month</div>
+      </div>
+      <div class="stat-card stat-red">
+        <div class="stat-label">Open Action Items</div>
+        <div class="stat-value">5</div>
+        <div class="stat-sub">3 high priority</div>
+      </div>
+    </div>
+
+    <!-- PLAN CARDS -->
+    <div class="section-title">🗂️ Response Plans</div>
+    <div class="plan-grid">
+
+      <!-- FIRE -->
+      <div class="plan-card fire active">
+        <div class="plan-icon fire">🔥</div>
+        <div class="plan-card-header">
+          <div>
+            <div class="plan-name">Fire Emergency</div>
+            <div class="plan-meta">Updated May 28, 2026</div>
+          </div>
+          <div class="plan-status-dot dot-green"></div>
+        </div>
+        <div class="plan-progress-bar">
+          <div class="plan-progress-fill fill-green" style="width:100%"></div>
+        </div>
+        <div class="plan-footer">
+          <span class="tag tag-green">✓ Approved</span>
+          <span>14 steps · 3 contacts</span>
+        </div>
+      </div>
+
+      <!-- EARTHQUAKE -->
+      <div class="plan-card earthquake">
+        <div class="plan-icon earthquake">🌍</div>
+        <div class="plan-card-header">
+          <div>
+            <div class="plan-name">Earthquake / Seismic</div>
+            <div class="plan-meta">Updated Apr 10, 2026</div>
+          </div>
+          <div class="plan-status-dot dot-green"></div>
+        </div>
+        <div class="plan-progress-bar">
+          <div class="plan-progress-fill fill-green" style="width:100%"></div>
+        </div>
+        <div class="plan-footer">
+          <span class="tag tag-green">✓ Approved</span>
+          <span>11 steps · 4 contacts</span>
+        </div>
+      </div>
+
+      <!-- WEATHER -->
+      <div class="plan-card weather">
+        <div class="plan-icon weather">⛈️</div>
+        <div class="plan-card-header">
+          <div>
+            <div class="plan-name">Severe Weather</div>
+            <div class="plan-meta">⚠️ Review Required</div>
+          </div>
+          <div class="plan-status-dot dot-yellow"></div>
+        </div>
+        <div class="plan-progress-bar">
+          <div class="plan-progress-fill fill-yellow" style="width:72%"></div>
+        </div>
+        <div class="plan-footer">
+          <span class="tag tag-yellow">⚠ Needs Review</span>
+          <span>12 steps · 3 contacts</span>
+        </div>
+      </div>
+
+      <!-- CHEMICAL -->
+      <div class="plan-card chemical">
+        <div class="plan-icon chemical">☣️</div>
+        <div class="plan-card-header">
+          <div>
+            <div class="plan-name">Chemical Spill / Release</div>
+            <div class="plan-meta">Updated Jun 1, 2026</div>
+          </div>
+          <div class="plan-status-dot dot-green"></div>
+        </div>
+        <div class="plan-progress-bar">
+          <div class="plan-progress-fill fill-green" style="width:100%"></div>
+        </div>
+        <div class="plan-footer">
+          <span class="tag tag-green">✓ Approved</span>
+          <span>18 steps · 5 contacts</span>
+        </div>
+      </div>
+
+      <!-- MEDICAL -->
+      <div class="plan-card medical">
+        <div class="plan-icon medical">🏥</div>
+        <div class="plan-card-header">
+          <div>
+            <div class="plan-name">Medical Emergency</div>
+            <div class="plan-meta">Updated Jun 5, 2026</div>
+          </div>
+          <div class="plan-status-dot dot-green"></div>
+        </div>
+        <div class="plan-progress-bar">
+          <div class="plan-progress-fill fill-green" style="width:100%"></div>
+        </div>
+        <div class="plan-footer">
+          <span class="tag tag-green">✓ Approved</span>
+          <span>9 steps · 4 contacts</span>
+        </div>
+      </div>
+
+      <!-- ADD NEW -->
+      <div class="add-plan-card">
+        <div class="plus">＋</div>
+        <div class="label">Add Response Plan</div>
+        <div class="sub">Power outage, flood, shelter-in-place…</div>
+      </div>
+
+    </div>
+
+    <!-- ACTIVE PLAN BUILDER: FIRE -->
+    <div class="section-title">✏️ Editing — Fire Emergency Response Plan</div>
+
+    <div class="builder-section">
+      <div class="builder-header">
+        <div class="builder-title">🔥 Response Steps &amp; Procedures</div>
+        <div style="display:flex;gap:8px;">
+          <button class="mini-btn">↕ Reorder</button>
+          <button class="mini-btn">+ Add Step</button>
+          <button class="mini-btn primary">Save Plan</button>
+        </div>
+      </div>
+      <div class="builder-body">
+        <ul class="step-list">
+          <li class="step-item">
+            <div class="step-check done">✓</div>
+            <div class="step-content">
+              <div class="step-title">1. Activate Fire Alarm &amp; Initiate Evacuation</div>
+              <div class="step-desc">Pull nearest manual pull station. All personnel shall immediately evacuate via designated exit routes. Do not use elevators.</div>
+            </div>
+            <div class="step-actions">
+              <span class="tag tag-green">Required</span>
+              <button class="mini-btn">Edit</button>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-check done">✓</div>
+            <div class="step-content">
+              <div class="step-title">2. Call 911 &amp; Notify Site Safety Director</div>
+              <div class="step-desc">Dial 911 immediately. Notify Site Safety Director at extension 4401. Provide location, size of fire, and any injured personnel.</div>
+            </div>
+            <div class="step-actions">
+              <span class="tag tag-green">Required</span>
+              <button class="mini-btn">Edit</button>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-check in-progress"></div>
+            <div class="step-content">
+              <div class="step-title">3. Account for All Personnel at Muster Point</div>
+              <div class="step-desc">Competent Person shall conduct headcount at designated muster point (Parking Lot B — west gate). Report to IC upon completion.</div>
+            </div>
+            <div class="step-actions">
+              <span class="tag tag-accent">In Draft</span>
+              <button class="mini-btn primary">Review</button>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-check pending"></div>
+            <div class="step-content">
+              <div class="step-title">4. Attempt Suppression — If Safe to Do So</div>
+              <div class="step-desc">Only trained personnel shall use portable fire extinguisher on incipient-stage fires. If fire cannot be controlled within 30 seconds, evacuate immediately. Stop Work Authority is in effect.</div>
+            </div>
+            <div class="step-actions">
+              <span class="tag tag-yellow">Needs Input</span>
+              <button class="mini-btn">Edit</button>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-check pending"></div>
+            <div class="step-content">
+              <div class="step-title">5. Meet &amp; Brief Emergency Responders</div>
+              <div class="step-desc">Safety Director or designee shall meet LHFD at site entrance, provide site map, hazardous materials inventory, and building layout.</div>
+            </div>
+            <div class="step-actions">
+              <button class="mini-btn">Edit</button>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-check pending"></div>
+            <div class="step-content">
+              <div class="step-title">6. Document &amp; Initiate Corrective Action</div>
+              <div class="step-desc">Complete incident report within 24 hours. Root cause analysis required. All findings shall be documented and corrective actions assigned prior to resuming operations.</div>
+            </div>
+            <div class="step-actions">
+              <button class="mini-btn">Edit</button>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- AI SUGGESTION BOX -->
+    <div class="builder-section">
+      <div class="builder-header">
+        <div class="builder-title">🔮 AI Recommendations</div>
+        <span class="tag tag-accent" style="font-size:11px;padding:3px 10px;">Predictive Engine</span>
+      </div>
+      <div class="builder-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:var(--accent-glow);border:1px solid rgba(99,102,241,0.3);border-radius:var(--radius-sm);padding:12px;">
+          <div style="font-size:12px;font-weight:700;color:var(--accent-light);margin-bottom:6px;">⚡ Suggested Addition</div>
+          <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Based on your chemical inventory, add a step for spill containment coordination with fire team before suppression. 3 similar sites have this as a required step.</div>
+          <button class="mini-btn primary" style="margin-top:10px;">Add Step</button>
+        </div>
+        <div style="background:var(--yellow-bg);border:1px solid rgba(234,179,8,0.25);border-radius:var(--radius-sm);padding:12px;">
+          <div style="font-size:12px;font-weight:700;color:var(--yellow);margin-bottom:6px;">📅 Drill Overdue</div>
+          <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Fire evacuation drill for Building 4 is 47 days overdue. OSHA 29 CFR 1910.38 requires documentation of drill frequency. Schedule now to maintain compliance.</div>
+          <button class="mini-btn" style="margin-top:10px;">Schedule Drill</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- RIGHT PANEL -->
+  <aside class="right-panel">
+
+    <!-- WEATHER INTEGRATION -->
+    <div class="panel-section">
+      <div class="panel-title">⛅ Weather Service Integration <span style="color:var(--green);font-size:9px;">● LIVE</span></div>
+
+      <div class="weather-header">
+        <div class="weather-location">📍 Indianapolis, IN — Lilly Site</div>
+        <div class="weather-main">
+          <div>
+            <div class="weather-temp">74°F</div>
+            <div class="weather-condition">Partly Cloudy</div>
+          </div>
+          <div class="weather-icon-big">⛅</div>
+        </div>
+        <div class="weather-detail">
+          <div class="weather-stat"><strong>68%</strong>Humidity</div>
+          <div class="weather-stat"><strong>12 mph</strong>Wind SW</div>
+          <div class="weather-stat"><strong>29.92"</strong>Pressure</div>
+          <div class="weather-stat"><strong>4 mi</strong>Visibility</div>
+        </div>
+      </div>
+
+      <div class="weather-alert">
+        <span class="wa-icon">⚠️</span>
+        <div class="wa-text">
+          <strong>Severe Thunderstorm Watch</strong>
+          <p>NWS Indianapolis · Active until 8:00 PM · Large hail and 60 mph wind gusts possible. Outdoor elevated work shall cease per plan protocol.</p>
+        </div>
+      </div>
+
+      <div class="weather-alert clear">
+        <span class="wa-icon">✅</span>
+        <div class="wa-text">
+          <strong>No Flood Warnings</strong>
+          <p>No current flood or flash flood alerts for your site coordinates.</p>
+        </div>
+      </div>
+
+      <div style="font-size:11px;color:var(--text-dim);margin:10px 0 6px;">5-Day Forecast</div>
+      <div class="forecast-row">
+        <div class="forecast-day">
+          <div class="fd-day">MON</div>
+          <div class="fd-icon">⛈️</div>
+          <div class="fd-temp">71°</div>
+        </div>
+        <div class="forecast-day">
+          <div class="fd-day">TUE</div>
+          <div class="fd-icon">🌤️</div>
+          <div class="fd-temp">78°</div>
+        </div>
+        <div class="forecast-day">
+          <div class="fd-day">WED</div>
+          <div class="fd-icon">☀️</div>
+          <div class="fd-temp">83°</div>
+        </div>
+        <div class="forecast-day">
+          <div class="fd-day">THU</div>
+          <div class="fd-icon">🌧️</div>
+          <div class="fd-temp">69°</div>
+        </div>
+        <div class="forecast-day">
+          <div class="fd-day">FRI</div>
+          <div class="fd-icon">🌤️</div>
+          <div class="fd-temp">75°</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">Weather-Triggered Plan Actions</div>
+        <div style="background:var(--orange-bg);border:1px solid rgba(249,115,22,0.25);border-radius:var(--radius-sm);padding:10px;font-size:11px;line-height:1.5;color:var(--text-muted);">
+          <span style="color:var(--orange);font-weight:700;">AUTO-TRIGGERED:</span> Severe Weather plan moved to "Needs Review" status. Outdoor crane operations suspended per Site Safety Plan §7.4. Notifications sent to 3 contacts.
+        </div>
+      </div>
+    </div>
+
+    <!-- EMERGENCY CONTACTS -->
+    <div class="panel-section">
+      <div class="panel-title">📞 Emergency Contacts</div>
+      <div class="contact-item">
+        <div class="contact-avatar" style="background:#6366f1;">JH</div>
+        <div>
+          <div class="contact-name">John Haldemann</div>
+          <div class="contact-role">Site Safety Director · Primary</div>
+        </div>
+        <div class="contact-status" style="background:var(--green);box-shadow:0 0 5px var(--green);"></div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-avatar" style="background:#ef4444;">RM</div>
+        <div>
+          <div class="contact-name">R. Martinez</div>
+          <div class="contact-role">Safety Manager · Backup</div>
+        </div>
+        <div class="contact-status" style="background:var(--green);box-shadow:0 0 5px var(--green);"></div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-avatar" style="background:#f97316;">TC</div>
+        <div>
+          <div class="contact-name">T. Chen</div>
+          <div class="contact-role">EHS Lead · Chemical</div>
+        </div>
+        <div class="contact-status" style="background:var(--yellow);"></div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-avatar" style="background:#22c55e;">EMS</div>
+        <div>
+          <div class="contact-name">Indianapolis EMS</div>
+          <div class="contact-role">External · 911</div>
+        </div>
+        <div class="contact-status" style="background:var(--green);box-shadow:0 0 5px var(--green);"></div>
+      </div>
+      <button class="mini-btn" style="width:100%;margin-top:10px;text-align:center;">+ Add Contact</button>
+    </div>
+
+    <!-- RECENT DRILLS -->
+    <div class="panel-section">
+      <div class="panel-title">🏃 Recent Drills</div>
+      <div class="drill-item">
+        <span class="drill-icon">🔥</span>
+        <div class="drill-info">
+          <div class="drill-name">Fire Evacuation — Bldg 4</div>
+          <div class="drill-date">Apr 28, 2026 · 38 participants</div>
+        </div>
+        <span class="drill-score" style="background:var(--green-bg);color:var(--green);">94%</span>
+      </div>
+      <div class="drill-item">
+        <span class="drill-icon">☣️</span>
+        <div class="drill-info">
+          <div class="drill-name">Chemical Spill Tabletop</div>
+          <div class="drill-date">Mar 15, 2026 · Leadership</div>
+        </div>
+        <span class="drill-score" style="background:var(--yellow-bg);color:var(--yellow);">81%</span>
+      </div>
+      <div class="drill-item">
+        <span class="drill-icon">⛈️</span>
+        <div class="drill-info">
+          <div class="drill-name">Severe Weather Shelter</div>
+          <div class="drill-date">Jan 10, 2026 · All-site</div>
+        </div>
+        <span class="drill-score" style="background:var(--green-bg);color:var(--green);">91%</span>
+      </div>
+    </div>
+
+    <!-- INTEGRATIONS -->
+    <div class="panel-section">
+      <div class="panel-title">🔗 Active Integrations</div>
+      <div class="integration-item">
+        <span class="integration-icon">🌦️</span>
+        <div>
+          <div class="integration-name">NOAA / NWS Alerts</div>
+          <div class="integration-sub">Auto-triggers plan reviews</div>
+        </div>
+        <div class="integration-toggle on"></div>
+      </div>
+      <div class="integration-item">
+        <span class="integration-icon">📱</span>
+        <div>
+          <div class="integration-name">SMS Notifications</div>
+          <div class="integration-sub">Alert all contacts on activation</div>
+        </div>
+        <div class="integration-toggle on"></div>
+      </div>
+      <div class="integration-item">
+        <span class="integration-icon">📧</span>
+        <div>
+          <div class="integration-name">Email Escalation</div>
+          <div class="integration-sub">EHS leadership distribution</div>
+        </div>
+        <div class="integration-toggle on"></div>
+      </div>
+      <div class="integration-item">
+        <span class="integration-icon">🗺️</span>
+        <div>
+          <div class="integration-name">Site Mapping / GIS</div>
+          <div class="integration-sub">Evacuation routes overlay</div>
+        </div>
+        <div class="integration-toggle off"></div>
+      </div>
+    </div>
+
+  </aside>
+
+</div>
+</body>
+</html>

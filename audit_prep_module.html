@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>External Audit Prep — Reliance Mako</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; color: #2C2C2A; background: #F5F4EF; }
+
+/* ── Layout ── */
+.app-shell { display: flex; height: 100vh; overflow: hidden; }
+.sidebar { width: 224px; background: #0F2E45; flex-shrink: 0; display: flex; flex-direction: column; }
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { background: #fff; border-bottom: 1px solid #E0DED7; padding: 0 22px; height: 58px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.content { flex: 1; overflow-y: auto; padding: 20px 22px; }
+
+/* ── Sidebar ── */
+.sidebar-logo { padding: 16px 18px 13px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.logo-name { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+.logo-sub { font-size: 9.5px; color: #7BBCD4; letter-spacing: 1.2px; text-transform: uppercase; margin-top: 1px; }
+.nav-group { padding: 14px 0 4px; }
+.nav-group-label { font-size: 9px; letter-spacing: 1.8px; text-transform: uppercase; color: rgba(255,255,255,0.35); padding: 0 18px; margin-bottom: 5px; }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 18px; font-size: 12.5px; color: rgba(255,255,255,0.7); cursor: pointer; }
+.nav-item:hover { background: rgba(255,255,255,0.07); }
+.nav-item.active { background: rgba(255,255,255,0.13); color: #fff; font-weight: 600; border-left: 3px solid #F59E2E; padding-left: 15px; }
+.nav-item .ico { width: 17px; text-align: center; font-size: 13px; }
+.nav-badge { margin-left: auto; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+.nb-red { background: #A32D2D; color: #fff; }
+.nb-amber { background: #854F0B; color: #fff; }
+.nb-teal { background: #0F6E56; color: #fff; }
+
+/* ── Topbar ── */
+.page-title { font-size: 15.5px; font-weight: 600; color: #2C2C2A; flex: 1; }
+.page-title small { font-size: 11.5px; font-weight: 400; color: #888780; margin-left: 7px; }
+.search-input { background: #F5F4EF; border: 1px solid #D3D1C7; border-radius: 6px; padding: 7px 12px; font-size: 12px; color: #2C2C2A; width: 210px; }
+.btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 13px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; white-space: nowrap; }
+.btn-primary { background: #0F2E45; color: #fff; }
+.btn-secondary { background: #fff; color: #2C2C2A; border: 1px solid #D3D1C7; }
+.btn-ai { background: linear-gradient(135deg, #0F2E45, #1A4D70); color: #9FE1CB; }
+.btn-warn { background: #F59E2E; color: #fff; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: #F59E2E; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-left: 6px; }
+
+/* ── AI Banner ── */
+.ai-banner { background: linear-gradient(135deg, #0F2E45 0%, #1A4D70 100%); border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; color: #fff; display: flex; gap: 18px; align-items: flex-start; }
+.aib-icon { font-size: 22px; margin-top: 2px; flex-shrink: 0; }
+.aib-body { flex: 1; }
+.aib-eyebrow { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: #7BBCD4; margin-bottom: 5px; }
+.aib-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.aib-text { font-size: 11px; color: #A8C8D8; line-height: 1.6; margin-bottom: 8px; }
+.aib-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.aib-chip { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18); padding: 3px 9px; border-radius: 20px; font-size: 10px; color: #A8C8D8; }
+.aib-chip-r { background: rgba(163,45,45,0.3); border-color: rgba(255,150,150,0.3); color: #FFD0D0; }
+.aib-chip-w { background: rgba(133,79,11,0.3); border-color: rgba(245,158,46,0.3); color: #F5C888; }
+.aib-chip-g { background: rgba(10,94,54,0.3); border-color: rgba(159,225,203,0.3); color: #9FE1CB; }
+.aib-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+
+/* ── Stat row ── */
+.stat-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 11px; margin-bottom: 16px; }
+.stat-card { background: #fff; border-radius: 8px; padding: 12px 14px; border: 1px solid #E0DED7; }
+.stat-label { font-size: 10.5px; color: #888780; margin-bottom: 4px; }
+.stat-val { font-size: 26px; font-weight: 700; color: #2C2C2A; line-height: 1; margin-bottom: 3px; }
+.sv-red { color: #A32D2D; } .sv-amber { color: #854F0B; } .sv-green { color: #0A5E36; } .sv-blue { color: #185FA5; } .sv-teal { color: #0F6E56; }
+.stat-sub { font-size: 10px; color: #888780; }
+.stat-sub.warn { color: #A32D2D; font-weight: 600; }
+
+/* ── Countdown badge ── */
+.countdown { display: inline-flex; align-items: center; gap: 5px; background: #FCEBEB; border: 1px solid #E8A8A8; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; color: #8B1A1A; margin-bottom: 16px; }
+
+/* ── Grid layout ── */
+.grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 14px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 13px; margin-bottom: 14px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; margin-bottom: 14px; }
+
+/* ── Panels ── */
+.panel { background: #fff; border: 1px solid #E0DED7; border-radius: 8px; overflow: hidden; }
+.panel-hdr { padding: 9px 14px; font-size: 12px; font-weight: 600; border-bottom: 1px solid #E0DED7; display: flex; align-items: center; justify-content: space-between; }
+.ph-dark { background: #0F2E45; color: #fff; }
+.ph-dark .ph-sub { color: rgba(255,255,255,0.55); font-size: 10px; font-weight: 400; }
+.ph-red { background: #FCEBEB; color: #8B1A1A; }
+.ph-amber { background: #FAEEDA; color: #7A4800; }
+.ph-green { background: #EAF3DE; color: #0A5E36; }
+.ph-blue { background: #E6F1FB; color: #042C53; }
+.ph-neutral { background: #FAFAF8; color: #2C2C2A; }
+.ph-teal { background: #E0F5EE; color: #0A4530; }
+.panel-body { padding: 12px 14px; }
+
+/* ── Audit card ── */
+.audit-card { border-radius: 8px; overflow: hidden; border: 1px solid #E0DED7; }
+.audit-card-hdr { padding: 11px 14px; display: flex; align-items: flex-start; gap: 10px; }
+.audit-card-hdr.smeta { background: linear-gradient(135deg, #0F2E45, #163d60); }
+.audit-card-hdr.osha { background: linear-gradient(135deg, #3B0A0A, #6B1515); }
+.audit-card-hdr.iso { background: linear-gradient(135deg, #0A3A28, #0F6E56); }
+.audit-card-hdr.client { background: linear-gradient(135deg, #1A2A6B, #2D4AB0); }
+.ac-type { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.6); margin-bottom: 3px; }
+.ac-name { font-size: 13px; font-weight: 700; color: #fff; }
+.ac-scope { font-size: 10px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+.ac-date-block { margin-left: auto; text-align: right; flex-shrink: 0; }
+.ac-days { font-size: 22px; font-weight: 800; color: #F59E2E; line-height: 1; }
+.ac-days-lbl { font-size: 9px; color: rgba(255,255,255,0.55); }
+.audit-card-body { padding: 10px 14px; background: #FAFAF8; }
+.ac-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 0.5px solid #F0EEE8; font-size: 11px; }
+.ac-row:last-child { border-bottom: none; }
+.ac-metric { color: #888780; }
+.ac-val { font-weight: 600; }
+.ac-val-red { color: #A32D2D; font-weight: 700; }
+.ac-val-amber { color: #854F0B; font-weight: 700; }
+.ac-val-green { color: #0A5E36; font-weight: 700; }
+.ac-progress { margin-top: 8px; }
+.ac-prog-label { display: flex; justify-content: space-between; font-size: 10px; color: #888780; margin-bottom: 3px; }
+.ac-prog-bar { height: 6px; background: #E0DED7; border-radius: 3px; overflow: hidden; }
+.ac-prog-fill { height: 100%; border-radius: 3px; }
+
+/* ── Doc readiness ── */
+.doc-item { display: flex; align-items: center; gap: 9px; padding: 8px 0; border-bottom: 0.5px solid #F0EEE8; }
+.doc-item:last-child { border-bottom: none; }
+.doc-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ds-green { background: #0A5E36; }
+.ds-amber { background: #F59E2E; }
+.ds-red { background: #A32D2D; }
+.ds-gray { background: #C5C4BF; }
+.doc-name { flex: 1; font-size: 11.5px; }
+.doc-expiry { font-size: 10px; color: #888780; white-space: nowrap; }
+.doc-badge { font-size: 9.5px; padding: 2px 7px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
+.db-current { background: #EAF3DE; color: #0A5E36; }
+.db-expiring { background: #FAEEDA; color: #854F0B; }
+.db-missing { background: #FCEBEB; color: #8B1A1A; }
+.db-pending { background: #E6F1FB; color: #185FA5; }
+
+/* ── Gap item ── */
+.gap-item { display: flex; align-items: flex-start; gap: 9px; padding: 9px 0; border-bottom: 0.5px solid #F0EEE8; }
+.gap-item:last-child { border-bottom: none; }
+.gap-sev { width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.gs-crit { background: #FCEBEB; }
+.gs-warn { background: #FAEEDA; }
+.gs-info { background: #EEF2F5; }
+.gap-content { flex: 1; }
+.gap-title { font-weight: 600; font-size: 12px; }
+.gap-meta { font-size: 10.5px; color: #888780; line-height: 1.5; margin-top: 1px; }
+.gap-tag { font-size: 9.5px; padding: 2px 7px; border-radius: 4px; font-weight: 600; display: inline-block; margin-top: 3px; }
+.gt-crit { background: #FCEBEB; color: #8B1A1A; }
+.gt-warn { background: #FAEEDA; color: #7A4800; }
+.gt-info { background: #EEF2F5; color: #0F2E45; }
+
+/* ── CAPA ── */
+.capa-item { display: flex; align-items: flex-start; gap: 9px; padding: 8px 0; border-bottom: 0.5px solid #F0EEE8; font-size: 11.5px; }
+.capa-item:last-child { border-bottom: none; }
+.capa-num { font-size: 10px; font-weight: 700; background: #0F2E45; color: #fff; padding: 2px 7px; border-radius: 4px; white-space: nowrap; margin-top: 1px; }
+.capa-content { flex: 1; }
+.capa-title { font-weight: 600; }
+.capa-due { font-size: 10px; color: #888780; }
+.capa-status { font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600; }
+.cs-open { background: #FAEEDA; color: #7A4800; }
+.cs-progress { background: #E6F1FB; color: #185FA5; }
+.cs-closed { background: #EAF3DE; color: #0A5E36; }
+
+/* ── Checklist ── */
+.checklist-item { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 0.5px solid #F0EEE8; font-size: 11.5px; }
+.checklist-item:last-child { border-bottom: none; }
+.ci-box { width: 15px; height: 15px; border-radius: 3px; border: 1.5px solid #D3D1C7; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+.ci-checked { background: #0A5E36; border-color: #0A5E36; color: #fff; }
+.ci-partial { background: #FAEEDA; border-color: #F59E2E; color: #854F0B; }
+.ci-empty { background: #fff; }
+.ci-text { flex: 1; }
+.ci-owner { font-size: 10px; color: #888780; white-space: nowrap; }
+
+/* ── Tabs ── */
+.tab-bar { display: flex; background: #fff; border: 1px solid #E0DED7; border-bottom: none; border-radius: 8px 8px 0 0; padding: 0 14px; }
+.tab { padding: 10px 13px; font-size: 12px; font-weight: 500; color: #888780; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab.active { color: #0F2E45; border-bottom-color: #F59E2E; font-weight: 600; }
+.tab .tc { font-size: 10px; padding: 1px 5px; border-radius: 10px; margin-left: 4px; }
+.tc-red { background: #FCEBEB; color: #A32D2D; }
+.tc-amber { background: #FAEEDA; color: #854F0B; }
+
+/* ── Evidence builder ── */
+.ev-section { margin-bottom: 14px; }
+.ev-section-title { font-size: 11px; font-weight: 700; color: #0F2E45; background: #EEF2F5; padding: 5px 10px; border-radius: 5px 5px 0 0; border: 1px solid #C5D5E0; border-bottom: none; }
+.ev-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid #E0DED7; border-top: none; font-size: 11px; }
+.ev-row:last-child { border-radius: 0 0 5px 5px; }
+.ev-icon { font-size: 13px; flex-shrink: 0; }
+.ev-name { flex: 1; }
+.ev-source { font-size: 10px; color: #888780; }
+.ev-action { font-size: 10px; color: #185FA5; cursor: pointer; white-space: nowrap; }
+
+/* ── Audit history table ── */
+table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+th { background: #0F2E45; color: rgba(255,255,255,0.85); padding: 7px 10px; text-align: left; font-weight: 500; font-size: 10.5px; }
+td { padding: 8px 10px; border-bottom: 0.5px solid #F0EEE8; vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:nth-child(even) td { background: #FAFAF8; }
+
+/* ── Mock hint ── */
+.mock-hint { position: fixed; bottom: 16px; right: 16px; background: #fff; border: 1px solid #E0DED7; border-radius: 8px; padding: 10px 13px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); font-size: 11px; max-width: 230px; }
+.mock-hint strong { display: block; font-size: 11.5px; margin-bottom: 3px; color: #F59E2E; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-name">Reliance Mako</div>
+      <div class="logo-sub">Safety Platform</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Overview</div>
+      <div class="nav-item"><span class="ico">&#9632;</span> Dashboard</div>
+      <div class="nav-item"><span class="ico">&#128276;</span> Alerts <span class="nav-badge nb-red">7</span></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Compliance &amp; Audit</div>
+      <div class="nav-item active"><span class="ico">&#128196;</span> External Audit Prep <span class="nav-badge nb-amber">3</span></div>
+      <div class="nav-item"><span class="ico">&#128203;</span> Audit Records</div>
+      <div class="nav-item"><span class="ico">&#128202;</span> Reports</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Site Safety</div>
+      <div class="nav-item"><span class="ico">&#128736;</span> Contractor Risk</div>
+      <div class="nav-item"><span class="ico">&#128221;</span> Daily Activity Plans</div>
+      <div class="nav-item"><span class="ico">&#9989;</span> JSA / Permits</div>
+      <div class="nav-item"><span class="ico">&#9888;</span> Incidents <span class="nav-badge nb-amber">2</span></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Workforce</div>
+      <div class="nav-item"><span class="ico">&#127979;</span> Training &amp; SDS</div>
+      <div class="nav-item"><span class="ico">&#128293;</span> Calibration &amp; Equip</div>
+      <div class="nav-item"><span class="ico">&#128101;</span> Certifications</div>
+    </div>
+    <div class="nav-group" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">
+      <div class="nav-item"><span class="ico">&#9881;</span> Settings</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="page-title">External Audit Prep <small>3 audits upcoming</small></div>
+      <input class="search-input" placeholder="Search audits, documents, CAPAs..." />
+      <button class="btn btn-secondary">Export Evidence Package</button>
+      <button class="btn btn-ai">Run AI Gap Scan</button>
+      <button class="btn btn-primary">+ Schedule Audit</button>
+      <div class="avatar">JH</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- COUNTDOWN + AI BANNER -->
+      <div class="countdown">
+        &#128197; SMETA audit in <strong style="font-size:14px; margin:0 4px;">23 days</strong> &mdash; Jun 15 &rarr; Jul 8, 2026 &nbsp; | &nbsp; 4 open gaps require action before that date
+      </div>
+
+      <div class="ai-banner">
+        <div class="aib-icon">&#129302;</div>
+        <div class="aib-body">
+          <div class="aib-eyebrow">Predictive AI Safety Engine &mdash; Pre-Audit Gap Scan</div>
+          <div class="aib-title">4 compliance gaps identified across 3 upcoming audits &mdash; 2 are critical for SMETA</div>
+          <div class="aib-text">AI scan completed June 15, 2026. Highest risk: (1) 3 workers lack current heat illness training &mdash; required for SMETA Health &amp; Safety pillar; (2) OSHA 300 log has 1 unclassified incident from May 14 that must be resolved before any external audit. 1 contractor pre-qual document expired June 2. Evidence packages for ISO 45001 and Client Safety Audit are 91% complete.</div>
+          <div class="aib-chips">
+            <span class="aib-chip aib-chip-r">SMETA: 2 critical gaps</span>
+            <span class="aib-chip aib-chip-w">OSHA log: 1 unclassified item</span>
+            <span class="aib-chip aib-chip-w">Contractor pre-qual expired</span>
+            <span class="aib-chip aib-chip-g">ISO 45001: 91% ready</span>
+            <span class="aib-chip aib-chip-g">Client audit: 88% ready</span>
+            <span class="aib-chip">Scan: Today 5:55 AM</span>
+          </div>
+        </div>
+        <div class="aib-actions">
+          <button class="btn btn-warn" style="font-size:11px;">View full gap report</button>
+          <button class="btn btn-secondary" style="font-size:11px; background:rgba(255,255,255,0.1); color:#fff; border-color:rgba(255,255,255,0.25);">Export PDF</button>
+        </div>
+      </div>
+
+      <!-- STAT CARDS -->
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-label">Upcoming audits</div>
+          <div class="stat-val sv-blue">3</div>
+          <div class="stat-sub">Next 90 days</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Critical gaps</div>
+          <div class="stat-val sv-red">2</div>
+          <div class="stat-sub warn">Must resolve before Jul 8</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Docs missing / expired</div>
+          <div class="stat-val sv-amber">4</div>
+          <div class="stat-sub">Across all audits</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Open CAPAs</div>
+          <div class="stat-val sv-amber">7</div>
+          <div class="stat-sub">From prior audits</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg readiness</div>
+          <div class="stat-val sv-teal">84%</div>
+          <div class="stat-sub">Across 3 audits</div>
+        </div>
+      </div>
+
+      <!-- UPCOMING AUDIT CARDS -->
+      <div style="font-size:12px; font-weight:700; color:#0F2E45; margin-bottom:10px;">Upcoming Audits</div>
+      <div class="grid-3" style="margin-bottom:16px;">
+
+        <!-- SMETA -->
+        <div class="audit-card">
+          <div class="audit-card-hdr smeta">
+            <div>
+              <div class="ac-type">SMETA 4-Pillar</div>
+              <div class="ac-name">Sedex / SMETA Audit</div>
+              <div class="ac-scope">Ethical trade &mdash; Labor, H&amp;S, Environment, Business Ethics</div>
+            </div>
+            <div class="ac-date-block">
+              <div class="ac-days">23</div>
+              <div class="ac-days-lbl">days left</div>
+            </div>
+          </div>
+          <div class="audit-card-body">
+            <div class="ac-row"><span class="ac-metric">Audit date</span><span class="ac-val">Jul 8, 2026</span></div>
+            <div class="ac-row"><span class="ac-metric">Auditor</span><span class="ac-val">Bureau Veritas</span></div>
+            <div class="ac-row"><span class="ac-metric">Critical gaps</span><span class="ac-val-red">2</span></div>
+            <div class="ac-row"><span class="ac-metric">Docs ready</span><span class="ac-val-amber">14 of 18</span></div>
+            <div class="ac-progress">
+              <div class="ac-prog-label"><span>Readiness</span><span style="color:#854F0B; font-weight:600;">72%</span></div>
+              <div class="ac-prog-bar"><div class="ac-prog-fill" style="width:72%; background:#854F0B;"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ISO 45001 -->
+        <div class="audit-card">
+          <div class="audit-card-hdr iso">
+            <div>
+              <div class="ac-type">ISO 45001:2018</div>
+              <div class="ac-name">OHS Management System</div>
+              <div class="ac-scope">Occupational Health &amp; Safety certification surveillance</div>
+            </div>
+            <div class="ac-date-block">
+              <div class="ac-days">51</div>
+              <div class="ac-days-lbl">days left</div>
+            </div>
+          </div>
+          <div class="audit-card-body">
+            <div class="ac-row"><span class="ac-metric">Audit date</span><span class="ac-val">Aug 5, 2026</span></div>
+            <div class="ac-row"><span class="ac-metric">Auditor</span><span class="ac-val">NSF International</span></div>
+            <div class="ac-row"><span class="ac-metric">Critical gaps</span><span class="ac-val-green">0</span></div>
+            <div class="ac-row"><span class="ac-metric">Docs ready</span><span class="ac-val-green">21 of 23</span></div>
+            <div class="ac-progress">
+              <div class="ac-prog-label"><span>Readiness</span><span style="color:#0A5E36; font-weight:600;">91%</span></div>
+              <div class="ac-prog-bar"><div class="ac-prog-fill" style="width:91%; background:#0A5E36;"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Client Safety Audit -->
+        <div class="audit-card">
+          <div class="audit-card-hdr client">
+            <div>
+              <div class="ac-type">Client Safety Audit</div>
+              <div class="ac-name">Lilly Site Safety Review</div>
+              <div class="ac-scope">Owner-mandated contractor safety compliance review</div>
+            </div>
+            <div class="ac-date-block">
+              <div class="ac-days">78</div>
+              <div class="ac-days-lbl">days left</div>
+            </div>
+          </div>
+          <div class="audit-card-body">
+            <div class="ac-row"><span class="ac-metric">Audit date</span><span class="ac-val">Sep 1, 2026</span></div>
+            <div class="ac-row"><span class="ac-metric">Auditor</span><span class="ac-val">Lilly EHS Team</span></div>
+            <div class="ac-row"><span class="ac-metric">Critical gaps</span><span class="ac-val-green">0</span></div>
+            <div class="ac-row"><span class="ac-metric">Docs ready</span><span class="ac-val-amber">15 of 17</span></div>
+            <div class="ac-progress">
+              <div class="ac-prog-label"><span>Readiness</span><span style="color:#0A5E36; font-weight:600;">88%</span></div>
+              <div class="ac-prog-bar"><div class="ac-prog-fill" style="width:88%; background:#0A5E36;"></div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TABS for detail section -->
+      <div class="tab-bar">
+        <div class="tab active">AI Gap Analysis <span class="tc tc-red">4</span></div>
+        <div class="tab">Document Readiness</div>
+        <div class="tab">Pre-Audit Checklist</div>
+        <div class="tab">Evidence Package Builder</div>
+        <div class="tab">Open CAPAs <span class="tc tc-amber">7</span></div>
+        <div class="tab">Audit History</div>
+      </div>
+
+      <!-- GAP ANALYSIS + DOC READINESS -->
+      <div class="grid-2-1" style="margin-bottom:0;">
+
+        <!-- AI GAP ANALYSIS -->
+        <div class="panel" style="border-radius:0 0 8px 8px; border-top:none;">
+          <div class="panel-hdr ph-red">
+            <span>AI-Identified Gaps &mdash; SMETA (Jul 8)</span>
+            <span style="font-size:10px; background:#FCEBEB; color:#8B1A1A; padding:2px 7px; border-radius:10px; font-weight:700;">4 open gaps</span>
+          </div>
+          <div class="panel-body" style="padding:10px 14px;">
+
+            <div class="gap-item">
+              <div class="gap-sev gs-crit">&#9888;&#65039;</div>
+              <div class="gap-content">
+                <div class="gap-title">3 workers missing heat illness training (SMETA H&amp;S pillar)</div>
+                <div class="gap-meta">M. Torres, D. Osei, R. Vargas have not completed heat illness prevention training. SMETA requires documented training for all personnel exposed to outdoor heat. Training module is available in the platform &mdash; can be assigned and completed before Jul 8.</div>
+                <span class="gap-tag gt-crit">Critical &mdash; blocks SMETA pass</span>
+              </div>
+            </div>
+
+            <div class="gap-item">
+              <div class="gap-sev gs-crit">&#9888;&#65039;</div>
+              <div class="gap-content">
+                <div class="gap-title">OSHA 300 log: 1 unclassified incident (May 14)</div>
+                <div class="gap-meta">Incident #2026-047 (laceration, R. Vargas) has not been classified as recordable or non-recordable. Any external auditor will review the 300 log. Unclassified entries signal incomplete recordkeeping &mdash; must be resolved before any audit.</div>
+                <span class="gap-tag gt-crit">Critical &mdash; recordkeeping finding risk</span>
+              </div>
+            </div>
+
+            <div class="gap-item">
+              <div class="gap-sev gs-warn">&#128203;</div>
+              <div class="gap-content">
+                <div class="gap-title">Apex Mechanical pre-qual expired June 2</div>
+                <div class="gap-meta">SMETA auditors review contractor management practices. Apex Mechanical's pre-qualification documents expired 13 days ago. Also relevant to Client Safety Audit. Renew or suspend contractor access before audit date.</div>
+                <span class="gap-tag gt-warn">High &mdash; contractor management finding</span>
+              </div>
+            </div>
+
+            <div class="gap-item">
+              <div class="gap-sev gs-warn">&#128196;</div>
+              <div class="gap-content">
+                <div class="gap-title">Environmental waste manifest: Q2 summary not filed</div>
+                <div class="gap-meta">SMETA Environment pillar requires documented waste disposal records. Q2 2026 hazardous waste manifest summary has not been uploaded. Contact EHS coordinator to obtain from waste hauler and upload before Jul 1.</div>
+                <span class="gap-tag gt-warn">Medium &mdash; environment pillar</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- DOC READINESS -->
+        <div class="panel" style="border-radius:0 0 8px 8px; border-top:none;">
+          <div class="panel-hdr ph-neutral">
+            <span>Key Docs &mdash; SMETA</span>
+            <span style="font-size:10px; color:#888780;">14 / 18 ready</span>
+          </div>
+          <div class="panel-body" style="padding:8px 14px;">
+            <div class="doc-item">
+              <div class="doc-status-dot ds-green"></div>
+              <div class="doc-name">OSHA 300 Log (2024)</div>
+              <span class="doc-badge db-current">Current</span>
+            </div>
+            <div class="doc-item">
+              <div class="doc-status-dot ds-red"></div>
+              <div class="doc-name">OSHA 300 Log (2026 YTD)</div>
+              <span class="doc-badge db-missing">Unclassified item</span>
+            </div>
+            <div class="doc-item">
+              <div class="doc-status-dot ds-green"></div>
+              <div class="doc-name">Written Safety Program</div>
+              <span class="doc-badge db-current">Current</span>
+            </div>
+            <div class="doc-item">
+              <div class="doc-status-dot ds-green"></div>
+              <div class="doc-name">Emergency Action Plan</div>
+              <span class="doc-badge db-current">Current</span>
+            </div>
+            <div class="doc-item">
+              <div class="doc-status-dot ds-red"></div>
+              <div class="doc-name">Heat Illness Training Records</div>
+              <span class="doc-badge db-missing">3 workers missing</span>
+            </div>
+            <div class="doc-item">
+              <div class="doc-status-dot ds-green"></div>
+              <div class="doc-name">Hazard Communication Program</div>
+              <span class="doc-badge db-current">Current</span>
+            </div>
+            <div class="doc-item">
+              <div class="doc-status-dot ds-amber"></div>
+              <div class="doc-name">Contractor Pre-Qual Records</div>
+              <span class="doc-badge db-expiring">1 expired</span>
+            </div>
+            <div class="doc-item">
+              <div class="doc-status-dot ds-red"></div>
+              <div class="doc-name">Q2 Waste Manifest Summary</div>
+              <span class="doc-badge db-missing">Not uploaded</span>
+            </div>
+            <div class="doc-item">
+              <div class="doc-status-dot ds-green"></div>
+              <div class="doc-name">Incident Investigation Reports</div>
+              <span class="doc-badge db-current">Current</span>
+            </div>
+            <div class="doc-item">
+              <div class="doc-status-dot ds-gray"></div>
+              <div class="doc-name">Worker grievance records</div>
+              <span class="doc-badge db-pending">Awaiting HR</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CHECKLIST + CAPA SUMMARY -->
+      <div class="grid-2" style="margin-top:14px; margin-bottom:14px;">
+
+        <!-- CHECKLIST -->
+        <div class="panel">
+          <div class="panel-hdr ph-dark">
+            <span>Pre-Audit Checklist &mdash; SMETA</span>
+            <span class="ph-sub">8 / 14 complete</span>
+          </div>
+          <div class="panel-body" style="padding:8px 14px;">
+            <div style="font-size:10.5px; font-weight:700; color:#888780; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.8px;">Health &amp; Safety</div>
+            <div class="checklist-item"><div class="ci-box ci-checked">&#10003;</div><div class="ci-text">Written Safety Program current and posted</div><div class="ci-owner">JH</div></div>
+            <div class="checklist-item"><div class="ci-box ci-checked">&#10003;</div><div class="ci-text">Emergency Action Plan reviewed (last 12mo)</div><div class="ci-owner">JH</div></div>
+            <div class="checklist-item"><div class="ci-box ci-partial">!</div><div class="ci-text">All required training records complete</div><div class="ci-owner" style="color:#854F0B;">3 missing</div></div>
+            <div class="checklist-item"><div class="ci-box ci-empty"></div><div class="ci-text">OSHA 300 log reviewed and fully classified</div><div class="ci-owner" style="color:#A32D2D;">Overdue</div></div>
+            <div class="checklist-item"><div class="ci-box ci-checked">&#10003;</div><div class="ci-text">First aid kits inspected and stocked</div><div class="ci-owner">JH</div></div>
+            <div style="font-size:10.5px; font-weight:700; color:#888780; margin:8px 0 4px; text-transform:uppercase; letter-spacing:0.8px;">Labor</div>
+            <div class="checklist-item"><div class="ci-box ci-checked">&#10003;</div><div class="ci-text">Wage and hour records available</div><div class="ci-owner">HR</div></div>
+            <div class="checklist-item"><div class="ci-box ci-checked">&#10003;</div><div class="ci-text">Worker right-to-work documentation on file</div><div class="ci-owner">HR</div></div>
+            <div class="checklist-item"><div class="ci-box ci-empty"></div><div class="ci-text">Grievance procedure documented and communicated</div><div class="ci-owner">HR</div></div>
+            <div style="font-size:10.5px; font-weight:700; color:#888780; margin:8px 0 4px; text-transform:uppercase; letter-spacing:0.8px;">Environment</div>
+            <div class="checklist-item"><div class="ci-box ci-checked">&#10003;</div><div class="ci-text">Environmental policy posted on site</div><div class="ci-owner">JH</div></div>
+            <div class="checklist-item"><div class="ci-box ci-empty"></div><div class="ci-text">Waste disposal manifests current (Q2)</div><div class="ci-owner" style="color:#A32D2D;">Missing</div></div>
+            <div style="font-size:10.5px; font-weight:700; color:#888780; margin:8px 0 4px; text-transform:uppercase; letter-spacing:0.8px;">Business Ethics</div>
+            <div class="checklist-item"><div class="ci-box ci-checked">&#10003;</div><div class="ci-text">Anti-bribery/corruption policy in place</div><div class="ci-owner">Legal</div></div>
+            <div class="checklist-item"><div class="ci-box ci-checked">&#10003;</div><div class="ci-text">Supplier code of conduct distributed</div><div class="ci-owner">JH</div></div>
+          </div>
+        </div>
+
+        <!-- OPEN CAPAs -->
+        <div class="panel">
+          <div class="panel-hdr ph-amber">
+            <span>Open CAPAs from Prior Audits</span>
+            <span style="font-size:10px; background:#FAEEDA; color:#7A4800; padding:2px 7px; border-radius:10px; font-weight:700;">7 open</span>
+          </div>
+          <div class="panel-body" style="padding:8px 14px;">
+            <div class="capa-item">
+              <div class="capa-num">CA-041</div>
+              <div class="capa-content">
+                <div class="capa-title">Heat illness training &mdash; all exposed workers</div>
+                <div class="capa-due">From: SMETA 2025 &bull; Due: Jun 30, 2026</div>
+              </div>
+              <span class="capa-status cs-open">Open</span>
+            </div>
+            <div class="capa-item">
+              <div class="capa-num">CA-038</div>
+              <div class="capa-content">
+                <div class="capa-title">Classify all OSHA 300 log entries within 7 days</div>
+                <div class="capa-due">From: ISO 45001 2025 &bull; Due: Jun 20, 2026</div>
+              </div>
+              <span class="capa-status cs-open">Open</span>
+            </div>
+            <div class="capa-item">
+              <div class="capa-num">CA-036</div>
+              <div class="capa-content">
+                <div class="capa-title">Annual contractor pre-qual review process documented</div>
+                <div class="capa-due">From: Client Audit 2025 &bull; Due: Jul 15, 2026</div>
+              </div>
+              <span class="capa-status cs-progress">In progress</span>
+            </div>
+            <div class="capa-item">
+              <div class="capa-num">CA-033</div>
+              <div class="capa-content">
+                <div class="capa-title">Implement documented waste manifest tracking</div>
+                <div class="capa-due">From: SMETA 2025 &bull; Due: Jul 1, 2026</div>
+              </div>
+              <span class="capa-status cs-open">Open</span>
+            </div>
+            <div class="capa-item">
+              <div class="capa-num">CA-029</div>
+              <div class="capa-content">
+                <div class="capa-title">Implement stop-work authority acknowledgment form</div>
+                <div class="capa-due">From: ISO 45001 2025 &bull; Due: Aug 1, 2026</div>
+              </div>
+              <span class="capa-status cs-progress">In progress</span>
+            </div>
+            <div class="capa-item">
+              <div class="capa-num">CA-024</div>
+              <div class="capa-content">
+                <div class="capa-title">Post worker rights notices in worker language</div>
+                <div class="capa-due">From: SMETA 2025 &bull; Due: Jul 8, 2026</div>
+              </div>
+              <span class="capa-status cs-closed">Closed</span>
+            </div>
+            <div class="capa-item">
+              <div class="capa-num">CA-021</div>
+              <div class="capa-content">
+                <div class="capa-title">Establish formal grievance procedure</div>
+                <div class="capa-due">From: SMETA 2025 &bull; Due: Jul 8, 2026</div>
+              </div>
+              <span class="capa-status cs-progress">In progress</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- AUDIT HISTORY -->
+      <div class="panel">
+        <div class="panel-hdr ph-teal">
+          <span>Audit History</span>
+          <span style="font-size:11px; color:#0A4530; cursor:pointer;">View all records &rarr;</span>
+        </div>
+        <div style="padding:0; overflow:hidden; border-radius:0 0 8px 8px;">
+          <table>
+            <thead><tr>
+              <th style="padding-left:14px;">Audit</th>
+              <th>Type</th>
+              <th>Date</th>
+              <th>Auditor</th>
+              <th>Findings</th>
+              <th>CAPAs issued</th>
+              <th>Outcome</th>
+              <th style="padding-right:14px;"></th>
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td style="padding-left:14px;"><strong>SMETA 4-Pillar</strong></td>
+                <td>SMETA</td>
+                <td>Oct 12, 2025</td>
+                <td>Bureau Veritas</td>
+                <td>6 minor, 1 major</td>
+                <td>7</td>
+                <td><span style="background:#EAF3DE; color:#0A5E36; font-size:10px; padding:2px 8px; border-radius:10px; font-weight:700;">Passed</span></td>
+                <td style="padding-right:14px;"><span style="color:#185FA5; font-size:10.5px; cursor:pointer;">Report</span></td>
+              </tr>
+              <tr>
+                <td style="padding-left:14px;"><strong>ISO 45001 Surveillance</strong></td>
+                <td>ISO 45001</td>
+                <td>Aug 3, 2025</td>
+                <td>NSF International</td>
+                <td>3 minor</td>
+                <td>3</td>
+                <td><span style="background:#EAF3DE; color:#0A5E36; font-size:10px; padding:2px 8px; border-radius:10px; font-weight:700;">Passed</span></td>
+                <td style="padding-right:14px;"><span style="color:#185FA5; font-size:10.5px; cursor:pointer;">Report</span></td>
+              </tr>
+              <tr>
+                <td style="padding-left:14px;"><strong>Lilly Client Safety Review</strong></td>
+                <td>Client audit</td>
+                <td>Jun 14, 2025</td>
+                <td>Lilly EHS</td>
+                <td>2 minor</td>
+                <td>2</td>
+                <td><span style="background:#EAF3DE; color:#0A5E36; font-size:10px; padding:2px 8px; border-radius:10px; font-weight:700;">Passed</span></td>
+                <td style="padding-right:14px;"><span style="color:#185FA5; font-size:10.5px; cursor:pointer;">Report</span></td>
+              </tr>
+              <tr>
+                <td style="padding-left:14px;"><strong>OSHA Compliance Visit</strong></td>
+                <td>OSHA</td>
+                <td>Mar 2, 2025</td>
+                <td>OSHA Area Office</td>
+                <td>1 serious</td>
+                <td>1</td>
+                <td><span style="background:#FAEEDA; color:#7A4800; font-size:10px; padding:2px 8px; border-radius:10px; font-weight:700;">Citation</span></td>
+                <td style="padding-right:14px;"><span style="color:#185FA5; font-size:10.5px; cursor:pointer;">Report</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<div class="mock-hint">
+  <strong>Design mockup — for approval</strong>
+  External Audit Prep module for Reliance Mako. Pending review before development.
+</div>
+
+</body>
+</html>
