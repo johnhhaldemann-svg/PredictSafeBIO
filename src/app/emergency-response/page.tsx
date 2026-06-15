@@ -107,9 +107,15 @@ type WeatherData = {
   icon: string;
   alerts: Array<{ event: string; ends: string | null }>;
   forecast: Array<{ day: string; icon: string; high: number }>;
+  live: boolean;
 };
 
-async function fetchWeather(): Promise<WeatherData | null> {
+async function fetchWeather(): Promise<WeatherData> {
+  const fallback: WeatherData = {
+    tempF: 74, humidity: 68, descr: "Partly Cloudy", icon: "🌤",
+    alerts: [], forecast: DEMO_FORECAST, live: false,
+  };
+
   try {
     const [meteoRes, alertsRes] = await Promise.allSettled([
       fetch(
@@ -117,16 +123,17 @@ async function fetchWeather(): Promise<WeatherData | null> {
         "&current=temperature_2m,relative_humidity_2m,weather_code" +
         "&daily=weather_code,temperature_2m_max" +
         "&temperature_unit=fahrenheit&timezone=America%2FIndiana%2FIndianapolis&forecast_days=5",
-        { next: { revalidate: 300 } }
+        { cache: "no-store" }
       ),
       fetch(
         "https://api.weather.gov/alerts/active?area=IN",
-        { headers: { "User-Agent": "PredictSafeBIO/1.0 (contact@predictsafe.io)" }, next: { revalidate: 300 } }
+        { headers: { "User-Agent": "PredictSafeBIO/1.0 (contact@predictsafe.io)" }, cache: "no-store" }
       ),
     ]);
 
     let tempF = 74, humidity = 68, weatherCode = 2;
     let forecast: WeatherData["forecast"] = DEMO_FORECAST;
+    let meteoLive = false;
 
     if (meteoRes.status === "fulfilled" && meteoRes.value.ok) {
       const d = await meteoRes.value.json();
@@ -138,6 +145,7 @@ async function fetchWeather(): Promise<WeatherData | null> {
         icon: wmoIcon(d.daily.weather_code[i] as number),
         high: Math.round(d.daily.temperature_2m_max[i] as number),
       }));
+      meteoLive = true;
     }
 
     let alerts: WeatherData["alerts"] = [];
@@ -149,9 +157,9 @@ async function fetchWeather(): Promise<WeatherData | null> {
         .filter(a => /severe|thunderstorm|tornado|watch|warning|hurricane|flood/i.test(a.event));
     }
 
-    return { tempF, humidity, descr: wmoDesc(weatherCode), icon: wmoIcon(weatherCode), alerts, forecast };
+    return { tempF, humidity, descr: wmoDesc(weatherCode), icon: wmoIcon(weatherCode), alerts, forecast, live: meteoLive };
   } catch {
-    return null;
+    return fallback;
   }
 }
 
@@ -251,6 +259,7 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
     })),
     fetchWeather(),
   ]);
+  const weatherLive = weather.live;
 
   const loadFailed = plansResult === null;
   const plans      = plansResult ?? [];
@@ -268,7 +277,7 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
   const overdueDrillPlans = plans.filter(p => p.nextDrillDate && new Date(p.nextDrillDate) < now);
 
   // Weather banner: real NOAA alerts OR plan-status proxy in demo mode
-  const liveAlerts  = weather?.alerts ?? [];
+  const liveAlerts  = weather.alerts;
   const hasLiveAlert = liveAlerts.length > 0;
   const severeWeatherPlanFlag = plans.some(p => p.planType === "severe_weather" && p.needsReview);
   const showWeatherBanner = hasLiveAlert || severeWeatherPlanFlag;
@@ -323,7 +332,7 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
               </div>
             </div>
             <span style={{ ...PURPLE_CHIP, whiteSpace: "nowrap", alignSelf: "flex-start", marginTop: 2 }}>
-              NOAA LIVE
+              {weatherLive ? "NOAA LIVE" : "PLAN ALERT"}
             </span>
           </div>
         )}
@@ -868,18 +877,21 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
               <div style={{ background: "#1a3a6e", padding: "12px 14px", color: "#fff" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                   <span style={{ fontSize: 11, color: "var(--blue-lt)", fontWeight: 600 }}>Indianapolis, IN</span>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#6EE7B7", letterSpacing: "0.04em" }}>● NOAA LIVE</span>
+                  {weatherLive
+                    ? <span style={{ fontSize: 10, fontWeight: 700, color: "#6EE7B7", letterSpacing: "0.04em" }}>● NOAA LIVE</span>
+                    : <span style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", letterSpacing: "0.04em" }}>○ DEMO DATA</span>
+                  }
                 </div>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
                   <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1 }}>
-                    {weather?.tempF ?? 74}°F
+                    {weather.tempF}°F
                   </div>
                   <div>
                     <div style={{ fontSize: 11, color: "var(--blue-lt)" }}>
-                      {weather?.descr ?? "Partly Cloudy"} · Humidity {weather?.humidity ?? 68}%
+                      {weather.descr} · Humidity {weather.humidity}%
                     </div>
                     <div style={{ fontSize: 10, color: "var(--blue-lt)", marginTop: 2 }}>
-                      Live from Open-Meteo API
+                      {weatherLive ? "Live from Open-Meteo API" : "API unavailable — showing demo data"}
                     </div>
                   </div>
                 </div>
@@ -893,7 +905,7 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
 
               {/* 5-day forecast */}
               <div style={{ display: "flex", borderTop: "1px solid var(--line)" }}>
-                {(weather?.forecast ?? DEMO_FORECAST).map((d, i, arr) => (
+                {weather.forecast.map((d, i, arr) => (
                   <div key={d.day} style={{ flex: 1, textAlign: "center", padding: "10px 4px", borderRight: i < arr.length - 1 ? "1px solid var(--line)" : "none" }}>
                     <div style={{ fontSize: 9, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", marginBottom: 4 }}>{d.day}</div>
                     <div style={{ fontSize: 14, marginBottom: 3 }}>{d.icon}</div>
