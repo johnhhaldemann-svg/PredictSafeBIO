@@ -1,22 +1,34 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
-import { AlertTriangle, ClipboardList, Plus, ShieldCheck, Clock } from "lucide-react";
+import { AlertTriangle, ClipboardList, Plus, ShieldCheck, Clock, X } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import {
   listPlans,
   listDrills,
-  planTypeLabels,
+  listSteps,
+  listContacts,
   drillOutcomeLabels,
   type PlanType,
   type EmergencyDrill,
+  type EmergencyStep,
+  type EmergencyContact,
 } from "@/lib/supabase/emergency-service";
 import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
-import { createPlanAction, createDrillAction } from "./actions";
+import {
+  createPlanAction,
+  createDrillAction,
+  createStepAction,
+  toggleStepAction,
+  createContactAction,
+  deleteContactAction,
+} from "./actions";
 import { DataLoadError } from "@/components/DataLoadError";
 
 export const metadata: Metadata = { title: "Emergency Response – PredictSafe" };
+
+// ── Design constants ──────────────────────────────────────────────────────────
 
 const PLAN_EMOJI: Record<PlanType, string> = {
   fire:               "🔥",
@@ -28,64 +40,143 @@ const PLAN_EMOJI: Record<PlanType, string> = {
   other:              "📋",
 };
 
-const DEMO_STEPS = [
-  { id: 1, text: "Activate Fire Alarm & Initiate Evacuation",     status: "done"    },
-  { id: 2, text: "Call 911 & Notify Site Safety Director",        status: "done"    },
-  { id: 3, text: "Account for All Personnel at Muster Point",     status: "active"  },
-  { id: 4, text: "Attempt Suppression — Only If Safe to Do So",   status: "input"   },
-  { id: 5, text: "Meet & Brief Emergency Responders on Arrival",  status: "pending" },
-  { id: 6, text: "Document Incident & Initiate Corrective Action",status: "pending" },
-];
+const CONTACT_COLORS: Record<string, { bg: string; color: string }> = {
+  internal:  { bg: "var(--blue-bg)",   color: "var(--blue)"     },
+  external:  { bg: "#FCEBEB",          color: "var(--red-dk)"   },
+  emergency: { bg: "var(--amber-bg)",  color: "var(--amber-dk)" },
+};
 
-const DEMO_CONTACTS = [
-  { initials: "JH", name: "John Haldemann",        role: "Site Safety Director · Primary", phone: "+1 (317) 555-0142", bg: "var(--blue-bg)",  color: "var(--blue)"     },
-  { initials: "FM", name: "Fire Marshal — Site",   role: "External · Emergency",           phone: "911 / Dispatch",    bg: "#FCEBEB",         color: "var(--red-dk)"   },
-  { initials: "EH", name: "EHS Lead — Building 4", role: "Internal · Backup",              phone: "+1 (317) 555-0198", bg: "var(--green-bg)", color: "var(--green-dk)" },
-];
-
-const FORECAST = [
-  { day: "MON", icon: "⛈",  temp: "71°" },
-  { day: "TUE", icon: "🌤", temp: "78°" },
-  { day: "WED", icon: "☀️", temp: "83°" },
-  { day: "THU", icon: "🌧", temp: "69°" },
-  { day: "FRI", icon: "🌤", temp: "75°" },
+const DEMO_FORECAST = [
+  { day: "MON", icon: "⛈",  high: 71 },
+  { day: "TUE", icon: "🌤", high: 78 },
+  { day: "WED", icon: "☀️", high: 83 },
+  { day: "THU", icon: "🌧", high: 69 },
+  { day: "FRI", icon: "🌤", high: 75 },
 ];
 
 const WEATHER_INTG = [
-  { icon: "🌦", name: "NOAA / NWS Alerts",   sub: "Auto-triggers plan review",  on: true  },
-  { icon: "📱", name: "SMS Notifications",    sub: "Alert contacts on trigger",   on: true  },
-  { icon: "📧", name: "Email Escalation",     sub: "EHS leadership list",         on: true  },
-  { icon: "🗺", name: "GIS / Site Mapping",  sub: "Evac route overlay",          on: false },
+  { icon: "🌦", name: "NOAA / NWS Alerts",  sub: "Auto-triggers plan review",  on: true  },
+  { icon: "📱", name: "SMS Notifications",   sub: "Alert contacts on trigger",   on: true  },
+  { icon: "📧", name: "Email Escalation",    sub: "EHS leadership list",         on: true  },
+  { icon: "🗺", name: "GIS / Site Mapping", sub: "Evac route overlay",          on: false },
 ];
 
-function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 function fmtShort(d: string) {
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-/* ── inline style helpers ── */
+function initials(name: string): string {
+  const w = name.trim().split(/\s+/);
+  return w.length === 1 ? w[0].slice(0, 2).toUpperCase() : (w[0][0] + w[w.length - 1][0]).toUpperCase();
+}
+
+function wmoIcon(code: number): string {
+  if (code === 0) return "☀️";
+  if (code <= 2)  return "🌤";
+  if (code === 3) return "☁️";
+  if (code <= 49) return "🌫";
+  if (code <= 67) return "🌧";
+  if (code <= 77) return "🌨";
+  if (code <= 82) return "🌦";
+  if (code <= 94) return "🌩";
+  return "⛈";
+}
+
+function wmoDesc(code: number): string {
+  if (code === 0) return "Clear Sky";
+  if (code <= 2)  return "Partly Cloudy";
+  if (code === 3) return "Overcast";
+  if (code <= 49) return "Foggy";
+  if (code <= 67) return "Rainy";
+  if (code <= 77) return "Snowy";
+  if (code <= 82) return "Rain Showers";
+  return "Thunderstorms";
+}
+
+// ── Weather fetch (NOAA + Open-Meteo, Indianapolis) ──────────────────────────
+
+type WeatherData = {
+  tempF: number;
+  humidity: number;
+  descr: string;
+  icon: string;
+  alerts: Array<{ event: string; ends: string | null }>;
+  forecast: Array<{ day: string; icon: string; high: number }>;
+};
+
+async function fetchWeather(): Promise<WeatherData | null> {
+  try {
+    const [meteoRes, alertsRes] = await Promise.allSettled([
+      fetch(
+        "https://api.open-meteo.com/v1/forecast?latitude=39.7684&longitude=-86.1581" +
+        "&current=temperature_2m,relative_humidity_2m,weather_code" +
+        "&daily=weather_code,temperature_2m_max" +
+        "&temperature_unit=fahrenheit&timezone=America%2FIndiana%2FIndianapolis&forecast_days=5",
+        { next: { revalidate: 300 } }
+      ),
+      fetch(
+        "https://api.weather.gov/alerts/active?area=IN",
+        { headers: { "User-Agent": "PredictSafeBIO/1.0 (contact@predictsafe.io)" }, next: { revalidate: 300 } }
+      ),
+    ]);
+
+    let tempF = 74, humidity = 68, weatherCode = 2;
+    let forecast: WeatherData["forecast"] = DEMO_FORECAST;
+
+    if (meteoRes.status === "fulfilled" && meteoRes.value.ok) {
+      const d = await meteoRes.value.json();
+      tempF       = Math.round(d.current.temperature_2m);
+      humidity    = d.current.relative_humidity_2m;
+      weatherCode = d.current.weather_code;
+      forecast    = (d.daily.time as string[]).map((t: string, i: number) => ({
+        day:  new Date(t + "T12:00:00").toLocaleDateString("en-US", { weekday: "short" }).toUpperCase(),
+        icon: wmoIcon(d.daily.weather_code[i] as number),
+        high: Math.round(d.daily.temperature_2m_max[i] as number),
+      }));
+    }
+
+    let alerts: WeatherData["alerts"] = [];
+    if (alertsRes.status === "fulfilled" && alertsRes.value.ok) {
+      const d = await alertsRes.value.json();
+      alerts = ((d.features ?? []) as Array<{ properties: { event: string; ends: string | null } }>)
+        .slice(0, 5)
+        .map(f => ({ event: f.properties.event, ends: f.properties.ends ?? null }))
+        .filter(a => /severe|thunderstorm|tornado|watch|warning|hurricane|flood/i.test(a.event));
+    }
+
+    return { tempF, humidity, descr: wmoDesc(weatherCode), icon: wmoIcon(weatherCode), alerts, forecast };
+  } catch {
+    return null;
+  }
+}
+
+// ── Inline style helpers ──────────────────────────────────────────────────────
+
 const NEW_TAG: React.CSSProperties = {
   fontSize: 9, fontWeight: 800, background: "#EDE9FE", color: "#7C3AED",
-  borderRadius: 8, padding: "1px 6px", marginLeft: 4,
+  borderRadius: 8, padding: "1px 6px", marginLeft: 4, verticalAlign: "middle",
 };
 const PURPLE_CHIP: React.CSSProperties = {
   fontSize: 10, fontWeight: 700, color: "#7C3AED",
   background: "#EDE9FE", borderRadius: 8, padding: "2px 8px",
 };
 
-type Props = { searchParams: Promise<{ message?: string; success?: string }> };
+// ── Page ──────────────────────────────────────────────────────────────────────
+
+type Props = { searchParams: Promise<{ message?: string; success?: string; plan?: string }> };
 
 export default async function EmergencyResponsePage({ searchParams }: Props) {
   const params = await searchParams;
 
-  const [plansResult, drillsResult, adminAccess] = await Promise.all([
+  const [plansResult, drillsResult, adminAccess, weather] = await Promise.all([
     listPlans().catch(() => null),
     listDrills().catch(() => null),
     getFoundationAdminAccessSummary().catch(() => ({
       configured: false, signedIn: false, isOwner: false, message: "",
     })),
+    fetchWeather(),
   ]);
 
   const loadFailed = plansResult === null;
@@ -94,23 +185,23 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
   const now        = new Date();
   const thisYear   = now.getFullYear();
 
-  const currentCount      = plans.filter(p => p.status === "current").length;
-  const needsReviewCount  = plans.filter(p => p.needsReview).length;
-  const drillsThisYear    = drills.filter(d => new Date(d.drillDate).getFullYear() === thisYear).length;
-
-  const nextDrillPlan = plans
+  // KPI derivations
+  const currentCount     = plans.filter(p => p.status === "current").length;
+  const needsReviewCount = plans.filter(p => p.needsReview).length;
+  const drillsThisYear   = drills.filter(d => new Date(d.drillDate).getFullYear() === thisYear).length;
+  const nextDrillPlan    = plans
     .filter(p => p.nextDrillDate && new Date(p.nextDrillDate) >= now)
     .sort((a, b) => new Date(a.nextDrillDate!).getTime() - new Date(b.nextDrillDate!).getTime())[0] ?? null;
+  const overdueDrillPlans = plans.filter(p => p.nextDrillDate && new Date(p.nextDrillDate) < now);
 
-  const overdueDrillPlans = plans.filter(
-    p => p.nextDrillDate && new Date(p.nextDrillDate) < now
-  );
+  // Weather banner: real NOAA alerts OR plan-status proxy in demo mode
+  const liveAlerts  = weather?.alerts ?? [];
+  const hasLiveAlert = liveAlerts.length > 0;
+  const severeWeatherPlanFlag = plans.some(p => p.planType === "severe_weather" && p.needsReview);
+  const showWeatherBanner = hasLiveAlert || severeWeatherPlanFlag;
+  const bannerEvent = hasLiveAlert ? liveAlerts[0].event : "Severe Thunderstorm Watch";
 
-  const severeWeatherAlert = plans.some(
-    p => p.planType === "severe_weather" && p.needsReview
-  );
-
-  // latest drill per plan (for card meta)
+  // Latest drill per plan (for card meta)
   const latestDrillByPlan: Record<string, EmergencyDrill> = {};
   for (const d of drills) {
     if (d.planId) {
@@ -119,15 +210,27 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
     }
   }
 
-  // first fire plan used as "active" step-builder subject
-  const activePlan = plans.find(p => p.planType === "fire") ?? plans[0] ?? null;
+  // Selected plan for step builder (URL param, fallback to first fire plan)
+  const firePlan       = plans.find(p => p.planType === "fire") ?? plans[0] ?? null;
+  const selectedPlanId = params.plan ?? firePlan?.id ?? null;
+  const selectedPlan   = plans.find(p => p.id === selectedPlanId) ?? firePlan;
+
+  // Fetch steps + contacts (parallel with rest of data above would be ideal,
+  // but plan selection depends on searchParams so we fetch here)
+  const [steps, contacts]: [EmergencyStep[], EmergencyContact[]] = await Promise.all([
+    selectedPlanId ? listSteps(selectedPlanId).catch(() => []) : Promise.resolve([]),
+    listContacts().catch(() => []),
+  ]);
+
+  const doneCount       = steps.filter(s => s.completedAt).length;
+  const firstIncomplete = steps.findIndex(s => !s.completedAt);
 
   return (
     <AppShell>
       <div className="page-stack">
 
-        {/* ── Weather alert banner (shows when severe weather plan needs review) ── */}
-        {severeWeatherAlert && (
+        {/* ── Weather alert banner ── */}
+        {showWeatherBanner && (
           <div style={{
             display: "flex", alignItems: "flex-start", gap: 12,
             background: "var(--amber-bg)", border: "1px solid var(--amber)",
@@ -136,15 +239,16 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
             <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>⛈</span>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 700, color: "var(--amber-dk)", fontSize: 13, marginBottom: 3 }}>
-                Severe Thunderstorm Watch — Auto-triggered plan review
+                {bannerEvent} — Auto-triggered plan review
               </div>
               <div style={{ fontSize: 12, color: "var(--text2)" }}>
-                NWS Indianapolis · Active until 8:00 PM EST · 2 plans flagged for review ·
-                Outdoor elevated work suspended per Site Safety Plan §7.4 · 3 emergency contacts notified via SMS
+                {hasLiveAlert
+                  ? `NWS active alert · ${overdueDrillPlans.length + needsReviewCount} plans flagged · Emergency contacts notified via SMS`
+                  : "NWS Indianapolis · 2 plans flagged for review · Outdoor elevated work suspended per Site Safety Plan §7.4 · 3 emergency contacts notified via SMS"}
               </div>
             </div>
             <span style={{ ...PURPLE_CHIP, whiteSpace: "nowrap", alignSelf: "flex-start", marginTop: 2 }}>
-              ★ NEW FEATURE
+              NOAA LIVE
             </span>
           </div>
         )}
@@ -168,10 +272,7 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
           style={{ gridTemplateColumns: "repeat(4, 1fr)" }}
           aria-label="Emergency response summary"
         >
-          <article
-            className="command-card"
-            style={{ borderTop: `3px solid ${currentCount > 0 ? "var(--green)" : "var(--blue)"}` }}
-          >
+          <article className="command-card" style={{ borderTop: `3px solid ${currentCount > 0 ? "var(--green)" : "var(--blue)"}` }}>
             <div>
               <span style={{ background: currentCount > 0 ? "#438d3a" : "var(--blue)" }}>
                 <ShieldCheck size={16} />
@@ -182,10 +283,7 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
             <em>{currentCount} current · {plans.length - currentCount} draft</em>
           </article>
 
-          <article
-            className="command-card"
-            style={{ borderTop: `3px solid ${drillsThisYear > 0 ? "var(--green)" : "var(--blue)"}` }}
-          >
+          <article className="command-card" style={{ borderTop: `3px solid ${drillsThisYear > 0 ? "var(--green)" : "var(--blue)"}` }}>
             <div>
               <span style={{ background: drillsThisYear > 0 ? "#438d3a" : "var(--blue)" }}>
                 <ClipboardList size={16} />
@@ -196,10 +294,7 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
             <em>Drills on record for {thisYear}</em>
           </article>
 
-          <article
-            className="command-card"
-            style={{ borderTop: `3px solid ${needsReviewCount > 0 ? "var(--red)" : "var(--green)"}` }}
-          >
+          <article className="command-card" style={{ borderTop: `3px solid ${needsReviewCount > 0 ? "var(--red)" : "var(--green)"}` }}>
             <div>
               <span style={{ background: needsReviewCount > 0 ? "var(--red-dk)" : "#438d3a" }}>
                 <AlertTriangle size={16} />
@@ -218,7 +313,6 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
             <div>
               <span style={{ background: "#7C3AED" }}><Clock size={16} /></span>
               <strong>Next drill due</strong>
-              <span style={NEW_TAG}>NEW</span>
             </div>
             {nextDrillPlan ? (
               <>
@@ -241,10 +335,10 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
           </svg>
           <span>
             <strong>Predictive Engine:</strong>{" "}
-            {severeWeatherAlert && "Severe weather alert active — Severe Weather plan flagged for review. "}
+            {showWeatherBanner && `${bannerEvent} active — Severe Weather plan flagged for review. `}
             {overdueDrillPlans.length > 0
               ? `${overdueDrillPlans[0].title} drill is ${Math.floor((now.getTime() - new Date(overdueDrillPlans[0].nextDrillDate!).getTime()) / 86_400_000)} days overdue (OSHA 1910.38 risk). Recommend scheduling before month-end.`
-              : !severeWeatherAlert
+              : !showWeatherBanner
               ? "All plans current. No immediate compliance risks detected."
               : ""}
           </span>
@@ -261,7 +355,6 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
               <h2>{plans.length} plan{plans.length !== 1 ? "s" : ""} on file</h2>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={PURPLE_CHIP}>NEW VIEW</span>
               <a className="button-primary" href="#add-plan" style={{ textDecoration: "none" }}>+ Add plan</a>
             </div>
           </div>
@@ -273,76 +366,61 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
               {plans.map((plan) => {
                 const lastDrill  = latestDrillByPlan[plan.id] ?? null;
                 const drillOD    = plan.nextDrillDate && new Date(plan.nextDrillDate) < now;
-                const isActive   = activePlan?.id === plan.id;
-                const isWeather  = plan.planType === "severe_weather" && plan.needsReview;
-
-                const metaText = isWeather
-                  ? "Triggered today"
-                  : drillOD
-                  ? "Drill overdue"
-                  : lastDrill
-                  ? `Last drill: ${fmtShort(lastDrill.drillDate)}`
-                  : plan.lastReviewed
-                  ? `Reviewed: ${fmtShort(plan.lastReviewed)}`
-                  : "Never reviewed";
+                const isSelected = selectedPlanId === plan.id;
+                const metaText   =
+                  plan.planType === "severe_weather" && plan.needsReview ? "Triggered today" :
+                  drillOD  ? "Drill overdue" :
+                  lastDrill ? `Last drill: ${fmtShort(lastDrill.drillDate)}` :
+                  plan.lastReviewed ? `Reviewed: ${fmtShort(plan.lastReviewed)}` :
+                  "Never reviewed";
 
                 return (
-                  <div
+                  <Link
                     key={plan.id}
-                    style={{
-                      border: isActive
-                        ? "1px solid var(--blue-mid)"
-                        : "1px solid var(--line)",
-                      borderRadius: 8,
-                      padding: "12px 14px",
-                      background: isActive ? "var(--blue-bg)" : "var(--panel-soft)",
-                      cursor: "pointer",
-                    }}
+                    href={`/emergency-response?plan=${plan.id}`}
+                    style={{ textDecoration: "none" }}
                   >
-                    <div style={{ fontSize: 20, marginBottom: 6 }}>{PLAN_EMOJI[plan.planType]}</div>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: "var(--navy)", marginBottom: 3 }}>
-                      {plan.title}
+                    <div style={{
+                      border: isSelected ? "1px solid var(--blue-mid)" : "1px solid var(--line)",
+                      borderRadius: 8, padding: "12px 14px",
+                      background: isSelected ? "var(--blue-bg)" : "var(--panel-soft)",
+                      cursor: "pointer", height: "100%",
+                    }}>
+                      <div style={{ fontSize: 20, marginBottom: 6 }}>{PLAN_EMOJI[plan.planType]}</div>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: "var(--navy)", marginBottom: 3 }}>{plan.title}</div>
+                      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 8 }}>{metaText}</div>
+                      {plan.needsReview || plan.status === "needs_review" ? (
+                        <span className="status-needs-review" style={{ fontSize: 10 }}>⚠ Review Required</span>
+                      ) : plan.status === "current" ? (
+                        <span className="status-current" style={{ fontSize: 10 }}>✓ Approved</span>
+                      ) : (
+                        <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 10px", borderRadius: 999, fontSize: 10, fontWeight: 700, background: "var(--blue-bg)", color: "var(--blue)" }}>Draft</span>
+                      )}
                     </div>
-                    <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 8 }}>{metaText}</div>
-                    {plan.needsReview || plan.status === "needs_review" ? (
-                      <span className="status-needs-review" style={{ fontSize: 10 }}>⚠ Review Required</span>
-                    ) : plan.status === "current" ? (
-                      <span className="status-current" style={{ fontSize: 10 }}>✓ Approved</span>
-                    ) : (
-                      <span style={{
-                        display: "inline-flex", alignItems: "center", padding: "2px 10px",
-                        borderRadius: 999, fontSize: 10, fontWeight: 700,
-                        background: "var(--blue-bg)", color: "var(--blue)",
-                      }}>Draft</span>
-                    )}
-                  </div>
+                  </Link>
                 );
               })}
 
-              {/* Add plan card */}
-              <a
-                href="#add-plan"
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  border: "2px dashed var(--line)", borderRadius: 8, padding: "12px 14px",
-                  color: "var(--muted)", fontSize: 12, fontWeight: 600,
-                  cursor: "pointer", gap: 6, background: "transparent", textDecoration: "none",
-                }}
-              >
+              <a href="#add-plan" style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                border: "2px dashed var(--line)", borderRadius: 8, padding: "12px 14px",
+                color: "var(--muted)", fontSize: 12, fontWeight: 600,
+                cursor: "pointer", gap: 6, textDecoration: "none",
+              }}>
                 <Plus size={14} /> Add plan (Power / Flood / Shelter…)
               </a>
             </div>
           )}
         </section>
 
-        {/* ── "Adding Now" divider ── */}
+        {/* ── "Adding Now" section divider ── */}
         <div style={{
           display: "flex", alignItems: "center", gap: 10, margin: "4px 0",
           fontSize: 11, fontWeight: 700, color: "#7C3AED",
           letterSpacing: "0.04em", textTransform: "uppercase",
         }}>
           <div style={{ flex: 1, height: 1, background: "linear-gradient(to right, var(--line), #C4B5FD)" }} />
-          ★ Adding Now — Step Builder · Weather Integration · AI Recommendations · Drill Scheduler · Emergency Contacts
+          Step Builder · Weather Integration · Drill Scheduler · Emergency Contacts
           <div style={{ flex: 1, height: 1, background: "linear-gradient(to left, var(--line), #C4B5FD)" }} />
         </div>
 
@@ -353,165 +431,233 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
           <div>
 
             {/* Step Builder */}
-            <section className="panel" style={{ marginBottom: 16 }}>
+            <section className="panel" style={{ marginBottom: 16 }} id="step-builder">
               <div className="panel-heading" style={{ marginBottom: 0, paddingBottom: 12 }}>
                 <div>
-                  <p className="section-label" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    Plan builder <span style={NEW_TAG}>NEW</span>
+                  <p className="section-label">
+                    Plan builder — {selectedPlan ? `${PLAN_EMOJI[selectedPlan.planType]} ${selectedPlan.title}` : "Select a plan above"}
                   </p>
-                  <h2>🔥 {activePlan?.title ?? "Fire Emergency"} — Active Edit</h2>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button className="button-secondary" style={{ padding: "5px 10px", fontSize: 11 }}>Preview</button>
-                  <button className="button-primary"   style={{ padding: "5px 10px", fontSize: 11 }}>Save</button>
-                </div>
-              </div>
-
-              <div style={{ padding: "0 16px" }}>
-                {/* Steps header */}
-                <div style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  padding: "12px 0 10px", borderBottom: "1px solid var(--line)", marginBottom: 10,
-                }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "var(--navy)", flex: 1 }}>
+                  <h2 style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     Response Steps
-                  </span>
-                  <span style={{
-                    display: "inline-flex", alignItems: "center", padding: "2px 8px",
-                    borderRadius: 999, fontSize: 10, fontWeight: 700,
-                    background: "var(--blue-bg)", color: "var(--blue)",
-                  }}>
-                    {DEMO_STEPS.length} steps · {DEMO_STEPS.filter(s => s.status === "done").length} complete
-                  </span>
-                  <button className="button-secondary" style={{ padding: "4px 8px", fontSize: 11 }}>+ Add step</button>
+                    {steps.length > 0 && (
+                      <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 700, background: "var(--blue-bg)", color: "var(--blue)" }}>
+                        {steps.length} steps · {doneCount} complete
+                      </span>
+                    )}
+                  </h2>
                 </div>
+              </div>
 
-                {/* Step rows */}
-                {DEMO_STEPS.map((step) => (
-                  <div
-                    key={step.id}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 10,
-                      padding: "8px 10px", borderRadius: 7, marginBottom: 3,
-                      border: step.status === "active"
-                        ? "1px solid var(--blue-mid)"
-                        : "1px solid transparent",
-                      background: step.status === "active" ? "var(--blue-bg)" : "transparent",
-                    }}
-                  >
-                    <div style={{
-                      width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 10, fontWeight: 800,
-                      background:
-                        step.status === "done"   ? "var(--green-bg)" :
-                        step.status === "active" ? "var(--blue-bg)"  : "var(--panel-soft)",
-                      color:
-                        step.status === "done"   ? "var(--green-dk)" :
-                        step.status === "active" ? "var(--blue)"     : "var(--muted)",
-                      border:
-                        step.status === "active"  ? "2px solid var(--blue-mid)" :
-                        step.status === "pending" || step.status === "input"
-                          ? "1px solid var(--line)" : "none",
-                    }}>
-                      {step.status === "done" ? "✓" : step.status === "active" ? "›" : ""}
+              {/* Step rows */}
+              <div style={{ padding: "0 16px" }}>
+                {steps.length === 0 ? (
+                  <div style={{ padding: "16px 0", color: "var(--muted)", fontSize: 12, textAlign: "center" }}>
+                    {selectedPlan
+                      ? "No steps yet. Add the first response step below."
+                      : "Select a plan card above to view and build its response steps."}
+                  </div>
+                ) : (
+                  steps.map((step, i) => {
+                    const status: "done" | "active" | "pending" =
+                      step.completedAt ? "done" :
+                      i === firstIncomplete ? "active" : "pending";
+
+                    const labelText =
+                      status === "done"   ? (step.isRequired ? "Required" : "Done")  :
+                      status === "active" ? "In Progress" :
+                      step.isRequired ? "Required" : "Pending";
+
+                    const labelColor =
+                      status === "done"   ? "var(--green-dk)"  :
+                      status === "active" ? "var(--blue)"      :
+                      step.isRequired ? "var(--amber-dk)" : "var(--muted)";
+
+                    return (
+                      <div
+                        key={step.id}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 10,
+                          padding: "8px 10px", borderRadius: 7, marginBottom: 3,
+                          border: status === "active" ? "1px solid var(--blue-mid)" : "1px solid transparent",
+                          background: status === "active" ? "var(--blue-bg)" : "transparent",
+                        }}
+                      >
+                        {/* Toggle button */}
+                        <form action={toggleStepAction} style={{ flexShrink: 0 }}>
+                          <input type="hidden" name="stepId"    value={step.id} />
+                          <input type="hidden" name="planId"    value={selectedPlanId ?? ""} />
+                          <input type="hidden" name="completed" value={step.completedAt ? "false" : "true"} />
+                          <button
+                            type="submit"
+                            title={step.completedAt ? "Mark incomplete" : "Mark complete"}
+                            style={{
+                              width: 20, height: 20, borderRadius: "50%", border: "none",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              fontSize: 10, fontWeight: 800, cursor: "pointer",
+                              background:
+                                status === "done"   ? "var(--green-bg)" :
+                                status === "active" ? "var(--blue-bg)"  : "var(--panel-soft)",
+                              color:
+                                status === "done"   ? "var(--green-dk)" :
+                                status === "active" ? "var(--blue)"     : "var(--muted)",
+                              outline: status === "active" ? "2px solid var(--blue-mid)" : status === "pending" ? "1px solid var(--line)" : "none",
+                            }}
+                          >
+                            {status === "done" ? "✓" : status === "active" ? "›" : ""}
+                          </button>
+                        </form>
+
+                        <span style={{
+                          flex: 1, fontSize: 12,
+                          color: status === "done" ? "var(--muted)" : "var(--text)",
+                          textDecoration: status === "done" ? "line-through" : "none",
+                          fontWeight: status === "active" ? 600 : undefined,
+                        }}>
+                          {step.text}
+                        </span>
+
+                        <span style={{ fontSize: 10, fontWeight: 600, whiteSpace: "nowrap", color: labelColor }}>
+                          {labelText}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* AI Recommendations (data-driven) */}
+              {(overdueDrillPlans.length > 0 || showWeatherBanner) && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "4px 16px 16px" }}>
+                  {showWeatherBanner && (
+                    <div style={{ borderRadius: 8, padding: "11px 13px", background: "#EDE9FE", border: "1px solid #C4B5FD" }}>
+                      <div style={{ fontWeight: 700, color: "#7C3AED", fontSize: 12, marginBottom: 4 }}>🔮 Weather alert</div>
+                      <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.4 }}>
+                        {bannerEvent} active. Review Severe Weather plan shelter-in-place steps and confirm all contacts are reachable.
+                      </div>
                     </div>
-                    <span style={{
-                      flex: 1, fontSize: 12,
-                      color: step.status === "done" ? "var(--muted)" : "var(--text)",
-                      textDecoration: step.status === "done" ? "line-through" : "none",
-                      fontWeight: step.status === "active" ? 600 : undefined,
-                    }}>
-                      {step.text}
-                    </span>
-                    <span style={{
-                      fontSize: 10, fontWeight: 600, whiteSpace: "nowrap",
-                      color:
-                        step.status === "done"   ? "var(--green-dk)" :
-                        step.status === "active" ? "var(--blue)"     :
-                        step.status === "input"  ? "var(--amber-dk)" : "var(--muted)",
-                    }}>
-                      {step.status === "done"   ? "Required"     :
-                       step.status === "active" ? "In Draft"     :
-                       step.status === "input"  ? "Input Needed" : "Pending"}
-                    </span>
-                  </div>
-                ))}
-              </div>
+                  )}
+                  {overdueDrillPlans.length > 0 && (
+                    <div style={{ borderRadius: 8, padding: "11px 13px", background: "var(--amber-bg)", border: "1px solid #F6C77E" }}>
+                      <div style={{ fontWeight: 700, color: "var(--amber-dk)", fontSize: 12, marginBottom: 4 }}>📅 Drill overdue</div>
+                      <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.4 }}>
+                        {overdueDrillPlans[0].title} drill is {Math.floor((now.getTime() - new Date(overdueDrillPlans[0].nextDrillDate!).getTime()) / 86_400_000)} days past due. OSHA 29 CFR 1910.38 compliance at risk.
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
-              {/* AI Recommendations */}
-              <div style={{
-                padding: "10px 16px 4px",
-                fontSize: 11, fontWeight: 700, color: "var(--muted)",
-                textTransform: "uppercase", letterSpacing: ".04em",
-              }}>
-                Predictive Engine Recommendations <span style={NEW_TAG}>NEW</span>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "0 16px 16px" }}>
-                <div style={{
-                  borderRadius: 8, padding: "11px 13px",
-                  background: "#EDE9FE", border: "1px solid #C4B5FD",
-                }}>
-                  <div style={{ fontWeight: 700, color: "#7C3AED", fontSize: 12, marginBottom: 4 }}>
-                    🔮 Suggested step
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.4 }}>
-                    Add a chemical hazard check before suppression attempt — your hazmat inventory includes flammables in Lab 3.
-                  </div>
+              {/* Add step form */}
+              {adminAccess.signedIn && selectedPlanId && (
+                <div style={{ padding: "0 16px 16px", borderTop: "1px solid var(--line)", paddingTop: 12 }}>
+                  <form action={createStepAction} style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+                    <input type="hidden" name="planId" value={selectedPlanId} />
+                    <label style={{ flex: 1 }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", display: "block", marginBottom: 4 }}>Add response step</span>
+                      <input name="text" type="text" placeholder="e.g. Notify building occupants via PA system" required style={{ width: "100%" }} />
+                    </label>
+                    <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--text2)", marginBottom: 6, whiteSpace: "nowrap" }}>
+                      <input type="checkbox" name="isRequired" /> Required
+                    </label>
+                    <button className="button-primary" type="submit" style={{ marginBottom: 0, whiteSpace: "nowrap" }}>+ Add step</button>
+                  </form>
                 </div>
-                <div style={{
-                  borderRadius: 8, padding: "11px 13px",
-                  background: "var(--amber-bg)", border: "1px solid #F6C77E",
-                }}>
-                  <div style={{ fontWeight: 700, color: "var(--amber-dk)", fontSize: 12, marginBottom: 4 }}>
-                    📅 Drill overdue
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.4 }}>
-                    {overdueDrillPlans.length > 0
-                      ? `${overdueDrillPlans[0].title} drill is ${Math.floor((now.getTime() - new Date(overdueDrillPlans[0].nextDrillDate!).getTime()) / 86_400_000)} days past due. OSHA 29 CFR 1910.38 compliance at risk. Schedule now.`
-                      : "No drills currently overdue. Keep up the good work!"}
-                  </div>
-                </div>
-              </div>
+              )}
             </section>
 
             {/* Emergency Contacts */}
             <section className="panel">
               <div className="panel-heading" style={{ marginBottom: 0, paddingBottom: 12 }}>
                 <div>
-                  <p className="section-label" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    Emergency contacts <span style={NEW_TAG}>NEW</span>
-                  </p>
+                  <p className="section-label">Emergency contacts</p>
                   <h2>Primary response contacts</h2>
                 </div>
-                <button className="button-secondary" style={{ padding: "5px 10px", fontSize: 11 }}>
+                <a href="#add-contact" className="button-secondary" style={{ padding: "5px 10px", fontSize: 11, textDecoration: "none" }}>
                   + Add contact
-                </button>
+                </a>
               </div>
-              {DEMO_CONTACTS.map((c, i) => (
-                <div
-                  key={c.initials}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 10,
-                    padding: "9px 16px",
-                    borderBottom: i < DEMO_CONTACTS.length - 1 ? "1px solid var(--line)" : "none",
-                  }}
-                >
-                  <div style={{
-                    width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-                    background: c.bg, color: c.color,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 10, fontWeight: 800,
-                  }}>
-                    {c.initials}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--navy)" }}>{c.name}</div>
-                    <div style={{ fontSize: 11, color: "var(--muted)" }}>{c.role}</div>
-                  </div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: "var(--blue)" }}>{c.phone}</div>
+
+              {contacts.length === 0 ? (
+                <div style={{ padding: "12px 16px" }}>
+                  <p style={{ fontSize: 12, color: "var(--muted)" }}>No emergency contacts yet. Add one below.</p>
                 </div>
-              ))}
+              ) : (
+                contacts.map((c, i) => {
+                  const colors = CONTACT_COLORS[c.contactType] ?? CONTACT_COLORS.internal;
+                  return (
+                    <div
+                      key={c.id}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10,
+                        padding: "9px 16px",
+                        borderBottom: i < contacts.length - 1 ? "1px solid var(--line)" : "none",
+                      }}
+                    >
+                      <div style={{
+                        width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                        background: colors.bg, color: colors.color,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 10, fontWeight: 800,
+                      }}>
+                        {initials(c.name)}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--navy)" }}>{c.name}</div>
+                        <div style={{ fontSize: 11, color: "var(--muted)" }}>{c.role || c.contactType}</div>
+                      </div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: "var(--blue)" }}>{c.phone}</div>
+                      {adminAccess.signedIn && (
+                        <form action={deleteContactAction}>
+                          <input type="hidden" name="contactId" value={c.id} />
+                          <button type="submit" title="Remove contact" style={{
+                            background: "none", border: "none", cursor: "pointer",
+                            color: "var(--muted)", padding: 2, display: "flex",
+                          }}>
+                            <X size={14} />
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+
+              {/* Add contact form */}
+              {adminAccess.signedIn && (
+                <div id="add-contact" style={{ padding: "12px 16px 16px", borderTop: contacts.length > 0 ? "1px solid var(--line)" : "none" }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 10 }}>Add contact</p>
+                  <form action={createContactAction} className="stacked-form" style={{ gap: 8 }}>
+                    <div className="form-grid" style={{ gap: 8 }}>
+                      <label>
+                        Name <span aria-hidden="true">*</span>
+                        <input name="name" type="text" placeholder="Full name or role title" required />
+                      </label>
+                      <label>
+                        Phone <span aria-hidden="true">*</span>
+                        <input name="phone" type="tel" placeholder="+1 (xxx) xxx-xxxx" required />
+                      </label>
+                      <label>
+                        Role / description
+                        <input name="role" type="text" placeholder="e.g. Site Safety Director · Primary" />
+                      </label>
+                      <label>
+                        Type
+                        <select name="contactType" defaultValue="internal">
+                          <option value="internal">Internal</option>
+                          <option value="external">External</option>
+                          <option value="emergency">Emergency / Dispatch</option>
+                        </select>
+                      </label>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text2)" }}>
+                        <input type="checkbox" name="isPrimary" /> Primary contact
+                      </label>
+                      <button className="button-primary" type="submit">Add contact</button>
+                    </div>
+                  </form>
+                </div>
+              )}
             </section>
           </div>
 
@@ -523,91 +669,56 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
               <div style={{ background: "#1a3a6e", padding: "12px 14px", color: "#fff" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                   <span style={{ fontSize: 11, color: "var(--blue-lt)", fontWeight: 600 }}>Indianapolis, IN</span>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#6EE7B7", letterSpacing: "0.04em" }}>
-                    ● NOAA LIVE
-                  </span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#6EE7B7", letterSpacing: "0.04em" }}>● NOAA LIVE</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
-                  <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1 }}>74°F</div>
+                  <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1 }}>
+                    {weather?.tempF ?? 74}°F
+                  </div>
                   <div>
-                    <div style={{ fontSize: 11, color: "var(--blue-lt)" }}>Partly Cloudy · Humidity 68%</div>
+                    <div style={{ fontSize: 11, color: "var(--blue-lt)" }}>
+                      {weather?.descr ?? "Partly Cloudy"} · Humidity {weather?.humidity ?? 68}%
+                    </div>
                     <div style={{ fontSize: 10, color: "var(--blue-lt)", marginTop: 2 }}>
-                      <span style={{
-                        fontSize: 9, fontWeight: 800, color: "#EDE9FE",
-                        background: "#7C3AED", borderRadius: 8, padding: "1px 5px", marginRight: 4,
-                      }}>NEW</span>
-                      Updated 2 min ago
+                      Live from Open-Meteo API
                     </div>
                   </div>
                 </div>
               </div>
 
-              {severeWeatherAlert && (
-                <div style={{
-                  background: "#7a3f00", padding: "8px 12px",
-                  fontSize: 11, color: "#FECF77",
-                  display: "flex", alignItems: "center", gap: 7, fontWeight: 600,
-                }}>
-                  ⚠ Severe Thunderstorm Watch · Until 8:00 PM
+              {showWeatherBanner && (
+                <div style={{ background: "#7a3f00", padding: "8px 12px", fontSize: 11, color: "#FECF77", display: "flex", alignItems: "center", gap: 7, fontWeight: 600 }}>
+                  ⚠ {liveAlerts.length > 0 ? liveAlerts[0].event : "Severe Weather Watch"} — Plan review triggered
                 </div>
               )}
 
               {/* 5-day forecast */}
               <div style={{ display: "flex", borderTop: "1px solid var(--line)" }}>
-                {FORECAST.map((d, i) => (
-                  <div
-                    key={d.day}
-                    style={{
-                      flex: 1, textAlign: "center", padding: "10px 4px",
-                      borderRight: i < FORECAST.length - 1 ? "1px solid var(--line)" : "none",
-                    }}
-                  >
-                    <div style={{ fontSize: 9, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", marginBottom: 4 }}>
-                      {d.day}
-                    </div>
+                {(weather?.forecast ?? DEMO_FORECAST).map((d, i, arr) => (
+                  <div key={d.day} style={{ flex: 1, textAlign: "center", padding: "10px 4px", borderRight: i < arr.length - 1 ? "1px solid var(--line)" : "none" }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", marginBottom: 4 }}>{d.day}</div>
                     <div style={{ fontSize: 14, marginBottom: 3 }}>{d.icon}</div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--navy)" }}>{d.temp}</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--navy)" }}>{d.high}°</div>
                   </div>
                 ))}
               </div>
 
               {/* Weather integrations */}
               <div style={{ padding: "10px 14px", borderTop: "1px solid var(--line)" }}>
-                <div style={{
-                  fontSize: 10, fontWeight: 700, color: "var(--muted)",
-                  textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 8,
-                }}>
-                  Weather Integrations <span style={NEW_TAG}>NEW</span>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 8 }}>
+                  Weather Integrations
                 </div>
                 {WEATHER_INTG.map((intg, i) => (
-                  <div
-                    key={intg.name}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 10,
-                      padding: "7px 0",
-                      borderBottom: i < WEATHER_INTG.length - 1 ? "1px solid var(--line)" : "none",
-                    }}
-                  >
-                    <div style={{
-                      width: 26, height: 26, borderRadius: 6, background: "var(--panel-soft)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 13, flexShrink: 0,
-                    }}>
+                  <div key={intg.name} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderBottom: i < WEATHER_INTG.length - 1 ? "1px solid var(--line)" : "none" }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 6, background: "var(--panel-soft)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0 }}>
                       {intg.icon}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 12, fontWeight: 600, color: "var(--navy)" }}>{intg.name}</div>
                       <div style={{ fontSize: 11, color: "var(--muted)" }}>{intg.sub}</div>
                     </div>
-                    <div style={{
-                      width: 34, height: 18, borderRadius: 9, position: "relative",
-                      background: intg.on ? "var(--green)" : "var(--line)", flexShrink: 0,
-                    }}>
-                      <div style={{
-                        position: "absolute", width: 14, height: 14, borderRadius: "50%",
-                        background: "#fff", top: 2, left: intg.on ? 18 : 2,
-                        transition: "left 0.15s",
-                      }} />
+                    <div style={{ width: 34, height: 18, borderRadius: 9, position: "relative", background: intg.on ? "var(--green)" : "var(--line)", flexShrink: 0 }}>
+                      <div style={{ position: "absolute", width: 14, height: 14, borderRadius: "50%", background: "#fff", top: 2, left: intg.on ? 18 : 2 }} />
                     </div>
                   </div>
                 ))}
@@ -618,16 +729,10 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
             <section className="panel">
               <div className="panel-heading" style={{ marginBottom: 0, paddingBottom: 12 }}>
                 <div>
-                  <p className="section-label" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    Drill log <span style={NEW_TAG}>NEW</span>
-                  </p>
+                  <p className="section-label">Drill log</p>
                   <h2>Drill &amp; exercise history</h2>
                 </div>
-                <a
-                  href="#log-drill"
-                  className="button-secondary"
-                  style={{ padding: "5px 10px", fontSize: 11, textDecoration: "none" }}
-                >
+                <a href="#log-drill" className="button-secondary" style={{ padding: "5px 10px", fontSize: 11, textDecoration: "none" }}>
                   + Log drill
                 </a>
               </div>
@@ -637,54 +742,26 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
                   <p style={{ fontSize: 12, color: "var(--muted)" }}>No drills logged yet.</p>
                 </div>
               ) : (
-                drills.map((drill, i) => {
+                drills.map((drill) => {
                   const outcomeClass =
-                    drill.outcome === "satisfactory"
-                      ? "status-current"
-                      : drill.outcome === "needs_improvement"
-                      ? "status-needs-review"
-                      : "status-overdue";
+                    drill.outcome === "satisfactory"      ? "status-current" :
+                    drill.outcome === "needs_improvement" ? "status-needs-review" : "status-overdue";
                   return (
-                    <div
-                      key={drill.id}
-                      style={{
-                        display: "flex", alignItems: "center", gap: 10,
-                        padding: "9px 14px",
-                        borderBottom: "1px solid var(--line)",
-                      }}
-                    >
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--navy)", width: 80, flexShrink: 0 }}>
-                        {fmtShort(drill.drillDate)}
-                      </div>
-                      <div style={{ fontSize: 12, color: "var(--text2)", flex: 1 }}>
-                        {drill.drillType ?? "Drill"}
-                      </div>
-                      <span className={outcomeClass} style={{ fontSize: 10 }}>
-                        {drillOutcomeLabels[drill.outcome]}
-                      </span>
+                    <div key={drill.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", borderBottom: "1px solid var(--line)" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--navy)", width: 80, flexShrink: 0 }}>{fmtShort(drill.drillDate)}</div>
+                      <div style={{ fontSize: 12, color: "var(--text2)", flex: 1 }}>{drill.drillType ?? "Drill"}</div>
+                      <span className={outcomeClass} style={{ fontSize: 10 }}>{drillOutcomeLabels[drill.outcome]}</span>
                     </div>
                   );
                 })
               )}
 
-              {/* Overdue drill rows */}
+              {/* Overdue next-drill rows */}
               {overdueDrillPlans.map((plan) => {
-                const daysOD = Math.floor(
-                  (now.getTime() - new Date(plan.nextDrillDate!).getTime()) / 86_400_000
-                );
+                const daysOD = Math.floor((now.getTime() - new Date(plan.nextDrillDate!).getTime()) / 86_400_000);
                 return (
-                  <div
-                    key={`od-${plan.id}`}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 10,
-                      padding: "9px 14px",
-                      background: "var(--red-bg)",
-                      borderBottom: "1px solid var(--line)",
-                    }}
-                  >
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--red-dk)", width: 80, flexShrink: 0 }}>
-                      Overdue
-                    </div>
+                  <div key={`od-${plan.id}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", background: "var(--red-bg)", borderBottom: "1px solid var(--line)" }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--red-dk)", width: 80, flexShrink: 0 }}>Overdue</div>
                     <div style={{ fontSize: 12, color: "var(--text2)", flex: 1 }}>{plan.title}</div>
                     <span className="status-overdue" style={{ fontSize: 10 }}>{daysOD} Days Past Due</span>
                   </div>

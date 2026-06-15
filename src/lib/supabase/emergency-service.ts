@@ -51,12 +51,47 @@ export type EmergencyDrill = {
   createdAt: string;
 };
 
+export type ContactType = "internal" | "external" | "emergency";
+
+export type EmergencyStep = {
+  id: string;
+  organizationId: string;
+  planId: string;
+  stepNumber: number;
+  text: string;
+  isRequired: boolean;
+  completedAt: string | null;
+  createdAt: string;
+};
+
+export type EmergencyContact = {
+  id: string;
+  organizationId: string;
+  planId: string | null;
+  name: string;
+  role: string;
+  phone: string;
+  contactType: ContactType;
+  isPrimary: boolean;
+  createdAt: string;
+};
+
 export type EmergencyResult =
   | { ok: true; message: string }
   | { ok: false; message: string };
 
 // ---------------------------------------------------------------------------
-// Labels
+// Labels / constants
+// ---------------------------------------------------------------------------
+
+export const contactTypeLabels: Record<ContactType, string> = {
+  internal:  "Internal",
+  external:  "External",
+  emergency: "Emergency",
+};
+
+// ---------------------------------------------------------------------------
+// Labels (plans / drills)
 // ---------------------------------------------------------------------------
 
 export const planTypeLabels: Record<PlanType, string> = {
@@ -105,6 +140,33 @@ function mapPlanRow(row: Record<string, unknown>): EmergencyPlan {
     createdAt:     row.created_at as string,
     updatedAt:     row.updated_at as string,
     needsReview:   deriveNeedsReview(row.last_reviewed as string | null),
+  };
+}
+
+function mapStepRow(row: Record<string, unknown>): EmergencyStep {
+  return {
+    id:             row.id as string,
+    organizationId: row.organization_id as string,
+    planId:         row.plan_id as string,
+    stepNumber:     row.step_number as number,
+    text:           row.text as string,
+    isRequired:     row.is_required as boolean,
+    completedAt:    row.completed_at as string | null,
+    createdAt:      row.created_at as string,
+  };
+}
+
+function mapContactRow(row: Record<string, unknown>): EmergencyContact {
+  return {
+    id:             row.id as string,
+    organizationId: row.organization_id as string,
+    planId:         row.plan_id as string | null,
+    name:           row.name as string,
+    role:           row.role as string,
+    phone:          row.phone as string,
+    contactType:    (row.contact_type as ContactType) ?? "internal",
+    isPrimary:      row.is_primary as boolean,
+    createdAt:      row.created_at as string,
   };
 }
 
@@ -304,6 +366,184 @@ export async function createDrill(input: {
     });
     if (error) return { ok: false, message: error.message };
     return { ok: true, message: "Drill logged successfully." };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Unexpected error." };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Steps — demo data
+// ---------------------------------------------------------------------------
+
+function demoSteps(planId: string): EmergencyStep[] {
+  if (planId !== "demo-erp-001") return [];
+  const now = new Date().toISOString();
+  const done = new Date(Date.now() - 60_000).toISOString();
+  return [
+    { id: "demo-step-001", organizationId: "demo-org", planId, stepNumber: 1, text: "Activate Fire Alarm & Initiate Evacuation",      isRequired: true,  completedAt: done, createdAt: now },
+    { id: "demo-step-002", organizationId: "demo-org", planId, stepNumber: 2, text: "Call 911 & Notify Site Safety Director",           isRequired: true,  completedAt: done, createdAt: now },
+    { id: "demo-step-003", organizationId: "demo-org", planId, stepNumber: 3, text: "Account for All Personnel at Muster Point",        isRequired: true,  completedAt: null, createdAt: now },
+    { id: "demo-step-004", organizationId: "demo-org", planId, stepNumber: 4, text: "Attempt Suppression — Only If Safe to Do So",      isRequired: false, completedAt: null, createdAt: now },
+    { id: "demo-step-005", organizationId: "demo-org", planId, stepNumber: 5, text: "Meet & Brief Emergency Responders on Arrival",     isRequired: false, completedAt: null, createdAt: now },
+    { id: "demo-step-006", organizationId: "demo-org", planId, stepNumber: 6, text: "Document Incident & Initiate Corrective Action",   isRequired: false, completedAt: null, createdAt: now },
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// Steps — queries
+// ---------------------------------------------------------------------------
+
+export async function listSteps(planId: string): Promise<EmergencyStep[]> {
+  if (!isSupabaseConfigured()) return demoSteps(planId);
+  try {
+    const ctx = await getProfileContext();
+    if (!ctx) return demoSteps(planId);
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("emergency_response_steps")
+      .select("*")
+      .eq("plan_id", planId)
+      .eq("organization_id", ctx.organizationId)
+      .order("step_number", { ascending: true });
+    if (error) throw error;
+    return (data ?? []).map(mapStepRow);
+  } catch {
+    return demoSteps(planId);
+  }
+}
+
+export async function createStep(input: {
+  planId: string;
+  text: string;
+  isRequired?: boolean;
+}): Promise<EmergencyResult> {
+  if (!isSupabaseConfigured()) return { ok: true, message: "Demo: Step added." };
+  try {
+    const ctx = await getProfileContext();
+    if (!ctx) return { ok: false, message: "Not authenticated." };
+    const supabase = await createSupabaseServerClient();
+    const { data: existing } = await supabase
+      .from("emergency_response_steps")
+      .select("step_number")
+      .eq("plan_id", input.planId)
+      .order("step_number", { ascending: false })
+      .limit(1);
+    const nextNum = ((existing?.[0]?.step_number as number) ?? 0) + 1;
+    const { error } = await supabase.from("emergency_response_steps").insert({
+      organization_id: ctx.organizationId,
+      plan_id:         input.planId,
+      step_number:     nextNum,
+      text:            input.text,
+      is_required:     input.isRequired ?? false,
+      created_by:      ctx.userId,
+    });
+    if (error) return { ok: false, message: error.message };
+    return { ok: true, message: "Step added." };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Unexpected error." };
+  }
+}
+
+export async function toggleStepComplete(
+  stepId: string,
+  completed: boolean,
+): Promise<EmergencyResult> {
+  if (!isSupabaseConfigured()) return { ok: true, message: "Demo: Step updated." };
+  try {
+    const ctx = await getProfileContext();
+    if (!ctx) return { ok: false, message: "Not authenticated." };
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase
+      .from("emergency_response_steps")
+      .update({ completed_at: completed ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
+      .eq("id", stepId)
+      .eq("organization_id", ctx.organizationId);
+    if (error) return { ok: false, message: error.message };
+    return { ok: true, message: completed ? "Step completed." : "Step unmarked." };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Unexpected error." };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Contacts — demo data
+// ---------------------------------------------------------------------------
+
+function demoContacts(): EmergencyContact[] {
+  const now = new Date().toISOString();
+  return [
+    { id: "demo-contact-001", organizationId: "demo-org", planId: null, name: "EHS Manager",            role: "Site Safety Director · Primary", phone: "+1 (317) 555-0142", contactType: "internal",  isPrimary: true,  createdAt: now },
+    { id: "demo-contact-002", organizationId: "demo-org", planId: null, name: "Fire Marshal — Site",    role: "External · Emergency",           phone: "911 / Dispatch",    contactType: "emergency", isPrimary: false, createdAt: now },
+    { id: "demo-contact-003", organizationId: "demo-org", planId: null, name: "EHS Lead — Building 4",  role: "Internal · Backup",              phone: "+1 (317) 555-0198", contactType: "internal",  isPrimary: false, createdAt: now },
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// Contacts — queries
+// ---------------------------------------------------------------------------
+
+export async function listContacts(): Promise<EmergencyContact[]> {
+  if (!isSupabaseConfigured()) return demoContacts();
+  try {
+    const ctx = await getProfileContext();
+    if (!ctx) return demoContacts();
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("emergency_contacts")
+      .select("*")
+      .eq("organization_id", ctx.organizationId)
+      .order("is_primary", { ascending: false })
+      .order("created_at", { ascending: true });
+    if (error) throw error;
+    return (data ?? []).map(mapContactRow);
+  } catch {
+    return demoContacts();
+  }
+}
+
+export async function createContact(input: {
+  name: string;
+  role: string;
+  phone: string;
+  contactType: ContactType;
+  isPrimary: boolean;
+  planId?: string | null;
+}): Promise<EmergencyResult> {
+  if (!isSupabaseConfigured()) return { ok: true, message: "Demo: Contact added." };
+  try {
+    const ctx = await getProfileContext();
+    if (!ctx) return { ok: false, message: "Not authenticated." };
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase.from("emergency_contacts").insert({
+      organization_id: ctx.organizationId,
+      name:            input.name,
+      role:            input.role,
+      phone:           input.phone,
+      contact_type:    input.contactType,
+      is_primary:      input.isPrimary,
+      plan_id:         input.planId ?? null,
+      created_by:      ctx.userId,
+    });
+    if (error) return { ok: false, message: error.message };
+    return { ok: true, message: `${input.name} added to emergency contacts.` };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Unexpected error." };
+  }
+}
+
+export async function deleteContact(id: string): Promise<EmergencyResult> {
+  if (!isSupabaseConfigured()) return { ok: true, message: "Demo: Contact removed." };
+  try {
+    const ctx = await getProfileContext();
+    if (!ctx) return { ok: false, message: "Not authenticated." };
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase
+      .from("emergency_contacts")
+      .delete()
+      .eq("id", id)
+      .eq("organization_id", ctx.organizationId);
+    if (error) return { ok: false, message: error.message };
+    return { ok: true, message: "Contact removed." };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Unexpected error." };
   }
