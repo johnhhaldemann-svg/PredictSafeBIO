@@ -85,22 +85,27 @@ export default async function CapaListPage({ searchParams }: Props) {
           <Link className="button-secondary" href="/incidents">Incident Register →</Link>
         </header>
 
-        <section className="command-card-grid" aria-label="CAPA summary">
-          <article className={`command-card ${openCount > 0 ? "platform-blue" : "platform-green"}`}>
-            <div><span><CircleDot size={16} /></span><strong>Open CAPAs</strong></div>
-            <small>{openCount}</small>
-            <em>Requiring action or review.</em>
-          </article>
-          <article className={`command-card ${overdueCount > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><Clock size={16} /></span><strong>Overdue</strong></div>
-            <small>{overdueCount}</small>
-            <em>{overdueCount > 0 ? "Past due date — requires immediate attention." : "No overdue CAPAs."}</em>
-          </article>
-          <article className="command-card platform-green">
-            <div><span><CheckCircle2 size={16} /></span><strong>Closed</strong></div>
-            <small>{allRecords.filter((r) => r.status === "closed").length}</small>
-            <em>Completed with effectiveness check.</em>
-          </article>
+        <section className="kpi-grid" aria-label="CAPA summary">
+          <div className={`kpi-card ${openCount > 0 ? "kpi-card--blue" : "kpi-card--green"}`}>
+            <div className="kpi-label">Open CAPAs</div>
+            <div className="kpi-value">{openCount}</div>
+            <div className="kpi-sub">Requiring action or review</div>
+          </div>
+          <div className={`kpi-card ${overdueCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Overdue</div>
+            <div className="kpi-value">{overdueCount}</div>
+            <div className="kpi-sub">{overdueCount > 0 ? "Immediate attention needed" : "None overdue"}</div>
+          </div>
+          <div className="kpi-card kpi-card--green">
+            <div className="kpi-label">Closed</div>
+            <div className="kpi-value">{allRecords.filter((r) => r.status === "closed").length}</div>
+            <div className="kpi-sub">Effectiveness verified</div>
+          </div>
+          <div className="kpi-card kpi-card--amber">
+            <div className="kpi-label">In Progress</div>
+            <div className="kpi-value">{allRecords.filter((r) => r.status === "in_progress").length}</div>
+            <div className="kpi-sub">Under investigation</div>
+          </div>
         </section>
 
         {overdueCount > 0 && (

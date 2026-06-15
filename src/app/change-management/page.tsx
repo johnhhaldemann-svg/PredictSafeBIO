@@ -35,32 +35,27 @@ export default async function ChangeManagementPage() {
         </header>
 
         {/* KPI strip */}
-        <section className="command-card-grid" aria-label="Change management summary">
-          <article className={`command-card ${highPriority > 0 ? "platform-red" : "platform-blue"}`}>
-            <div><span><ClipboardList size={16} /></span><strong>High-priority roadmap items</strong></div>
-            <small>{highPriority}</small>
-            <em>
-              {highPriority > 0
-                ? `${highPriority} item${highPriority !== 1 ? "s" : ""} flagged High priority.`
-                : activeItems.length > 0
-                ? `${plannedItems} planned item${plannedItems !== 1 ? "s" : ""} in roadmap.`
-                : "No active roadmap items yet."}
-            </em>
-          </article>
-          <article className={`command-card ${mocInReview > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><GitBranch size={16} /></span><strong>MOC awaiting review</strong></div>
-            <small>{mocInReview}</small>
-            <em>
-              {mocInReview > 0
-                ? `${mocInReview} change${mocInReview !== 1 ? "s" : ""} routed to reviewers.`
-                : "No changes pending review."}
-            </em>
-          </article>
-          <article className="command-card platform-blue">
-            <div><span><RefreshCw size={16} /></span><strong>Total MOC records</strong></div>
-            <small>{mocRecords.length}</small>
-            <em>Change records on file.</em>
-          </article>
+        <section className="kpi-grid" aria-label="Change management summary">
+          <div className={`kpi-card ${highPriority > 0 ? "kpi-card--red" : "kpi-card--blue"}`}>
+            <div className="kpi-label">High-Priority Items</div>
+            <div className="kpi-value">{highPriority}</div>
+            <div className="kpi-sub">{highPriority > 0 ? "Flagged high priority" : `${plannedItems} planned in roadmap`}</div>
+          </div>
+          <div className={`kpi-card ${mocInReview > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+            <div className="kpi-label">MOC Awaiting Review</div>
+            <div className="kpi-value">{mocInReview}</div>
+            <div className="kpi-sub">{mocInReview > 0 ? "Routed to reviewers" : "None pending"}</div>
+          </div>
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Total MOC Records</div>
+            <div className="kpi-value">{mocRecords.length}</div>
+            <div className="kpi-sub">Change records on file</div>
+          </div>
+          <div className="kpi-card kpi-card--purple">
+            <div className="kpi-label">Active Items</div>
+            <div className="kpi-value">{activeItems.length}</div>
+            <div className="kpi-sub">In-progress changes</div>
+          </div>
         </section>
 
         {/* Module cards */}

@@ -65,18 +65,13 @@ export default async function TrainingMatrixPage({ searchParams }: { searchParam
           </div>
         </section>
 
-        <section className="command-card-grid" aria-label="Training matrix summary">
-          {summary.counts.map((count) => (
-            <article className="command-card platform-green" key={count.label}>
-              <div>
-                <span>
-                  <ClipboardCheck size={16} />
-                </span>
-                <strong>{count.label}</strong>
-              </div>
-              <small>{count.value}</small>
-              <em>{count.label === "Change impacts" ? "Document and process changes that may trigger retraining." : "Training matrix signal."}</em>
-            </article>
+        <section className="kpi-grid" aria-label="Training matrix summary">
+          {summary.counts.map((count, i) => (
+            <div className={`kpi-card ${i === 0 ? "kpi-card--blue" : i === 1 ? "kpi-card--green" : i === 2 ? "kpi-card--amber" : "kpi-card--purple"}`} key={count.label}>
+              <div className="kpi-label">{count.label}</div>
+              <div className="kpi-value">{count.value}</div>
+              <div className="kpi-sub">{count.label === "Change impacts" ? "May trigger retraining" : "Training signal"}</div>
+            </div>
           ))}
         </section>
 

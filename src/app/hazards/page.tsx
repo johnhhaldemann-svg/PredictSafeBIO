@@ -74,22 +74,27 @@ export default async function HazardRegisterPage({ searchParams }: Props) {
         </header>
 
         {/* KPI strip */}
-        <section className="command-card-grid" aria-label="Hazard register summary">
-          <article className="command-card platform-blue">
-            <div><span><AlertTriangle size={16} /></span><strong>Total hazards</strong></div>
-            <small>{totalCount}</small>
-            <em>Active hazards in the register.</em>
-          </article>
-          <article className={`command-card ${identifiedCount > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><Activity size={16} /></span><strong>Identified, uncontrolled</strong></div>
-            <small>{identifiedCount}</small>
-            <em>{identifiedCount > 0 ? "Leading indicators raising predicted risk." : "No uncontrolled hazards."}</em>
-          </article>
-          <article className="command-card platform-green">
-            <div><span><ShieldCheck size={16} /></span><strong>Controlled</strong></div>
-            <small>{controlledCount}</small>
-            <em>Hazards with controls in place.</em>
-          </article>
+        <section className="kpi-grid" aria-label="Hazard register summary">
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Total Hazards</div>
+            <div className="kpi-value">{totalCount}</div>
+            <div className="kpi-sub">Active in register</div>
+          </div>
+          <div className={`kpi-card ${identifiedCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Uncontrolled</div>
+            <div className="kpi-value">{identifiedCount}</div>
+            <div className="kpi-sub">{identifiedCount > 0 ? "Leading risk indicators" : "None uncontrolled"}</div>
+          </div>
+          <div className="kpi-card kpi-card--amber">
+            <div className="kpi-label">Under Assessment</div>
+            <div className="kpi-value">{hazards.filter(h => h.status === "assessed").length}</div>
+            <div className="kpi-sub">Being evaluated</div>
+          </div>
+          <div className="kpi-card kpi-card--green">
+            <div className="kpi-label">Controlled</div>
+            <div className="kpi-value">{controlledCount}</div>
+            <div className="kpi-sub">Controls in place</div>
+          </div>
         </section>
 
         {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}

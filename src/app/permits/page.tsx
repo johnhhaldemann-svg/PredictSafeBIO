@@ -75,22 +75,27 @@ export default async function PermitsPage({ searchParams }: Props) {
         </header>
 
         {/* KPI strip */}
-        <section className="command-card-grid" aria-label="Permit summary">
-          <article className="command-card platform-blue">
-            <div><span><Lock size={16} /></span><strong>Active permits</strong></div>
-            <small>{activeCount}</small>
-            <em>Approved or in-progress work.</em>
-          </article>
-          <article className={`command-card ${overdueCount > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><AlertTriangle size={16} /></span><strong>Overdue (&gt;24 hrs)</strong></div>
-            <small>{overdueCount}</small>
-            <em>{overdueCount > 0 ? "Active permits open beyond 24 hours — close or escalate." : "No overdue permits."}</em>
-          </article>
-          <article className={`command-card ${draftCount > 0 ? "platform-blue" : "platform-green"}`}>
-            <div><span><ClipboardCheck size={16} /></span><strong>Drafts</strong></div>
-            <small>{draftCount}</small>
-            <em>{draftCount > 0 ? "Permits awaiting submission for approval." : "No drafts pending."}</em>
-          </article>
+        <section className="kpi-grid" aria-label="Permit summary">
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Active Permits</div>
+            <div className="kpi-value">{activeCount}</div>
+            <div className="kpi-sub">Approved or in-progress</div>
+          </div>
+          <div className={`kpi-card ${overdueCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Overdue (&gt;24 hrs)</div>
+            <div className="kpi-value">{overdueCount}</div>
+            <div className="kpi-sub">{overdueCount > 0 ? "Close or escalate" : "None overdue"}</div>
+          </div>
+          <div className={`kpi-card ${draftCount > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+            <div className="kpi-label">Drafts</div>
+            <div className="kpi-value">{draftCount}</div>
+            <div className="kpi-sub">{draftCount > 0 ? "Awaiting approval" : "None pending"}</div>
+          </div>
+          <div className="kpi-card kpi-card--green">
+            <div className="kpi-label">Closed</div>
+            <div className="kpi-value">{allPermits.filter(p => p.closeoutStatus === "closed").length}</div>
+            <div className="kpi-sub">Completed safely</div>
+          </div>
         </section>
 
         {overdueCount > 0 && (

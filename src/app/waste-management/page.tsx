@@ -74,26 +74,29 @@ export default async function WasteManagementPage({ searchParams }: Props) {
         </header>
 
         {/* KPI strip */}
-        <section className="command-card-grid" aria-label="Waste management summary">
-          <article className="command-card platform-blue">
-            <div><span><Trash2 size={16} /></span><strong>Active containers</strong></div>
-            <small>{totalCount}</small>
-            <em>Containers currently tracked.</em>
-          </article>
-          <article className={`command-card ${criticalCount > 0 ? "platform-red" : atRiskCount > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><AlertTriangle size={16} /></span><strong>Critical / At risk</strong></div>
-            <small>{criticalCount + atRiskCount}</small>
-            <em>
-              {criticalCount > 0 ? `${criticalCount} critical (full or incident). ` : ""}
-              {atRiskCount > 0 ? `${atRiskCount} at risk (≥80% or label issues).` : ""}
-              {criticalCount === 0 && atRiskCount === 0 ? "No containers at risk." : ""}
-            </em>
-          </article>
-          <article className={`command-card ${readyCount > 0 ? "platform-blue" : "platform-green"}`}>
-            <div><span><Truck size={16} /></span><strong>Ready for pickup</strong></div>
-            <small>{readyCount}</small>
-            <em>{readyCount > 0 ? "Containers awaiting collection." : "No containers pending pickup."}</em>
-          </article>
+        <section className="kpi-grid" aria-label="Waste management summary">
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Active Containers</div>
+            <div className="kpi-value">{totalCount}</div>
+            <div className="kpi-sub">Currently tracked</div>
+          </div>
+          <div className={`kpi-card ${criticalCount > 0 ? "kpi-card--red" : atRiskCount > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+            <div className="kpi-label">Critical / At Risk</div>
+            <div className="kpi-value">{criticalCount + atRiskCount}</div>
+            <div className="kpi-sub">
+              {criticalCount > 0 ? `${criticalCount} critical` : atRiskCount > 0 ? `${atRiskCount} at risk` : "All containers safe"}
+            </div>
+          </div>
+          <div className={`kpi-card ${readyCount > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+            <div className="kpi-label">Ready for Pickup</div>
+            <div className="kpi-value">{readyCount}</div>
+            <div className="kpi-sub">{readyCount > 0 ? "Awaiting collection" : "None pending"}</div>
+          </div>
+          <div className="kpi-card kpi-card--purple">
+            <div className="kpi-label">Biohazard</div>
+            <div className="kpi-value">{allRecords.filter(r => r.wasteType === "biological").length}</div>
+            <div className="kpi-sub">Biohazardous waste streams</div>
+          </div>
         </section>
 
         {criticalCount > 0 && (

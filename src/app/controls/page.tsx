@@ -74,22 +74,27 @@ export default async function ControlRegisterPage({ searchParams }: Props) {
         </header>
 
         {/* KPI strip */}
-        <section className="command-card-grid" aria-label="Control register summary">
-          <article className="command-card platform-blue">
-            <div><span><SlidersHorizontal size={16} /></span><strong>Total controls</strong></div>
-            <small>{totalCount}</small>
-            <em>Active controls across all hazards.</em>
-          </article>
-          <article className={`command-card ${overdueCount > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><Clock size={16} /></span><strong>Verification overdue</strong></div>
-            <small>{overdueCount}</small>
-            <em>{overdueCount > 0 ? "Overdue verification raises predicted risk." : "All verifications current."}</em>
-          </article>
-          <article className={`command-card ${uncoveredHazards > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><AlertTriangle size={16} /></span><strong>Hazards without controls</strong></div>
-            <small>{uncoveredHazards}</small>
-            <em>{uncoveredHazards > 0 ? "Uncontrolled hazards carry full predicted risk." : "Every hazard has a control."}</em>
-          </article>
+        <section className="kpi-grid" aria-label="Control register summary">
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Total Controls</div>
+            <div className="kpi-value">{totalCount}</div>
+            <div className="kpi-sub">Active across all hazards</div>
+          </div>
+          <div className={`kpi-card ${overdueCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Verification Overdue</div>
+            <div className="kpi-value">{overdueCount}</div>
+            <div className="kpi-sub">{overdueCount > 0 ? "Raises predicted risk" : "All current"}</div>
+          </div>
+          <div className={`kpi-card ${uncoveredHazards > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Hazards Without Controls</div>
+            <div className="kpi-value">{uncoveredHazards}</div>
+            <div className="kpi-sub">{uncoveredHazards > 0 ? "Full predicted risk" : "All hazards covered"}</div>
+          </div>
+          <div className="kpi-card kpi-card--purple">
+            <div className="kpi-label">Hierarchy Coverage</div>
+            <div className="kpi-value">{totalCount > 0 ? Math.round(((totalCount - uncoveredHazards) / Math.max(totalCount, 1)) * 100) : 0}%</div>
+            <div className="kpi-sub">Hazards with controls</div>
+          </div>
         </section>
 
         {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
