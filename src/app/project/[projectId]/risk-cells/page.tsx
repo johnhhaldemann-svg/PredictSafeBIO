@@ -72,26 +72,29 @@ export default async function ProjectRiskCellsPage({ params }: Props) {
         ) : (
           <>
             {/* KPI strip */}
-            <section className="command-card-grid" aria-label="Risk summary">
-              <article className={`command-card ${summary.criticalCount > 0 || summary.highCount > 0 ? "platform-red" : "platform-green"}`}>
-                <div><span><AlertTriangle size={16} /></span><strong>Critical / High</strong></div>
-                <small>{summary.criticalCount + summary.highCount}</small>
-                <em>
-                  {summary.criticalCount > 0 ? `${summary.criticalCount} critical · ` : ""}
-                  {summary.highCount > 0 ? `${summary.highCount} high` : ""}
-                  {summary.criticalCount === 0 && summary.highCount === 0 ? "No critical or high risk cells." : ""}
-                </em>
-              </article>
-              <article className="command-card platform-blue">
-                <div><span><Activity size={16} /></span><strong>Active signals</strong></div>
-                <small>{summary.totalActive}</small>
-                <em>Total active risk cells.</em>
-              </article>
-              <article className={`command-card ${summary.byType.failure_cell > 0 ? "platform-red" : "platform-green"}`}>
-                <div><span><Zap size={16} /></span><strong>Failures</strong></div>
-                <small>{summary.byType.failure_cell}</small>
-                <em>{summary.byType.failure_cell > 0 ? "Control breakdowns requiring action." : "No active failures."}</em>
-              </article>
+            <section className="kpi-grid" aria-label="Risk summary">
+              <div className={`kpi-card ${summary.criticalCount > 0 || summary.highCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+                <div className="kpi-label">Critical / High</div>
+                <div className="kpi-value">{summary.criticalCount + summary.highCount}</div>
+                <div className="kpi-sub">
+                  {summary.criticalCount > 0 ? `${summary.criticalCount} critical` : summary.highCount > 0 ? `${summary.highCount} high priority` : "No critical signals"}
+                </div>
+              </div>
+              <div className="kpi-card kpi-card--blue">
+                <div className="kpi-label">Active Signals</div>
+                <div className="kpi-value">{summary.totalActive}</div>
+                <div className="kpi-sub">Total active risk cells</div>
+              </div>
+              <div className={`kpi-card ${summary.byType.failure_cell > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+                <div className="kpi-label">Failures</div>
+                <div className="kpi-value">{summary.byType.failure_cell}</div>
+                <div className="kpi-sub">{summary.byType.failure_cell > 0 ? "Control breakdowns" : "No active failures"}</div>
+              </div>
+              <div className="kpi-card kpi-card--purple">
+                <div className="kpi-label">Precursors</div>
+                <div className="kpi-value">{summary.byType.precursor_cell}</div>
+                <div className="kpi-sub">Early warning signals</div>
+              </div>
             </section>
 
             {/* Live feed */}

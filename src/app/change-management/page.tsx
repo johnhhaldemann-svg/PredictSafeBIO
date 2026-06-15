@@ -59,24 +59,22 @@ export default async function ChangeManagementPage() {
         </section>
 
         {/* Module cards */}
-        <section className="command-card-grid" aria-label="Change management modules">
-          <article className="command-card platform-blue">
-            <div><span><ClipboardList size={16} /></span><strong>Change Plan</strong></div>
-            <em>
-              Strategic improvement roadmap — track planned changes to programs, processes, and
-              compliance gaps. Prioritise by impact and monitor progress to completion.
-            </em>
-            <Link className="button-secondary compact" href="/change-plan">Open Change Plan →</Link>
-          </article>
-          <article className="command-card platform-blue">
-            <div><span><RefreshCw size={16} /></span><strong>Management of Change</strong></div>
-            <em>
-              Operational change control — when materials, processes, equipment, or scale change,
-              controls must be revalidated. Auto-routes to reviewers based on affected programs.
-            </em>
-            <Link className="button-secondary compact" href="/operate/management-of-change">Open MOC →</Link>
-          </article>
-        </section>
+        <div className="plan-grid" aria-label="Change management modules">
+          <Link href="/change-plan" className="plan-card">
+            <div style={{ fontSize: 20, marginBottom: 6 }}>📋</div>
+            <strong>Change Plan</strong>
+            <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+              Strategic improvement roadmap — track planned changes, prioritise by impact, monitor progress.
+            </p>
+          </Link>
+          <Link href="/operate/management-of-change" className="plan-card">
+            <div style={{ fontSize: 20, marginBottom: 6 }}>🔄</div>
+            <strong>Management of Change</strong>
+            <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+              Operational change control — materials, processes, equipment. Auto-routes to reviewers.
+            </p>
+          </Link>
+        </div>
       </div>
     </AppShell>
   );

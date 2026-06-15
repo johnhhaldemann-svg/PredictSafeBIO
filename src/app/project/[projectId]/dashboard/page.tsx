@@ -53,17 +53,17 @@ export default async function ProjectDashboardPage({ params }: Props) {
           </div>
         </header>
 
-        <section className="command-card-grid" aria-label="Project modules">
-          {PROJECT_MODULES.map((m) => (
-            <article key={m.href} className="command-card platform-blue">
-              <div><strong>{m.label}</strong></div>
-              <em>{m.description}</em>
-              <a className="button-secondary compact" href={`/project/${projectId}/${m.href}`}>
-                Open →
-              </a>
-            </article>
+        <div className="plan-grid" aria-label="Project modules">
+          {PROJECT_MODULES.map((m, i) => (
+            <a key={m.href} href={`/project/${projectId}/${m.href}`} className="plan-card">
+              <div style={{ fontSize: 20, marginBottom: 6 }}>
+                {i === 0 ? "📄" : i === 1 ? "⚡" : "📁"}
+              </div>
+              <strong>{m.label}</strong>
+              <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>{m.description}</p>
+            </a>
           ))}
-        </section>
+        </div>
       </div>
     </AppShell>
   );

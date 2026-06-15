@@ -18,6 +18,8 @@ export default async function ManagementOfChangePage({ searchParams }: Props) {
   const params = await searchParams;
   const records = await listMocRecords().catch(() => []);
   const inReview = records.filter((r) => r.status === "in_review").length;
+  const approved = records.filter((r) => r.status === "approved").length;
+  const draft = records.filter((r) => r.status === "draft").length;
 
   return (
     <AppShell>
@@ -36,15 +38,27 @@ export default async function ManagementOfChangePage({ searchParams }: Props) {
         {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message && <p className="form-message">{params.message}</p>}
 
-        <section className="command-card-grid" aria-label="MOC summary">
-          <article className="command-card platform-blue">
-            <div><span><GitBranch size={16} /></span><strong>Total changes</strong></div>
-            <small>{records.length}</small><em>Change records.</em>
-          </article>
-          <article className={`command-card ${inReview > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><GitBranch size={16} /></span><strong>Awaiting review</strong></div>
-            <small>{inReview}</small><em>{inReview > 0 ? "Routed to qualified reviewers." : "Nothing pending."}</em>
-          </article>
+        <section className="kpi-grid" aria-label="MOC summary">
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Total Changes</div>
+            <div className="kpi-value">{records.length}</div>
+            <div className="kpi-sub">Change records on file</div>
+          </div>
+          <div className={`kpi-card ${inReview > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+            <div className="kpi-label">Awaiting Review</div>
+            <div className="kpi-value">{inReview}</div>
+            <div className="kpi-sub">{inReview > 0 ? "Routed to reviewers" : "Nothing pending"}</div>
+          </div>
+          <div className="kpi-card kpi-card--green">
+            <div className="kpi-label">Approved</div>
+            <div className="kpi-value">{approved}</div>
+            <div className="kpi-sub">Changes signed off</div>
+          </div>
+          <div className="kpi-card kpi-card--purple">
+            <div className="kpi-label">Draft</div>
+            <div className="kpi-value">{draft}</div>
+            <div className="kpi-sub">Pending submission</div>
+          </div>
         </section>
 
         <section className="panel">
