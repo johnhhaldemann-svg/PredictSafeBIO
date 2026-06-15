@@ -4,10 +4,21 @@ import { redirect } from "next/navigation";
 import {
   createPlan,
   createDrill,
+  createStep,
+  toggleStepComplete,
+  createContact,
+  deleteContact,
+  resetSteps,
+  uploadPlanDocument,
+  setPlanDocumentUrl,
   type PlanType,
   type DrillOutcome,
+  type ContactType,
 } from "@/lib/supabase/emergency-service";
+import { createCapaRecord } from "@/lib/supabase/capa-service";
 import { authMessage, authSuccess } from "@/lib/auth-routing";
+
+// ── Plan ─────────────────────────────────────────────────────────────────────
 
 export async function createPlanAction(formData: FormData) {
   const planType      = String(formData.get("planType") ?? "other") as PlanType;
@@ -26,6 +37,8 @@ export async function createPlanAction(formData: FormData) {
   );
 }
 
+// ── Drills ────────────────────────────────────────────────────────────────────
+
 export async function createDrillAction(formData: FormData) {
   const planId            = String(formData.get("planId") ?? "").trim() || null;
   const drillDate         = String(formData.get("drillDate") ?? "").trim();
@@ -39,9 +52,105 @@ export async function createDrillAction(formData: FormData) {
   if (!drillDate) redirect(authMessage("/emergency-response", "Drill date is required."));
 
   const result = await createDrill({ planId, drillDate, drillType, participantsCount, outcome, notes, conductedBy });
+
+  if (result.ok && result.id && (outcome === "needs_improvement" || outcome === "unsatisfactory")) {
+    const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    await createCapaRecord({
+      title:            `Drill gap: ${drillType ?? drillDate} — ${outcome.replace("_", " ")}`,
+      linkedRecordType: "emergency_drills",
+      linkedRecordId:   result.id,
+      dueDate,
+      rootCause:        `Drill outcome: ${outcome}. Review findings and implement corrective actions before next scheduled drill.`,
+    }).catch(() => { /* non-fatal */ });
+  }
+
   redirect(
     result.ok
       ? authSuccess("/emergency-response", result.message)
       : authMessage("/emergency-response", result.message)
   );
+}
+
+// ── Steps ─────────────────────────────────────────────────────────────────────
+
+export async function createStepAction(formData: FormData) {
+  const planId     = String(formData.get("planId") ?? "").trim();
+  const text       = String(formData.get("text") ?? "").trim();
+  const isRequired = formData.get("isRequired") === "on";
+
+  if (!planId || !text) redirect(authMessage(`/emergency-response`, "Step text is required."));
+
+  const result = await createStep({ planId, text, isRequired });
+  const back = planId ? `/emergency-response?plan=${planId}` : "/emergency-response";
+  redirect(
+    result.ok
+      ? authSuccess(back, result.message)
+      : authMessage(back, result.message)
+  );
+}
+
+export async function toggleStepAction(formData: FormData) {
+  const stepId    = String(formData.get("stepId") ?? "").trim();
+  const planId    = String(formData.get("planId") ?? "").trim();
+  const completed = formData.get("completed") === "true";
+
+  if (!stepId) redirect(authMessage("/emergency-response", "Invalid step."));
+
+  await toggleStepComplete(stepId, completed);
+  const back = planId ? `/emergency-response?plan=${planId}` : "/emergency-response";
+  redirect(back);
+}
+
+// ── Contacts ─────────────────────────────────────────────────────────────────
+
+export async function createContactAction(formData: FormData) {
+  const name        = String(formData.get("name") ?? "").trim();
+  const role        = String(formData.get("role") ?? "").trim();
+  const phone       = String(formData.get("phone") ?? "").trim();
+  const contactType = (String(formData.get("contactType") ?? "internal")) as ContactType;
+  const isPrimary   = formData.get("isPrimary") === "on";
+
+  if (!name || !phone) redirect(authMessage("/emergency-response", "Name and phone are required."));
+
+  const result = await createContact({ name, role, phone, contactType, isPrimary });
+  redirect(
+    result.ok
+      ? authSuccess("/emergency-response", result.message)
+      : authMessage("/emergency-response", result.message)
+  );
+}
+
+export async function deleteContactAction(formData: FormData) {
+  const id = String(formData.get("contactId") ?? "").trim();
+  if (!id) redirect(authMessage("/emergency-response", "Invalid contact."));
+  await deleteContact(id);
+  redirect("/emergency-response");
+}
+
+export async function uploadPlanDocumentAction(formData: FormData) {
+  const planId  = String(formData.get("planId") ?? "").trim();
+  const docUrl  = String(formData.get("documentUrl") ?? "").trim();
+  const file    = formData.get("document") as File | null;
+  const back    = planId ? `/emergency-response?plan=${planId}` : "/emergency-response";
+
+  if (!planId) redirect(authMessage("/emergency-response", "Invalid plan."));
+
+  let result;
+  if (docUrl) {
+    result = await setPlanDocumentUrl(planId, docUrl);
+  } else if (file && file.size > 0) {
+    result = await uploadPlanDocument(planId, file);
+  } else {
+    redirect(authMessage(back, "Provide a document URL or select a file."));
+  }
+
+  redirect(result.ok ? authSuccess(back, result.message) : authMessage(back, result.message));
+}
+
+export async function resetStepsAction(formData: FormData) {
+  const planId = String(formData.get("planId") ?? "").trim();
+  if (!planId) redirect(authMessage("/emergency-response", "Invalid plan."));
+  const result = await resetSteps(planId);
+  const back = `/emergency-response?plan=${planId}`;
+  redirect(result.ok ? authSuccess(back, result.message) : authMessage(back, result.message));
 }
