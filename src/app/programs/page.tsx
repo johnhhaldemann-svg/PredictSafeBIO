@@ -36,22 +36,27 @@ export default function ProgramsPage() {
         </header>
 
         {/* Summary */}
-        <section className="command-card-grid" aria-label="Programs summary">
-          <article className="command-card platform-blue">
-            <div><span><ShieldCheck size={16} /></span><strong>Total programs</strong></div>
-            <small>{totalCount}</small>
-            <em>Required EHS program areas covered.</em>
-          </article>
-          <article className="command-card platform-green">
-            <div><span><CheckCircle2 size={16} /></span><strong>Dedicated modules</strong></div>
-            <small>{withModuleCount}</small>
-            <em>Programs with full platform workflows.</em>
-          </article>
-          <article className="command-card platform-blue">
-            <div><span><ClipboardList size={16} /></span><strong>Via inspections</strong></div>
-            <small>{totalCount - withModuleCount}</small>
-            <em>Programs tracked through inspection system.</em>
-          </article>
+        <section className="kpi-grid" aria-label="Programs summary">
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Total Programs</div>
+            <div className="kpi-value">{totalCount}</div>
+            <div className="kpi-sub">EHS program areas</div>
+          </div>
+          <div className="kpi-card kpi-card--green">
+            <div className="kpi-label">Dedicated Modules</div>
+            <div className="kpi-value">{withModuleCount}</div>
+            <div className="kpi-sub">Full platform workflows</div>
+          </div>
+          <div className="kpi-card kpi-card--amber">
+            <div className="kpi-label">Via Inspections</div>
+            <div className="kpi-value">{totalCount - withModuleCount}</div>
+            <div className="kpi-sub">Tracked via inspection system</div>
+          </div>
+          <div className="kpi-card kpi-card--purple">
+            <div className="kpi-label">Coverage</div>
+            <div className="kpi-value">{totalCount > 0 ? Math.round((withModuleCount / totalCount) * 100) : 0}%</div>
+            <div className="kpi-sub">Module coverage rate</div>
+          </div>
         </section>
 
         {/* Program groups */}

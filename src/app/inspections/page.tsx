@@ -118,27 +118,27 @@ export default async function InspectionsPage({ searchParams }: Props) {
           <Link className="button-secondary" href="/permits">Work Permits →</Link>
         </header>
 
-        <section className="command-card-grid" aria-label="Inspection summary">
-          <article className={`command-card ${overdueCount > 0 ? "platform-red" : "platform-blue"}`}>
-            <div><span><AlertTriangle size={16} /></span><strong>Overdue</strong></div>
-            <small>{overdueCount}</small>
-            <em>{overdueCount > 0 ? "Inspections past their required date." : "No overdue inspections."}</em>
-          </article>
-          <article className="command-card platform-blue">
-            <div><span><ClipboardList size={16} /></span><strong>Scheduled</strong></div>
-            <small>{upcomingCount}</small>
-            <em>Planned inspections awaiting execution.</em>
-          </article>
-          <article className="command-card platform-blue">
-            <div><span><ClipboardList size={16} /></span><strong>Active</strong></div>
-            <small>{activeCount}</small>
-            <em>Inspections currently in progress.</em>
-          </article>
-          <article className={`command-card ${openFindingsTotal > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><CheckCircle2 size={16} /></span><strong>Open findings</strong></div>
-            <small>{openFindingsTotal}</small>
-            <em>{openFindingsTotal > 0 ? "Findings requiring resolution." : "No open findings."}</em>
-          </article>
+        <section className="kpi-grid" aria-label="Inspection summary">
+          <div className={`kpi-card ${overdueCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Overdue</div>
+            <div className="kpi-value">{overdueCount}</div>
+            <div className="kpi-sub">{overdueCount > 0 ? "Past required date" : "All on schedule"}</div>
+          </div>
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Scheduled</div>
+            <div className="kpi-value">{upcomingCount}</div>
+            <div className="kpi-sub">Awaiting execution</div>
+          </div>
+          <div className="kpi-card kpi-card--amber">
+            <div className="kpi-label">In Progress</div>
+            <div className="kpi-value">{activeCount}</div>
+            <div className="kpi-sub">Currently active</div>
+          </div>
+          <div className={`kpi-card ${openFindingsTotal > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+            <div className="kpi-label">Open Findings</div>
+            <div className="kpi-value">{openFindingsTotal}</div>
+            <div className="kpi-sub">{openFindingsTotal > 0 ? "Requiring resolution" : "No open findings"}</div>
+          </div>
         </section>
 
         {overdueCount > 0 && (

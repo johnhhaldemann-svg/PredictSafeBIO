@@ -110,32 +110,27 @@ export default async function IncidentReportingPage({ searchParams }: Props) {
         </header>
 
         {/* Summary cards */}
-        <section className="command-card-grid" aria-label="Incident summary">
-          <article className={`command-card ${openCount > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><AlertCircle size={16} /></span><strong>Open</strong></div>
-            <small>{openCount}</small>
-            <em>{openCount > 0 ? "Require investigation or action." : "No open incidents."}</em>
-          </article>
-          <article className={`command-card ${investigatingCount > 0 ? "platform-blue" : "platform-green"}`}>
-            <div><span><Eye size={16} /></span><strong>Investigating</strong></div>
-            <small>{investigatingCount}</small>
-            <em>Active RCA underway.</em>
-          </article>
-          <article className={`command-card ${criticalCount > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><AlertTriangle size={16} /></span><strong>High / Critical</strong></div>
-            <small>{criticalCount}</small>
-            <em>{criticalCount > 0 ? "Escalated severity — priority response." : "No high/critical incidents."}</em>
-          </article>
-          <article className={`command-card ${oshaCount > 0 ? "platform-blue" : "platform-green"}`}>
-            <div><span><Clock size={16} /></span><strong>OSHA Recordable</strong></div>
-            <small>{oshaCount}</small>
-            <em>Must appear on 300 Log within 7 days.</em>
-          </article>
-          <article className="command-card platform-green">
-            <div><span><CheckCircle2 size={16} /></span><strong>Closed</strong></div>
-            <small>{closedCount}</small>
-            <em>Investigation complete, CAPA verified.</em>
-          </article>
+        <section className="kpi-grid" aria-label="Incident summary">
+          <div className={`kpi-card ${openCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Open</div>
+            <div className="kpi-value">{openCount}</div>
+            <div className="kpi-sub">{openCount > 0 ? "Require action" : "None open"}</div>
+          </div>
+          <div className={`kpi-card ${investigatingCount > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+            <div className="kpi-label">Investigating</div>
+            <div className="kpi-value">{investigatingCount}</div>
+            <div className="kpi-sub">Active RCA underway</div>
+          </div>
+          <div className={`kpi-card ${criticalCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">High / Critical</div>
+            <div className="kpi-value">{criticalCount}</div>
+            <div className="kpi-sub">{criticalCount > 0 ? "Priority response" : "None high/critical"}</div>
+          </div>
+          <div className={`kpi-card ${oshaCount > 0 ? "kpi-card--purple" : "kpi-card--green"}`}>
+            <div className="kpi-label">OSHA Recordable</div>
+            <div className="kpi-value">{oshaCount}</div>
+            <div className="kpi-sub">300 Log within 7 days</div>
+          </div>
         </section>
 
         {/* OSHA obligation banner */}

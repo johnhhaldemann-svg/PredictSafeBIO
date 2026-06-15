@@ -73,26 +73,29 @@ export default async function ChemicalInventoryPage({ searchParams }: Props) {
         </header>
 
         {/* KPI strip */}
-        <section className="command-card-grid" aria-label="Chemical inventory summary">
-          <article className="command-card platform-blue">
-            <div><span><FlaskConical size={16} /></span><strong>Total chemicals</strong></div>
-            <small>{totalCount}</small>
-            <em>Active chemicals in inventory.</em>
-          </article>
-          <article className={`command-card ${missingSds > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><FileWarning size={16} /></span><strong>Missing SDS</strong></div>
-            <small>{missingSds}</small>
-            <em>{missingSds > 0 ? "SDS required for all hazardous chemicals." : "All SDS documents on file."}</em>
-          </article>
-          <article className={`command-card ${expiringSoon > 0 || expiredCount > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><Clock size={16} /></span><strong>Expiring / Expired</strong></div>
-            <small>{expiringSoon + expiredCount}</small>
-            <em>
-              {expiredCount > 0 ? `${expiredCount} expired. ` : ""}
-              {expiringSoon > 0 ? `${expiringSoon} expiring within 30 days.` : ""}
-              {expiringSoon === 0 && expiredCount === 0 ? "No expiry issues." : ""}
-            </em>
-          </article>
+        <section className="kpi-grid" aria-label="Chemical inventory summary">
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Total Chemicals</div>
+            <div className="kpi-value">{totalCount}</div>
+            <div className="kpi-sub">Active in inventory</div>
+          </div>
+          <div className={`kpi-card ${missingSds > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Missing SDS</div>
+            <div className="kpi-value">{missingSds}</div>
+            <div className="kpi-sub">{missingSds > 0 ? "SDS required — compliance risk" : "All SDS on file"}</div>
+          </div>
+          <div className={`kpi-card ${expiringSoon + expiredCount > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+            <div className="kpi-label">Expiring / Expired</div>
+            <div className="kpi-value">{expiringSoon + expiredCount}</div>
+            <div className="kpi-sub">
+              {expiredCount > 0 ? `${expiredCount} expired` : expiringSoon > 0 ? `${expiringSoon} within 30 days` : "No expiry issues"}
+            </div>
+          </div>
+          <div className="kpi-card kpi-card--purple">
+            <div className="kpi-label">Restricted</div>
+            <div className="kpi-value">{allChemicals.filter(c => c.restricted).length}</div>
+            <div className="kpi-sub">Require special handling</div>
+          </div>
         </section>
 
         {missingSds > 0 && (

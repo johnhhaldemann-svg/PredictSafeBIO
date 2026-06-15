@@ -30,7 +30,7 @@ import {
   TrendingUp
 } from "lucide-react";
 
-type SubItem = { href: string; label: string; icon: React.ElementType; desc: string };
+type SubItem = { href: string; label: string; icon: React.ElementType; desc: string; badge?: "new" | "live" };
 type Category = {
   title: string;
   href: string;
@@ -67,7 +67,7 @@ const categories: Category[] = [
       { href: "/controls",                 label: "Control Register",       icon: Wrench,         desc: "Controls by hierarchy; residual-risk forecast" },
       { href: "/change-management",        label: "Change Management",      icon: GitBranch,      desc: "Planned changes, impact review & revalidation" },
       { href: "/programs",                 label: "Programs",               icon: BookOpen,       desc: "Safety program tools and checklists" },
-      { href: "/emergency-response",       label: "Emergency Response",     icon: ShieldCheck,    desc: "Emergency response plans and drills" },
+      { href: "/emergency-response",       label: "Emergency Response",     icon: ShieldCheck,    desc: "Emergency response plans and drills", badge: "new" },
       { href: "/documents",                label: "Documents",              icon: FileText,       desc: "Controlled SOPs, records, and files" },
     ]
   },
@@ -95,9 +95,9 @@ const categories: Category[] = [
     icon: Activity,
     subItems: [
       { href: "/",                    label: "Dashboard",           icon: Gauge,      desc: "Assess → Plan → Operate → Monitor overview" },
-      { href: "/predictive-engine",   label: "Predictive Engine",   icon: Brain,      desc: "Forward-looking risk forecast & early warnings" },
+      { href: "/predictive-engine",   label: "Predictive Engine",   icon: Brain,      desc: "Forward-looking risk forecast & early warnings", badge: "new" },
       { href: "/risk-command-center", label: "Risk Monitor",        icon: Activity,   desc: "Prioritized HSE risk signals" },
-      { href: "/monitoring/exposure", label: "Exposure Monitoring", icon: FlaskConical, desc: "Live air quality and biological exposure levels" },
+      { href: "/monitoring/exposure", label: "Exposure Monitoring", icon: FlaskConical, desc: "Live air quality and biological exposure levels", badge: "live" },
       { href: "/trends",              label: "Trend Analysis",      icon: TrendingUp,    desc: "CAPA backlog, training completion & audit readiness over time" },
       { href: "/management-review",   label: "Management Review",   icon: BarChart3,     desc: "Quarterly & annual review; trend analysis" },
       { href: "/lessons-learned",     label: "Lessons Learned",     icon: BookOpen,      desc: "Capture and share insights from incidents and CAPAs" },
@@ -215,6 +215,11 @@ export function PlatformCategoryNav({ canViewPlatform = false }: { canViewPlatfo
                       >
                         <SubIcon size={13} aria-hidden="true" />
                         <span className="snav-subitem-label">{sub.label}</span>
+                        {sub.badge && (
+                          <span className={`snav-badge snav-badge--${sub.badge}`}>
+                            {sub.badge === "new" ? "NEW" : "LIVE"}
+                          </span>
+                        )}
                       </Link>
                     </li>
                   );

@@ -46,22 +46,27 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
         </header>
 
         {totalDocuments > 0 ? (
-          <section className="command-card-grid" aria-label="Document register summary">
-            <article className="command-card platform-blue">
-              <div><span><FileText size={16} /></span><strong>Controlled documents</strong></div>
-              <small>{totalDocuments}</small>
-              <em>Records tracked in the register.</em>
-            </article>
-            <article className="command-card platform-green">
-              <div><span><FileCheck2 size={16} /></span><strong>Approved</strong></div>
-              <small>{approvedCount}</small>
-              <em>Documents in approved status.</em>
-            </article>
-            <article className={`command-card ${docsWithGaps > 0 ? "platform-red" : "platform-green"}`}>
-              <div><span><AlertTriangle size={16} /></span><strong>With open gaps</strong></div>
-              <small>{docsWithGaps}</small>
-              <em>{docsWithGaps > 0 ? "Documents needing evidence or updates." : "No open document gaps."}</em>
-            </article>
+          <section className="kpi-grid" aria-label="Document register summary">
+            <div className="kpi-card kpi-card--blue">
+              <div className="kpi-label">Controlled Documents</div>
+              <div className="kpi-value">{totalDocuments}</div>
+              <div className="kpi-sub">Tracked in register</div>
+            </div>
+            <div className="kpi-card kpi-card--green">
+              <div className="kpi-label">Approved</div>
+              <div className="kpi-value">{approvedCount}</div>
+              <div className="kpi-sub">In approved status</div>
+            </div>
+            <div className={`kpi-card ${docsWithGaps > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+              <div className="kpi-label">With Open Gaps</div>
+              <div className="kpi-value">{docsWithGaps}</div>
+              <div className="kpi-sub">{docsWithGaps > 0 ? "Need evidence or updates" : "No open gaps"}</div>
+            </div>
+            <div className="kpi-card kpi-card--amber">
+              <div className="kpi-label">Total Gaps</div>
+              <div className="kpi-value">{totalDocumentGaps}</div>
+              <div className="kpi-sub">Across all documents</div>
+            </div>
           </section>
         ) : null}
 
