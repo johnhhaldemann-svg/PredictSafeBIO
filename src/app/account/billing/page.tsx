@@ -92,7 +92,7 @@ export default async function BillingPage() {
         )}
 
         {/* Plan cards */}
-        <div className="command-card-grid">
+        <div className="kpi-grid">
           {plans.map(plan => {
             const color = TIER_HIGHLIGHT[plan.tier] ?? "#6b7280";
             const isCurrent = plan.tier === currentTier;

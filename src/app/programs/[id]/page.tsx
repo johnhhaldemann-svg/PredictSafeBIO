@@ -63,31 +63,25 @@ export default async function ProgramToolPage({ params }: Props) {
         </section>
 
         {/* Quick actions */}
-        <section className="command-card-grid" aria-label="Quick actions">
-          <article className="command-card platform-blue">
-            <div><span><ClipboardList size={16} /></span><strong>Log Inspection</strong></div>
-            <em>Record a completed inspection or audit for this program.</em>
-            <Link className="button-primary compact" href={program.inspectionHref}>
-              Schedule / Log
-            </Link>
-          </article>
+        <div className="plan-grid" aria-label="Quick actions">
+          <Link href={program.inspectionHref} className="plan-card">
+            <div style={{ fontSize: 20, marginBottom: 6 }}>📋</div>
+            <strong>Log Inspection</strong>
+            <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>Record a completed inspection or audit for this program.</p>
+          </Link>
           {program.relatedHref ? (
-            <article className="command-card platform-green">
-              <div><span><Zap size={16} /></span><strong>Platform Module</strong></div>
-              <em>This program has a dedicated tool in {pack.brandLabel}.</em>
-              <Link className="button-primary compact" href={program.relatedHref}>
-                {program.relatedLabel ?? "Open Module"}
-              </Link>
-            </article>
-          ) : null}
-          <article className="command-card platform-blue">
-            <div><span><FileText size={16} /></span><strong>Inspections Log</strong></div>
-            <em>Review all past inspections and open findings.</em>
-            <Link className="button-secondary compact" href="/inspections">
-              View Inspections
+            <Link href={program.relatedHref} className="plan-card plan-card--active">
+              <div style={{ fontSize: 20, marginBottom: 6 }}>⚡</div>
+              <strong>Platform Module</strong>
+              <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>Dedicated tool in {pack.brandLabel}. {program.relatedLabel ?? "Open Module"}</p>
             </Link>
-          </article>
-        </section>
+          ) : null}
+          <Link href="/inspections" className="plan-card">
+            <div style={{ fontSize: 20, marginBottom: 6 }}>📄</div>
+            <strong>Inspections Log</strong>
+            <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>Review all past inspections and open findings.</p>
+          </Link>
+        </div>
 
         {/* Vertical-specific note */}
         <section className="panel">

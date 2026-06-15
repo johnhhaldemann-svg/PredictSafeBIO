@@ -185,27 +185,27 @@ export default async function InspectionCalendarPage() {
           <Link className="button-secondary" href="/inspections">← All Inspections</Link>
         </header>
 
-        <section className="command-card-grid" aria-label="Calendar summary">
-          <article className="command-card platform-blue">
-            <div><span><Calendar size={16} /></span><strong>Scheduled</strong></div>
-            <small>{totalScheduled}</small>
-            <em>Planned or active inspections.</em>
-          </article>
-          <article className={`command-card ${totalOverdue > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><AlertTriangle size={16} /></span><strong>Overdue</strong></div>
-            <small>{totalOverdue}</small>
-            <em>{totalOverdue > 0 ? "Past their due date." : "All on track."}</em>
-          </article>
-          <article className="command-card platform-blue">
-            <div><span><Sparkles size={16} /></span><strong>AI-assigned</strong></div>
-            <small>{autoGenCount}</small>
-            <em>Created automatically by the compliance engine.</em>
-          </article>
-          <article className="command-card platform-green">
-            <div><span><CheckCircle2 size={16} /></span><strong>Completed</strong></div>
-            <small>{inspections.filter((i) => i.status === "completed").length}</small>
-            <em>Inspections closed this period.</em>
-          </article>
+        <section className="kpi-grid" aria-label="Calendar summary">
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Scheduled</div>
+            <div className="kpi-value">{totalScheduled}</div>
+            <div className="kpi-sub">Planned or in progress</div>
+          </div>
+          <div className={`kpi-card ${totalOverdue > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Overdue</div>
+            <div className="kpi-value">{totalOverdue}</div>
+            <div className="kpi-sub">{totalOverdue > 0 ? "Past due date" : "All on track"}</div>
+          </div>
+          <div className="kpi-card kpi-card--purple">
+            <div className="kpi-label">AI-Assigned</div>
+            <div className="kpi-value">{autoGenCount}</div>
+            <div className="kpi-sub">Auto-scheduled by engine</div>
+          </div>
+          <div className="kpi-card kpi-card--green">
+            <div className="kpi-label">Completed</div>
+            <div className="kpi-value">{inspections.filter((i) => i.status === "completed").length}</div>
+            <div className="kpi-sub">Inspections closed</div>
+          </div>
         </section>
 
         <div className="calendar-legend" aria-label="Status legend">

@@ -59,19 +59,27 @@ export default async function VersionControlPage({ searchParams }: Props) {
           <h1>Version Control</h1>
         </header>
 
-        <section className="command-card-grid" aria-label="Version control summary">
-          {([
-            ["Controlled documents", documents.length, "SOP metadata, forms, templates, and records."],
-            ["In review", inReviewCount, "Waiting on controlled review or revision."],
-            ["Approved", approvedCount, "Marked approved in current metadata."],
-            ["Needs attention", missingRevisionCount + overdueOrDue, "Missing revisions or overdue / near-term review dates."]
-          ] as const).map(([label, value, detail]) => (
-            <article className="command-card platform-blue" key={label}>
-              <div><span><GitBranch size={16} /></span><strong>{label}</strong></div>
-              <small>{value}</small>
-              <em>{detail}</em>
-            </article>
-          ))}
+        <section className="kpi-grid" aria-label="Version control summary">
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Controlled Documents</div>
+            <div className="kpi-value">{documents.length}</div>
+            <div className="kpi-sub">SOPs, forms, records</div>
+          </div>
+          <div className={`kpi-card ${inReviewCount > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+            <div className="kpi-label">In Review</div>
+            <div className="kpi-value">{inReviewCount}</div>
+            <div className="kpi-sub">{inReviewCount > 0 ? "Awaiting approval" : "None pending"}</div>
+          </div>
+          <div className="kpi-card kpi-card--green">
+            <div className="kpi-label">Approved</div>
+            <div className="kpi-value">{approvedCount}</div>
+            <div className="kpi-sub">Current approved docs</div>
+          </div>
+          <div className={`kpi-card ${missingRevisionCount + overdueOrDue > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Needs Attention</div>
+            <div className="kpi-value">{missingRevisionCount + overdueOrDue}</div>
+            <div className="kpi-sub">Missing revisions or overdue</div>
+          </div>
         </section>
 
         {params.message && <p className="form-message">{params.message}</p>}

@@ -330,12 +330,12 @@ export default function RiskTriggerFrameworkPage() {
               </p>
             </div>
           </div>
-          <div className="command-card-grid">
+          <div className="plan-grid">
             {principles.map((p) => (
-              <div key={p.title} className="command-card">
-                <div style={{ fontSize: 20 }}>{p.icon}</div>
+              <div key={p.title} className="plan-card">
+                <div style={{ fontSize: 20, marginBottom: 6 }}>{p.icon}</div>
                 <strong>{p.title}</strong>
-                <p className="muted">{p.desc}</p>
+                <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>{p.desc}</p>
               </div>
             ))}
           </div>

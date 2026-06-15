@@ -345,65 +345,31 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
         </header>
 
         {/* ── KPI strip — 4 cards ── */}
-        <section
-          className="command-card-grid"
-          style={{ gridTemplateColumns: "repeat(4, 1fr)" }}
-          aria-label="Emergency response summary"
-        >
-          <article className="command-card" style={{ borderTop: `3px solid ${currentCount > 0 ? "var(--green)" : "var(--blue)"}` }}>
-            <div>
-              <span style={{ background: currentCount > 0 ? "#438d3a" : "var(--blue)" }}>
-                <ShieldCheck size={16} />
-              </span>
-              <strong>Plans on file</strong>
+        <section className="kpi-grid" aria-label="Emergency response summary">
+          <div className={`kpi-card ${currentCount > 0 ? "kpi-card--green" : "kpi-card--blue"}`}>
+            <div className="kpi-label">Plans on File</div>
+            <div className="kpi-value">{plans.length}</div>
+            <div className="kpi-sub">{currentCount} current · {plans.length - currentCount} draft</div>
+          </div>
+          <div className={`kpi-card ${drillsThisYear > 0 ? "kpi-card--green" : "kpi-card--blue"}`}>
+            <div className="kpi-label">Drills This Year</div>
+            <div className="kpi-value">{drillsThisYear}</div>
+            <div className="kpi-sub">Drills on record for {thisYear}</div>
+          </div>
+          <div className={`kpi-card ${needsReviewCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Needs Review</div>
+            <div className="kpi-value">{needsReviewCount}</div>
+            <div className="kpi-sub">
+              {needsReviewCount > 0 ? "Plans not reviewed in 12 mo" : "All plans current"}
             </div>
-            <small>{plans.length}</small>
-            <em>{currentCount} current · {plans.length - currentCount} draft</em>
-          </article>
-
-          <article className="command-card" style={{ borderTop: `3px solid ${drillsThisYear > 0 ? "var(--green)" : "var(--blue)"}` }}>
-            <div>
-              <span style={{ background: drillsThisYear > 0 ? "#438d3a" : "var(--blue)" }}>
-                <ClipboardList size={16} />
-              </span>
-              <strong>Drills this year</strong>
+          </div>
+          <div className="kpi-card kpi-card--purple">
+            <div className="kpi-label">Next Drill Due</div>
+            <div className="kpi-value" style={{ fontSize: nextDrillPlan ? 20 : 28 }}>
+              {nextDrillPlan ? fmtShort(nextDrillPlan.nextDrillDate!) : "—"}
             </div>
-            <small>{drillsThisYear}</small>
-            <em>Drills on record for {thisYear}</em>
-          </article>
-
-          <article className="command-card" style={{ borderTop: `3px solid ${needsReviewCount > 0 ? "var(--red)" : "var(--green)"}` }}>
-            <div>
-              <span style={{ background: needsReviewCount > 0 ? "var(--red-dk)" : "#438d3a" }}>
-                <AlertTriangle size={16} />
-              </span>
-              <strong>Needs review</strong>
-            </div>
-            <small>{needsReviewCount}</small>
-            <em>
-              {needsReviewCount > 0
-                ? `${needsReviewCount} plan${needsReviewCount !== 1 ? "s" : ""} not reviewed in 12 mo`
-                : "All plans reviewed within 12 months."}
-            </em>
-          </article>
-
-          <article className="command-card" style={{ borderTop: "3px solid #7C3AED" }}>
-            <div>
-              <span style={{ background: "#7C3AED" }}><Clock size={16} /></span>
-              <strong>Next drill due</strong>
-            </div>
-            {nextDrillPlan ? (
-              <>
-                <small style={{ fontSize: 18, paddingTop: 4 }}>{fmtShort(nextDrillPlan.nextDrillDate!)}</small>
-                <em>{nextDrillPlan.title}</em>
-              </>
-            ) : (
-              <>
-                <small style={{ fontSize: 18, paddingTop: 4 }}>—</small>
-                <em>No upcoming drills scheduled</em>
-              </>
-            )}
-          </article>
+            <div className="kpi-sub">{nextDrillPlan ? nextDrillPlan.title : "No upcoming drills"}</div>
+          </div>
         </section>
 
         {/* ── Predictive Engine bar ── */}

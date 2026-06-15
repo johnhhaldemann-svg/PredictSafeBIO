@@ -55,23 +55,27 @@ export default async function QualifiedPersonsPage({ searchParams }: Props) {
         {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message && <p className="form-message">{params.message}</p>}
 
-        <section className="command-card-grid" aria-label="Registry summary">
-          <article className="command-card platform-blue">
-            <div><span><Users size={16} /></span><strong>Total in registry</strong></div>
-            <small>{people.length}</small><em>All registered reviewers.</em>
-          </article>
-          <article className={`command-card ${activeCount === 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><UserCheck size={16} /></span><strong>Active</strong></div>
-            <small>{activeCount}</small>
-            <em>{activeCount === 0 ? "No active reviewers — approvals blocked." : "Authorized reviewers."}</em>
-          </article>
-          <article className={`command-card ${expiredCount > 0 ? "platform-red" : expiringSoonCount > 0 ? "platform-blue" : "platform-green"}`}>
-            <div><span><AlertTriangle size={16} /></span><strong>Expired / expiring</strong></div>
-            <small>{expiredCount + expiringSoonCount}</small>
-            <em>
-              {expiredCount > 0 ? `${expiredCount} expired — approvals at risk.` : expiringSoonCount > 0 ? `${expiringSoonCount} expiring within 90 days.` : "All current."}
-            </em>
-          </article>
+        <section className="kpi-grid" aria-label="Registry summary">
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Total in Registry</div>
+            <div className="kpi-value">{people.length}</div>
+            <div className="kpi-sub">All registered reviewers</div>
+          </div>
+          <div className={`kpi-card ${activeCount === 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Active</div>
+            <div className="kpi-value">{activeCount}</div>
+            <div className="kpi-sub">{activeCount === 0 ? "No active reviewers" : "Authorized reviewers"}</div>
+          </div>
+          <div className={`kpi-card ${expiredCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Expired</div>
+            <div className="kpi-value">{expiredCount}</div>
+            <div className="kpi-sub">{expiredCount > 0 ? "Approvals at risk" : "None expired"}</div>
+          </div>
+          <div className={`kpi-card ${expiringSoonCount > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+            <div className="kpi-label">Expiring Soon</div>
+            <div className="kpi-value">{expiringSoonCount}</div>
+            <div className="kpi-sub">{expiringSoonCount > 0 ? "Within 90 days" : "All current"}</div>
+          </div>
         </section>
 
         {expiredCount > 0 && (

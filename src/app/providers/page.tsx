@@ -135,6 +135,9 @@ export default async function ProvidersDirectoryPage({ searchParams }: Props) {
     getSpecialties(),
   ]);
 
+  const verifiedCount = providers.filter(p => p.npi_verified).length;
+  const availableCount = providers.filter(p => p.accepting_patients).length;
+
   return (
     <AppShell>
       <div className="page-stack">
@@ -149,6 +152,29 @@ export default async function ProvidersDirectoryPage({ searchParams }: Props) {
           </div>
           <Link className="button-secondary" href="/plan/qualified-persons">Qualified Persons →</Link>
         </header>
+
+        <section className="kpi-grid" aria-label="Provider directory summary">
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Providers Listed</div>
+            <div className="kpi-value">{providers.length}</div>
+            <div className="kpi-sub">In directory</div>
+          </div>
+          <div className="kpi-card kpi-card--green">
+            <div className="kpi-label">Verified</div>
+            <div className="kpi-value">{verifiedCount}</div>
+            <div className="kpi-sub">NPI-verified profiles</div>
+          </div>
+          <div className={`kpi-card ${availableCount > 0 ? "kpi-card--green" : "kpi-card--amber"}`}>
+            <div className="kpi-label">Available</div>
+            <div className="kpi-value">{availableCount}</div>
+            <div className="kpi-sub">Accepting consultation</div>
+          </div>
+          <div className="kpi-card kpi-card--purple">
+            <div className="kpi-label">Specialties</div>
+            <div className="kpi-value">{specialties.length}</div>
+            <div className="kpi-sub">Disciplines covered</div>
+          </div>
+        </section>
 
         {/* Why this matters — compliance purpose */}
         <section className="panel inline-action-panel">
@@ -202,14 +228,14 @@ export default async function ProvidersDirectoryPage({ searchParams }: Props) {
             </div>
           </section>
         ) : (
-          <div className="command-card-grid">
+          <div className="plan-grid">
             {providers.map(p => (
               <Link
                 key={p.id}
                 href={p.id.startsWith("demo-") ? "/providers" : `/providers/${p.id}`}
                 className="provider-card-link"
               >
-                <article className="command-card">
+                <article className="plan-card">
                   <div className="provider-card-header">
                     <div>
                       <strong>{p.full_name}</strong>
