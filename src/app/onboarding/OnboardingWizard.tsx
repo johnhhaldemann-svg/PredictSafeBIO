@@ -4,7 +4,7 @@ import { useRef, useState, Fragment } from "react";
 import {
   ArrowLeft, ArrowRight, Building2, FlaskConical, Users,
   Layers, CheckCircle2, ShieldCheck, ClipboardCheck,
-  LayoutDashboard, BookOpen, HeartPulse, Loader2,
+  LayoutDashboard, BookOpen, Activity, Loader2,
 } from "lucide-react";
 import { completeFullOnboardingAction } from "@/app/auth/actions";
 import { SETUP_QUESTIONS } from "@/lib/manual/setup-questions";
@@ -50,7 +50,7 @@ const OWNER_CAPS = [
 ];
 const MEMBER_CAPS = [
   { icon: LayoutDashboard, text: "Personal safety dashboard" },
-  { icon: HeartPulse,      text: "Hazard & ergonomic screenings" },
+  { icon: Activity,        text: "Hazard & ergonomic screenings" },
   { icon: BookOpen,        text: "Browse all 29 safety programs" },
   { icon: ClipboardCheck,  text: "Track your assigned tasks" },
 ];

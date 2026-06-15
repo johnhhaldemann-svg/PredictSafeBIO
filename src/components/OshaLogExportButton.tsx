@@ -21,8 +21,8 @@ function csv(value: string | null | undefined): string {
 }
 
 function classifyCase(incident: Incident): string {
-  if (incident.severity === "critical") return "Hospitalization";
-  if (incident.incidentType === "recordable_injury") return "Days Away / Restricted";
+  if (incident.incidentType === "recordable_injury" && incident.severity === "critical") return "Days Away from Work";
+  if (incident.incidentType === "recordable_injury") return "Job Transfer / Restriction";
   return "Other Recordable";
 }
 
