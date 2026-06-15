@@ -178,3 +178,32 @@ describe("demo fallback", () => {
     expect(block).toContain("demoIncidents()");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Auto-CAPA creation
+// ---------------------------------------------------------------------------
+
+describe("auto-CAPA on incident create", () => {
+  const block = src.slice(src.indexOf("async function createIncident"));
+
+  it("imports createCapaRecord from capa-service", () => {
+    expect(src).toContain('from "./capa-service"');
+    expect(src).toContain("createCapaRecord");
+  });
+
+  it("calls createCapaRecord after the incident is inserted", () => {
+    const insertPos = block.indexOf(".insert(");
+    const capaPos   = block.indexOf("createCapaRecord(");
+    expect(capaPos).toBeGreaterThan(insertPos);
+  });
+
+  it("links the CAPA to the incident via sourceIncidentId", () => {
+    expect(block).toContain("sourceIncidentId");
+    expect(block).toContain("linkedRecordType");
+  });
+
+  it("makes CAPA creation non-fatal with .catch()", () => {
+    const capaCall = block.slice(block.indexOf("createCapaRecord("));
+    expect(capaCall).toContain(".catch(");
+  });
+});

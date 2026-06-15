@@ -41,7 +41,7 @@ export async function submitPersonnelRecordAction(formData: FormData) {
   });
 
   if (error) {
-    console.error("[submitPatientBio]", error.message);
+    console.error("[submitPersonnelRecord]", error.message);
     redirect(`/bios/new?error=${encodeURIComponent(error.message)}`);
   }
 
