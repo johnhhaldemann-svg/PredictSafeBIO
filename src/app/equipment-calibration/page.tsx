@@ -86,30 +86,27 @@ export default async function EquipmentCalibrationPage({ searchParams }: Props) 
         </header>
 
         {/* KPI strip */}
-        <section className="command-card-grid" aria-label="Equipment summary">
-          <article className="command-card platform-blue">
-            <div><span><Gauge size={16} /></span><strong>Equipment on registry</strong></div>
-            <small>{active.length}</small>
-            <em>Active items being tracked.</em>
-          </article>
-          <article className={`command-card ${overdueList.length > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><AlertTriangle size={16} /></span><strong>Overdue calibration</strong></div>
-            <small>{overdueList.length}</small>
-            <em>
-              {overdueList.length > 0
-                ? `${overdueList.length} item${overdueList.length !== 1 ? "s" : ""} past due.`
-                : "All calibrations current."}
-            </em>
-          </article>
-          <article className={`command-card ${dueSoonList.length > 0 ? "platform-blue" : "platform-green"}`}>
-            <div><span><Gauge size={16} /></span><strong>Due within 30 days</strong></div>
-            <small>{dueSoonList.length}</small>
-            <em>
-              {dueSoonList.length > 0
-                ? `${dueSoonList.length} calibration${dueSoonList.length !== 1 ? "s" : ""} coming up.`
-                : "No calibrations due soon."}
-            </em>
-          </article>
+        <section className="kpi-grid" aria-label="Equipment summary">
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">On Registry</div>
+            <div className="kpi-value">{active.length}</div>
+            <div className="kpi-sub">Active items tracked</div>
+          </div>
+          <div className={`kpi-card ${overdueList.length > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Overdue Calibration</div>
+            <div className="kpi-value">{overdueList.length}</div>
+            <div className="kpi-sub">{overdueList.length > 0 ? "Past due" : "All current"}</div>
+          </div>
+          <div className={`kpi-card ${dueSoonList.length > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+            <div className="kpi-label">Due Within 30 Days</div>
+            <div className="kpi-value">{dueSoonList.length}</div>
+            <div className="kpi-sub">{dueSoonList.length > 0 ? "Coming up soon" : "None due soon"}</div>
+          </div>
+          <div className="kpi-card kpi-card--purple">
+            <div className="kpi-label">Total Items</div>
+            <div className="kpi-value">{allRecords.length}</div>
+            <div className="kpi-sub">Including archived</div>
+          </div>
         </section>
 
         {overdueList.length > 0 && (

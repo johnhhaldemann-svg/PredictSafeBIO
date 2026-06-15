@@ -87,19 +87,27 @@ export default async function RiskRegisterPage({ searchParams }: Props) {
         {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message && <p className="form-message">{params.message}</p>}
 
-        <section className="command-card-grid" aria-label="Risk register summary">
-          <article className="command-card platform-blue">
-            <div><span><ShieldCheck size={16} /></span><strong>Total entries</strong></div>
-            <small>{total}</small><em>Requirements in the register.</em>
-          </article>
-          <article className={`command-card ${overdue > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><AlertTriangle size={16} /></span><strong>Overdue</strong></div>
-            <small>{overdue}</small><em>{overdue > 0 ? "Past due — raises predicted pressure." : "Nothing overdue."}</em>
-          </article>
-          <article className="command-card platform-green">
-            <div><span><Activity size={16} /></span><strong>Active</strong></div>
-            <small>{active}</small><em>Approved &amp; in the calendar.</em>
-          </article>
+        <section className="kpi-grid" aria-label="Risk register summary">
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Total Entries</div>
+            <div className="kpi-value">{total}</div>
+            <div className="kpi-sub">Requirements in register</div>
+          </div>
+          <div className={`kpi-card ${overdue > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Overdue</div>
+            <div className="kpi-value">{overdue}</div>
+            <div className="kpi-sub">{overdue > 0 ? "Raises predicted pressure" : "Nothing overdue"}</div>
+          </div>
+          <div className="kpi-card kpi-card--green">
+            <div className="kpi-label">Active</div>
+            <div className="kpi-value">{active}</div>
+            <div className="kpi-sub">Approved & in calendar</div>
+          </div>
+          <div className="kpi-card kpi-card--amber">
+            <div className="kpi-label">Pending</div>
+            <div className="kpi-value">{total - active - overdue}</div>
+            <div className="kpi-sub">Not yet activated</div>
+          </div>
         </section>
 
         {overdue > 0 && (
