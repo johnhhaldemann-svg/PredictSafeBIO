@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Contractor Risk Scoring — Reliance Mako</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; color: #2C2C2A; background: #F5F4EF; }
+
+/* ── Layout ── */
+.app-shell { display: flex; height: 100vh; overflow: hidden; }
+.sidebar { width: 224px; background: #0F2E45; flex-shrink: 0; display: flex; flex-direction: column; }
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { background: #fff; border-bottom: 1px solid #E0DED7; padding: 0 24px; height: 58px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.content { flex: 1; overflow-y: auto; padding: 22px 24px; }
+
+/* ── Sidebar ── */
+.sidebar-logo { padding: 18px 18px 14px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.logo-name { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+.logo-sub { font-size: 9.5px; color: #7BBCD4; letter-spacing: 1.2px; text-transform: uppercase; margin-top: 1px; }
+.nav-group { padding: 16px 0 4px; }
+.nav-group-label { font-size: 9px; letter-spacing: 1.8px; text-transform: uppercase; color: rgba(255,255,255,0.35); padding: 0 18px; margin-bottom: 5px; }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 18px; font-size: 12.5px; color: rgba(255,255,255,0.7); cursor: pointer; }
+.nav-item:hover { background: rgba(255,255,255,0.07); }
+.nav-item.active { background: rgba(255,255,255,0.13); color: #fff; font-weight: 600; border-left: 3px solid #F59E2E; padding-left: 15px; }
+.nav-item .ico { width: 17px; text-align: center; font-size: 13px; }
+.nav-badge { margin-left: auto; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+.nb-red { background: #A32D2D; color: #fff; }
+.nb-amber { background: #854F0B; color: #fff; }
+
+/* ── Topbar ── */
+.page-title { font-size: 15.5px; font-weight: 600; color: #2C2C2A; flex: 1; }
+.page-title small { font-size: 11.5px; font-weight: 400; color: #888780; margin-left: 7px; }
+.search-input { background: #F5F4EF; border: 1px solid #D3D1C7; border-radius: 6px; padding: 7px 12px; font-size: 12px; color: #2C2C2A; width: 230px; }
+.btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 13px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; white-space: nowrap; }
+.btn-primary { background: #0F2E45; color: #fff; }
+.btn-secondary { background: #fff; color: #2C2C2A; border: 1px solid #D3D1C7; }
+.btn-warn { background: #F59E2E; color: #fff; }
+.btn-ghost { background: #E6F1FB; color: #185FA5; border: none; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: #F59E2E; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-left: 6px; }
+
+/* ── Stat cards ── */
+.stat-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 11px; margin-bottom: 18px; }
+.stat-card { background: #fff; border-radius: 8px; padding: 13px 15px; border: 1px solid #E0DED7; }
+.stat-label { font-size: 11px; color: #888780; margin-bottom: 5px; }
+.stat-val { font-size: 28px; font-weight: 700; color: #2C2C2A; line-height: 1; margin-bottom: 4px; }
+.sv-red { color: #A32D2D; } .sv-amber { color: #854F0B; } .sv-green { color: #0A5E36; } .sv-blue { color: #185FA5; } .sv-orange { color: #B85C00; }
+.stat-sub { font-size: 10px; color: #888780; }
+.stat-sub.warn { color: #A32D2D; font-weight: 600; }
+
+/* ── Risk meter ── */
+.risk-meter { width: 100%; height: 6px; border-radius: 3px; overflow: hidden; background: linear-gradient(to right, #0A5E36 0%, #0A5E36 33%, #854F0B 33%, #854F0B 66%, #A32D2D 66%, #A32D2D 100%); margin-bottom: 3px; position: relative; }
+.risk-pointer { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: #fff; border: 2px solid #2C2C2A; top: -2px; transform: translateX(-50%); }
+
+/* ── AI Score badge ── */
+.ai-score { display: inline-flex; align-items: center; gap: 5px; border-radius: 6px; padding: 4px 9px; font-size: 12px; font-weight: 700; }
+.ai-score .score-num { font-size: 15px; }
+.score-low { background: #EAF3DE; color: #0A5E36; border: 1px solid #B3D98A; }
+.score-med { background: #FAEEDA; color: #7A4800; border: 1px solid #F5C888; }
+.score-high { background: #FCEBEB; color: #8B1A1A; border: 1px solid #E8A8A8; }
+.score-critical { background: #2C0A0A; color: #FFD0D0; border: 1px solid #A32D2D; }
+.ai-icon { font-size: 11px; opacity: 0.8; }
+
+/* ── Tabs ── */
+.tab-bar { display: flex; background: #fff; border: 1px solid #E0DED7; border-bottom: none; border-radius: 8px 8px 0 0; padding: 0 16px; }
+.tab { padding: 11px 15px; font-size: 12.5px; font-weight: 500; color: #888780; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab.active { color: #0F2E45; border-bottom-color: #F59E2E; font-weight: 600; }
+.tab .tc { font-size: 10px; padding: 1px 5px; border-radius: 10px; margin-left: 4px; }
+.tc-red { background: #FCEBEB; color: #A32D2D; }
+.tc-amber { background: #FAEEDA; color: #854F0B; }
+.tc-gray { background: #E8E7E2; color: #5F5E5A; }
+
+/* ── Table ── */
+.table-wrap { background: #fff; border: 1px solid #E0DED7; border-top: none; border-radius: 0 0 8px 8px; overflow: hidden; margin-bottom: 16px; }
+.table-toolbar { padding: 9px 16px; display: flex; align-items: center; gap: 7px; border-bottom: 1px solid #E0DED7; background: #FAFAF8; }
+.filter-chip { background: #F1EFE8; border: 1px solid #D3D1C7; border-radius: 20px; padding: 4px 10px; font-size: 11px; color: #5F5E5A; cursor: pointer; }
+.filter-chip.on { background: #0F2E45; border-color: #0F2E45; color: #fff; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { background: #0F2E45; color: rgba(255,255,255,0.85); padding: 8px 11px; text-align: left; font-weight: 500; font-size: 11px; letter-spacing: 0.2px; white-space: nowrap; }
+td { padding: 10px 11px; border-bottom: 1px solid #F0EEE8; vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #FAFAF8; }
+.co-name { font-weight: 600; font-size: 12.5px; }
+.co-trade { font-size: 10.5px; color: #888780; margin-top: 1px; }
+
+/* ── Trend spark ── */
+.spark { display: inline-flex; gap: 2px; align-items: flex-end; height: 18px; }
+.spark-bar { width: 5px; border-radius: 2px 2px 0 0; background: #E0DED7; }
+.spark-bar.hi { background: #A32D2D; }
+.spark-bar.mid { background: #854F0B; }
+.spark-bar.lo { background: #0A5E36; }
+
+/* ── Citation pills ── */
+.cit-pill { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 600; margin: 1px 2px 1px 0; }
+.cit-serious { background: #FCEBEB; color: #8B1A1A; }
+.cit-other { background: #FAEEDA; color: #7A4800; }
+.cit-willful { background: #2C0A0A; color: #FFD0D0; }
+
+/* ── Bottom panels ── */
+.bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; margin-bottom: 14px; }
+.panel { background: #fff; border: 1px solid #E0DED7; border-radius: 8px; overflow: hidden; }
+.panel-hdr { padding: 10px 14px; font-size: 12px; font-weight: 600; border-bottom: 1px solid #E0DED7; display: flex; align-items: center; justify-content: space-between; }
+.ph-red { background: #FCEBEB; color: #8B1A1A; }
+.ph-amber { background: #FAEEDA; color: #7A4800; }
+.ph-blue { background: #E6F1FB; color: #042C53; }
+.ph-neutral { background: #FAFAF8; color: #2C2C2A; }
+.ph-dark { background: #EEF2F5; color: #0F2E45; }
+.panel-body { padding: 12px 14px; }
+
+.risk-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid #F0EEE8; }
+.risk-row:last-child { border-bottom: none; }
+.risk-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.ri-red { background: #FCEBEB; }
+.ri-amber { background: #FAEEDA; }
+.ri-blue { background: #E6F1FB; }
+.risk-content { flex: 1; }
+.risk-title { font-weight: 600; font-size: 12px; }
+.risk-meta { font-size: 10.5px; color: #888780; margin-top: 1px; line-height: 1.5; }
+
+.audit-item { display: flex; gap: 9px; padding: 7px 0; border-bottom: 1px solid #F0EEE8; font-size: 11.5px; }
+.audit-item:last-child { border-bottom: none; }
+.ai-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.ai-content { flex: 1; line-height: 1.5; }
+.ai-time { font-size: 10px; color: #888780; white-space: nowrap; }
+
+/* ── AI insight panel ── */
+.insight-card { background: linear-gradient(135deg, #0F2E45 0%, #1A4D70 100%); border-radius: 8px; padding: 16px 18px; margin-bottom: 14px; color: #fff; }
+.insight-eyebrow { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: #7BBCD4; margin-bottom: 8px; }
+.insight-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.insight-body { font-size: 11.5px; color: #A8C8D8; line-height: 1.6; }
+.insight-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.insight-chip { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); padding: 3px 9px; border-radius: 20px; font-size: 10px; color: #A8C8D8; }
+.insight-chip.warn { background: rgba(245,158,46,0.2); border-color: rgba(245,158,46,0.4); color: #F5C888; }
+.insight-chip.danger { background: rgba(163,45,45,0.25); border-color: rgba(163,45,45,0.4); color: #FFD0D0; }
+
+/* ── Modal hint ── */
+.mock-hint { position: fixed; bottom: 18px; right: 18px; background: #fff; border: 1px solid #E0DED7; border-radius: 8px; padding: 12px 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); font-size: 11px; max-width: 240px; }
+.mock-hint strong { display: block; font-size: 11.5px; margin-bottom: 3px; color: #F59E2E; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-name">Reliance Mako</div>
+      <div class="logo-sub">Safety Platform</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Overview</div>
+      <div class="nav-item"><span class="ico">⬛</span> Dashboard</div>
+      <div class="nav-item"><span class="ico">🔔</span> Alerts <span class="nav-badge nb-red">11</span></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Contractor Safety</div>
+      <div class="nav-item active"><span class="ico">🏗️</span> Contractor Risk Scoring <span class="nav-badge nb-red">3</span></div>
+      <div class="nav-item"><span class="ico">📋</span> Pre-Qual Submissions</div>
+      <div class="nav-item"><span class="ico">📊</span> OSHA Citation Lookup</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Site Management</div>
+      <div class="nav-item"><span class="ico">🪪</span> Site Access &amp; Credentials</div>
+      <div class="nav-item"><span class="ico">📅</span> Daily Activity Plans</div>
+      <div class="nav-item"><span class="ico">✅</span> JSA / Permits</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Incidents &amp; Compliance</div>
+      <div class="nav-item"><span class="ico">⚠️</span> Incidents &amp; Near-Misses <span class="nav-badge nb-amber">2</span></div>
+      <div class="nav-item"><span class="ico">📁</span> Audit Records</div>
+      <div class="nav-item"><span class="ico">📈</span> Reports</div>
+    </div>
+    <div class="nav-group" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">
+      <div class="nav-item"><span class="ico">⚙️</span> Settings</div>
+      <div class="nav-item"><span class="ico">👤</span> Profile</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="page-title">AI Contractor Risk Scoring <small>Lilly Site — Indianapolis Campus</small></div>
+      <input class="search-input" placeholder="Search contractor, trade, EIN…" />
+      <button class="btn btn-secondary">Export Report</button>
+      <button class="btn btn-ghost">Run AI Scan</button>
+      <button class="btn btn-primary">+ Add Contractor</button>
+      <div class="avatar">JH</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- AI INSIGHT CARD -->
+      <div class="insight-card">
+        <div class="insight-eyebrow">🤖 Predictive AI Safety Engine — Live Scan</div>
+        <div class="insight-title">3 contractors flagged as high-risk based on OSHA citation patterns, EMR trajectory, and cross-site fatality history</div>
+        <div class="insight-body">AI analysis complete as of today, June 15, 2026. Apex Mechanical Services carries the highest combined risk: 2 willful citations in 24 months, EMR trending 0.82 → 1.41, and a fatality recorded on a sister-company project in Q4 2025. Recommend hold on scope expansion pending safety meeting.</div>
+        <div class="insight-chips">
+          <span class="insight-chip danger">Apex Mechanical — Critical risk</span>
+          <span class="insight-chip warn">Atlas Electrical — Elevated EMR</span>
+          <span class="insight-chip warn">Ironclad Framing — Citation trend ↑</span>
+          <span class="insight-chip">24 contractors scanned</span>
+          <span class="insight-chip">OSHA API — Live data</span>
+          <span class="insight-chip">Last scan: Today 6:00 AM</span>
+        </div>
+      </div>
+
+      <!-- STAT CARDS -->
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-label">Active contractors</div>
+          <div class="stat-val sv-blue">24</div>
+          <div class="stat-sub">On site this month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Critical risk</div>
+          <div class="stat-val sv-red">1</div>
+          <div class="stat-sub warn">Immediate review needed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">High risk</div>
+          <div class="stat-val sv-red">2</div>
+          <div class="stat-sub">Safety meeting required</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Medium risk</div>
+          <div class="stat-val sv-amber">8</div>
+          <div class="stat-sub">Monitor closely</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Low / qualified</div>
+          <div class="stat-val sv-green">13</div>
+          <div class="stat-sub">Pre-qual current</div>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="tab-bar">
+        <div class="tab active">All Contractors <span class="tc tc-gray">24</span></div>
+        <div class="tab">Critical / High Risk <span class="tc tc-red">3</span></div>
+        <div class="tab">OSHA Citations <span class="tc tc-amber">17</span></div>
+        <div class="tab">Fatality History</div>
+        <div class="tab">Pre-Qual Status</div>
+        <div class="tab">AI Score Breakdown</div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <span style="font-size:11px; color:#888780; margin-right:3px;">Filter:</span>
+          <span class="filter-chip on">All</span>
+          <span class="filter-chip">Critical</span>
+          <span class="filter-chip">High</span>
+          <span class="filter-chip">Medium</span>
+          <span class="filter-chip">Low</span>
+          <div style="margin-left:auto; display:flex; gap:6px;">
+            <span class="filter-chip">Trade ▾</span>
+            <span class="filter-chip">Sort: AI Risk Score ↓</span>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="padding-left:14px;">Contractor / Trade</th>
+              <th>EMR</th>
+              <th>TRIR (3yr avg)</th>
+              <th>OSHA Citations (3yr)</th>
+              <th>Fatalities (5yr)</th>
+              <th>AI Risk Score</th>
+              <th>Trend</th>
+              <th>Status</th>
+              <th style="padding-right:14px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <!-- CRITICAL -->
+            <tr style="background:#FFF5F5;">
+              <td style="padding-left:14px;">
+                <div class="co-name">Apex Mechanical Services</div>
+                <div class="co-trade">HVAC &amp; Mechanical &middot; EIN: 82-3441092</div>
+              </td>
+              <td><strong style="color:#A32D2D;">1.41</strong><div style="font-size:10px; color:#888780;">↑ from 0.82</div></td>
+              <td><strong style="color:#A32D2D;">8.2</strong><div style="font-size:10px; color:#888780;">Ind. avg: 3.1</div></td>
+              <td>
+                <span class="cit-pill cit-willful">2 Willful</span>
+                <span class="cit-pill cit-serious">3 Serious</span>
+              </td>
+              <td><strong style="color:#A32D2D;">1</strong><div style="font-size:10px; color:#888780;">Q4 2025 — sister co.</div></td>
+              <td>
+                <div class="ai-score score-critical"><span class="ai-icon">🤖</span><span class="score-num">91</span>/100</div>
+              </td>
+              <td>
+                <div class="spark">
+                  <div class="spark-bar lo" style="height:6px;"></div>
+                  <div class="spark-bar mid" style="height:10px;"></div>
+                  <div class="spark-bar hi" style="height:14px;"></div>
+                  <div class="spark-bar hi" style="height:18px;"></div>
+                </div>
+              </td>
+              <td><span style="background:#2C0A0A; color:#FFD0D0; font-size:10px; padding:3px 8px; border-radius:20px; font-weight:700;">⛔ Critical</span></td>
+              <td style="padding-right:14px;"><span style="color:#185FA5; font-size:11px; cursor:pointer;">Full report</span></td>
+            </tr>
+
+            <!-- HIGH -->
+            <tr>
+              <td style="padding-left:14px;">
+                <div class="co-name">Atlas Electrical Contractors</div>
+                <div class="co-trade">Electrical &middot; EIN: 77-2109834</div>
+              </td>
+              <td><strong style="color:#854F0B;">1.18</strong><div style="font-size:10px; color:#888780;">↑ from 0.94</div></td>
+              <td><strong style="color:#854F0B;">5.7</strong><div style="font-size:10px; color:#888780;">Ind. avg: 2.8</div></td>
+              <td>
+                <span class="cit-pill cit-serious">4 Serious</span>
+                <span class="cit-pill cit-other">2 Other</span>
+              </td>
+              <td><strong style="color:#888780;">0</strong></td>
+              <td>
+                <div class="ai-score score-high"><span class="ai-icon">🤖</span><span class="score-num">74</span>/100</div>
+              </td>
+              <td>
+                <div class="spark">
+                  <div class="spark-bar lo" style="height:6px;"></div>
+                  <div class="spark-bar lo" style="height:8px;"></div>
+                  <div class="spark-bar mid" style="height:13px;"></div>
+                  <div class="spark-bar hi" style="height:16px;"></div>
+                </div>
+              </td>
+              <td><span style="background:#FCEBEB; color:#8B1A1A; font-size:10px; padding:3px 8px; border-radius:20px; font-weight:700;">⚠️ High</span></td>
+              <td style="padding-right:14px;"><span style="color:#185FA5; font-size:11px; cursor:pointer;">Full report</span></td>
+            </tr>
+
+            <!-- HIGH -->
+            <tr style="background:#FAFAF8;">
+              <td style="padding-left:14px;">
+                <div class="co-name">Ironclad Framing &amp; Structural</div>
+                <div class="co-trade">Structural Steel &middot; EIN: 55-8821047</div>
+              </td>
+              <td><strong style="color:#854F0B;">1.09</strong><div style="font-size:10px; color:#888780;">↑ from 0.88</div></td>
+              <td><strong style="color:#854F0B;">4.9</strong><div style="font-size:10px; color:#888780;">Ind. avg: 4.1</div></td>
+              <td>
+                <span class="cit-pill cit-serious">3 Serious</span>
+                <span class="cit-pill cit-other">1 Other</span>
+              </td>
+              <td><strong style="color:#888780;">0</strong></td>
+              <td>
+                <div class="ai-score score-high"><span class="ai-icon">🤖</span><span class="score-num">68</span>/100</div>
+              </td>
+              <td>
+                <div class="spark">
+                  <div class="spark-bar lo" style="height:7px;"></div>
+                  <div class="spark-bar mid" style="height:10px;"></div>
+                  <div class="spark-bar mid" style="height:12px;"></div>
+                  <div class="spark-bar hi" style="height:15px;"></div>
+                </div>
+              </td>
+              <td><span style="background:#FCEBEB; color:#8B1A1A; font-size:10px; padding:3px 8px; border-radius:20px; font-weight:700;">⚠️ High</span></td>
+              <td style="padding-right:14px;"><span style="color:#185FA5; font-size:11px; cursor:pointer;">Full report</span></td>
+            </tr>
+
+            <!-- MEDIUM -->
+            <tr>
+              <td style="padding-left:14px;">
+                <div class="co-name">Precision Plumbing Solutions</div>
+                <div class="co-trade">Plumbing &middot; EIN: 44-1093872</div>
+              </td>
+              <td><strong style="color:#854F0B;">1.02</strong><div style="font-size:10px; color:#888780;">Stable</div></td>
+              <td><strong>3.3</strong><div style="font-size:10px; color:#888780;">Ind. avg: 3.1</div></td>
+              <td>
+                <span class="cit-pill cit-other">1 Other</span>
+              </td>
+              <td><strong style="color:#888780;">0</strong></td>
+              <td>
+                <div class="ai-score score-med"><span class="ai-icon">🤖</span><span class="score-num">44</span>/100</div>
+              </td>
+              <td>
+                <div class="spark">
+                  <div class="spark-bar mid" style="height:10px;"></div>
+                  <div class="spark-bar mid" style="height:10px;"></div>
+                  <div class="spark-bar lo" style="height:8px;"></div>
+                  <div class="spark-bar mid" style="height:9px;"></div>
+                </div>
+              </td>
+              <td><span style="background:#FAEEDA; color:#7A4800; font-size:10px; padding:3px 8px; border-radius:20px; font-weight:700;">⚡ Medium</span></td>
+              <td style="padding-right:14px;"><span style="color:#185FA5; font-size:11px; cursor:pointer;">Full report</span></td>
+            </tr>
+
+            <!-- LOW -->
+            <tr style="background:#FAFAF8;">
+              <td style="padding-left:14px;">
+                <div class="co-name">Summit Concrete &amp; Masonry</div>
+                <div class="co-trade">Concrete / Masonry &middot; EIN: 31-5541209</div>
+              </td>
+              <td><strong style="color:#0A5E36;">0.74</strong><div style="font-size:10px; color:#888780;">↓ improving</div></td>
+              <td><strong style="color:#0A5E36;">1.8</strong><div style="font-size:10px; color:#888780;">Ind. avg: 3.4</div></td>
+              <td>
+                <span style="font-size:11px; color:#888780;">None (3yr)</span>
+              </td>
+              <td><strong style="color:#888780;">0</strong></td>
+              <td>
+                <div class="ai-score score-low"><span class="ai-icon">🤖</span><span class="score-num">18</span>/100</div>
+              </td>
+              <td>
+                <div class="spark">
+                  <div class="spark-bar mid" style="height:9px;"></div>
+                  <div class="spark-bar lo" style="height:7px;"></div>
+                  <div class="spark-bar lo" style="height:6px;"></div>
+                  <div class="spark-bar lo" style="height:5px;"></div>
+                </div>
+              </td>
+              <td><span style="background:#EAF3DE; color:#0A5E36; font-size:10px; padding:3px 8px; border-radius:20px; font-weight:700;">✓ Low</span></td>
+              <td style="padding-right:14px;"><span style="color:#185FA5; font-size:11px; cursor:pointer;">Full report</span></td>
+            </tr>
+
+            <!-- LOW -->
+            <tr>
+              <td style="padding-left:14px;">
+                <div class="co-name">Clearline Safety &amp; Rigging</div>
+                <div class="co-trade">Rigging / Crane &middot; EIN: 90-2287401</div>
+              </td>
+              <td><strong style="color:#0A5E36;">0.61</strong><div style="font-size:10px; color:#888780;">↓ improving</div></td>
+              <td><strong style="color:#0A5E36;">1.2</strong><div style="font-size:10px; color:#888780;">Ind. avg: 3.8</div></td>
+              <td>
+                <span style="font-size:11px; color:#888780;">None (3yr)</span>
+              </td>
+              <td><strong style="color:#888780;">0</strong></td>
+              <td>
+                <div class="ai-score score-low"><span class="ai-icon">🤖</span><span class="score-num">11</span>/100</div>
+              </td>
+              <td>
+                <div class="spark">
+                  <div class="spark-bar lo" style="height:8px;"></div>
+                  <div class="spark-bar lo" style="height:7px;"></div>
+                  <div class="spark-bar lo" style="height:6px;"></div>
+                  <div class="spark-bar lo" style="height:5px;"></div>
+                </div>
+              </td>
+              <td><span style="background:#EAF3DE; color:#0A5E36; font-size:10px; padding:3px 8px; border-radius:20px; font-weight:700;">✓ Low</span></td>
+              <td style="padding-right:14px;"><span style="color:#185FA5; font-size:11px; cursor:pointer;">Full report</span></td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+
+      <!-- BOTTOM PANELS -->
+      <div class="bottom-grid">
+
+        <div class="panel">
+          <div class="panel-hdr ph-red">
+            <span>Critical &amp; High Risk — Action Required</span>
+            <span style="font-size:10px; background:#FCEBEB; color:#8B1A1A; padding:2px 7px; border-radius:10px; font-weight:700;">3 contractors</span>
+          </div>
+          <div class="panel-body">
+            <div class="risk-row">
+              <div class="risk-icon ri-red">⛔</div>
+              <div class="risk-content">
+                <div class="risk-title">Apex Mechanical — HOLD recommended</div>
+                <div class="risk-meta">2 willful OSHA citations + fatality (sister company, Q4 2025) + EMR 1.41. AI score 91/100. Recommend mandatory safety meeting before any new scope assigned.</div>
+              </div>
+            </div>
+            <div class="risk-row">
+              <div class="risk-icon ri-red">⚠️</div>
+              <div class="risk-content">
+                <div class="risk-title">Atlas Electrical — Safety meeting required</div>
+                <div class="risk-meta">4 serious citations including lockout/tagout violation. EMR trending up. AI score 74/100. Review electrical safety plan before energized work resumes.</div>
+              </div>
+            </div>
+            <div class="risk-row">
+              <div class="risk-icon ri-amber">⚠️</div>
+              <div class="risk-content">
+                <div class="risk-title">Ironclad Framing — Elevated citation trend</div>
+                <div class="risk-meta">3 serious fall protection citations in 24 months — pattern suggests systemic issue, not isolated events. AI score 68/100.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-hdr ph-dark">
+            <span>AI Score Breakdown — How Scores Are Calculated</span>
+          </div>
+          <div class="panel-body">
+            <div style="font-size:11.5px; line-height:1.7; color:#5F5E5A; margin-bottom:10px;">The AI engine pulls live data from OSHA's public enforcement API and weights each factor by severity and recency. Scores update nightly or on-demand.</div>
+            <table style="font-size:11px; margin:0;">
+              <thead><tr><th style="background:#EEF2F5; color:#0F2E45; padding:5px 8px;">Factor</th><th style="background:#EEF2F5; color:#0F2E45; padding:5px 8px;">Weight</th><th style="background:#EEF2F5; color:#0F2E45; padding:5px 8px;">Source</th></tr></thead>
+              <tbody>
+                <tr><td style="padding:5px 8px; border-bottom:0.5px solid #E0DED7;">EMR (Experience Mod. Rate)</td><td style="padding:5px 8px; border-bottom:0.5px solid #E0DED7; font-weight:600;">25%</td><td style="padding:5px 8px; border-bottom:0.5px solid #E0DED7; color:#888780;">Insurance / submitted</td></tr>
+                <tr><td style="padding:5px 8px; border-bottom:0.5px solid #E0DED7; background:#FAFAF8;">OSHA citation severity</td><td style="padding:5px 8px; border-bottom:0.5px solid #E0DED7; background:#FAFAF8; font-weight:600;">25%</td><td style="padding:5px 8px; border-bottom:0.5px solid #E0DED7; background:#FAFAF8; color:#888780;">OSHA public API</td></tr>
+                <tr><td style="padding:5px 8px; border-bottom:0.5px solid #E0DED7;">TRIR / DART rate</td><td style="padding:5px 8px; border-bottom:0.5px solid #E0DED7; font-weight:600;">20%</td><td style="padding:5px 8px; border-bottom:0.5px solid #E0DED7; color:#888780;">OSHA 300 log</td></tr>
+                <tr><td style="padding:5px 8px; border-bottom:0.5px solid #E0DED7; background:#FAFAF8;">Fatality history</td><td style="padding:5px 8px; border-bottom:0.5px solid #E0DED7; background:#FAFAF8; font-weight:600;">20%</td><td style="padding:5px 8px; border-bottom:0.5px solid #E0DED7; background:#FAFAF8; color:#888780;">OSHA API + manual</td></tr>
+                <tr><td style="padding:5px 8px;">Citation trend (12mo)</td><td style="padding:5px 8px; font-weight:600;">10%</td><td style="padding:5px 8px; color:#888780;">AI trend model</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- AUDIT LOG PANEL -->
+      <div class="panel">
+        <div class="panel-hdr ph-blue">
+          <span>AI Activity &amp; System Audit Log</span>
+          <span style="font-size:11px; color:#185FA5; cursor:pointer;">View full log →</span>
+        </div>
+        <div class="panel-body" style="display:grid; grid-template-columns:1fr 1fr; gap:0 24px;">
+          <div>
+            <div class="audit-item">
+              <div class="ai-dot" style="background:#A32D2D;"></div>
+              <div class="ai-content"><strong>AI Engine</strong> elevated Apex Mechanical to Critical — willful citation confirmed via OSHA API refresh.</div>
+              <div class="ai-time">Today 6:02 AM</div>
+            </div>
+            <div class="audit-item">
+              <div class="ai-dot" style="background:#854F0B;"></div>
+              <div class="ai-content"><strong>J. Haldemann</strong> reviewed Atlas Electrical risk report. Safety meeting scheduled for Jun 18.</div>
+              <div class="ai-time">Today 9:15 AM</div>
+            </div>
+            <div class="audit-item">
+              <div class="ai-dot" style="background:#185FA5;"></div>
+              <div class="ai-content"><strong>AI Engine</strong> completed nightly OSHA scan — 24 contractors, 0 new critical findings beyond existing flags.</div>
+              <div class="ai-time">Today 6:00 AM</div>
+            </div>
+          </div>
+          <div>
+            <div class="audit-item">
+              <div class="ai-dot" style="background:#0A5E36;"></div>
+              <div class="ai-content"><strong>Clearline Safety &amp; Rigging</strong> pre-qual resubmitted and approved — EMR confirmed 0.61.</div>
+              <div class="ai-time">Jun 14, 2:30 PM</div>
+            </div>
+            <div class="audit-item">
+              <div class="ai-dot" style="background:#854F0B;"></div>
+              <div class="ai-content"><strong>AI Engine</strong> flagged Ironclad Framing — 3rd fall protection citation detected; pattern model triggered High risk threshold.</div>
+              <div class="ai-time">Jun 12, 6:01 AM</div>
+            </div>
+            <div class="audit-item">
+              <div class="ai-dot" style="background:#185FA5;"></div>
+              <div class="ai-content"><strong>J. Haldemann</strong> added Summit Concrete — initial AI score 18 (Low). Pre-qual docs uploaded.</div>
+              <div class="ai-time">Jun 10, 11:42 AM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<div class="mock-hint">
+  <strong>Design mockup — for approval</strong>
+  AI Contractor Risk Scoring module for Reliance Mako. Pending review before development.
+</div>
+
+</body>
+</html>
