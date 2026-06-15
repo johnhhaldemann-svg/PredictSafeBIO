@@ -9,10 +9,10 @@ import { pressureBandLabels, trendLabels, type PressureBand, type TrendDirection
 export const metadata: Metadata = { title: "Predictive Engine – PredictSafe" };
 
 const BAND_CLASS: Record<PressureBand, string> = {
-  low: "platform-green",
-  elevated: "platform-blue",
-  high: "platform-red",
-  critical: "platform-red",
+  low: "kpi-card--green",
+  elevated: "kpi-card--blue",
+  high: "kpi-card--amber",
+  critical: "kpi-card--red",
 };
 
 function TrendIcon({ trend }: { trend: TrendDirection }) {
@@ -40,46 +40,51 @@ export default async function PredictiveEnginePage() {
         </header>
 
         {/* Forecast headline */}
-        <section className="command-card-grid" aria-label="Safety forecast">
-          <article className={`command-card ${BAND_CLASS[forecast.band]}`}>
-            <div><span><Gauge size={16} /></span><strong>Predicted pressure</strong></div>
-            <small>{forecast.predictedPressure}</small>
-            <em>{pressureBandLabels[forecast.band]} — composite of active leading indicators.</em>
-          </article>
-          <article className="command-card platform-blue">
-            <div><span><TrendIcon trend={forecast.trend} /></span><strong>Trend</strong></div>
-            <small>{trendLabels[forecast.trend]}</small>
-            <em>Recent 14 days vs. the prior 14 days.</em>
-          </article>
-          <article className="command-card platform-blue">
-            <div><span><Clock size={16} /></span><strong>Suggested review</strong></div>
-            <small>within {forecast.horizonDays}d</small>
-            <em>Sooner when predicted pressure is higher.</em>
-          </article>
-          <article className="command-card platform-blue">
-            <div><span><Activity size={16} /></span><strong>Confidence</strong></div>
-            <small>{forecast.confidence[0].toUpperCase() + forecast.confidence.slice(1)}</small>
-            <em>{calibration.calibrated ? "Calibrated against outcomes." : "Uncalibrated — capped at moderate."}</em>
-          </article>
+        <section className="kpi-grid" aria-label="Safety forecast">
+          <div className={`kpi-card ${BAND_CLASS[forecast.band]}`}>
+            <div className="kpi-label">Predicted Pressure</div>
+            <div className="kpi-value">{forecast.predictedPressure}</div>
+            <div className="kpi-sub">{pressureBandLabels[forecast.band]}</div>
+          </div>
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Trend</div>
+            <div className="kpi-value" style={{ fontSize: 20 }}>{trendLabels[forecast.trend]}</div>
+            <div className="kpi-sub">14-day vs prior 14-day</div>
+          </div>
+          <div className="kpi-card kpi-card--purple">
+            <div className="kpi-label">Review Horizon</div>
+            <div className="kpi-value">{forecast.horizonDays}d</div>
+            <div className="kpi-sub">Suggested review window</div>
+          </div>
+          <div className="kpi-card kpi-card--amber">
+            <div className="kpi-label">Confidence</div>
+            <div className="kpi-value" style={{ fontSize: 16 }}>{forecast.confidence[0].toUpperCase() + forecast.confidence.slice(1)}</div>
+            <div className="kpi-sub">{calibration.calibrated ? "Calibrated" : "Uncalibrated"}</div>
+          </div>
         </section>
 
         {/* Signal breakdown */}
-        <section className="command-card-grid" aria-label="Signal breakdown">
-          <article className="command-card">
-            <div><span><Activity size={16} /></span><strong>Leading indicators</strong></div>
-            <small>{forecast.leadingIndicatorCount}</small>
-            <em>Precursors feeding the forecast.</em>
-          </article>
-          <article className={`command-card ${forecast.earlyWarningCount > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><Brain size={16} /></span><strong>Early warnings</strong></div>
-            <small>{forecast.earlyWarningCount}</small>
-            <em>High-route / high-severity precursors.</em>
-          </article>
-          <article className={`command-card ${forecast.overdueCount > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><Clock size={16} /></span><strong>Overdue verifications</strong></div>
-            <small>{forecast.overdueCount}</small>
-            <em>Controls past their verification date.</em>
-          </article>
+        <section className="kpi-grid" aria-label="Signal breakdown">
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Leading Indicators</div>
+            <div className="kpi-value">{forecast.leadingIndicatorCount}</div>
+            <div className="kpi-sub">Feeding the forecast</div>
+          </div>
+          <div className={`kpi-card ${forecast.earlyWarningCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Early Warnings</div>
+            <div className="kpi-value">{forecast.earlyWarningCount}</div>
+            <div className="kpi-sub">High-route precursors</div>
+          </div>
+          <div className={`kpi-card ${forecast.overdueCount > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+            <div className="kpi-label">Overdue Verifications</div>
+            <div className="kpi-value">{forecast.overdueCount}</div>
+            <div className="kpi-sub">Controls past due date</div>
+          </div>
+          <div className="kpi-card kpi-card--purple">
+            <div className="kpi-label">Signal Coverage</div>
+            <div className="kpi-value">{forecast.leadingIndicatorCount > 0 ? "Active" : "None"}</div>
+            <div className="kpi-sub">Leading indicator status</div>
+          </div>
         </section>
 
         {/* Top drivers */}

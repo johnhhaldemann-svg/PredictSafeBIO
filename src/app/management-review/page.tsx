@@ -64,26 +64,27 @@ export default async function ManagementReviewPage({ searchParams }: Props) {
         </header>
 
         {/* KPI strip */}
-        <section className="command-card-grid" aria-label="Management review summary">
-          <article className={`command-card ${reviewsYear > 0 ? "platform-green" : "platform-blue"}`}>
-            <div><span><BarChart3 size={16} /></span><strong>Reviews this year</strong></div>
-            <small>{reviewsYear}</small>
-            <em>{reviewsYear > 0 ? "Reviews on record." : "No reviews recorded yet this year."}</em>
-          </article>
-          <article className={`command-card ${openItems > 0 ? "platform-blue" : "platform-green"}`}>
-            <div><span><CheckCircle size={16} /></span><strong>Open action items</strong></div>
-            <small>{openItems}</small>
-            <em>{openItems > 0 ? `${openItems} item${openItems !== 1 ? "s" : ""} in progress.` : "All action items closed."}</em>
-          </article>
-          <article className={`command-card ${overdueItems > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><AlertTriangle size={16} /></span><strong>Overdue action items</strong></div>
-            <small>{overdueItems}</small>
-            <em>
-              {overdueItems > 0
-                ? `${overdueItems} item${overdueItems !== 1 ? "s" : ""} past due date.`
-                : "No overdue action items."}
-            </em>
-          </article>
+        <section className="kpi-grid" aria-label="Management review summary">
+          <div className={`kpi-card ${reviewsYear > 0 ? "kpi-card--green" : "kpi-card--blue"}`}>
+            <div className="kpi-label">Reviews This Year</div>
+            <div className="kpi-value">{reviewsYear}</div>
+            <div className="kpi-sub">{reviewsYear > 0 ? "Reviews on record" : "None recorded yet"}</div>
+          </div>
+          <div className={`kpi-card ${openItems > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+            <div className="kpi-label">Open Action Items</div>
+            <div className="kpi-value">{openItems}</div>
+            <div className="kpi-sub">{openItems > 0 ? "In progress" : "All items closed"}</div>
+          </div>
+          <div className={`kpi-card ${overdueItems > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Overdue Action Items</div>
+            <div className="kpi-value">{overdueItems}</div>
+            <div className="kpi-sub">{overdueItems > 0 ? "Past due date" : "None overdue"}</div>
+          </div>
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Total Reviews</div>
+            <div className="kpi-value">{reviews.length}</div>
+            <div className="kpi-sub">All time</div>
+          </div>
         </section>
 
         {overdueItems > 0 && (
