@@ -203,10 +203,9 @@ Deno.serve(async (req: Request) => {
     return new Response("ok", { headers: CORS_HEADERS });
   }
 
-  // Allow cron invocation (no auth header) OR service-role auth
+  // Allow cron invocation (service-role auth) OR a valid user token.
   const authHeader = req.headers.get("Authorization");
   if (authHeader && !authHeader.includes(SUPABASE_SERVICE_ROLE_KEY)) {
-    // Validate it's a valid user token via Supabase
     const supabaseCheck = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { error } = await supabaseCheck.auth.getUser(authHeader.replace("Bearer ", ""));
     if (error) {

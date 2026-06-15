@@ -64,6 +64,14 @@ export async function POST(req: NextRequest) {
         const organizationId = session.metadata?.organization_id;
         const planId = session.metadata?.plan_id;
 
+        if (!organizationId || !planId) {
+          console.warn("[stripe/webhook] checkout.session.completed missing metadata", {
+            event_id: event.id,
+            has_org: !!organizationId,
+            has_plan: !!planId,
+          });
+        }
+
         if (organizationId && planId) {
           // Pull the subscription to capture period + status details.
           let sub: any = null;

@@ -7,6 +7,7 @@ import { withAuditTrace } from "@/lib/audit-trace";
 import { createSupabaseServerClient } from "./server";
 import { getProfileContext } from "./data-helpers";
 import { isSupabaseConfigured } from "./env";
+import { createCapaRecord } from "./capa-service";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -284,6 +285,16 @@ export async function createIncident(input: {
       { sourceModule: "incidents", sourceRecordId: data.id }
     ),
   });
+
+  // Auto-create a linked CAPA for root-cause investigation (non-blocking).
+  const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  await createCapaRecord({
+    title: `RCA: ${input.title}`,
+    sourceIncidentId: data.id,
+    linkedRecordType: "incidents",
+    linkedRecordId: data.id,
+    dueDate,
+  }).catch(() => { /* non-fatal — incident is already logged */ });
 
   return { ok: true, message: "Incident logged successfully.", id: data.id };
 }

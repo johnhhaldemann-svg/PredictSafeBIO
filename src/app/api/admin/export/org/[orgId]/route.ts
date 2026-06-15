@@ -22,6 +22,11 @@ export async function GET(
 ) {
   const { orgId } = await params;
 
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(orgId)) {
+    return NextResponse.json({ error: "Invalid orgId" }, { status: 400 });
+  }
+
   // Auth check — superadmin only
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();

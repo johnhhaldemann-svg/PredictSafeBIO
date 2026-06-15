@@ -46,6 +46,8 @@ describe("suggestControlEffectiveness", () => {
 
   it("suggests admin-only and none appropriately", () => {
     expect(suggestControlEffectiveness(["administrative"])).toBe("admin_only");
+    expect(suggestControlEffectiveness(["administrative", "ppe"])).toBe("admin_only");
+    // PPE-alone is treated as "none" — it requires backing controls to reach an effective tier
     expect(suggestControlEffectiveness(["ppe"])).toBe("none");
     expect(suggestControlEffectiveness([])).toBe("none");
   });

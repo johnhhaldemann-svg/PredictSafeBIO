@@ -10,6 +10,9 @@ import { authMessage, friendlyAuthError, passwordMeetsMinimum, safeAuthNext } fr
 import { isPlatformRole } from "@/lib/role-permissions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { SETUP_QUESTIONS } from "@/lib/manual/setup-questions";
+import { saveQuestionnaireResponses } from "@/lib/supabase/questionnaire-service";
+import { runApplicabilityEngine } from "@/lib/supabase/applicability-engine";
 
 function field(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -303,6 +306,144 @@ export async function completeOnboardingAction(formData: FormData) {
     event_type: "company_profile_updated",
     summary: `Onboarding completed for ${companyName}.`,
     payload: { companyName, organizationName, primarySite: field(formData, "primarySite") || demoCompanyProfile.primarySite }
+  });
+
+  revalidatePath("/", "layout");
+  redirect("/workbench?message=onboarding-complete");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Unified wizard action — creates org + saves all questionnaire answers in one
+// round-trip. Called from OnboardingWizard on the final step.
+// ─────────────────────────────────────────────────────────────────────────────
+export async function completeFullOnboardingAction(formData: FormData) {
+  const supabase = await createClientOrRedirect("/onboarding");
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(authMessage("/login?next=%2Fonboarding", "Sign in before completing onboarding."));
+  }
+
+  // Guard: already onboarded — never re-bind an org.
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (existingProfile?.organization_id) redirect("/workbench");
+
+  const fullName = field(formData, "fullName") || user.email || "PredictSafe user";
+
+  // ── Invite path — join existing org ────────────────────────────────────────
+  if (user.email) {
+    const admin = getSupabaseAdminClient();
+    const { data: invite } = await (admin as any)
+      .from("workspace_invitations")
+      .select("id, organization_id, role")
+      .eq("email", user.email.toLowerCase())
+      .eq("status", "pending")
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (invite?.organization_id) {
+      const { error: joinError } = await (admin as any).from("profiles").upsert(
+        {
+          id: user.id,
+          organization_id: invite.organization_id,
+          full_name: fullName,
+          role: invite.role ?? "member",
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      );
+      if (joinError) redirect(authMessage("/onboarding", joinError.message));
+
+      await (admin as any)
+        .from("workspace_invitations")
+        .update({ status: "accepted", accepted_at: new Date().toISOString() })
+        .eq("id", invite.id);
+
+      await (admin as any).from("audit_events").insert({
+        organization_id: invite.organization_id,
+        actor_id: user.id,
+        event_type: "company_profile_updated",
+        summary: `${fullName} joined via invitation as ${invite.role ?? "member"}.`,
+        payload: { inviteId: invite.id, role: invite.role ?? "member", joinedViaInvite: true },
+      });
+
+      revalidatePath("/", "layout");
+      redirect("/workbench?message=onboarding-complete");
+    }
+  }
+
+  // ── Self-serve path — create new org as owner ──────────────────────────────
+  const organizationId = randomUUID();
+  const organizationName = field(formData, "organizationName") || demoCompanyProfile.companyName;
+  const companyName = field(formData, "companyName") || organizationName;
+  const vertical =
+    field(formData, "vertical") === "general_manufacturing"
+      ? "general_manufacturing"
+      : "biotech_pharma";
+
+  const { error: orgError } = await supabase.from("organizations").insert({
+    id: organizationId,
+    name: organizationName,
+    industry_vertical: vertical,
+  });
+  if (orgError) redirect(authMessage("/onboarding", orgError.message));
+
+  const { error: profileError } = await supabase.from("profiles").upsert(
+    {
+      id: user.id,
+      organization_id: organizationId,
+      full_name: fullName,
+      role: "owner",
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "id" }
+  );
+  if (profileError) redirect(authMessage("/onboarding", profileError.message));
+
+  const reviewOwnerRoles = listField(formData, "reviewOwnerRoles") as ReviewOwnerRole[];
+  const { error: companyError } = await supabase.from("company_profiles").insert({
+    organization_id: organizationId,
+    company_name: companyName,
+    primary_site: field(formData, "primarySite") || demoCompanyProfile.primarySite,
+    operating_areas: listField(formData, "operatingAreas"),
+    programs: listField(formData, "programs"),
+    quality_system_scope: listField(formData, "qualityScope"),
+    biosafety_levels: listField(formData, "biosafetyLevels"),
+    review_owner_roles: reviewOwnerRoles,
+    document_families: listField(formData, "documentFamilies"),
+    created_by: user.id,
+  });
+  if (companyError) redirect(authMessage("/onboarding", companyError.message));
+
+  // ── Save questionnaire answers & run applicability engine ──────────────────
+  const answers = SETUP_QUESTIONS.map((q) => ({
+    questionNumber: q.number,
+    answer: String(formData.get(`q_${q.number}`) ?? "").trim(),
+    notes: String(formData.get(`note_${q.number}`) ?? "").trim() || undefined,
+  })).filter((a) => a.answer !== "");
+
+  if (answers.length > 0) {
+    const saved = await saveQuestionnaireResponses(answers);
+    if (saved.ok) {
+      // Non-fatal: engine failure doesn't block workspace entry.
+      await runApplicabilityEngine().catch(() => null);
+    }
+  }
+
+  await supabase.from("audit_events").insert({
+    organization_id: organizationId,
+    actor_id: user.id,
+    event_type: "company_profile_updated",
+    summary: `Onboarding completed for ${companyName} (wizard).`,
+    payload: { companyName, organizationName, vertical, answeredQuestions: answers.length },
   });
 
   revalidatePath("/", "layout");
