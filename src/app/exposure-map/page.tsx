@@ -82,22 +82,27 @@ export default async function ExposureMapPage({ searchParams }: Props) {
         </header>
 
         {/* KPI strip */}
-        <section className="command-card-grid" aria-label="Exposure map summary">
-          <article className="command-card platform-blue">
-            <div><span><MapIcon size={16} /></span><strong>Exposure pathways</strong></div>
-            <small>{totalCount}</small>
-            <em>Mapped people ↔ materials ↔ routes.</em>
-          </article>
-          <article className={`command-card ${highRouteCount > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><Wind size={16} /></span><strong>High-route exposures</strong></div>
-            <small>{highRouteCount}</small>
-            <em>{highRouteCount > 0 ? "Injection / inhalation pathways." : "No high-route pathways."}</em>
-          </article>
-          <article className={`command-card ${earlyWarnings > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><Brain size={16} /></span><strong>Early warnings</strong></div>
-            <small>{earlyWarnings}</small>
-            <em>{earlyWarnings > 0 ? "Routine high-route exposure — engine flagged." : "No early warnings."}</em>
-          </article>
+        <section className="kpi-grid" aria-label="Exposure map summary">
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Exposure Pathways</div>
+            <div className="kpi-value">{totalCount}</div>
+            <div className="kpi-sub">Mapped people ↔ routes</div>
+          </div>
+          <div className={`kpi-card ${highRouteCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">High-Route Exposures</div>
+            <div className="kpi-value">{highRouteCount}</div>
+            <div className="kpi-sub">{highRouteCount > 0 ? "Injection/inhalation pathways" : "No high-route pathways"}</div>
+          </div>
+          <div className={`kpi-card ${earlyWarnings > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
+            <div className="kpi-label">Early Warnings</div>
+            <div className="kpi-value">{earlyWarnings}</div>
+            <div className="kpi-sub">{earlyWarnings > 0 ? "Engine flagged" : "No warnings"}</div>
+          </div>
+          <div className="kpi-card kpi-card--purple">
+            <div className="kpi-label">Unique Roles Exposed</div>
+            <div className="kpi-value">{new Set(exposures.map(e => e.personRole).filter(Boolean)).size}</div>
+            <div className="kpi-sub">Distinct job roles</div>
+          </div>
         </section>
 
         {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}

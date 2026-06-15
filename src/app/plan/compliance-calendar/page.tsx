@@ -55,20 +55,27 @@ export default async function ComplianceCalendarPage({ searchParams }: Props) {
         {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
         {params.message && <p className="form-message">{params.message}</p>}
 
-        <section className="command-card-grid" aria-label="Calendar summary">
-          <article className={`command-card ${overdue > 0 ? "platform-red" : "platform-green"}`}>
-            <div><span><AlertTriangle size={16} /></span><strong>Overdue</strong></div>
-            <small>{overdue}</small>
-            <em>{overdue > 0 ? "Past due — complete ASAP." : "Nothing overdue."}</em>
-          </article>
-          <article className="command-card platform-blue">
-            <div><span><CalendarClock size={16} /></span><strong>Due this week</strong></div>
-            <small>{dueWeek}</small><em>Next 7 days.</em>
-          </article>
-          <article className="command-card platform-green">
-            <div><span><CheckCircle2 size={16} /></span><strong>Completed</strong></div>
-            <small>{done}</small><em>Closed tasks.</em>
-          </article>
+        <section className="kpi-grid" aria-label="Calendar summary">
+          <div className={`kpi-card ${overdue > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">Overdue</div>
+            <div className="kpi-value">{overdue}</div>
+            <div className="kpi-sub">{overdue > 0 ? "Complete ASAP" : "Nothing overdue"}</div>
+          </div>
+          <div className="kpi-card kpi-card--amber">
+            <div className="kpi-label">Due This Week</div>
+            <div className="kpi-value">{dueWeek}</div>
+            <div className="kpi-sub">Next 7 days</div>
+          </div>
+          <div className="kpi-card kpi-card--green">
+            <div className="kpi-label">Completed</div>
+            <div className="kpi-value">{done}</div>
+            <div className="kpi-sub">Closed tasks</div>
+          </div>
+          <div className="kpi-card kpi-card--blue">
+            <div className="kpi-label">Total Tasks</div>
+            <div className="kpi-value">{overdue + dueWeek + done}</div>
+            <div className="kpi-sub">All compliance tasks</div>
+          </div>
         </section>
 
         {overdue > 0 && (
