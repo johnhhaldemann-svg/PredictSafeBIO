@@ -8,10 +8,12 @@ import {
   toggleStepComplete,
   createContact,
   deleteContact,
+  resetSteps,
   type PlanType,
   type DrillOutcome,
   type ContactType,
 } from "@/lib/supabase/emergency-service";
+import { createCapaRecord } from "@/lib/supabase/capa-service";
 import { authMessage, authSuccess } from "@/lib/auth-routing";
 
 // ── Plan ─────────────────────────────────────────────────────────────────────
@@ -48,6 +50,18 @@ export async function createDrillAction(formData: FormData) {
   if (!drillDate) redirect(authMessage("/emergency-response", "Drill date is required."));
 
   const result = await createDrill({ planId, drillDate, drillType, participantsCount, outcome, notes, conductedBy });
+
+  if (result.ok && result.id && (outcome === "needs_improvement" || outcome === "unsatisfactory")) {
+    const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    await createCapaRecord({
+      title:            `Drill gap: ${drillType ?? drillDate} — ${outcome.replace("_", " ")}`,
+      linkedRecordType: "emergency_drills",
+      linkedRecordId:   result.id,
+      dueDate,
+      rootCause:        `Drill outcome: ${outcome}. Review findings and implement corrective actions before next scheduled drill.`,
+    }).catch(() => { /* non-fatal */ });
+  }
+
   redirect(
     result.ok
       ? authSuccess("/emergency-response", result.message)
@@ -109,4 +123,12 @@ export async function deleteContactAction(formData: FormData) {
   if (!id) redirect(authMessage("/emergency-response", "Invalid contact."));
   await deleteContact(id);
   redirect("/emergency-response");
+}
+
+export async function resetStepsAction(formData: FormData) {
+  const planId = String(formData.get("planId") ?? "").trim();
+  if (!planId) redirect(authMessage("/emergency-response", "Invalid plan."));
+  const result = await resetSteps(planId);
+  const back = `/emergency-response?plan=${planId}`;
+  redirect(result.ok ? authSuccess(back, result.message) : authMessage(back, result.message));
 }

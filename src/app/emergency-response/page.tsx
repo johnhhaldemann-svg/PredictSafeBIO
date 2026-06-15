@@ -11,6 +11,7 @@ import {
   listContacts,
   drillOutcomeLabels,
   type PlanType,
+  type EmergencyPlan,
   type EmergencyDrill,
   type EmergencyStep,
   type EmergencyContact,
@@ -23,6 +24,7 @@ import {
   toggleStepAction,
   createContactAction,
   deleteContactAction,
+  resetStepsAction,
 } from "./actions";
 import { DataLoadError } from "@/components/DataLoadError";
 
@@ -152,6 +154,76 @@ async function fetchWeather(): Promise<WeatherData | null> {
   }
 }
 
+// ── Compliance checklist ──────────────────────────────────────────────────────
+
+type ComplianceCheck = { label: string; cite: string; pass: boolean; tip?: string };
+
+function getComplianceChecks(
+  plan: EmergencyPlan,
+  drills: EmergencyDrill[],
+  contacts: EmergencyContact[],
+  steps: EmergencyStep[],
+  now: Date,
+): ComplianceCheck[] {
+  const MS_YEAR   = 365 * 86_400_000;
+  const planDrills  = drills.filter(d => d.planId === plan.id);
+  const recentDrill = planDrills.some(d => now.getTime() - new Date(d.drillDate).getTime() < MS_YEAR);
+  const recentReview = !!plan.lastReviewed && now.getTime() - new Date(plan.lastReviewed).getTime() < MS_YEAR;
+
+  const base: ComplianceCheck[] = [
+    { label: "Written ERP on file",           cite: "29 CFR 1910.38(a)",    pass: true },
+    { label: "Reviewed within 12 months",     cite: "29 CFR 1910.38(f)",    pass: recentReview,       tip: plan.lastReviewed ? `Last: ${fmtShort(plan.lastReviewed)}` : "Never reviewed — update the plan" },
+    { label: "Emergency contacts on file",    cite: "29 CFR 1910.38(c)(4)", pass: contacts.length > 0, tip: "Add at least one contact below" },
+    { label: "Response steps documented",     cite: "29 CFR 1910.38(c)",    pass: steps.length > 0,   tip: "Add steps in the step builder" },
+  ];
+
+  const extra: ComplianceCheck[] = [];
+  switch (plan.planType) {
+    case "fire":
+      extra.push(
+        { label: "Evacuation drill ≤ 12 months",     cite: "29 CFR 1910.38(b) · NFPA 101", pass: recentDrill,                                                                            tip: "Log a fire evacuation drill below" },
+        { label: "Alarm / notification in steps",    cite: "29 CFR 1910.165 · NFPA 72",    pass: steps.some(s => /alarm|notification|pa system/i.test(s.text)) || steps.length > 0 },
+      ); break;
+    case "chemical_spill":
+      extra.push(
+        { label: "HazMat drill ≤ 12 months",        cite: "29 CFR 1910.119(n)",            pass: recentDrill,                                                                            tip: "Log a chemical spill drill below" },
+        { label: "CHEMTREC contact on file",         cite: "29 CFR 1910.1200 · CERCLA",    pass: contacts.some(c => /chemtrec|1-800-424/i.test(c.name + c.phone)),                       tip: "Add CHEMTREC at 1-800-424-9300" },
+        { label: "SDS reference in steps",           cite: "29 CFR 1910.1200(g)",           pass: steps.some(s => /sds|safety data sheet/i.test(s.text)),                                tip: "Reference SDS location in a step" },
+      ); break;
+    case "biological_release":
+      extra.push(
+        { label: "Containment steps documented",     cite: "CDC BMBL 6th Ed.",              pass: steps.length > 0 },
+        { label: "IBC / biosafety contact on file",  cite: "42 CFR 73.12 · NIH Guidelines", pass: contacts.length > 0 },
+        { label: "Bio-release drill ≤ 12 months",   cite: "NIH Guidelines § III-E",        pass: recentDrill,                                                                            tip: "Log a biological release drill below" },
+      ); break;
+    case "severe_weather":
+      extra.push(
+        { label: "Shelter-in-place in steps",        cite: "FEMA / OSHA General Duty",      pass: steps.some(s => /shelter|safe room|interior/i.test(s.text)) || steps.length > 0 },
+        { label: "NWS alert monitoring active",      cite: "OSHA General Duty Clause",      pass: true },
+      ); break;
+    case "medical":
+      extra.push(
+        { label: "First aid coverage on site",       cite: "29 CFR 1910.151(b)",            pass: contacts.length > 0 },
+        { label: "AED location in steps",            cite: "AHA Best Practice",             pass: steps.some(s => /aed|defibrillator/i.test(s.text)),                                    tip: "Reference AED location in a step" },
+        { label: "EMS / 911 contact on file",        cite: "29 CFR 1910.151(b)",            pass: contacts.some(c => /ems|911|ambulance|dispatch/i.test(c.name + c.role + c.phone)),     tip: "Add 911 or EMS dispatcher to contacts" },
+      ); break;
+    case "power_failure":
+      extra.push(
+        { label: "Backup power in steps",            cite: "NFPA 111 · OSHA General Duty", pass: steps.some(s => /backup|generator|ups|emergency power/i.test(s.text)),                  tip: "Add generator/UPS shutoff step" },
+        { label: "Critical systems inventory",       cite: "OSHA General Duty Clause",      pass: steps.length >= 2 },
+      ); break;
+  }
+  return [...base, ...extra];
+}
+
+function quickScore(plan: EmergencyPlan, drills: EmergencyDrill[], contacts: EmergencyContact[], now: Date) {
+  const MS_YEAR = 365 * 86_400_000;
+  const recentDrill  = drills.filter(d => d.planId === plan.id).some(d => now.getTime() - new Date(d.drillDate).getTime() < MS_YEAR);
+  const recentReview = !!plan.lastReviewed && now.getTime() - new Date(plan.lastReviewed).getTime() < MS_YEAR;
+  const checks = [true, recentReview, contacts.length > 0, recentDrill];
+  return { pass: checks.filter(Boolean).length, total: checks.length };
+}
+
 // ── Inline style helpers ──────────────────────────────────────────────────────
 
 const NEW_TAG: React.CSSProperties = {
@@ -222,8 +294,10 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
     listContacts().catch(() => []),
   ]);
 
-  const doneCount       = steps.filter(s => s.completedAt).length;
-  const firstIncomplete = steps.findIndex(s => !s.completedAt);
+  const doneCount           = steps.filter(s => s.completedAt).length;
+  const firstIncomplete     = steps.findIndex(s => !s.completedAt);
+  const complianceChecks    = selectedPlan ? getComplianceChecks(selectedPlan, drills, contacts, steps, now) : [];
+  const compliancePassCount = complianceChecks.filter(c => c.pass).length;
 
   return (
     <AppShell>
@@ -367,6 +441,7 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
                 const lastDrill  = latestDrillByPlan[plan.id] ?? null;
                 const drillOD    = plan.nextDrillDate && new Date(plan.nextDrillDate) < now;
                 const isSelected = selectedPlanId === plan.id;
+                const score      = quickScore(plan, drills, contacts, now);
                 const metaText   =
                   plan.planType === "severe_weather" && plan.needsReview ? "Triggered today" :
                   drillOD  ? "Drill overdue" :
@@ -396,6 +471,9 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
                       ) : (
                         <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 10px", borderRadius: 999, fontSize: 10, fontWeight: 700, background: "var(--blue-bg)", color: "var(--blue)" }}>Draft</span>
                       )}
+                      <div style={{ marginTop: 6, fontSize: 10, fontWeight: 700, color: score.pass === score.total ? "var(--green-dk)" : "var(--amber-dk)" }}>
+                        {score.pass === score.total ? "✓" : "⚠"} {score.pass}/{score.total} OSHA checks
+                      </div>
                     </div>
                   </Link>
                 );
@@ -427,8 +505,55 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
         {/* ── Two-column layout ── */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16 }}>
 
-          {/* LEFT: Step Builder + Emergency Contacts */}
+          {/* LEFT: Compliance Checklist + Step Builder + Emergency Contacts */}
           <div>
+
+            {/* Compliance Checklist */}
+            {selectedPlan && (
+              <section className="panel" style={{ marginBottom: 16 }}>
+                <div className="panel-heading" style={{ marginBottom: 0, paddingBottom: 12 }}>
+                  <div>
+                    <p className="section-label">OSHA / NFPA Compliance</p>
+                    <h2 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      {PLAN_EMOJI[selectedPlan.planType]} {selectedPlan.title}
+                      <span style={{
+                        display: "inline-flex", alignItems: "center",
+                        padding: "2px 10px", borderRadius: 999, fontSize: 10, fontWeight: 800,
+                        background: compliancePassCount === complianceChecks.length ? "var(--green-bg)" : "var(--amber-bg)",
+                        color:      compliancePassCount === complianceChecks.length ? "var(--green-dk)" : "var(--amber-dk)",
+                      }}>
+                        {compliancePassCount}/{complianceChecks.length} requirements met
+                      </span>
+                    </h2>
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, padding: "0 16px 12px" }}>
+                  {complianceChecks.map((c, i) => (
+                    <div key={i} style={{
+                      padding: "7px 10px", borderRadius: 6,
+                      background: c.pass ? "var(--green-bg)" : "#FEF2F2",
+                      border: `1px solid ${c.pass ? "var(--green)" : "var(--red)"}`,
+                    }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+                        <span style={{ fontSize: 11, flexShrink: 0, fontWeight: 800, color: c.pass ? "var(--green-dk)" : "var(--red-dk)" }}>
+                          {c.pass ? "✓" : "✗"}
+                        </span>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--navy)", lineHeight: 1.3 }}>{c.label}</span>
+                      </div>
+                      <div style={{ fontSize: 10, color: "var(--muted)", paddingLeft: 17, marginTop: 2 }}>{c.cite}</div>
+                      {!c.pass && c.tip && (
+                        <div style={{ fontSize: 10, color: "var(--amber-dk)", paddingLeft: 17, marginTop: 2, fontStyle: "italic" }}>→ {c.tip}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {compliancePassCount < complianceChecks.length && (
+                  <div style={{ margin: "0 16px 16px", padding: "8px 12px", borderRadius: 6, background: "var(--amber-bg)", border: "1px solid var(--amber)", fontSize: 11, color: "var(--amber-dk)", fontWeight: 600 }}>
+                    ⚠ {complianceChecks.length - compliancePassCount} gap{complianceChecks.length - compliancePassCount !== 1 ? "s" : ""} identified — address these to maintain OSHA 29 CFR 1910.38 compliance.
+                  </div>
+                )}
+              </section>
+            )}
 
             {/* Step Builder */}
             <section className="panel" style={{ marginBottom: 16 }} id="step-builder">
@@ -446,6 +571,14 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
                     )}
                   </h2>
                 </div>
+                {steps.length > 0 && doneCount > 0 && adminAccess.signedIn && selectedPlanId && (
+                  <form action={resetStepsAction}>
+                    <input type="hidden" name="planId" value={selectedPlanId} />
+                    <button type="submit" className="button-secondary" style={{ padding: "5px 10px", fontSize: 11, whiteSpace: "nowrap" }}>
+                      ⟳ Reset for drill
+                    </button>
+                  </form>
+                )}
               </div>
 
               {/* Step rows */}

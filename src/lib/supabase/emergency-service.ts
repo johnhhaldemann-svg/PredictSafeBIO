@@ -77,7 +77,7 @@ export type EmergencyContact = {
 };
 
 export type EmergencyResult =
-  | { ok: true; message: string }
+  | { ok: true; message: string; id?: string }
   | { ok: false; message: string };
 
 // ---------------------------------------------------------------------------
@@ -353,7 +353,7 @@ export async function createDrill(input: {
     const ctx = await getProfileContext();
     if (!ctx) return { ok: false, message: "Not authenticated." };
     const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.from("emergency_drills").insert({
+    const { data, error } = await supabase.from("emergency_drills").insert({
       organization_id:    ctx.organizationId,
       plan_id:            input.planId ?? null,
       drill_date:         input.drillDate,
@@ -363,9 +363,9 @@ export async function createDrill(input: {
       notes:              input.notes ?? null,
       conducted_by:       input.conductedBy ?? null,
       created_by:         ctx.userId,
-    });
-    if (error) return { ok: false, message: error.message };
-    return { ok: true, message: "Drill logged successfully." };
+    }).select("id").single();
+    if (error || !data) return { ok: false, message: error?.message ?? "Insert failed." };
+    return { ok: true, message: "Drill logged successfully.", id: (data as { id: string }).id };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Unexpected error." };
   }
@@ -544,6 +544,24 @@ export async function deleteContact(id: string): Promise<EmergencyResult> {
       .eq("organization_id", ctx.organizationId);
     if (error) return { ok: false, message: error.message };
     return { ok: true, message: "Contact removed." };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Unexpected error." };
+  }
+}
+
+export async function resetSteps(planId: string): Promise<EmergencyResult> {
+  if (!isSupabaseConfigured()) return { ok: true, message: "Demo: Steps reset." };
+  try {
+    const ctx = await getProfileContext();
+    if (!ctx) return { ok: false, message: "Not authenticated." };
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase
+      .from("emergency_response_steps")
+      .update({ completed_at: null, updated_at: new Date().toISOString() })
+      .eq("plan_id", planId)
+      .eq("organization_id", ctx.organizationId);
+    if (error) return { ok: false, message: error.message };
+    return { ok: true, message: "All steps reset. Ready to run drill." };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Unexpected error." };
   }
