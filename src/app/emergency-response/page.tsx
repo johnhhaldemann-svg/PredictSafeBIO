@@ -28,6 +28,7 @@ import {
   uploadPlanDocumentAction,
 } from "./actions";
 import { DataLoadError } from "@/components/DataLoadError";
+import { WeatherToggles } from "./WeatherToggles";
 
 export const metadata: Metadata = { title: "Emergency Response – PredictSafe" };
 
@@ -55,13 +56,6 @@ const DEMO_FORECAST = [
   { day: "WED", icon: "☀️", high: 83 },
   { day: "THU", icon: "🌧", high: 69 },
   { day: "FRI", icon: "🌤", high: 75 },
-];
-
-const WEATHER_INTG = [
-  { icon: "🌦", name: "NOAA / NWS Alerts",  sub: "Auto-triggers plan review",  on: true  },
-  { icon: "📱", name: "SMS Notifications",   sub: "Alert contacts on trigger",   on: true  },
-  { icon: "📧", name: "Email Escalation",    sub: "EHS leadership list",         on: true  },
-  { icon: "🗺", name: "GIS / Site Mapping", sub: "Evac route overlay",          on: false },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -914,26 +908,8 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
                 ))}
               </div>
 
-              {/* Weather integrations */}
-              <div style={{ padding: "10px 14px", borderTop: "1px solid var(--line)" }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 8 }}>
-                  Weather Integrations
-                </div>
-                {WEATHER_INTG.map((intg, i) => (
-                  <div key={intg.name} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderBottom: i < WEATHER_INTG.length - 1 ? "1px solid var(--line)" : "none" }}>
-                    <div style={{ width: 26, height: 26, borderRadius: 6, background: "var(--panel-soft)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0 }}>
-                      {intg.icon}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--navy)" }}>{intg.name}</div>
-                      <div style={{ fontSize: 11, color: "var(--muted)" }}>{intg.sub}</div>
-                    </div>
-                    <div style={{ width: 34, height: 18, borderRadius: 9, position: "relative", background: intg.on ? "var(--green)" : "var(--line)", flexShrink: 0 }}>
-                      <div style={{ position: "absolute", width: 14, height: 14, borderRadius: "50%", background: "#fff", top: 2, left: intg.on ? 18 : 2 }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {/* Weather integrations — interactive client component */}
+              <WeatherToggles />
             </div>
 
             {/* Drill log */}
