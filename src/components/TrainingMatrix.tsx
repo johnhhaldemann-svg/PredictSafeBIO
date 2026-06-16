@@ -20,6 +20,12 @@ import {
 } from '@/app/training-matrix/actions';
 import { formatOwnerRole } from '@/lib/display-labels';
 
+/* ── Module-level nav item (must be outside component to satisfy react-hooks/static-components) ── */
+function NavItem({ href, pathname, children }: { href: string; pathname: string; children: ReactNode }) {
+  const isActive = pathname === href || (href.length > 1 && pathname.startsWith(href + '/'));
+  return <Link href={href} className={`psb-navitem${isActive ? ' on' : ''}`}>{children}</Link>;
+}
+
 /* ─────────────────────────────── Types ─────────────────────────────── */
 
 type CellStatus = 'current' | 'needs_review' | 'expired' | 'missing' | 'none';
@@ -145,14 +151,6 @@ export default function TrainingMatrix({
     ...(adminSection ? [['admin', 'Admin'] as [string, string]] : []),
   ];
 
-  function isActivePath(href: string) {
-    if (href === '/training-matrix') return pathname === '/training-matrix';
-    return pathname.startsWith(href);
-  }
-
-  const NavItem = ({ href, children }: { href: string; children: ReactNode }) => (
-    <Link href={href} className={`psb-navitem${isActivePath(href) ? ' on' : ''}`}>{children}</Link>
-  );
 
   /* ─────────────────────────────── JSX ─────────────────────────────── */
 
@@ -189,15 +187,15 @@ export default function TrainingMatrix({
           <Link href="/workbench" className="psb-navtop">Assess <span className="ch">▸</span></Link>
 
           <div className="psb-navgrp">Plan <span style={{ marginLeft: 'auto' }}>▾</span></div>
-          <NavItem href="/foundation">Compliance Map</NavItem>
-          <NavItem href="/plan/compliance-calendar">Compliance Calendar</NavItem>
-          <NavItem href="/training-matrix">Training Matrix</NavItem>
-          <NavItem href="/plan/qualified-persons">Qualified Persons</NavItem>
-          <NavItem href="/controls">Control Register</NavItem>
-          <NavItem href="/change-management">Change Management</NavItem>
-          <NavItem href="/programs">Programs</NavItem>
-          <NavItem href="/emergency-response">Emergency Response <span className="navnew">NEW</span></NavItem>
-          <NavItem href="/documents">Documents</NavItem>
+          <NavItem pathname={pathname} href="/foundation">Compliance Map</NavItem>
+          <NavItem pathname={pathname} href="/plan/compliance-calendar">Compliance Calendar</NavItem>
+          <NavItem pathname={pathname} href="/training-matrix">Training Matrix</NavItem>
+          <NavItem pathname={pathname} href="/plan/qualified-persons">Qualified Persons</NavItem>
+          <NavItem pathname={pathname} href="/controls">Control Register</NavItem>
+          <NavItem pathname={pathname} href="/change-management">Change Management</NavItem>
+          <NavItem pathname={pathname} href="/programs">Programs</NavItem>
+          <NavItem pathname={pathname} href="/emergency-response">Emergency Response <span className="navnew">NEW</span></NavItem>
+          <NavItem pathname={pathname} href="/documents">Documents</NavItem>
 
           <Link href="/inspections" className="psb-navtop">Operate <span className="ch">▸</span></Link>
           <Link href="/" className="psb-navtop">Monitor <span className="ch">▸</span></Link>
