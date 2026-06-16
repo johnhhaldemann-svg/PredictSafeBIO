@@ -1,283 +1,76 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
-import { AlertTriangle, Plus, ShieldCheck, Activity, Brain } from "lucide-react";
-import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
-import {
-  listHazards,
-  hazardTypeLabels,
-  hazardStatusLabels,
-  riskFamilyOptions,
-  bslLevels,
-  type HazardType,
-  type HazardStatus,
-} from "@/lib/supabase/hazard-service";
-import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
-import { createHazardAction, archiveHazardAction } from "./actions";
-import { DataLoadError } from "@/components/DataLoadError";
+import { listHazards, type HazardRecord } from "@/lib/supabase/hazard-service";
+import { HazardRegisterWrapper } from "@/components/HazardRegisterWrapper";
+import type { Hazard, HazardType as ViewHazardType, HazardStatus as ViewHazardStatus } from "@/components/HazardRegister";
 
 export const metadata: Metadata = { title: "Hazard Register – PredictSafe" };
 
-const STATUS_CLASS: Record<HazardStatus, string> = {
-  identified: "status-overdue",
-  assessed: "status-needs-review",
-  controlled: "status-ok",
-  retired: "",
+/* Map the richer service HazardType (10 values) → the 4-category view type */
+function mapType(t: HazardRecord["hazardType"]): ViewHazardType {
+  if (t === "biological") return "biological";
+  if (t === "chemical") return "chemical";
+  if (t === "ergonomic") return "ergonomic";
+  return "physical"; // radiation, laser, electrical, fire, equipment, environmental, other
+}
+
+/* Map service status (4 values) → view status (4 values) */
+function mapStatus(s: HazardRecord["status"]): ViewHazardStatus {
+  if (s === "controlled" || s === "retired") return "controlled";
+  if (s === "assessed") return "under_assessment";
+  return "identified";
+}
+
+/* Derive a 0–10 risk score from hazard type + status (approximation until
+   the risk_score column is added to the hazards table via migration) */
+const BASE_SCORE: Record<HazardRecord["hazardType"], number> = {
+  radiation: 9, biological: 8, chemical: 8, laser: 7, fire: 7,
+  electrical: 6, equipment: 5, ergonomic: 4, environmental: 4, other: 4,
+};
+function deriveRiskScore(r: HazardRecord): number {
+  const base = BASE_SCORE[r.hazardType] ?? 5;
+  if (r.status === "controlled") return Math.max(1, base - 4);
+  if (r.status === "assessed")   return Math.max(2, base - 2);
+  return base;
+}
+
+const CONSEQUENCE: Record<HazardRecord["hazardType"], string> = {
+  biological: "Exposure / infection",
+  chemical: "Toxic exposure",
+  ergonomic: "Repetitive strain",
+  radiation: "Radiation exposure",
+  laser: "Eye / skin injury",
+  electrical: "Electrocution",
+  fire: "Fire / burns",
+  equipment: "Equipment failure",
+  environmental: "Contamination",
+  other: "General hazard",
 };
 
-type Props = {
-  searchParams: Promise<{ message?: string; success?: string; filter?: string; search?: string }>;
-};
+function toViewHazard(r: HazardRecord): Hazard {
+  const score = deriveRiskScore(r);
+  const st = mapStatus(r.status);
+  const controlsInPlace = st === "controlled" ? 3 : st === "under_assessment" ? 1 : 0;
+  return {
+    id: r.id,
+    name: r.name,
+    location: r.location ?? "Unspecified",
+    containment: r.containment ?? "Not documented",
+    containmentLevel: r.bslLevel && r.bslLevel !== "n/a" ? r.bslLevel : "PPE req.",
+    type: mapType(r.hazardType),
+    riskScore: score,
+    consequenceNote: CONSEQUENCE[r.hazardType] ?? "General hazard",
+    controlsInPlace,
+    controlsRequired: 3,
+    ownerName: null,
+    nextReview: null,
+    status: st,
+  };
+}
 
-export default async function HazardRegisterPage({ searchParams }: Props) {
-  const params = await searchParams;
-  const filter = params.filter ?? "all";
-  const searchQuery = (params.search ?? "").trim().toLowerCase();
-
-  const statusFilter: HazardStatus | undefined =
-    filter === "identified" ? "identified" : filter === "controlled" ? "controlled" : undefined;
-
-  const [hazardsResult, adminAccess] = await Promise.all([
-    listHazards(statusFilter ? { status: statusFilter } : undefined).catch(() => null),
-    getFoundationAdminAccessSummary().catch(() => ({
-      configured: false,
-      signedIn: false,
-      isOwner: false,
-      message: "",
-    })),
-  ]);
-
-  const loadFailed = hazardsResult === null;
-  const allHazards = hazardsResult ?? [];
-  const hazards = searchQuery
-    ? allHazards.filter((h) => h.name.toLowerCase().includes(searchQuery))
-    : allHazards;
-  const totalCount = hazards.length;
-  const identifiedCount = hazards.filter((h) => h.status === "identified").length;
-  const controlledCount = hazards.filter((h) => h.status === "controlled").length;
-  const allIdentifiedCount = allHazards.filter((h) => h.status === "identified").length;
-  const allControlledCount = allHazards.filter((h) => h.status === "controlled").length;
-
-  return (
-    <AppShell>
-      <div className="page-stack">
-        <header className="page-header">
-          <div className="page-header-left">
-            <p className="section-label">Assess · Stage 3</p>
-            <h1>Hazard Register</h1>
-            <p className="muted">
-              Identify and track biological, chemical, physical, and ergonomic hazards. Uncontrolled
-              hazards feed the Predictive Engine as leading indicators.
-            </p>
-          </div>
-        </header>
-
-        {/* KPI strip */}
-        <section className="kpi-grid" aria-label="Hazard register summary">
-          <div className="kpi-card kpi-card--blue">
-            <div className="kpi-label">Total Hazards</div>
-            <div className="kpi-value">{totalCount}</div>
-            <div className="kpi-sub">Active in register</div>
-          </div>
-          <div className={`kpi-card ${identifiedCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
-            <div className="kpi-label">Uncontrolled</div>
-            <div className="kpi-value">{identifiedCount}</div>
-            <div className="kpi-sub">{identifiedCount > 0 ? "Leading risk indicators" : "None uncontrolled"}</div>
-          </div>
-          <div className="kpi-card kpi-card--amber">
-            <div className="kpi-label">Under Assessment</div>
-            <div className="kpi-value">{hazards.filter(h => h.status === "assessed").length}</div>
-            <div className="kpi-sub">Being evaluated</div>
-          </div>
-          <div className="kpi-card kpi-card--green">
-            <div className="kpi-label">Controlled</div>
-            <div className="kpi-value">{controlledCount}</div>
-            <div className="kpi-sub">Controls in place</div>
-          </div>
-        </section>
-
-        {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
-        {params.message && <p className="form-message">{params.message}</p>}
-
-        {/* Search + filter strip */}
-        <div className="command-center-link-strip">
-          <form method="get" action="/hazards" className="hazard-search-row">
-            {filter !== "all" && <input type="hidden" name="filter" value={filter} />}
-            <input
-              type="search"
-              name="search"
-              defaultValue={params.search ?? ""}
-              placeholder="Search hazards…"
-              aria-label="Search hazards by name"
-            />
-            <button className="button-secondary compact" type="submit">Search</button>
-            {searchQuery && (
-              <Link className="button-secondary compact" href={filter !== "all" ? `/hazards?filter=${filter}` : "/hazards"}>
-                Clear
-              </Link>
-            )}
-          </form>
-          <nav aria-label="Hazard filter" className="command-center-link-strip">
-            <Link
-              href="/hazards"
-              className={`button-secondary compact ${filter === "all" ? "active-filter" : ""}`}
-            >
-              All hazards
-              <span className="filter-count-badge">{allHazards.length}</span>
-            </Link>
-            <Link
-              href="/hazards?filter=identified"
-              className={`button-secondary compact ${filter === "identified" ? "active-filter" : ""}`}
-            >
-              Identified (uncontrolled)
-              <span className="filter-count-badge">{allIdentifiedCount}</span>
-            </Link>
-            <Link
-              href="/hazards?filter=controlled"
-              className={`button-secondary compact ${filter === "controlled" ? "active-filter" : ""}`}
-            >
-              Controlled
-              <span className="filter-count-badge">{allControlledCount}</span>
-            </Link>
-          </nav>
-        </div>
-
-        {/* Hazard register */}
-        <section className="panel">
-          <div className="panel-heading">
-            <div>
-              <p className="section-label">Hazard register</p>
-              <h2>
-                {searchQuery
-                  ? `${totalCount} result${totalCount !== 1 ? "s" : ""} for "${params.search}"`
-                  : `${totalCount} hazard${totalCount !== 1 ? "s" : ""}`}
-              </h2>
-            </div>
-          </div>
-
-          {loadFailed ? (
-            <DataLoadError resource="hazard register" />
-          ) : hazards.length === 0 ? (
-            <div className="empty-state-card">
-              <p className="empty-state-title">No hazards registered yet</p>
-              <p className="muted">Add your first hazard below to begin tracking risk controls.</p>
-            </div>
-          ) : (
-            <div className="action-list">
-              {hazards.map((hz) => (
-                <article className="action-row" key={hz.id}>
-                  <div>
-                    <strong>{hz.name}</strong>
-                    <span className="status-pill">{hazardTypeLabels[hz.hazardType]}</span>
-                    <span className={STATUS_CLASS[hz.status]}>{hazardStatusLabels[hz.status]}</span>
-                    <small className="muted">
-                      {hz.bslLevel ? `${hz.bslLevel} · ` : ""}
-                      {hz.location ? `${hz.location} · ` : ""}
-                      {hz.containment ? `Containment: ${hz.containment}` : "No containment recorded"}
-                    </small>
-                  </div>
-                  {adminAccess.signedIn && hz.status !== "retired" && (
-                    <form action={archiveHazardAction}>
-                      <input type="hidden" name="id" value={hz.id} />
-                      <button className="button-secondary compact" type="submit">Retire</button>
-                    </form>
-                  )}
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Add hazard form */}
-        {adminAccess.signedIn && (
-          <section className="panel">
-            <div className="panel-heading">
-              <div>
-                <p className="section-label">Identify hazard</p>
-                <h2>Add a hazard to the register</h2>
-              </div>
-              <Plus size={22} />
-            </div>
-            <form action={createHazardAction} className="stacked-form">
-              <label>
-                Hazard name <span aria-hidden="true">*</span>
-                <input name="name" type="text" placeholder="e.g. Aerosol generation during centrifugation" required />
-              </label>
-              <div className="form-grid">
-                <label>
-                  Hazard type
-                  <select name="hazardType" defaultValue="biological">
-                    {(Object.keys(hazardTypeLabels) as HazardType[]).map((t) => (
-                      <option key={t} value={t}>{hazardTypeLabels[t]}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Risk family
-                  <select name="riskFamily" defaultValue="">
-                    <option value="">— Select —</option>
-                    {riskFamilyOptions.map((f) => (
-                      <option key={f.id} value={f.id}>{f.label}</option>
-                    ))}
-                  </select>
-                  <span className="muted">
-                    Links this hazard to a predictive risk category — uncontrolled hazards in the same family raise forecasted risk together.
-                  </span>
-                </label>
-                <label>
-                  BSL level
-                  <select name="bslLevel" defaultValue="n/a">
-                    {bslLevels.map((b) => (
-                      <option key={b} value={b}>{b}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Status
-                  <select name="status" defaultValue="identified">
-                    {(Object.keys(hazardStatusLabels) as HazardStatus[])
-                      .filter((s) => s !== "retired")
-                      .map((s) => (
-                        <option key={s} value={s}>{hazardStatusLabels[s]}</option>
-                      ))}
-                  </select>
-                </label>
-                <label>
-                  Location
-                  <input name="location" type="text" placeholder="e.g. Lab 101" />
-                </label>
-                <label>
-                  Associated material
-                  <input name="associatedMaterial" type="text" placeholder="e.g. Lentiviral vector" />
-                </label>
-                <label>
-                  Containment / control
-                  <input name="containment" type="text" placeholder="e.g. BSC Class II + sealed rotor" />
-                </label>
-              </div>
-              <label>
-                Description
-                <textarea name="description" rows={2} placeholder="What is the hazard and how could it cause harm?" />
-              </label>
-              <button className="button-primary" type="submit">Add hazard</button>
-            </form>
-          </section>
-        )}
-
-        {/* AI guardrail */}
-        <section className="panel inline-action-panel">
-          <div>
-            <p className="section-label">AI Guardrail</p>
-            <h2>Hazard identification supports — it does not replace — the safety officer</h2>
-            <p className="muted">
-              Containment level, BSL assignment, and control adequacy must be verified by a qualified
-              biosafety professional. New hazards are <strong>Draft — Human Review Required</strong>.
-            </p>
-          </div>
-          <Brain size={24} />
-        </section>
-      </div>
-    </AppShell>
-  );
+export default async function HazardRegisterPage() {
+  const records = await listHazards().catch(() => []);
+  const hazards = records.map(toViewHazard);
+  return <HazardRegisterWrapper hazards={hazards} />;
 }
