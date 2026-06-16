@@ -72,8 +72,7 @@ export default async function CapaListPage({ searchParams }: Props) {
     (r) => r.dueDate && new Date(r.dueDate) < new Date() && r.status !== "closed" && r.status !== "void",
   ).length;
 
-  const now = Date.now();
-  const nowDate = new Date(now);
+  const nowDate = new Date();
 
   const viewCapas: ViewCapa[] = allRecords.map((r) => {
     const dueDt     = r.dueDate ? new Date(r.dueDate) : null;

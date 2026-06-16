@@ -44,7 +44,7 @@ export default async function IncidentReportingPage({ searchParams }: Props) {
   const oshaCount          = allRecords.filter((r) => r.isOshaRecordable).length;
 
   // Map to ViewIncident — compute OSHA deadline from occurredAt
-  const now = Date.now();
+  const now = new Date().getTime();
   const viewIncidents: ViewIncident[] = allRecords.map((r) => {
     const ms     = r.occurredAt ? now - new Date(r.occurredAt).getTime() : 0;
     const daysAgo = Math.max(0, Math.floor(ms / 86400000));
