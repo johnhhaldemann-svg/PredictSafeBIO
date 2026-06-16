@@ -316,6 +316,14 @@ export function WorkbenchClient({
     }));
   }
 
+  function removeSignal(index: number) {
+    pulseAnalysis();
+    setInput((current) => ({
+      ...current,
+      signals: (current.signals ?? []).filter((_, i) => i !== index)
+    }));
+  }
+
   async function saveAssessment() {
     setSaveState("saving");
     setSaveMessage("Saving assessment and audit event...");
@@ -446,26 +454,79 @@ export function WorkbenchClient({
         <button className="button-secondary compact" type="button" onClick={() => setActiveTab("risk-register")}>Risk Register</button>
         <button className="button-secondary compact" type="button" onClick={() => setActiveTab("analytics")}>Analytics</button>
       </nav>
-      <section className="kpi-grid" aria-label="Workbench summary">
-        <div className={`kpi-card ${assessment.level === "critical" ? "kpi-card--red" : assessment.level === "high" ? "kpi-card--amber" : "kpi-card--blue"}`}>
-          <div className="kpi-label">{scoreLabel}</div>
-          <div className="kpi-value">{assessment.score}</div>
-          <div className="kpi-sub">{assessment.level} risk · {assessment.confidence} confidence</div>
+      <section className="kpi-strip" aria-label="Workbench summary">
+        {(() => {
+          const scoreColor = assessment.level === "critical" ? "#E24B4A" : assessment.level === "high" ? "#EF9F27" : "#639922";
+          const scoreBg    = assessment.level === "critical" ? "#FCEBEB" : assessment.level === "high" ? "#FAEEDA" : "#EAF3DE";
+          return (
+            <div className="kpi-card">
+              <div className="kpi-icon" style={{ background: scoreBg }}>
+                <ShieldCheck size={18} color={scoreColor} aria-hidden="true" />
+              </div>
+              <div className="kpi-body">
+                <div className="kpi-label">{scoreLabel}</div>
+                <div className="kpi-row">
+                  <span className="kpi-val" style={{ color: scoreColor }}>{assessment.score}</span>
+                  <span className="kpi-badge" style={{ background: scoreBg, color: scoreColor }}>{assessment.level}</span>
+                </div>
+                <div className="kpi-trend">{assessment.confidence} confidence</div>
+              </div>
+            </div>
+          );
+        })()}
+        <div className="kpi-card">
+          <div className="kpi-icon" style={{ background: commandSummary.criticalRiskCount > 0 ? "#FCEBEB" : "#EAF3DE" }}>
+            <AlertCircle size={18} color={commandSummary.criticalRiskCount > 0 ? "#E24B4A" : "#639922"} aria-hidden="true" />
+          </div>
+          <div className="kpi-body">
+            <div className="kpi-label">Critical Risks</div>
+            <div className="kpi-row">
+              <span className="kpi-val">{commandSummary.criticalRiskCount}</span>
+            </div>
+            <div className="kpi-trend">{commandSummary.criticalRiskCount > 0 ? "Require immediate review" : "No critical signals"}</div>
+          </div>
         </div>
-        <div className={`kpi-card ${commandSummary.criticalRiskCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
-          <div className="kpi-label">Critical Risks</div>
-          <div className="kpi-value">{commandSummary.criticalRiskCount}</div>
-          <div className="kpi-sub">{commandSummary.criticalRiskCount > 0 ? "Require immediate review" : "No critical signals"}</div>
+        <div className="kpi-card">
+          <div className="kpi-icon" style={{ background: "#E6F1FB" }}>
+            <ClipboardList size={18} color="#185FA5" aria-hidden="true" />
+          </div>
+          <div className="kpi-body">
+            <div className="kpi-label">Assessments Saved</div>
+            <div className="kpi-row">
+              <span className="kpi-val">{commandSummary.assessmentCount}</span>
+            </div>
+            <div className="kpi-trend">In risk register</div>
+          </div>
         </div>
-        <div className="kpi-card kpi-card--blue">
-          <div className="kpi-label">Assessments Saved</div>
-          <div className="kpi-value">{commandSummary.assessmentCount}</div>
-          <div className="kpi-sub">In risk register</div>
-        </div>
-        <div className={`kpi-card ${commandSummary.readinessScore >= 70 ? "kpi-card--green" : commandSummary.readinessScore >= 40 ? "kpi-card--amber" : "kpi-card--red"}`}>
-          <div className="kpi-label">Audit Readiness</div>
-          <div className="kpi-value">{commandSummary.readinessScore}%</div>
-          <div className="kpi-sub">{commandSummary.readinessTrend.replace(/_/g, " ")}</div>
+        {(() => {
+          const readColor = commandSummary.readinessScore >= 70 ? "#639922" : commandSummary.readinessScore >= 40 ? "#EF9F27" : "#E24B4A";
+          const readBg    = commandSummary.readinessScore >= 70 ? "#EAF3DE" : commandSummary.readinessScore >= 40 ? "#FAEEDA" : "#FCEBEB";
+          return (
+            <div className="kpi-card">
+              <div className="kpi-icon" style={{ background: readBg }}>
+                <CheckCircle2 size={18} color={readColor} aria-hidden="true" />
+              </div>
+              <div className="kpi-body">
+                <div className="kpi-label">Audit Readiness</div>
+                <div className="kpi-row">
+                  <span className="kpi-val" style={{ color: readColor }}>{commandSummary.readinessScore}%</span>
+                </div>
+                <div className="kpi-trend">{commandSummary.readinessTrend.replace(/_/g, " ")}</div>
+              </div>
+            </div>
+          );
+        })()}
+        <div className="kpi-card">
+          <div className="kpi-icon" style={{ background: "#EEEDFE" }}>
+            <Zap size={18} color="#534AB7" aria-hidden="true" />
+          </div>
+          <div className="kpi-body">
+            <div className="kpi-label">Active Signals</div>
+            <div className="kpi-row">
+              <span className="kpi-val">{input.signals?.length ?? 0}</span>
+            </div>
+            <div className="kpi-trend">In current assessment</div>
+          </div>
         </div>
       </section>
 
@@ -653,6 +714,32 @@ export function WorkbenchClient({
             <Plus size={15} />
             Add custom signal
           </button>
+
+          {(input.signals?.length ?? 0) > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <p style={{ margin: "0 0 6px", fontSize: 12, fontWeight: 600, color: "var(--text2)" }}>
+                {input.signals!.length} signal{input.signals!.length !== 1 ? "s" : ""} in this assessment:
+              </p>
+              <ul className="signal-list">
+                {input.signals!.map((sig, i) => {
+                  const sevColor = sig.severity === "high" || sig.severity === "critical" ? "#A32D2D" : sig.severity === "medium" ? "#854F0B" : "#3B6D11";
+                  const sevBg    = sig.severity === "high" || sig.severity === "critical" ? "#FCEBEB" : sig.severity === "medium" ? "#FAEEDA" : "#EAF3DE";
+                  return (
+                    <li key={i} className="signal-item">
+                      <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 5, background: sevBg, color: sevColor }}>
+                        {sig.severity ?? "med"}
+                      </span>
+                      <div className="signal-item-body">
+                        <strong style={{ fontSize: 12, display: "block" }}>{sig.label}</strong>
+                        <span style={{ fontSize: 11, color: "var(--muted)" }}>{sig.type.replace(/_/g, " ")}</span>
+                      </div>
+                      <button className="signal-remove-btn" type="button" onClick={() => removeSignal(i)} title="Remove signal">×</button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
         </div>
         </section>
 
@@ -673,10 +760,37 @@ export function WorkbenchClient({
           </div>
         </div>
         <div className="score-wrap">
-          <span className="score">{assessment.score}</span>
+          {(() => {
+            const scoreColor = assessment.level === "critical" ? "#E24B4A" : assessment.level === "high" ? "#EF9F27" : "#639922";
+            const dashArray  = 135;
+            const dashOffset = dashArray - (assessment.score / 100) * dashArray;
+            return (
+              <div style={{ flexShrink: 0, textAlign: "center" }}>
+                <svg width="96" height="64" viewBox="0 0 110 70" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="wb-score-rg" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%"   stopColor="#639922" />
+                      <stop offset="40%"  stopColor="#EF9F27" />
+                      <stop offset="75%"  stopColor="#E24B4A" />
+                      <stop offset="100%" stopColor="#A32D2D" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M12 62 A43 43 0 0 1 98 62" fill="none" stroke="#F0F4F8" strokeWidth="12" strokeLinecap="round" />
+                  <path d="M12 62 A43 43 0 0 1 98 62" fill="none" stroke="url(#wb-score-rg)" strokeWidth="12" strokeLinecap="round" strokeDasharray={dashArray} strokeDashoffset={dashOffset} />
+                  <text x="55" y="56" textAnchor="middle" fontSize="22" fontWeight="700" fill={scoreColor}>{assessment.score}</text>
+                </svg>
+                <div style={{ fontSize: 11, fontWeight: 600, color: scoreColor, marginTop: 2 }}>
+                  {assessment.level.charAt(0).toUpperCase() + assessment.level.slice(1)} Risk
+                </div>
+              </div>
+            );
+          })()}
           <div>
-            <p className="score-label">Risk score</p>
+            <p className="score-label">{scoreLabel}</p>
             <p className="muted">Confidence: {assessment.confidence}</p>
+            <p style={{ fontSize: 11, marginTop: 6, color: "var(--text2)" }}>
+              {trendLabel(commandSummary.bioRiskTrend)}
+            </p>
           </div>
         </div>
         <p className="explanation">{assessment.explanation}</p>
@@ -735,8 +849,35 @@ export function WorkbenchClient({
         <aside className="panel action-panel" aria-label="Human review and audit preview">
         <div className="draft-banner">
           <AlertTriangle size={18} />
-          Draft - Human Review Required
+          Draft — Human Review Required
         </div>
+
+        {/* Readiness mini-gauge */}
+        {(() => {
+          const r = commandSummary.readinessScore;
+          const col = r >= 70 ? "#639922" : r >= 40 ? "#EF9F27" : "#E24B4A";
+          const bg  = r >= 70 ? "#EAF3DE" : r >= 40 ? "#FAEEDA" : "#FCEBEB";
+          const circ = 2 * Math.PI * 16;
+          const offset = circ - (r / 100) * circ;
+          return (
+            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, background: "var(--panel-soft)", border: "0.5px solid var(--bdr)", marginBottom: 16 }}>
+              <svg width="44" height="44" viewBox="0 0 44 44" style={{ flexShrink: 0 }} aria-hidden="true">
+                <circle cx="22" cy="22" r="16" fill="none" stroke="#E6EEF6" strokeWidth="5" />
+                <circle cx="22" cy="22" r="16" fill="none" stroke={col} strokeWidth="5"
+                  strokeDasharray={circ} strokeDashoffset={offset}
+                  strokeLinecap="round" transform="rotate(-90 22 22)" />
+                <text x="22" y="26" textAnchor="middle" fontSize="10" fontWeight="700" fill={col}>{r}%</text>
+              </svg>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text)", marginBottom: 2 }}>Audit Readiness</div>
+                <div style={{ fontSize: 11, color: "var(--text2)" }}>{commandSummary.readinessTrend.replace(/_/g, " ")}</div>
+                <div style={{ fontSize: 10, color: col, fontWeight: 600, marginTop: 2 }}>{r >= 70 ? "Strong — audit-ready" : r >= 40 ? "Moderate — gaps present" : "Weak — action required"}</div>
+              </div>
+              <Link href="/foundation" style={{ marginLeft: "auto", fontSize: 11, color: "var(--blue)", fontWeight: 500, whiteSpace: "nowrap" }}>View →</Link>
+            </div>
+          );
+        })()}
+
         <h2>Recommended owner and next steps</h2>
         <div className="action-list">
           {assessment.recommendedActions.map((action) => (
@@ -785,14 +926,25 @@ export function WorkbenchClient({
           </div>
         </div>
         <div className="audit-preview">
-          <h3>Audit preview</h3>
-          <p>
-            Assessment run would log score {assessment.score}, level {assessment.level}, confidence {assessment.confidence}, and human review
-            status.
-          </p>
-          <button className="button-primary" type="button" onClick={saveAssessment} disabled={saveState === "saving"}>
+          <h3>Audit log preview</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 12px", fontSize: 11, marginBottom: 12, padding: "10px 12px", background: "var(--panel-soft)", borderRadius: 8, border: "0.5px solid var(--bdr)" }}>
+            {[
+              ["Score", String(assessment.score)],
+              ["Level", assessment.level],
+              ["Confidence", assessment.confidence],
+              ["Signals", String(input.signals?.length ?? 0)],
+              ["Human review", assessment.humanReviewRequired ? "Required" : "Not required"],
+              ["Action timeframe", assessment.actionTimeframe.replace(/_/g, " ")],
+            ].map(([label, val]) => (
+              <div key={label}>
+                <div style={{ fontWeight: 600, color: "var(--muted)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</div>
+                <div style={{ color: "var(--text)", fontWeight: 500 }}>{val}</div>
+              </div>
+            ))}
+          </div>
+          <button className="button-primary" type="button" onClick={saveAssessment} disabled={saveState === "saving"} style={{ width: "100%" }}>
             <Save size={16} />
-            {saveState === "saving" ? "Saving..." : "Save assessment"}
+            {saveState === "saving" ? "Saving..." : "Save to Risk Register"}
           </button>
           <p className={`save-message save-${saveState}`}>{saveMessage}</p>
           {saveState === "blocked" ? (
