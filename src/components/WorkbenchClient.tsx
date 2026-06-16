@@ -150,7 +150,7 @@ export function WorkbenchClient({
   commandCenter,
   assessments = [],
   initialTab = "command-center",
-  scoreLabel = "BioRisk score",
+  scoreLabel = "HSE risk score",
 }: {
   assignees?: FoundationAssigneeOption[];
   canManageFoundationActions?: boolean;

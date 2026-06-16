@@ -1,274 +1,154 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
-import { AlertTriangle, ClipboardCheck, Lock, Plus, ShieldCheck } from "lucide-react";
-import Link from "next/link";
-
-export const metadata: Metadata = { title: "Permits – PredictSafe" };
-import { AppShell } from "@/components/AppShell";
 import {
   listPermits,
   permitTypeLabels,
-  closeoutStatusLabels,
-  type CloseoutStatus
+  type PermitRecord,
+  type PermitType,
+  type CloseoutStatus,
 } from "@/lib/supabase/permits-service";
 import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
-import { createPermitAction, updatePermitStatusAction } from "./actions";
-import { DataLoadError } from "@/components/DataLoadError";
+import { getAuthSummary } from "@/lib/supabase/account-service";
+import WorkPermits, { type Permit, type Control } from "@/components/WorkPermits";
 
-const STATUS_CLASS: Record<CloseoutStatus, string> = {
-  draft: "",
-  pending_approval: "status-needs-review",
-  approved: "status-needs-review",
-  active: "status-needs-review",
-  closed: "status-current",
-  voided: ""
+export const metadata: Metadata = { title: "Work Permits – PredictSafe" };
+
+/* ─── Permit-type icons ─────────────────────────────────────────────────── */
+
+const ICON_MAP: Record<PermitType, string> = {
+  hot_work:         "🔥",
+  loto:             "🔒",
+  contractor:       "👷",
+  confined_space:   "⚠️",
+  line_break:       "🔧",
+  cleanroom:        "🧬",
+  utility_shutdown: "⚡",
+  chemical_transfer:"🧪",
 };
 
-type Props = {
-  searchParams: Promise<{ message?: string; success?: string; filter?: string }>;
+/* ─── Control-key → human label ─────────────────────────────────────────── */
+
+const CONTROL_LABELS: Record<string, string> = {
+  fire_watch:           "Fire watch assigned",
+  fire_extinguisher:    "Extinguisher staged",
+  combustibles_cleared: "Combustibles cleared (10 m)",
+  permit_posted:        "Hot-work permit posted",
+  gas_test:             "Gas / atmosphere test logged",
+  loto_applied:         "LOTO applied",
+  zero_energy_verified: "Zero-energy verified",
+  tags_applied:         "Tags applied",
+  staff_notified:       "Affected staff notified",
+  energy_identified:    "Energy sources identified",
+  isolation_locked:     "Isolation points locked",
+  contractor_induction: "Contractor induction complete",
+  insurance_on_file:    "Insurance / COI on file",
+  biosafety_briefing:   "Biosafety briefing",
+  decontamination_plan: "Decontamination plan",
+  airflow_lockout:      "BSC / airflow lockout",
+  ppe_required:         "PPE requirements confirmed",
+  escort_required:      "Escort assigned",
+  ventilation:          "Ventilation verified",
 };
 
-export default async function PermitsPage({ searchParams }: Props) {
-  const params = await searchParams;
-  const filter = params.filter ?? "all";
+/* ─── Status map ────────────────────────────────────────────────────────── */
 
-  const [allPermitsResult, adminAccess] = await Promise.all([
-    listPermits().catch(() => null),
-    getFoundationAdminAccessSummary().catch(() => ({
-      configured: false, signedIn: false, isOwner: false, message: ""
-    }))
+const STATUS_MAP: Record<CloseoutStatus, Permit["status"]> = {
+  draft:            "draft",
+  pending_approval: "draft",
+  approved:         "approved",
+  active:           "active",
+  closed:           "closed",
+  voided:           "closed",
+};
+
+/* ─── Mapping ───────────────────────────────────────────────────────────── */
+
+function mapRecord(p: PermitRecord): Permit {
+  const now     = new Date().getTime();
+  const startMs = p.startTime ? new Date(p.startTime).getTime() : null;
+  const stopMs  = p.stopTime  ? new Date(p.stopTime).getTime()  : null;
+
+  // Controls — each key maps to a label; all marked done if isolationVerified
+  const controls: Control[] = (p.requiredControls ?? []).map((key) => ({
+    label: CONTROL_LABELS[key] ?? key.replace(/_/g, " "),
+    done:  p.isolationVerified,
+  }));
+  if (controls.length === 0) {
+    controls.push({ label: "No controls specified", done: false });
+  }
+
+  // Clock
+  let clock      = "Draft";
+  let clockState: Permit["clockState"] = "draft";
+  if (p.closeoutStatus !== "draft" && p.closeoutStatus !== "pending_approval") {
+    if (startMs && startMs > now) {
+      const hrs = Math.round((startMs - now) / 3_600_000);
+      clock = `Starts in ${hrs} h`; clockState = "scheduled";
+    } else if (startMs) {
+      const hrs = Math.round((now - startMs) / 3_600_000);
+      clock = `Open ${hrs} h`; clockState = p.isOverdue ? "over" : "ok";
+    }
+  }
+
+  // Window label
+  const fmt = (iso: string | null | undefined) =>
+    iso
+      ? new Date(iso).toLocaleString("en-US", { month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" })
+      : "";
+  const window = startMs
+    ? `Started ${fmt(p.startTime)} · Ends ${stopMs ? fmt(p.stopTime) : "TBD"}`
+    : stopMs
+    ? `Ends ${fmt(p.stopTime)}`
+    : "Not scheduled";
+
+  return {
+    id:         p.id,
+    type:       permitTypeLabels[p.permitType],
+    icon:       ICON_MAP[p.permitType] ?? "📋",
+    status:     STATUS_MAP[p.closeoutStatus] ?? "draft",
+    over24:     p.isOverdue,
+    location:   p.location ?? "Unknown location",
+    work:       p.taskDescription ?? "No description",
+    window,
+    clock,
+    clockState,
+    hazards:    p.hazards ?? [],
+    controls,
+    holder:     p.createdBy ?? "Unknown",
+    issuedBy:   "Facilities",
+    approvedBy: (p.closeoutStatus === "approved" || p.closeoutStatus === "active")
+      ? "EHS Manager" : null,
+  };
+}
+
+/* ─── Page ──────────────────────────────────────────────────────────────── */
+
+function safeSettle<T>(promise: Promise<T>, fallback: T): Promise<T> {
+  return promise.catch(() => fallback);
+}
+
+export default async function PermitsPage() {
+  const [permitsResult, adminAccess, auth] = await Promise.all([
+    safeSettle(listPermits(), null),
+    safeSettle(getFoundationAdminAccessSummary(), {
+      configured: false, signedIn: false, isOwner: false, message: "",
+    }),
+    safeSettle(getAuthSummary(), {
+      configured: false, signedIn: false, needsOnboarding: false,
+    }),
   ]);
 
-  const loadFailed = allPermitsResult === null;
-  const allPermits = allPermitsResult ?? [];
-  const permits = allPermits.filter((p) => {
-    if (filter === "active")  return p.closeoutStatus === "active" || p.closeoutStatus === "approved";
-    if (filter === "overdue") return p.isOverdue;
-    if (filter === "draft")   return p.closeoutStatus === "draft";
-    return true;
-  });
-
-  const activeCount  = allPermits.filter((p) => p.closeoutStatus === "active" || p.closeoutStatus === "approved").length;
-  const overdueCount = allPermits.filter((p) => p.isOverdue).length;
-  const draftCount   = allPermits.filter((p) => p.closeoutStatus === "draft").length;
-  const filterCounts = {
-    all: allPermits.length,
-    active: activeCount,
-    overdue: overdueCount,
-    draft: draftCount,
-  };
+  const permits = permitsResult ? permitsResult.map(mapRecord) : undefined;
 
   return (
-    <AppShell>
-      <div className="page-stack">
-        <header className="page-header">
-          <div className="page-header-left">
-            <p className="section-label">Operate · Permit to Work</p>
-            <h1>Controlled Work Permits</h1>
-            <p className="muted">
-              LOTO, hot work, confined space, contractor, and chemical transfer permits.
-              No work may begin without an Approved permit on file.
-            </p>
-          </div>
-          <Link className="button-secondary" href="/inspections">Inspections →</Link>
-        </header>
-
-        {/* KPI strip */}
-        <section className="kpi-grid" aria-label="Permit summary">
-          <div className="kpi-card kpi-card--blue">
-            <div className="kpi-label">Active Permits</div>
-            <div className="kpi-value">{activeCount}</div>
-            <div className="kpi-sub">Approved or in-progress</div>
-          </div>
-          <div className={`kpi-card ${overdueCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
-            <div className="kpi-label">Overdue (&gt;24 hrs)</div>
-            <div className="kpi-value">{overdueCount}</div>
-            <div className="kpi-sub">{overdueCount > 0 ? "Close or escalate" : "None overdue"}</div>
-          </div>
-          <div className={`kpi-card ${draftCount > 0 ? "kpi-card--amber" : "kpi-card--green"}`}>
-            <div className="kpi-label">Drafts</div>
-            <div className="kpi-value">{draftCount}</div>
-            <div className="kpi-sub">{draftCount > 0 ? "Awaiting approval" : "None pending"}</div>
-          </div>
-          <div className="kpi-card kpi-card--green">
-            <div className="kpi-label">Closed</div>
-            <div className="kpi-value">{allPermits.filter(p => p.closeoutStatus === "closed").length}</div>
-            <div className="kpi-sub">Completed safely</div>
-          </div>
-        </section>
-
-        {overdueCount > 0 && (
-          <div className="ai-context-bar ai-context-bar--danger">
-            <AlertTriangle size={15} />
-            <span>
-              <strong>{overdueCount} permit{overdueCount !== 1 ? "s" : ""} open beyond 24 hours.</strong>{" "}
-              Permits left open past their stop time must be closed or escalated immediately.
-            </span>
-            <Link className="ai-fill-btn ai-fill-btn--danger" href="/permits?filter=overdue">View overdue</Link>
-          </div>
-        )}
-
-        {params.success && <div className="verification-pass-box"><span>✓ {params.success}</span></div>}
-        {params.message && <p className="form-message">{params.message}</p>}
-
-        {/* Filter strip */}
-        <nav className="command-center-link-strip" aria-label="Permit filter">
-          {(["all", "active", "overdue", "draft"] as const).map((f) => (
-            <Link
-              key={f}
-              href={f === "all" ? "/permits" : `/permits?filter=${f}`}
-              className={`button-secondary compact ${filter === f ? "active-filter" : ""}`}
-            >
-              {f === "all" ? "All permits" : f === "active" ? "Active" : f === "overdue" ? "Overdue" : "Drafts"}
-              <span className="filter-count-badge">{filterCounts[f] ?? 0}</span>
-            </Link>
-          ))}
-        </nav>
-
-        {/* Permit register */}
-        <section className="panel">
-          <div className="panel-heading">
-            <div>
-              <p className="section-label">Permit register</p>
-              <h2>
-                {permits.length === allPermits.length
-                  ? `${allPermits.length} permit${allPermits.length !== 1 ? "s" : ""}`
-                  : `${permits.length} of ${allPermits.length} shown`}
-              </h2>
-            </div>
-          </div>
-
-          {loadFailed ? (
-            <DataLoadError resource="work permits" />
-          ) : permits.length === 0 ? (
-            <div className="empty-state-card">
-              <p className="empty-state-title">No permits found</p>
-              <p className="muted">Create a controlled work permit below to begin tracking permit-to-work activity.</p>
-            </div>
-          ) : (
-            <div className="action-list">
-              {permits.map((permit) => (
-                <article className="action-row" key={permit.id}>
-                  <div>
-                    <strong>{permitTypeLabels[permit.permitType]}</strong>
-                    <span className={STATUS_CLASS[permit.closeoutStatus]}>
-                      {closeoutStatusLabels[permit.closeoutStatus]}
-                    </span>
-                    {permit.isCritical && (
-                      <span className="status-overdue">⚠ Open &gt;24 hrs</span>
-                    )}
-                  </div>
-                  <p>
-                    {permit.location ?? "No location set"}
-                    {permit.taskDescription ? ` · ${permit.taskDescription}` : ""}
-                    {permit.startTime
-                      ? ` · Started ${new Date(permit.startTime).toLocaleString()}`
-                      : ""}
-                    {permit.stopTime
-                      ? ` · Ends ${new Date(permit.stopTime).toLocaleString()}`
-                      : ""}
-                  </p>
-                  {permit.hazards && permit.hazards.length > 0 && (
-                    <p className="muted">
-                      Hazards: {permit.hazards.join(", ")}
-                    </p>
-                  )}
-
-                  {adminAccess.signedIn &&
-                    permit.closeoutStatus !== "closed" &&
-                    permit.closeoutStatus !== "voided" && (
-                    <form action={updatePermitStatusAction} className="form-action-row">
-                      <input type="hidden" name="id" value={permit.id} />
-                      <select name="closeoutStatus" defaultValue={permit.closeoutStatus}>
-                        <option value="draft">Draft</option>
-                        <option value="pending_approval">Submit for approval</option>
-                        <option value="approved">Approve</option>
-                        <option value="active">Activate (work starting)</option>
-                        <option value="closed">Close (work complete)</option>
-                        <option value="voided">Void</option>
-                      </select>
-                      <input name="notes" type="text" placeholder="Closeout notes (optional)" />
-                      <button className="button-secondary compact" type="submit">Update status</button>
-                    </form>
-                  )}
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Create permit form */}
-        {adminAccess.signedIn && (
-          <section className="panel">
-            <div className="panel-heading">
-              <div>
-                <p className="section-label">New permit</p>
-                <h2>Create a controlled work permit</h2>
-              </div>
-              <Plus size={22} />
-            </div>
-            <form action={createPermitAction} className="stacked-form">
-              <div className="form-grid">
-                <label>
-                  Permit type <span aria-hidden="true">*</span>
-                  <select name="permitType" defaultValue="contractor" required>
-                    <option value="loto">Lockout / Tagout (LOTO)</option>
-                    <option value="hot_work">Hot Work</option>
-                    <option value="line_break">Line Break</option>
-                    <option value="confined_space">Confined Space Entry</option>
-                    <option value="contractor">Contractor Work</option>
-                    <option value="cleanroom">Cleanroom Access</option>
-                    <option value="utility_shutdown">Utility Shutdown</option>
-                    <option value="chemical_transfer">Chemical Transfer</option>
-                  </select>
-                </label>
-                <label>
-                  Location
-                  <input name="location" type="text" placeholder="e.g. Lab 201, Mechanical Room" />
-                </label>
-              </div>
-              <label>
-                Task description
-                <textarea name="taskDescription" rows={2} placeholder="e.g. Welding repair on exhaust flange — BSC room 201" />
-              </label>
-              <div className="form-grid">
-                <label>
-                  Planned start
-                  <input name="startTime" type="datetime-local" />
-                </label>
-                <label>
-                  Planned end
-                  <input name="stopTime" type="datetime-local" />
-                </label>
-              </div>
-              <label>
-                Hazards identified (comma-separated)
-                <input name="hazards" type="text" placeholder="e.g. fire, fumes, electrical, biological" />
-              </label>
-              <p className="muted">
-                Permit starts in Draft status. Submit for approval, then activate when work begins. Close when complete.
-              </p>
-              <button className="button-primary" type="submit">Create permit</button>
-            </form>
-          </section>
-        )}
-
-        {/* AI guardrail */}
-        <section className="panel inline-action-panel">
-          <div>
-            <p className="section-label">AI Guardrail</p>
-            <h2>Permit authorization requires qualified human sign-off</h2>
-            <p className="muted">
-              AI may flag overdue permits and missing controls, but permit approval,
-              isolation verification, and closeout authorization must be performed by
-              a qualified EHS professional or authorized approver. No work may begin
-              without an <strong>Approved</strong> permit on file.
-            </p>
-          </div>
-          <ShieldCheck size={24} />
-        </section>
-      </div>
-    </AppShell>
+    <WorkPermits
+      permits={permits}
+      auth={{
+        isSignedIn: adminAccess.signedIn,
+        isOwner:    adminAccess.isOwner,
+        userEmail:  auth.userEmail ?? null,
+      }}
+    />
   );
 }

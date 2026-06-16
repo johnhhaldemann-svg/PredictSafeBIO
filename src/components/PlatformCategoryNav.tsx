@@ -94,7 +94,7 @@ const categories: Category[] = [
     href: "/",
     icon: Activity,
     subItems: [
-      { href: "/",                    label: "Dashboard",           icon: Gauge,      desc: "Assess → Plan → Operate → Monitor overview" },
+      { href: "/",                    label: "Operating Picture",   icon: Gauge,      desc: "Assess → Plan → Operate → Monitor overview" },
       { href: "/predictive-engine",   label: "Predictive Engine",   icon: Brain,      desc: "Forward-looking risk forecast & early warnings", badge: "new" },
       { href: "/risk-command-center", label: "Risk Monitor",        icon: Activity,   desc: "Prioritized HSE risk signals" },
       { href: "/monitoring/exposure", label: "Exposure Monitoring", icon: FlaskConical, desc: "Live air quality and biological exposure levels", badge: "live" },

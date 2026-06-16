@@ -5,26 +5,37 @@ import {
   createRiskRegisterEntry,
   updateRiskRegisterStatus,
   type ControlType,
-  type RiskLevel,
   type RiskStatus,
+  type RegulationFramework,
+  type ComplianceGap,
 } from "@/lib/supabase/risk-register-service";
+import type { ControlEffectivenessTier } from "@/lib/risk/scoring";
 import { authMessage, authSuccess } from "@/lib/auth-routing";
 
 const PATH = "/plan/risk-register";
 
 export async function createRiskRegisterEntryAction(formData: FormData) {
-  const riskItem = String(formData.get("riskItem") ?? "").trim();
-  if (!riskItem) redirect(authMessage(PATH, "Risk item is required."));
+  const regulation = String(formData.get("regulation") ?? "").trim() as RegulationFramework;
+  const requirementDetail = String(formData.get("requirementDetail") ?? "").trim();
+  const activity = String(formData.get("activity") ?? "").trim();
+  const complianceGap = String(formData.get("complianceGap") ?? "").trim() as ComplianceGap;
+
+  if (!regulation) redirect(authMessage(PATH, "Regulation is required."));
+  if (!activity && !requirementDetail) redirect(authMessage(PATH, "Activity or requirement detail is required."));
+  if (!complianceGap) redirect(authMessage(PATH, "Compliance gap is required."));
+
   const result = await createRiskRegisterEntry({
-    riskItem,
+    regulation,
+    requirementDetail,
+    activity,
+    complianceGap,
+    controlTier: (String(formData.get("controlTier") ?? "").trim() || "none") as ControlEffectivenessTier,
     area: String(formData.get("area") ?? "").trim() || undefined,
     process: String(formData.get("process") ?? "").trim() || undefined,
     sourceBasis: String(formData.get("sourceBasis") ?? "").trim() || undefined,
     controlType: (String(formData.get("controlType") ?? "").trim() || undefined) as ControlType | undefined,
     controlDescription: String(formData.get("controlDescription") ?? "").trim() || undefined,
     frequency: String(formData.get("frequency") ?? "").trim() || undefined,
-    inherentRisk: (String(formData.get("inherentRisk") ?? "").trim() || undefined) as RiskLevel | undefined,
-    residualRisk: (String(formData.get("residualRisk") ?? "").trim() || undefined) as RiskLevel | undefined,
     programName: String(formData.get("programName") ?? "").trim() || undefined,
   });
   redirect(result.ok ? authSuccess(PATH, result.message) : authMessage(PATH, result.message));

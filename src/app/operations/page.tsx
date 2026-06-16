@@ -42,7 +42,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
             <p className="section-label">Operate · Hub</p>
             <h1>Operations</h1>
             <p className="muted">
-              Linked HSE records, live module signals, BioRisk context, and open review actions
+              Linked HSE records, live module signals, safety risk context, and open review actions
               — the central control point for the Operate phase.
             </p>
           </div>
@@ -170,7 +170,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
             <div className="panel-heading">
               <div>
                 <p className="section-label">Assess</p>
-                <h2>BioRisk live context</h2>
+                <h2>Safety risk context</h2>
               </div>
               <FlaskConical size={22} />
             </div>
@@ -199,7 +199,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
               <span>{draftAiRecommendationGuardrail}</span>
             </div>
             <Link className="button-secondary" href="/workbench">
-              Open in BioRisk Scoring
+              Open in Risk Scoring
             </Link>
           </div>
         </section>

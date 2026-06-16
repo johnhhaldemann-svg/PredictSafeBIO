@@ -8,7 +8,7 @@ export const VERTICAL_PACKS: Record<VerticalKey, VerticalPack> = {
   biotech_pharma: {
     key: "biotech_pharma",
     brandLabel: "PredictSafe BIO",
-    scoreLabel: "BioRisk score",
+    scoreLabel: "HSE risk score",
     tagline: "Biosafety Intelligence",
     contextLabel: "Biotech Context",
     contextHeading: "Program guidance for life science facilities",
