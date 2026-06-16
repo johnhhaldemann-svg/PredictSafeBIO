@@ -21,12 +21,13 @@ const reviewActionsPanel = readFileSync(join(process.cwd(), "src/components/Foun
 const notificationCenter = readFileSync(join(process.cwd(), "src/components/FoundationNotificationCenter.tsx"), "utf8");
 const copyVerificationButton = readFileSync(join(process.cwd(), "src/components/CopyVerificationSummaryButton.tsx"), "utf8");
 const notesMigration = readFileSync(join(process.cwd(), "supabase/migrations/20260529143000_audit_readiness_notes.sql"), "utf8");
+const complianceMap = readFileSync(join(process.cwd(), "src/components/ComplianceMap.tsx"), "utf8");
 
 describe("foundation UI alignment", () => {
   it("surfaces BioType branching and compliance sections", () => {
-    expect(foundationPage).toContain("BioType Branching Engine");
-    expect(foundationPage).toContain("Compliance Foundation");
-    expect(foundationPage).toContain("kpi-strip");
+    expect(complianceMap).toContain("BioType Branching Engine");
+    expect(complianceMap).toContain("Compliance Map");
+    expect(complianceMap).toContain("hero-stats");
   });
 
   it("shows BioType selections on the company profile surface", () => {
@@ -65,13 +66,13 @@ describe("foundation UI alignment", () => {
     expect(foundationData).toContain("getAuditReadinessConsoleSummary");
     expect(foundationData).toContain("foundationActionKey");
     expect(foundationData).toContain("foundationReviewSourceModules");
-    expect(foundationPage).toContain("audit-readiness-console");
-    expect(foundationPage).toContain("Generated review actions");
-    expect(foundationPage).toContain("Generated Actions");
-    expect(foundationPage).toContain("/my-work");
-    expect(foundationPage).toContain("Audit Readiness");
-    expect(foundationPage).toContain("command-center-lane");
-    expect(foundationPage).toContain("primaryActionHref=\"/my-work\"");
+    expect(foundationData).toContain("audit-readiness-console");
+    expect(reviewActionsPanel).toContain("Generated Actions");
+    expect(foundationData).toContain("generatedActions");
+    expect(complianceMap).toContain("/my-work");
+    expect(complianceMap).toContain("Audit Readiness");
+    expect(reviewActionsPanel).toContain("command-center-lane");
+    expect(complianceMap).toContain('href="/my-work"');
     expect(copyVerificationButton).toContain("navigator.clipboard.writeText");
     expect(operationsPage).toContain("getFoundationReviewActionsSummary");
     expect(operationsPage).toContain("getFoundationOperationsDashboardSummary");
@@ -232,7 +233,7 @@ describe("foundation UI alignment", () => {
     expect(auditPage).toContain("returnTo=\"/admin/audit\"");
     expect(auditPage).toContain("foundation_review_task_note_added");
     expect(auditPage).toContain("foundation_source_resolution_refreshed");
-    expect(foundationPage).toContain("returnTo=\"/foundation\"");
+    expect(reviewActionsPanel).toContain('returnTo = "/foundation"');
     expect(workbenchPage).toContain("getFoundationReviewActionsSummary");
     expect(workbenchPage).toContain("getFoundationProductionVerificationSummary");
     expect(workbenchPage).toContain("getFoundationAssigneeOptions");

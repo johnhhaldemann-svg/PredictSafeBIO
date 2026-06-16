@@ -35,7 +35,8 @@ describe("display-labels", () => {
     const documentsPage = readFileSync(join(process.cwd(), "src/app/documents/page.tsx"), "utf8");
     const versionControl = readFileSync(join(process.cwd(), "src/app/documents/version-control/page.tsx"), "utf8");
     const capaPage = readFileSync(join(process.cwd(), "src/app/operations/capa/page.tsx"), "utf8");
-    const trainingPage = readFileSync(join(process.cwd(), "src/app/training-matrix/page.tsx"), "utf8");
+    const trainingPage = readFileSync(join(process.cwd(), "src/app/training-matrix/page.tsx"), "utf8")
+      + readFileSync(join(process.cwd(), "src/components/TrainingMatrix.tsx"), "utf8");
     // All rendering pages import from display-labels
     expect(documentsPage).toContain("display-labels");
     expect(versionControl).toContain("display-labels");
