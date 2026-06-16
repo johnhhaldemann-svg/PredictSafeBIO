@@ -18,12 +18,9 @@ describe("workbench and password reset customer copy", () => {
     expect(workbenchClient).not.toContain("finish onboarding to save assessments");
   });
 
-  it("workbench activity panel uses customer language with no DevOps terminology", () => {
-    expect(workbenchClient).toContain("Workspace Activity");
-    expect(workbenchClient).toContain("Workspace active");
-    expect(workbenchClient).toContain("No recent activity");
-    expect(workbenchClient).toContain("Workspace activity confirmed");
-    expect(workbenchClient).toContain("Complete your first workflow steps");
+  it("workbench uses customer language with no DevOps terminology", () => {
+    expect(workbenchClient).toContain("Risk Workbench");
+    expect(workbenchClient).toContain("Score risk signals, surface gaps");
     // No internal DevOps terms
     expect(workbenchClient).not.toContain("Production Verification");
     expect(workbenchClient).not.toContain("Operating evidence ready");

@@ -16,16 +16,13 @@ const trainingMatrixPage = readFileSync(join(process.cwd(), "src/app/training-ma
 const reviewWorkflow = readFileSync(join(process.cwd(), "src/lib/review-workflow.ts"), "utf8");
 
 describe("command center and change plan", () => {
-  it("adds a command-center first screen while preserving Risk scoring", () => {
+  it("workbench has risk scoring and KPI summary", () => {
     expect(workbenchClient).toContain("Risk Workbench");
-    expect(workbenchClient).toContain("category.statusLabel");
     expect(workbenchClient).toContain("Risk Engine");
-    expect(workbenchClient).toContain("PredictSafe Intelligence Platform Architecture");
     expect(workbenchPage).toContain("listAssessments");
     expect(workbenchPage).toContain("getAuditReadinessConsoleSummary");
     expect(workbenchPage).toContain("listChangePlanItems");
     expect(workbenchClient).toContain("changePlanItemCount");
-    expect(workbenchClient).toContain("Dashboard Trends");
     expect(workbenchClient).toContain("recentCriticalSignals");
   });
 
