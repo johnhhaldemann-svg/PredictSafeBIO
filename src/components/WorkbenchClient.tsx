@@ -160,11 +160,11 @@ export function WorkbenchClient({
   productionVerification?: FoundationProductionVerificationSummary;
   commandCenter?: CommandCenterSummary;
   assessments?: Array<{ id: string; workflow: string; area: string; level: string; score: number; humanReviewStatus: string; reviewedAt?: string | null; assignedReviewerName?: string | null; reviewDueDate?: string | null }>;
-  initialTab?: "command-center" | "risk-register";
+  initialTab?: "command-center" | "risk-register" | "analytics";
   /** Vertical-aware risk-score label from the active VerticalPack. */
   scoreLabel?: string;
 }) {
-  const [activeTab, setActiveTab] = useState<"command-center" | "risk-register">(initialTab);
+  const [activeTab, setActiveTab] = useState<"command-center" | "risk-register" | "analytics">(initialTab);
   const [input, setInput] = useState<BioAiInput>(initialInput);
   const [signalType, setSignalType] = useState<BioSignalType>("contamination_event");
   const [signalLabel, setSignalLabel] = useState("Unexpected microbial growth in assay control");
@@ -360,8 +360,9 @@ export function WorkbenchClient({
           </div>
         </header>
         <nav className="command-center-link-strip" aria-label="Assess tabs">
-          <button className="button-secondary compact" type="button" onClick={() => setActiveTab("command-center")}>Overview</button>
+          <button className="button-secondary compact" type="button" onClick={() => setActiveTab("command-center")}>Run Assessment</button>
           <button className="button-primary compact" type="button" onClick={() => setActiveTab("risk-register")}>Risk Register</button>
+          <button className="button-secondary compact" type="button" onClick={() => setActiveTab("analytics")}>Analytics</button>
         </nav>
         <section className="table-panel">
           <table>
@@ -401,6 +402,32 @@ export function WorkbenchClient({
     );
   }
 
+  if (activeTab === "analytics") {
+    return (
+      <div className="page-stack">
+        <header className="page-header">
+          <div className="page-header-left">
+            <p className="section-label">Assess · Analytics</p>
+            <h1>Risk Analytics</h1>
+            <p className="muted">Heat map, compliance progress, capability health, and audit readiness.</p>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <Link className="button-secondary" href="/assessments/framework">Trigger logic</Link>
+            <Link className="button-primary" href="/assessments">Risk Register →</Link>
+          </div>
+        </header>
+        <nav className="command-center-link-strip" aria-label="Assess tabs">
+          <button className="button-secondary compact" type="button" onClick={() => setActiveTab("command-center")}>Run Assessment</button>
+          <button className="button-secondary compact" type="button" onClick={() => setActiveTab("risk-register")}>Risk Register</button>
+          <button className="button-primary compact" type="button" onClick={() => setActiveTab("analytics")}>Analytics</button>
+        </nav>
+        <EnterpriseKPIStrip commandSummary={commandSummary} assessment={assessment} scoreLabel={scoreLabel} />
+        <EnterpriseWidgetRow commandSummary={commandSummary} assessment={assessment} foundationActions={foundationActions} scoreLabel={scoreLabel} />
+        <EnterpriseHeatMapRow />
+      </div>
+    );
+  }
+
   return (
     <div className="page-stack">
       <header className="page-header">
@@ -416,7 +443,8 @@ export function WorkbenchClient({
       </header>
       <nav className="command-center-link-strip" aria-label="Assess tabs">
         <button className="button-primary compact" type="button" onClick={() => setActiveTab("command-center")}>Run Assessment</button>
-        <button className="button-secondary compact" type="button" onClick={() => setActiveTab("risk-register")}>Saved Register</button>
+        <button className="button-secondary compact" type="button" onClick={() => setActiveTab("risk-register")}>Risk Register</button>
+        <button className="button-secondary compact" type="button" onClick={() => setActiveTab("analytics")}>Analytics</button>
       </nav>
       <section className="kpi-grid" aria-label="Workbench summary">
         <div className={`kpi-card ${assessment.level === "critical" ? "kpi-card--red" : assessment.level === "high" ? "kpi-card--amber" : "kpi-card--blue"}`}>
