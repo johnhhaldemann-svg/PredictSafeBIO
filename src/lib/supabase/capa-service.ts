@@ -23,11 +23,14 @@ export type CapaStatus =
 export type CapaActionStatus = "open" | "in_progress" | "complete" | "blocked";
 export type CapaActionType = "corrective" | "preventive";
 
+export type CapaType = "corrective" | "preventive" | "equipment";
+
 export type CapaRecord = {
   id: string;
   organizationId: string;
   title: string;
   status: CapaStatus;
+  capaType?: CapaType;
   ownerRole?: string | null;
   dueDate?: string | null;
   effectivenessCheckDue?: string | null;
@@ -107,6 +110,7 @@ function demoCapaRecords(): CapaRecord[] {
       organizationId: "demo-org",
       title: "Aseptic-work exposure — corrective action",
       status: "in_progress",
+      capaType: "corrective",
       ownerRole: "ehs",
       dueDate: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
       effectivenessCheckDue: new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10),
@@ -120,6 +124,7 @@ function demoCapaRecords(): CapaRecord[] {
       organizationId: "demo-org",
       title: "Expired aseptic technique training — preventive action",
       status: "open",
+      capaType: "preventive",
       ownerRole: "qa",
       dueDate: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
       sourceAssessmentId: "demo-training-gap",
@@ -132,6 +137,7 @@ function demoCapaRecords(): CapaRecord[] {
       organizationId: "demo-org",
       title: "BSC-001 calibration gap — equipment corrective action",
       status: "draft_human_review_required",
+      capaType: "equipment",
       ownerRole: "validation_lead",
       dueDate: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
       createdAt: new Date().toISOString(),
@@ -199,7 +205,7 @@ export async function listCapaRecords(filters?: {
   const supabase = await createSupabaseServerClient();
   let query = supabase
     .from("capa_records")
-    .select("id,title,status,owner_role,due_date,effectiveness_check_due,source_incident_id,source_assessment_id,created_by,created_at,updated_at,organization_id")
+    .select("id,title,status,capa_type,owner_role,due_date,effectiveness_check_due,source_incident_id,source_assessment_id,linked_record_type,linked_record_id,created_by,created_at,updated_at,organization_id")
     .eq("organization_id", context.organizationId)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -234,11 +240,14 @@ export async function listCapaRecords(filters?: {
     organizationId: row.organization_id,
     title: row.title,
     status: row.status as CapaStatus,
+    capaType: (row.capa_type ?? "corrective") as CapaType,
     ownerRole: row.owner_role,
     dueDate: row.due_date,
     effectivenessCheckDue: row.effectiveness_check_due,
     sourceIncidentId: row.source_incident_id,
     sourceAssessmentId: row.source_assessment_id,
+    linkedRecordType: row.linked_record_type,
+    linkedRecordId: row.linked_record_id,
     createdBy: row.created_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -333,6 +342,7 @@ export async function getCapaDetail(capaId: string): Promise<CapaDetail | null> 
 
 export async function createCapaRecord(input: {
   title: string;
+  capaType?: CapaType;
   ownerRole?: string;
   dueDate?: string | null;
   effectivenessCheckDue?: string | null;
@@ -355,6 +365,7 @@ export async function createCapaRecord(input: {
       organization_id: context.organizationId,
       title: input.title.trim(),
       status: "open",
+      capa_type: input.capaType ?? "corrective",
       owner_role: input.ownerRole || null,
       due_date: input.dueDate || null,
       effectiveness_check_due: input.effectivenessCheckDue || null,

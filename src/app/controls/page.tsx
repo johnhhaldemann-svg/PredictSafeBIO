@@ -6,6 +6,8 @@ import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import {
   listControls,
+  listHazardAcceptances,
+  buildControlInsightsState,
   controlTierLabels,
   controlTierRank,
   controlStatusLabels,
@@ -13,6 +15,7 @@ import {
   type ControlStatus,
 } from "@/lib/supabase/control-service";
 import { listHazards } from "@/lib/supabase/hazard-service";
+import ControlInsights from "@/components/ControlInsights";
 import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
 import { createControlAction, updateControlStatusAction, archiveControlAction } from "./actions";
 import { DataLoadError } from "@/components/DataLoadError";
@@ -50,6 +53,10 @@ export default async function ControlRegisterPage({ searchParams }: Props) {
 
   const loadFailed = controlsResult === null;
   const allControls = controlsResult ?? [];
+
+  const hazardIds = hazards.map((h) => h.id);
+  const acceptances = await listHazardAcceptances(hazardIds).catch(() => []);
+  const insightsState = buildControlInsightsState(hazards, allControls, acceptances);
   const controls = filter === "overdue" ? allControls.filter((c) => c.verificationOverdue) : allControls;
 
   const hazardName = new Map(hazards.map((h) => [h.id, h.name]));
@@ -174,6 +181,9 @@ export default async function ControlRegisterPage({ searchParams }: Props) {
             ))
           )}
         </section>
+
+        {/* Control insights panel */}
+        <ControlInsights hazards={insightsState} />
 
         {/* Add control form */}
         {adminAccess.signedIn && (

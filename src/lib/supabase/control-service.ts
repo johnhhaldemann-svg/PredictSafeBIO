@@ -12,7 +12,7 @@ import { createSupabaseServerClient } from "./server";
 import { getProfileContext } from "./data-helpers";
 import { isSupabaseConfigured } from "./env";
 import { scoreAndWriteRiskCell, resolveRiskCell } from "./continuous-scoring-service";
-import { getHazardById, hazardTypeLabels, type HazardType } from "./hazard-service";
+import { getHazardById, hazardTypeLabels, type HazardType, type HazardRecord } from "./hazard-service";
 import type { BioAiInput, BioAiSignal, BioSignalType } from "@/lib/bio-ai/types";
 
 // ---------------------------------------------------------------------------
@@ -448,6 +448,134 @@ export async function setControlStatus(id: string, status: ControlStatus): Promi
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Unexpected error." };
   }
+}
+
+// ---------------------------------------------------------------------------
+// Control Insights — shared types (used by ControlInsights component)
+// ---------------------------------------------------------------------------
+
+/** Per-hazard state for the Insights panel (inherent → residual → acceptance). */
+export type HazardControlState = {
+  hazard: string;
+  inherent: number;        // 0–10
+  residual: number;        // forecast after current controls
+  target: number;          // acceptable residual
+  controlTiers: ControlTier[];
+  raisedByOverdue?: boolean;
+  acceptedBy: string | null;
+  acceptedOn: string | null;
+  reReviewDue: string | null;
+};
+
+export type HazardAcceptance = {
+  id: string;
+  hazardId: string;
+  residualScore: number;
+  targetResidual: number;
+  acceptedByName: string | null;
+  acceptedAt: string | null;
+  reReviewDue: string | null;
+  alarpNote: string | null;
+};
+
+// Inherent severity on 0-10 scale (doubled from the 0-5 engine scale)
+const INHERENT_SCORE: Record<HazardType, number> = {
+  radiation: 10, biological: 8, chemical: 8, laser: 8, fire: 8,
+  electrical: 6, equipment: 6, ergonomic: 4, environmental: 4, other: 4,
+};
+
+function computeResidualScore(inherent: number, posture: ResidualPosture): number {
+  if (posture.activeControls === 0) return inherent;
+  switch (posture.effectiveness) {
+    case "effective":   return Math.max(1, Math.round(inherent * 0.15));
+    case "partial":     return Math.max(2, Math.round(inherent * 0.45));
+    case "ineffective": return Math.max(3, Math.round(inherent * 0.75));
+    default:            return inherent;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Hazard residual acceptance service
+// ---------------------------------------------------------------------------
+
+export async function listHazardAcceptances(hazardIds: string[]): Promise<HazardAcceptance[]> {
+  if (!isSupabaseConfigured() || hazardIds.length === 0) return [];
+  try {
+    const ctx = await getProfileContext();
+    if (!ctx) return [];
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("hazard_residual_acceptance")
+      .select("*")
+      .eq("organization_id", ctx.organizationId)
+      .in("hazard_id", hazardIds)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    // Keep only the most recent acceptance per hazard
+    const seen = new Set<string>();
+    return (data ?? [])
+      .filter((r) => { if (seen.has(r.hazard_id as string)) return false; seen.add(r.hazard_id as string); return true; })
+      .map((r) => ({
+        id: r.id as string,
+        hazardId: r.hazard_id as string,
+        residualScore: r.residual_score as number,
+        targetResidual: r.target_residual as number,
+        acceptedByName: (r.accepted_by_name as string) ?? null,
+        acceptedAt: (r.accepted_at as string) ?? null,
+        reReviewDue: (r.re_review_due as string) ?? null,
+        alarpNote: (r.alarp_note as string) ?? null,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Insight state builder — called server-side from the controls page
+// ---------------------------------------------------------------------------
+
+export function buildControlInsightsState(
+  hazards: HazardRecord[],
+  controls: ControlRecord[],
+  acceptances: HazardAcceptance[] = [],
+): HazardControlState[] {
+  const controlsByHazard = new Map<string, ControlRecord[]>();
+  for (const c of controls) {
+    if (c.hazardId) {
+      const list = controlsByHazard.get(c.hazardId) ?? [];
+      list.push(c);
+      controlsByHazard.set(c.hazardId, list);
+    }
+  }
+  const acceptanceByHazard = new Map(acceptances.map((a) => [a.hazardId, a]));
+
+  return hazards
+    .filter((h) => h.status !== "retired")
+    .map((h) => {
+      const hControls = controlsByHazard.get(h.id) ?? [];
+      const posture = residualPosture(hControls);
+      const inherent = INHERENT_SCORE[h.hazardType] ?? 4;
+      const tiers = [
+        ...new Set(
+          hControls
+            .filter((c) => c.status !== "retired" && !c.archivedAt)
+            .map((c) => c.controlType),
+        ),
+      ];
+      const acc = acceptanceByHazard.get(h.id) ?? null;
+
+      return {
+        hazard: h.name,
+        inherent,
+        residual: computeResidualScore(inherent, posture),
+        target: 3,
+        controlTiers: tiers,
+        raisedByOverdue: posture.overdueVerification,
+        acceptedBy: acc?.acceptedByName ?? null,
+        acceptedOn: acc?.acceptedAt ?? null,
+        reReviewDue: acc?.reReviewDue ?? null,
+      };
+    });
 }
 
 export async function archiveControl(id: string): Promise<ControlResult> {

@@ -2,40 +2,52 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import Link from "next/link";
-
-export const metadata: Metadata = { title: "CAPA Records – PredictSafe" };
-import { AlertTriangle, CheckCircle2, CircleDot, Clock, Plus, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Plus, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { formatOwnerRole } from "@/lib/display-labels";
 import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
 import {
   capaStatusLabels,
   listCapaRecords,
-  type CapaStatus
+  type CapaStatus,
+  type CapaType,
 } from "@/lib/supabase/capa-service";
 import { createCapaAction } from "./actions";
 import { DataLoadError } from "@/components/DataLoadError";
+import CapaRecords, {
+  type ViewCapa,
+  type CapaStatLocal,
+  type CapaStage,
+} from "@/components/CapaRecords";
 
-const STATUS_ICON: Record<CapaStatus, typeof AlertTriangle> = {
-  draft_human_review_required: AlertTriangle,
-  open: CircleDot,
-  in_progress: Clock,
-  closed: CheckCircle2,
-  void: ShieldCheck
+export const metadata: Metadata = { title: "CAPA Records – PredictSafe" };
+
+/* ─── Helpers ───────────────────────────────────────────────────────────────── */
+
+const LINKED_TYPE_META: Record<string, { label: string; kind: string }> = {
+  audit_findings:                { label: "Audit finding",         kind: "finding"   },
+  waste_records:                 { label: "Waste record",          kind: "deviation" },
+  biosafety_risk_assessments:    { label: "Biosafety assessment",  kind: "assessment"},
+  assessment_signals:            { label: "Observation / signal",  kind: "finding"   },
+  chemical_inventory:            { label: "Chemical inventory",    kind: "deviation" },
+  controlled_work_permits:       { label: "Work permit",           kind: "finding"   },
+  pesticide_disinfectant_records:{ label: "Pesticide record",      kind: "deviation" },
+  incidents:                     { label: "Incident",              kind: "incident"  },
 };
 
-const STATUS_CLASS: Record<CapaStatus, string> = {
-  draft_human_review_required: "status-missing",
-  open: "status-needs-review",
-  in_progress: "status-needs-review",
-  closed: "status-current",
-  void: ""
-};
+function deriveStage(status: CapaStatus): CapaStage {
+  switch (status) {
+    case "draft_human_review_required": return "root_cause";
+    case "open":                        return "action_plan";
+    case "in_progress":                 return "implementation";
+    case "closed":                      return "closure";
+    case "void":                        return "closure";
+    default:                            return "identification";
+  }
+}
 
 const PRIORITY_STATUSES: CapaStatus[] = [
-  "draft_human_review_required",
-  "open",
-  "in_progress"
+  "draft_human_review_required", "open", "in_progress",
 ];
 
 type Props = {
@@ -44,47 +56,79 @@ type Props = {
 
 export default async function CapaListPage({ searchParams }: Props) {
   const params = await searchParams;
-  const filterStatus = (params.filter as CapaStatus | "all") ?? "all";
 
   const [allRecordsResult, adminAccess] = await Promise.all([
     listCapaRecords().catch(() => null),
     getFoundationAdminAccessSummary().catch(() => ({
-      configured: false, signedIn: false, isOwner: false, message: ""
-    }))
+      configured: false, signedIn: false, isOwner: false, message: "",
+    })),
   ]);
 
-  const loadFailed = allRecordsResult === null;
-  const allRecords = allRecordsResult ?? [];
-  const records = filterStatus !== "all"
-    ? allRecords.filter((r) => r.status === filterStatus)
-    : allRecords;
+  const loadFailed  = allRecordsResult === null;
+  const allRecords  = allRecordsResult ?? [];
 
-  const openCount = allRecords.filter((r) => PRIORITY_STATUSES.includes(r.status)).length;
+  const openCount    = allRecords.filter((r) => PRIORITY_STATUSES.includes(r.status)).length;
   const overdueCount = allRecords.filter(
-    (r) => r.dueDate && new Date(r.dueDate) < new Date() && r.status !== "closed" && r.status !== "void"
+    (r) => r.dueDate && new Date(r.dueDate) < new Date() && r.status !== "closed" && r.status !== "void",
   ).length;
 
-  // Per-status counts for filter badges
-  const statusCounts = (["draft_human_review_required", "open", "in_progress", "closed", "void"] as const).reduce<Record<string, number>>(
-    (acc, s) => { acc[s] = allRecords.filter((r) => r.status === s).length; return acc; },
-    {}
-  );
+  const now = Date.now();
+  const nowDate = new Date(now);
+
+  const viewCapas: ViewCapa[] = allRecords.map((r) => {
+    const dueDt     = r.dueDate ? new Date(r.dueDate) : null;
+    const isOverdue = dueDt ? dueDt < nowDate && r.status !== "closed" && r.status !== "void" : false;
+    const isDueToday = dueDt && !isOverdue
+      ? dueDt.toDateString() === nowDate.toDateString()
+      : false;
+
+    let sourceLabel = "—";
+    let sourceKind  = "other";
+    if (r.sourceIncidentId) { sourceLabel = "Incident"; sourceKind = "incident"; }
+    else if (r.sourceAssessmentId) { sourceLabel = "Assessment finding"; sourceKind = "assessment"; }
+    else if (r.linkedRecordType) {
+      const m = LINKED_TYPE_META[r.linkedRecordType];
+      if (m) { sourceLabel = m.label; sourceKind = m.kind; }
+      else    { sourceLabel = r.linkedRecordType; sourceKind = "finding"; }
+    }
+
+    return {
+      id:             r.id,
+      title:          r.title,
+      capaType:       (r.capaType ?? "corrective") as CapaType,
+      status:         r.status as CapaStatLocal,
+      stage:          deriveStage(r.status),
+      ownerLabel:     r.ownerRole ? formatOwnerRole(r.ownerRole) : null,
+      dueDateLabel:   dueDt ? dueDt.toLocaleDateString() : null,
+      isOverdue,
+      isDueToday,
+      actionCount:    r.actionCount ?? 0,
+      openActionCount:r.openActionCount ?? 0,
+      sourceLabel,
+      sourceKind,
+    };
+  });
+
+  // Honour URL filter param for deep-link back-compat
+  const initialFilter = (params.filter as CapaStatLocal | "all") ?? "all";
 
   return (
     <AppShell>
       <div className="page-stack">
+
         <header className="page-header">
           <div className="page-header-left">
-            <p className="section-label">Operate · Stage 2</p>
+            <p className="section-label">Operate · CAPA</p>
             <h1>CAPA Records</h1>
             <p className="muted">
-              Corrective and Preventive Action records. Root-cause determination, action selection,
-              effectiveness verification, and closure are the sole responsibility of qualified quality personnel.
+              Corrective and preventive action records — source-linked to incidents, findings, and
+              deviations, verified for effectiveness before closure.
             </p>
           </div>
           <Link className="button-secondary" href="/incidents">Incident Register →</Link>
         </header>
 
+        {/* KPI strip */}
         <section className="kpi-grid" aria-label="CAPA summary">
           <div className={`kpi-card ${openCount > 0 ? "kpi-card--blue" : "kpi-card--green"}`}>
             <div className="kpi-label">Open CAPAs</div>
@@ -123,86 +167,12 @@ export default async function CapaListPage({ searchParams }: Props) {
 
         {params.message && <p className="form-message">{params.message}</p>}
 
-        {/* Filter strip */}
-        <nav className="command-center-link-strip" aria-label="CAPA status filter">
-          <Link
-            href="/operations/capa"
-            className={`button-secondary compact ${filterStatus === "all" ? "active-filter" : ""}`}
-          >
-            All
-            <span className="filter-count-badge">{allRecords.length}</span>
-          </Link>
-          {(["draft_human_review_required", "open", "in_progress", "closed", "void"] as const).map((s) => (
-            <Link
-              key={s}
-              href={`/operations/capa?filter=${s}`}
-              className={`button-secondary compact ${filterStatus === s ? "active-filter" : ""}`}
-            >
-              {capaStatusLabels[s]}
-              <span className="filter-count-badge">{statusCounts[s] ?? 0}</span>
-            </Link>
-          ))}
-        </nav>
-
-        {/* Record list */}
-        <section className="panel">
-          <div className="panel-heading">
-            <div>
-              <p className="section-label">CAPA Register</p>
-              <h2>
-                {records.length === allRecords.length
-                  ? `${allRecords.length} record${allRecords.length !== 1 ? "s" : ""}`
-                  : `${records.length} of ${allRecords.length} shown`}
-              </h2>
-            </div>
-          </div>
-          {loadFailed ? (
-            <DataLoadError resource="CAPA records" />
-          ) : records.length === 0 ? (
-            <div className="empty-state-card">
-              <p className="empty-state-title">No CAPA records found</p>
-              <p className="muted">Create a CAPA record below to begin tracking corrective and preventive actions.</p>
-            </div>
-          ) : (
-            <div className="action-list">
-              {records.map((record) => {
-                const Icon = STATUS_ICON[record.status];
-                const overdue =
-                  record.dueDate &&
-                  new Date(record.dueDate) < new Date() &&
-                  record.status !== "closed" &&
-                  record.status !== "void";
-                return (
-                  <article className="action-row" key={record.id}>
-                    <div>
-                      <strong>
-                        <Link href={`/operations/capa/${record.id}`}>{record.title}</Link>
-                      </strong>
-                      <span className={STATUS_CLASS[record.status]}>
-                        <Icon size={13} style={{ display: "inline", marginRight: 4 }} />
-                        {capaStatusLabels[record.status]}
-                      </span>
-                    </div>
-                    <p>
-                      {record.ownerRole ? `Owner: ${formatOwnerRole(record.ownerRole)} · ` : ""}
-                      {record.dueDate ? (
-                        <span className={overdue ? "overdue-cell" : undefined}>
-                          Due {new Date(record.dueDate).toLocaleDateString()}
-                          {overdue ? " · OVERDUE" : ""}
-                        </span>
-                      ) : "No due date"}
-                      {" · "}
-                      {record.actionCount ?? 0} action{(record.actionCount ?? 0) !== 1 ? "s" : ""}
-                      {(record.openActionCount ?? 0) > 0
-                        ? ` (${record.openActionCount} open)`
-                        : ""}
-                    </p>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </section>
+        {/* Interactive: lifecycle pipeline, filter tabs, CAPA list */}
+        {loadFailed ? (
+          <DataLoadError resource="CAPA records" />
+        ) : (
+          <CapaRecords capas={viewCapas} initialFilter={initialFilter} />
+        )}
 
         {/* Create form */}
         {adminAccess.signedIn && (
@@ -225,6 +195,14 @@ export default async function CapaListPage({ searchParams }: Props) {
                 <input name="title" type="text" placeholder="e.g. Sterility assay deviation — corrective action" required />
               </label>
               <div className="form-grid">
+                <label>
+                  CAPA type *
+                  <select name="capaType" defaultValue="corrective">
+                    <option value="corrective">Corrective</option>
+                    <option value="preventive">Preventive</option>
+                    <option value="equipment">Equipment</option>
+                  </select>
+                </label>
                 <label>
                   Owner role
                   <select name="ownerRole" defaultValue="ehs">
@@ -305,6 +283,7 @@ export default async function CapaListPage({ searchParams }: Props) {
           </div>
           <ShieldCheck size={24} />
         </section>
+
       </div>
     </AppShell>
   );

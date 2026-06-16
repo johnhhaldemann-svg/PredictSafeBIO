@@ -2,54 +2,24 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  AlertTriangle,
-  AlertCircle,
-  CheckCircle2,
-  CircleDot,
-  Clock,
-  Eye,
-  Plus,
-  ShieldAlert,
-} from "lucide-react";
+import { Plus, ShieldAlert } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { OshaLogExportButton } from "@/components/OshaLogExportButton";
 import { getFoundationAdminAccessSummary } from "@/lib/supabase/data";
 import { DataLoadError } from "@/components/DataLoadError";
 import {
   listIncidents,
-  incidentStatusLabels,
   incidentTypeLabels,
-  incidentSeverityLabels,
   incidentTypeOptions,
   incidentSeverityOptions,
+  incidentSeverityLabels,
   type IncidentStatus,
   type IncidentSeverity,
 } from "@/lib/supabase/incident-service";
 import { createIncidentAction } from "./actions";
+import IncidentRegister, { type ViewIncident, type IncidentStat, type IncidentSev } from "@/components/IncidentRegister";
 
 export const metadata: Metadata = { title: "Incident Reporting – PredictSafe" };
-
-const STATUS_CLASS: Record<IncidentStatus, string> = {
-  open:          "status-missing",
-  investigating: "status-needs-review",
-  contained:     "status-needs-review",
-  closed:        "status-current",
-};
-
-const STATUS_ICON: Record<IncidentStatus, typeof AlertCircle> = {
-  open:          AlertCircle,
-  investigating: Eye,
-  contained:     ShieldAlert,
-  closed:        CheckCircle2,
-};
-
-const SEVERITY_CLASS: Record<IncidentSeverity, string> = {
-  critical: "status-missing",
-  high:     "status-missing",
-  medium:   "status-needs-review",
-  low:      "status-current",
-};
 
 type Props = {
   searchParams: Promise<{ message?: string; filter?: string; severity?: string }>;
@@ -57,8 +27,6 @@ type Props = {
 
 export default async function IncidentReportingPage({ searchParams }: Props) {
   const params = await searchParams;
-  const filterStatus = (params.filter as IncidentStatus | "all") ?? "all";
-  const filterSeverity = (params.severity as IncidentSeverity | "all") ?? "all";
 
   const [allRecordsResult, adminAccess] = await Promise.all([
     listIncidents().catch(() => null),
@@ -67,33 +35,42 @@ export default async function IncidentReportingPage({ searchParams }: Props) {
     })),
   ]);
 
-  const loadFailed = allRecordsResult === null;
-  const allRecords = allRecordsResult ?? [];
-  const records = allRecords.filter((r) => {
-    if (filterStatus !== "all" && r.status !== filterStatus) return false;
-    if (filterSeverity !== "all" && r.severity !== filterSeverity) return false;
-    return true;
-  });
+  const loadFailed  = allRecordsResult === null;
+  const allRecords  = allRecordsResult ?? [];
 
   const openCount          = allRecords.filter((r) => r.status === "open").length;
   const investigatingCount = allRecords.filter((r) => r.status === "investigating").length;
   const criticalCount      = allRecords.filter((r) => r.severity === "critical" || r.severity === "high").length;
   const oshaCount          = allRecords.filter((r) => r.isOshaRecordable).length;
-  const closedCount        = allRecords.filter((r) => r.status === "closed").length;
 
-  // Per-status counts for filter badges
-  const statusCounts: Record<string, number> = {};
-  (["open", "investigating", "contained", "closed"] as const).forEach((s) => {
-    statusCounts[s] = allRecords.filter((r) => r.status === s).length;
+  // Map to ViewIncident — compute OSHA deadline from occurredAt
+  const now = Date.now();
+  const viewIncidents: ViewIncident[] = allRecords.map((r) => {
+    const ms     = r.occurredAt ? now - new Date(r.occurredAt).getTime() : 0;
+    const daysAgo = Math.max(0, Math.floor(ms / 86400000));
+    return {
+      id:               r.id,
+      title:            r.title,
+      incidentType:     r.incidentType,
+      incidentTypeLabel: incidentTypeLabels[r.incidentType],
+      severity:         r.severity,
+      status:           r.status,
+      isOshaRecordable: r.isOshaRecordable ?? false,
+      occurredLabel:    r.occurredAt ? new Date(r.occurredAt).toLocaleDateString() : "—",
+      daysAgo,
+      summary:          r.summary ?? null,
+      oshaDueIn:        r.isOshaRecordable ? Math.max(0, 7 - daysAgo) : null,
+    };
   });
-  const severityCounts: Record<string, number> = {};
-  (["critical", "high", "medium", "low"] as const).forEach((s) => {
-    severityCounts[s] = allRecords.filter((r) => r.severity === s).length;
-  });
+
+  // Honour URL filter params for deep-link backwards-compatibility
+  const initialStatus   = (params.filter   as IncidentStat | "all") ?? "all";
+  const initialSeverity = (params.severity as IncidentSev  | "all") ?? "all";
 
   return (
     <AppShell>
       <div className="page-stack">
+
         <header className="page-header">
           <div className="page-header-left">
             <p className="section-label">Operate · Incident Reporting</p>
@@ -109,7 +86,7 @@ export default async function IncidentReportingPage({ searchParams }: Props) {
           </div>
         </header>
 
-        {/* Summary cards */}
+        {/* KPI strip */}
         <section className="kpi-grid" aria-label="Incident summary">
           <div className={`kpi-card ${openCount > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
             <div className="kpi-label">Open</div>
@@ -133,116 +110,18 @@ export default async function IncidentReportingPage({ searchParams }: Props) {
           </div>
         </section>
 
-        {/* OSHA obligation banner */}
-        <div className="ai-context-bar ai-context-bar--warning">
-          <Clock size={15} />
-          <span>
-            <strong>OSHA reporting deadlines:</strong> Recordable incidents → 300 Log within{" "}
-            <strong>7 days</strong>. Fatalities &amp; hospitalisations → OSHA within{" "}
-            <strong>8 hours</strong>. Amputations &amp; eye losses → OSHA within <strong>24 hours</strong>.
-          </span>
-        </div>
-
-        {criticalCount > 0 && (
-          <div className="ai-context-bar ai-context-bar--danger">
-            <AlertTriangle size={15} />
-            <span>
-              <strong>{criticalCount} high/critical incident{criticalCount !== 1 ? "s" : ""} open.</strong>{" "}
-              Priority response required.
-            </span>
-            <Link className="ai-fill-btn ai-fill-btn--danger" href="/incidents?severity=critical">
-              View critical
-            </Link>
-          </div>
-        )}
-
         {params.message && <p className="form-message">{params.message}</p>}
 
-        {/* Status filter */}
-        <nav className="command-center-link-strip" aria-label="Incident status filter">
-          <Link href="/incidents" className={`button-secondary compact ${filterStatus === "all" && filterSeverity === "all" ? "active-filter" : ""}`}>
-            All
-            <span className="filter-count-badge">{allRecords.length}</span>
-          </Link>
-          {(["open", "investigating", "contained", "closed"] as const).map((s) => (
-            <Link
-              key={s}
-              href={`/incidents?filter=${s}`}
-              className={`button-secondary compact ${filterStatus === s ? "active-filter" : ""}`}
-            >
-              {incidentStatusLabels[s]}
-              <span className="filter-count-badge">{statusCounts[s] ?? 0}</span>
-            </Link>
-          ))}
-        </nav>
-
-        {/* Severity filter */}
-        <nav className="command-center-link-strip" aria-label="Incident severity filter">
-          {(["critical", "high", "medium", "low"] as const).map((s) => (
-            <Link
-              key={`sev-${s}`}
-              href={`/incidents?severity=${s}`}
-              className={`button-secondary compact ${filterSeverity === s ? "active-filter" : ""}`}
-            >
-              {incidentSeverityLabels[s as IncidentSeverity]}
-              {(severityCounts[s] ?? 0) > 0 && <span className="filter-count-badge">{severityCounts[s]}</span>}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Incident list */}
-        <section className="panel">
-          <div className="panel-heading">
-            <div>
-              <p className="section-label">Incident Register</p>
-              <h2>
-                {records.length === allRecords.length
-                  ? `${allRecords.length} record${allRecords.length !== 1 ? "s" : ""}`
-                  : `${records.length} of ${allRecords.length} shown`}
-              </h2>
-            </div>
-          </div>
-
-          {loadFailed ? (
-            <DataLoadError resource="incident records" />
-          ) : records.length === 0 ? (
-            <p className="muted">No incidents found. Log one below when an event occurs.</p>
-          ) : (
-            <div className="action-list">
-              {records.map((incident) => {
-                const StatusIcon = STATUS_ICON[incident.status];
-                return (
-                  <article className="action-row" key={incident.id}>
-                    <div>
-                      <strong>
-                        <Link href={`/incidents/${incident.id}`}>{incident.title}</Link>
-                      </strong>
-                      <span className={STATUS_CLASS[incident.status]}>
-                        <StatusIcon size={13} style={{ display: "inline", marginRight: 4 }} />
-                        {incidentStatusLabels[incident.status]}
-                      </span>
-                      <span className={SEVERITY_CLASS[incident.severity]}>
-                        {incidentSeverityLabels[incident.severity]}
-                      </span>
-                      {incident.isOshaRecordable && (
-                        <span className="status-missing">OSHA Recordable</span>
-                      )}
-                    </div>
-                    <p>
-                      {incidentTypeLabels[incident.incidentType]}
-                      {incident.occurredAt
-                        ? ` · Occurred ${new Date(incident.occurredAt).toLocaleDateString()}`
-                        : ""}
-                      {incident.summary
-                        ? ` · ${incident.summary.slice(0, 80)}${incident.summary.length > 80 ? "…" : ""}`
-                        : ""}
-                    </p>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </section>
+        {/* Interactive panels: Clock, analytics, filters, incident list */}
+        {loadFailed ? (
+          <DataLoadError resource="incident records" />
+        ) : (
+          <IncidentRegister
+            incidents={viewIncidents}
+            initialStatus={initialStatus}
+            initialSeverity={initialSeverity}
+          />
+        )}
 
         {/* Report new incident form */}
         {adminAccess.signedIn && (
@@ -293,10 +172,7 @@ export default async function IncidentReportingPage({ searchParams }: Props) {
 
               <label>
                 Date / time of occurrence
-                <input
-                  name="occurredAt"
-                  type="datetime-local"
-                />
+                <input name="occurredAt" type="datetime-local" />
               </label>
 
               <label>
@@ -309,15 +185,13 @@ export default async function IncidentReportingPage({ searchParams }: Props) {
                 />
               </label>
 
-              <button type="submit" className="button-primary">
-                Log Incident
-              </button>
+              <button type="submit" className="button-primary">Log Incident</button>
             </form>
           </section>
         )}
 
         {!adminAccess.signedIn && (
-          <section className={`panel access-banner access-readonly`}>
+          <section className="panel access-banner access-readonly">
             <strong>Sign in to report incidents</strong>
             <span>
               <Link href="/login">Sign in</Link> to log and manage incident records.
@@ -332,14 +206,16 @@ export default async function IncidentReportingPage({ searchParams }: Props) {
               <p className="section-label">Linked modules</p>
               <h2>Investigate &amp; respond</h2>
             </div>
+            <ShieldAlert size={20} />
           </div>
           <div className="command-center-link-strip">
-            <Link href="/operations/capa" className="button-secondary">CAPA Records →</Link>
-            <Link href="/risk-command-center" className="button-secondary">Risk Monitor →</Link>
-            <Link href="/inspections" className="button-secondary">Inspections →</Link>
-            <Link href="/monitoring/exposure" className="button-secondary">Exposure Monitoring →</Link>
+            <Link href="/operations/capa"      className="button-secondary">CAPA Records →</Link>
+            <Link href="/risk-command-center"  className="button-secondary">Risk Monitor →</Link>
+            <Link href="/inspections"          className="button-secondary">Inspections →</Link>
+            <Link href="/monitoring/exposure"  className="button-secondary">Exposure Monitoring →</Link>
           </div>
         </section>
+
       </div>
     </AppShell>
   );
