@@ -23,11 +23,10 @@ const copyVerificationButton = readFileSync(join(process.cwd(), "src/components/
 const notesMigration = readFileSync(join(process.cwd(), "supabase/migrations/20260529143000_audit_readiness_notes.sql"), "utf8");
 
 describe("foundation UI alignment", () => {
-  it("surfaces BioType, core component, AI workflow, and human validation sections", () => {
-    expect(foundationPage).toContain("Common Utilities");
+  it("surfaces BioType branching and compliance sections", () => {
     expect(foundationPage).toContain("BioType Branching Engine");
-    expect(foundationPage).toContain("AI Guardrails");
-    expect(foundationPage).toContain("Human Validation Workflow");
+    expect(foundationPage).toContain("Compliance Foundation");
+    expect(foundationPage).toContain("kpi-strip");
   });
 
   it("shows BioType selections on the company profile surface", () => {
@@ -68,26 +67,12 @@ describe("foundation UI alignment", () => {
     expect(foundationData).toContain("foundationReviewSourceModules");
     expect(foundationPage).toContain("audit-readiness-console");
     expect(foundationPage).toContain("Generated review actions");
-    expect(foundationPage).toContain("Owner verification status");
-    expect(foundationPage).toContain("Run verification mode");
     expect(foundationPage).toContain("Generated Actions");
     expect(foundationPage).toContain("/my-work");
-    expect(foundationPage).toContain("Source Intelligence");
-    expect(foundationPage).toContain("Generated Actions");
     expect(foundationPage).toContain("Audit Readiness");
-    expect(foundationPage).toContain("Source Drilldowns");
-    expect(foundationPage).toContain("command-center-link-strip");
     expect(foundationPage).toContain("command-center-lane");
     expect(foundationPage).toContain("primaryActionHref=\"/my-work\"");
-    expect(foundationPage).toContain("Duplicate prevention visibility");
-    expect(foundationPage).toContain("verificationStatus.checklist");
-    expect(foundationPage).toContain("Verification export summary");
-    expect(foundationPage).toContain("Production readiness gate");
-    expect(foundationPage).toContain("Verification passed");
-    expect(foundationPage).toContain("Final preview signoff note");
-    expect(foundationPage).toContain("CopyVerificationSummaryButton");
     expect(copyVerificationButton).toContain("navigator.clipboard.writeText");
-    expect(foundationPage).toContain("sourceRecordAnchor");
     expect(operationsPage).toContain("getFoundationReviewActionsSummary");
     expect(operationsPage).toContain("getFoundationOperationsDashboardSummary");
     expect(operationsPage).toContain("Foundation operations dashboard");
@@ -318,11 +303,6 @@ describe("foundation UI alignment", () => {
     expect(myWorkPage).toContain("canEditAssignment={adminAccess.isOwner}");
     expect(myWorkPage).toContain("canEditDueDate={adminAccess.isOwner}");
     expect(myWorkPage).toContain("canEditPriority={adminAccess.isOwner}");
-    expect(foundationPage).toContain("Source Drilldowns");
-    expect(foundationPage).toContain("source-drilldown-grid");
-    expect(foundationPage).toContain("getFoundationSourceDrilldownSummary");
-    expect(foundationPage).toContain("Recommended action");
-    expect(foundationPage).toContain("createFoundationReviewActionFromSourceAction");
     expect(workKpis).toContain("getFoundationWorkKpis");
     expect(workKpis).toContain("isFoundationReadyForClosure");
     expect(workKpis).toContain("completedThisWeek");

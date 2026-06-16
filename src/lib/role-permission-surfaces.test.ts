@@ -37,7 +37,7 @@ describe("role permission surfaces", () => {
   });
 
   it("keeps training CRUD owner-gated and admin seeding platform-only", () => {
-    expect(trainingMatrixPage).toContain("Training remains human validated");
+    expect(trainingMatrixPage).toContain("Completion must be verified by a qualified reviewer");
     // Training CRUD (mark complete, delete, create) is now implemented and owner-gated
     expect(trainingMatrixPage).toContain("adminAccess.isOwner");
     // /admin/* platform utilities are gated to platform staff — owners cannot seed demo data

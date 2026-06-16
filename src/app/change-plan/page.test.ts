@@ -88,8 +88,8 @@ describe("command center and change plan", () => {
     expect(platformOutline).toContain('href: "/training-matrix"');
     expect(trainingMatrixPage).toContain("Training Matrix");
     expect(trainingMatrixPage).toContain("getTrainingMatrixSummary");
-    expect(trainingMatrixPage).toContain("BioType, document, and change-impact training readiness");
-    expect(trainingMatrixPage).toContain("Training remains human validated");
+    expect(trainingMatrixPage).toContain("document-change refreshers");
+    expect(trainingMatrixPage).toContain("Completion must be verified by a qualified reviewer");
     expect(dataLayer).toContain("getTrainingMatrixSummary");
     expect(trainingMatrixService).toContain('"training_assignments"');
     expect(trainingMatrixService).toContain('"training_requirements"');
