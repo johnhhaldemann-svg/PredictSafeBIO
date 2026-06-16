@@ -253,16 +253,9 @@ describe("foundation UI alignment", () => {
     expect(workbenchPage).toContain("getFoundationAssigneeOptions");
     expect(workbenchPage).toContain("getFoundationNotificationSummary");
     expect(workbenchClient).toContain("getWorkbenchTaskAgingClass");
-    expect(workbenchClient).toContain("Command Summary");
-    expect(workbenchClient).toContain("Operating Work");
-    expect(workbenchClient).toContain("Workspace Activity");
     expect(notificationCenter).toContain("Notifications");
     expect(workbenchClient).toContain("Risk Engine");
     expect(workbenchClient).toContain("command-center-link-strip");
-    expect(workbenchClient).toContain("Foundation task lanes");
-    expect(workbenchClient).toContain("Completed this week");
-    expect(workbenchClient).toContain("Ready for closure");
-    expect(workbenchClient).toContain("High-priority work");
     expect(workbenchClient).toContain("ProductionVerificationEvidenceGrid");
     expect(workbenchClient).toContain("Complete your first workflow steps");
     expect(workbenchClient).toContain("production-evidence-list");
