@@ -20,10 +20,8 @@ export function ExposureMapWrapper({ pathways }: { pathways: ExposurePathway[] }
   return (
     <ExposureMap
       pathways={pathways}
-      onAddPathway={() => router.push("/exposure-map/new")}
       onExport={() => { /* TODO: wire CSV export */ }}
       onMarkMitigated={handleMarkMitigated}
-      onOpenPathway={(id) => router.push(`/exposure-map/${id}`)}
       onOpenHazard={(hazardRef) => router.push(`/hazards/${hazardRef}`)}
     />
   );

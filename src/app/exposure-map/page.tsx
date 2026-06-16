@@ -8,6 +8,7 @@ import {
   type ExposureStatus,
 } from "@/lib/supabase/exposure-service";
 import { listHazards } from "@/lib/supabase/hazard-service";
+import { AppShell } from "@/components/AppShell";
 import { ExposureMapWrapper } from "@/components/ExposureMapWrapper";
 import type { ExposurePathway, ExposureRoute, Frequency, PathwayStatus } from "@/components/ExposureMap";
 
@@ -56,5 +57,9 @@ export default async function ExposureMapPage() {
     nextReview:       null,
   }));
 
-  return <ExposureMapWrapper pathways={pathways} />;
+  return (
+    <AppShell>
+      <ExposureMapWrapper pathways={pathways} />
+    </AppShell>
+  );
 }
