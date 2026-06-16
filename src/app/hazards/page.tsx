@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { listHazards, type HazardRecord } from "@/lib/supabase/hazard-service";
 import { HazardRegisterWrapper } from "@/components/HazardRegisterWrapper";
 import type { Hazard, HazardType as ViewHazardType, HazardStatus as ViewHazardStatus } from "@/components/HazardRegister";
+import { AppShell } from "@/components/AppShell";
 
 export const metadata: Metadata = { title: "Hazard Register – PredictSafe" };
 
@@ -72,5 +73,9 @@ function toViewHazard(r: HazardRecord): Hazard {
 export default async function HazardRegisterPage() {
   const records = await listHazards().catch(() => []);
   const hazards = records.map(toViewHazard);
-  return <HazardRegisterWrapper hazards={hazards} />;
+  return (
+    <AppShell>
+      <HazardRegisterWrapper hazards={hazards} />
+    </AppShell>
+  );
 }
