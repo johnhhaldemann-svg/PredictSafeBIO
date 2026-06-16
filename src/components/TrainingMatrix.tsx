@@ -17,6 +17,7 @@ import { signOutAction } from '@/app/auth/actions';
 import {
   markTrainingCompleteAction,
   deleteTrainingRequirementAction,
+  removeEmployeeAssignmentAction,
 } from '@/app/training-matrix/actions';
 import { formatOwnerRole } from '@/lib/display-labels';
 
@@ -28,7 +29,7 @@ function NavItem({ href, pathname, children }: { href: string; pathname: string;
 
 /* ─────────────────────────────── Types ─────────────────────────────── */
 
-type CellStatus = 'current' | 'needs_review' | 'expired' | 'missing' | 'none';
+type CellStatus = 'current' | 'needs_review' | 'overdue' | 'expired' | 'missing' | 'none';
 
 /* ───────────────────────────── Props ─────────────────────────────── */
 
@@ -71,6 +72,7 @@ function readinessBand(s: number) { return s >= 70 ? 'green' : s >= 40 ? 'amber'
 function readinessToCell(readiness: string): CellStatus {
   if (readiness === 'Current')      return 'current';
   if (readiness === 'Needs review') return 'needs_review';
+  if (readiness === 'Overdue')      return 'overdue';
   if (readiness === 'Expired')      return 'expired';
   if (readiness === 'Missing')      return 'missing';
   return 'none';
@@ -79,6 +81,7 @@ function readinessToCell(readiness: string): CellStatus {
 const CELL_META: Record<CellStatus, { label: string; cls: string; abbr: string }> = {
   current:      { label: 'Current',      cls: 'g-ready',   abbr: '✓' },
   needs_review: { label: 'Needs review', cls: 'g-review',  abbr: '!' },
+  overdue:      { label: 'Overdue',      cls: 'g-overdue', abbr: '⚠' },
   expired:      { label: 'Expired',      cls: 'g-missing', abbr: '✕' },
   missing:      { label: 'Missing',      cls: 'g-missing', abbr: '—' },
   none:         { label: '—',            cls: '',          abbr: '·' },
@@ -129,11 +132,32 @@ export default function TrainingMatrix({
     return map;
   }, [summary.rows]);
 
+  /* ── Employee × training derived state ── */
+  const allRequirementsForEmployees = useMemo(() => {
+    const seen = new Map<string, string>();
+    summary.rows.forEach(r => { if (!seen.has(r.id)) seen.set(r.id, r.requirement); });
+    summary.employees.forEach(emp => {
+      emp.assignments.forEach(a => { if (a.requirementId && !seen.has(a.requirementId)) seen.set(a.requirementId, a.requirement); });
+    });
+    return Array.from(seen.entries()).map(([id, title]) => ({ id, title }));
+  }, [summary.rows, summary.employees]);
+
+  const employeeCellMap = useMemo(() => {
+    const map = new Map<string, CellStatus>();
+    summary.employees.forEach(emp => {
+      emp.assignments.forEach(a => {
+        map.set(`${emp.userId}::${a.requirementId}`, readinessToCell(a.readiness));
+      });
+    });
+    return map;
+  }, [summary.employees]);
+
   /* ── Derived hero stats ── */
   const currentCount  = summary.counts.find(c => c.label === 'Current')?.value ?? 0;
   const reviewCount   = summary.counts.find(c => c.label === 'Needs review')?.value ?? 0;
   const expiredCount  = (summary.counts.find(c => c.label === 'Expired')?.value ?? 0)
-                      + (summary.counts.find(c => c.label === 'Missing')?.value ?? 0);
+                      + (summary.counts.find(c => c.label === 'Missing')?.value ?? 0)
+                      + (summary.counts.find(c => c.label === 'Overdue')?.value ?? 0);
   const totalCount    = summary.counts.find(c => c.label === 'Training requirements')?.value ?? summary.rows.length;
 
   const band    = readinessBand(summary.readinessScore);
@@ -145,6 +169,7 @@ export default function TrainingMatrix({
 
   const SECTIONS: [string, string][] = [
     ['matrix',       'Training Matrix'],
+    ['employees',    'Employees'],
     ['requirements', 'Requirements'],
     ['biotypes',     'BioType Training'],
     ['triggers',     'Change Triggers'],
@@ -346,7 +371,7 @@ export default function TrainingMatrix({
                 </div>
               )}
               <div className="tm-legend">
-                {(['current', 'needs_review', 'expired', 'missing', 'none'] as CellStatus[]).map(s => (
+                {(['current', 'needs_review', 'overdue', 'expired', 'missing', 'none'] as CellStatus[]).map(s => (
                   <span key={s} className={`tm-leg-item ${s}`}>
                     <span className="tm-leg-dot" /> {CELL_META[s].label}
                   </span>
@@ -430,6 +455,122 @@ export default function TrainingMatrix({
                   </tbody>
                 </table>
               </div>
+            </PSBSection>
+          )}
+
+          {/* ═══════════ EMPLOYEES ═══════════ */}
+          {section === 'employees' && (
+            <PSBSection eyebrow="Employee Training Needs" title="Training needs by team member">
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+                <a href="/training-matrix/export" className="psb-btn ghost" style={{ fontSize: 11 }}>
+                  Export CSV →
+                </a>
+              </div>
+              {summary.employees.length === 0 ? (
+                <div className="subcard">
+                  <div className="subhd">No team members yet</div>
+                  <p className="line-desc" style={{ padding: '8px 0' }}>
+                    Team members appear here once they join your workspace. Use the Admin tab to assign training needs to specific employees.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Employee × Training grid */}
+                  {allRequirementsForEmployees.length > 0 && (
+                    <div className="tm-scroll" style={{ marginBottom: 16 }}>
+                      <table className="tm-table">
+                        <thead>
+                          <tr>
+                            <th className="tm-role-hd">Employee</th>
+                            {allRequirementsForEmployees.map(req => (
+                              <th key={req.id} className="tm-col-hd" title={req.title}>{req.title}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {summary.employees.map(emp => (
+                            <tr key={emp.userId}>
+                              <td className="tm-role">
+                                <div style={{ fontWeight: 600, color: 'var(--wink)' }}>{emp.name}</div>
+                                <div style={{ fontSize: 10, color: 'var(--wink3)', marginTop: 2 }}>{formatOwnerRole(emp.role)}</div>
+                              </td>
+                              {allRequirementsForEmployees.map(req => {
+                                const cell = employeeCellMap.get(`${emp.userId}::${req.id}`) ?? 'none';
+                                const meta = CELL_META[cell];
+                                return (
+                                  <td key={req.id} className={`tm-cell ${cell}`} title={meta.label}>
+                                    {meta.abbr}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {/* Per-employee detail cards */}
+                  <div className="emp-cards">
+                    {summary.employees.map(emp => (
+                      <div className="subcard" key={emp.userId}>
+                        <div className="subhd">
+                          {emp.name}
+                          <span className="emp-role-tag">{formatOwnerRole(emp.role)}</span>
+                        </div>
+                        {emp.assignments.length === 0 ? (
+                          <p className="line-desc">No training needs assigned yet.</p>
+                        ) : (
+                          <div className="emp-assignment-list">
+                            {emp.assignments.map(a => {
+                              const cell = readinessToCell(a.readiness);
+                              const meta = CELL_META[cell];
+                              return (
+                                <div key={a.assignmentId} className="emp-assignment-row">
+                                  <div>
+                                    <div className="emp-req-name">{a.requirement}</div>
+                                    {a.dueDate && !a.completedAt && (
+                                      <small className="req-due">due {new Date(a.dueDate).toLocaleDateString()}</small>
+                                    )}
+                                    {a.completedAt && (
+                                      <small style={{ display: 'block', fontSize: 10, color: '#86efac', marginTop: 2 }}>
+                                        completed {new Date(a.completedAt).toLocaleDateString()}
+                                      </small>
+                                    )}
+                                  </div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                                    <span className={`gchip ${meta.cls}`}>{meta.label}</span>
+                                    {auth.isSignedIn && a.status !== 'completed' && (
+                                      <form action={markTrainingCompleteAction} style={{ display: 'inline' }}>
+                                        <input type="hidden" name="assignmentId" value={a.assignmentId} />
+                                        <button className="req-action-btn" type="submit" title="Mark complete">✓</button>
+                                      </form>
+                                    )}
+                                    {auth.isOwner && (
+                                      <form action={removeEmployeeAssignmentAction} style={{ display: 'inline' }}>
+                                        <input type="hidden" name="assignmentId" value={a.assignmentId} />
+                                        <button className="req-action-btn req-action-del" type="submit" title="Remove assignment">✕</button>
+                                      </form>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="tm-legend">
+                    {(['current', 'needs_review', 'overdue', 'expired', 'missing', 'none'] as CellStatus[]).map(s => (
+                      <span key={s} className={`tm-leg-item ${s}`}>
+                        <span className="tm-leg-dot" /> {CELL_META[s].label}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
             </PSBSection>
           )}
 
@@ -656,6 +797,7 @@ const STYLES = `
 .gchip{font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:6px;white-space:nowrap}
 .g-missing{background:rgba(239,68,68,.18);color:#fca5a5;border:1px solid rgba(239,68,68,.4)}
 .g-review{background:rgba(245,158,11,.18);color:#fcd34d;border:1px solid rgba(245,158,11,.4)}
+.g-overdue{background:rgba(249,115,22,.18);color:#fdba74;border:1px solid rgba(249,115,22,.4)}
 .g-ready{background:rgba(34,197,94,.18);color:#86efac;border:1px solid rgba(34,197,94,.4)}
 .guardrail{font-size:9.5px;color:var(--wink3);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:7px;padding:8px 10px;line-height:1.5}
 
@@ -684,6 +826,7 @@ const STYLES = `
 .tm-cell{text-align:center;font-size:13px;font-weight:700;padding:10px 8px;cursor:default}
 .tm-cell.current{background:rgba(34,197,94,.14);color:#86efac}
 .tm-cell.needs_review{background:rgba(245,158,11,.14);color:#fcd34d}
+.tm-cell.overdue{background:rgba(249,115,22,.14);color:#fdba74}
 .tm-cell.expired,.tm-cell.missing{background:rgba(239,68,68,.14);color:#fca5a5}
 .tm-cell.none{background:transparent;color:var(--wink3)}
 
@@ -693,6 +836,7 @@ const STYLES = `
 .tm-leg-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
 .tm-leg-item.current .tm-leg-dot{background:rgba(34,197,94,.6)}
 .tm-leg-item.needs_review .tm-leg-dot{background:rgba(245,158,11,.6)}
+.tm-leg-item.overdue .tm-leg-dot{background:rgba(249,115,22,.7)}
 .tm-leg-item.expired .tm-leg-dot,.tm-leg-item.missing .tm-leg-dot{background:rgba(239,68,68,.6)}
 .tm-leg-item.none .tm-leg-dot{background:var(--cline)}
 
@@ -713,6 +857,15 @@ const STYLES = `
 .req-action-btn:hover{background:rgba(34,197,94,.24)}
 .req-action-del{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35);color:#fca5a5}
 .req-action-del:hover{background:rgba(239,68,68,.22)}
+
+/* ── Employee cards ── */
+.emp-cards{display:grid;gap:11px;grid-template-columns:1fr 1fr}
+.emp-role-tag{font-size:9.5px;font-weight:600;color:var(--wink3);background:rgba(99,130,177,.15);border:1px solid var(--wline2);border-radius:5px;padding:2px 7px;margin-left:auto}
+.emp-assignment-list{display:flex;flex-direction:column;gap:9px}
+.emp-assignment-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--wline)}
+.emp-assignment-row:last-child{border-bottom:none;padding-bottom:0}
+.emp-req-name{font-size:11.5px;font-weight:600;color:var(--wink)}
+@media (max-width:900px){.emp-cards{grid-template-columns:1fr}}
 
 /* ── Counts strip ── */
 .psb-counts{display:flex;flex-wrap:wrap;gap:7px;margin:16px 0 12px}

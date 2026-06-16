@@ -165,6 +165,153 @@ export async function markTrainingCompleteAction(formData: FormData) {
 }
 
 // ---------------------------------------------------------------------------
+// Owner: remove a single employee training assignment
+// ---------------------------------------------------------------------------
+export async function removeEmployeeAssignmentAction(formData: FormData) {
+  const context = await getProfileContext();
+  if (!context || !canManageWorkspace(context)) {
+    redirect(authMessage("/training-matrix", "Only owners can remove training assignments."));
+  }
+
+  const assignmentId = String(formData.get("assignmentId") ?? "").trim();
+  if (!assignmentId) redirect(authMessage("/training-matrix", "Missing assignment ID."));
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
+    .from("training_assignments")
+    .delete()
+    .eq("id", assignmentId)
+    .eq("organization_id", context.organizationId);
+
+  if (error) redirect(authMessage("/training-matrix", error.message));
+
+  await supabase.from("audit_events").insert({
+    organization_id: context.organizationId,
+    actor_id: context.userId,
+    event_type: "foundation_evidence_readiness_updated",
+    summary: "Employee training assignment removed.",
+    payload: withAuditTrace(
+      { assignmentId },
+      { sourceModule: "training", sourceRecordId: assignmentId, targetModule: "training_assignment", draftOnly: false }
+    ),
+  });
+
+  redirect(authSuccess("/training-matrix", "Training assignment removed."));
+}
+
+// ---------------------------------------------------------------------------
+// Owner: bulk-assign a training requirement to multiple employees
+// ---------------------------------------------------------------------------
+export async function bulkAssignTrainingAction(formData: FormData) {
+  const context = await getProfileContext();
+  if (!context || !canManageWorkspace(context)) {
+    redirect(authMessage("/training-matrix", "Only owners can bulk-assign training."));
+  }
+
+  const requirementId = String(formData.get("requirementId") ?? "").trim();
+  const dueDateStr = String(formData.get("dueDate") ?? "").trim() || null;
+  const employeeIds = formData.getAll("employeeIds[]").map(v => String(v).trim()).filter(Boolean);
+
+  if (!requirementId) redirect(authMessage("/training-matrix", "Training requirement is required."));
+  if (employeeIds.length === 0) redirect(authMessage("/training-matrix", "Select at least one employee."));
+
+  const supabase = await createSupabaseServerClient();
+
+  const { data: existing } = await supabase
+    .from("training_assignments")
+    .select("assigned_user_id")
+    .eq("organization_id", context.organizationId)
+    .eq("training_requirement_id", requirementId)
+    .in("assigned_user_id", employeeIds);
+
+  const existingUserIds = new Set(((existing ?? []) as Record<string, any>[]).map(r => r.assigned_user_id as string));
+  const toInsert = employeeIds
+    .filter(uid => !existingUserIds.has(uid))
+    .map(uid => ({
+      organization_id: context.organizationId,
+      training_requirement_id: requirementId,
+      assigned_user_id: uid,
+      status: "assigned",
+      due_date: dueDateStr,
+    }));
+
+  if (toInsert.length === 0) {
+    redirect(authMessage("/training-matrix", "All selected employees already have this training assigned."));
+  }
+
+  const { error } = await supabase.from("training_assignments").insert(toInsert);
+  if (error) redirect(authMessage("/training-matrix", error.message));
+
+  await supabase.from("audit_events").insert({
+    organization_id: context.organizationId,
+    actor_id: context.userId,
+    event_type: "foundation_starter_records_created",
+    summary: `Training bulk-assigned to ${toInsert.length} employee(s).`,
+    payload: withAuditTrace(
+      { requirementId, employeeIds: toInsert.map(r => r.assigned_user_id), dueDateStr },
+      { sourceModule: "training", sourceRecordId: requirementId, targetModule: "training_assignment", draftOnly: false }
+    ),
+  });
+
+  redirect(authSuccess("/training-matrix", `Training assigned to ${toInsert.length} employee(s).`));
+}
+
+// ---------------------------------------------------------------------------
+// Owner: assign a training requirement to a specific employee
+// ---------------------------------------------------------------------------
+export async function assignTrainingToEmployeeAction(formData: FormData) {
+  const context = await getProfileContext();
+  if (!context || !canManageWorkspace(context)) {
+    redirect(authMessage("/training-matrix", "Only owners can assign training to employees."));
+  }
+
+  const requirementId = String(formData.get("requirementId") ?? "").trim();
+  const employeeId = String(formData.get("employeeId") ?? "").trim();
+  const dueDateStr = String(formData.get("dueDate") ?? "").trim() || null;
+
+  if (!requirementId || !employeeId) {
+    redirect(authMessage("/training-matrix", "Requirement and employee are required."));
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const { data: existing } = await supabase
+    .from("training_assignments")
+    .select("id")
+    .eq("organization_id", context.organizationId)
+    .eq("training_requirement_id", requirementId)
+    .eq("assigned_user_id", employeeId)
+    .maybeSingle();
+
+  if (existing) {
+    redirect(authMessage("/training-matrix", "This employee already has this training assigned."));
+  }
+
+  const { error } = await supabase.from("training_assignments").insert({
+    organization_id: context.organizationId,
+    training_requirement_id: requirementId,
+    assigned_user_id: employeeId,
+    status: "assigned",
+    due_date: dueDateStr,
+  });
+
+  if (error) redirect(authMessage("/training-matrix", error.message));
+
+  await supabase.from("audit_events").insert({
+    organization_id: context.organizationId,
+    actor_id: context.userId,
+    event_type: "foundation_starter_records_created",
+    summary: "Training need assigned to employee.",
+    payload: withAuditTrace(
+      { requirementId, employeeId, dueDateStr },
+      { sourceModule: "training", sourceRecordId: requirementId, targetModule: "training_assignment", draftOnly: false }
+    ),
+  });
+
+  redirect(authSuccess("/training-matrix", "Training assigned to employee."));
+}
+
+// ---------------------------------------------------------------------------
 // Owner: delete a training requirement
 // ---------------------------------------------------------------------------
 export async function deleteTrainingRequirementAction(formData: FormData) {

@@ -109,7 +109,7 @@ export {
 } from "./change-plan-service";
 export type { ChangePlanItem, ChangePlanItemsSummary, ChangePlanItemInput } from "./change-plan-service";
 export { getTrainingMatrixSummary } from "./training-matrix-service";
-export type { TrainingMatrixRow, TrainingMatrixSummary } from "./training-matrix-service";
+export type { TrainingMatrixRow, TrainingMatrixSummary, EmployeeTrainingSummary, EmployeeTrainingAssignment } from "./training-matrix-service";
 export { getMapOperationsSummary, getMapAlignedWorkbenchInput, createMapOperationsBundle } from "./map-operations-service";
 export type { MapOperationsBundleInput, MapOperationsSummary } from "./map-operations-service";
 export {
