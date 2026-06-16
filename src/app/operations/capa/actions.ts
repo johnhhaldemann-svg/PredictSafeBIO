@@ -8,12 +8,14 @@ import {
   updateCapaStatus,
   type CapaActionStatus,
   type CapaActionType,
-  type CapaStatus
+  type CapaStatus,
+  type CapaType,
 } from "@/lib/supabase/capa-service";
 import { authMessage } from "@/lib/auth-routing";
 
 export async function createCapaAction(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
+  const capaType = (String(formData.get("capaType") ?? "corrective").trim() || "corrective") as CapaType;
   const ownerRole = String(formData.get("ownerRole") ?? "").trim() || undefined;
   const dueDate = String(formData.get("dueDate") ?? "").trim() || null;
   const effectivenessCheckDue = String(formData.get("effectivenessCheckDue") ?? "").trim() || null;
@@ -28,6 +30,7 @@ export async function createCapaAction(formData: FormData) {
 
   const result = await createCapaRecord({
     title,
+    capaType,
     ownerRole,
     dueDate,
     effectivenessCheckDue,
