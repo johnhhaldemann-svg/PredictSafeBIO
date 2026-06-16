@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
-import { ShieldCheck, Plus, AlertTriangle, Activity, Clock } from "lucide-react";
+import { Plus, Clock } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { AiDraftBanner } from "@/components/AiDraftBanner";
@@ -14,6 +14,14 @@ import {
   type RiskLevel,
   type ControlType,
 } from "@/lib/supabase/risk-register-service";
+import {
+  REGULATION_FRAMEWORKS,
+  COMPLIANCE_GAP_LABELS,
+  CONTROL_EFFECTIVENESS,
+  type RegulationFramework,
+  type ComplianceGap,
+  type ControlEffectivenessTier,
+} from "@/lib/risk/scoring";
 import { createRiskRegisterEntryAction, updateRiskRegisterStatusAction } from "./actions";
 
 export const metadata: Metadata = { title: "Risk Register – PredictSafe" };
@@ -42,7 +50,15 @@ const FREQUENCY_LABELS: Record<typeof FREQUENCIES[number], string> = {
   per_batch: "Per batch",
 };
 
-const RISK_LEVELS: RiskLevel[] = ["low", "medium", "high", "critical"];
+const COMPLIANCE_GAPS = Object.keys(COMPLIANCE_GAP_LABELS) as ComplianceGap[];
+const CONTROL_TIERS = Object.keys(CONTROL_EFFECTIVENESS) as ControlEffectivenessTier[];
+
+const CONTROL_TIER_LABELS: Record<ControlEffectivenessTier, string> = {
+  engineering_plus_backups: "Engineering + backups (×0.25)",
+  engineering_plus_admin: "Engineering + admin (×0.50)",
+  admin_only: "Admin controls only (×0.75)",
+  none: "No controls / unverified (×1.00)",
+};
 
 type Props = { searchParams: Promise<{ message?: string; success?: string; status?: string; risk?: string }> };
 
@@ -51,7 +67,6 @@ export default async function RiskRegisterPage({ searchParams }: Props) {
   const statusFilter = (params.status as RiskStatus) || undefined;
   const riskFilter = (params.risk as RiskLevel) || undefined;
 
-  // Fetch all entries so we can show per-status counts on filter badges
   const allEntries = await listRiskRegisterEntries({}).catch(() => []);
   const entries = allEntries.filter((e) => {
     if (statusFilter && e.status !== statusFilter) return false;
@@ -62,8 +77,8 @@ export default async function RiskRegisterPage({ searchParams }: Props) {
   const total = allEntries.length;
   const overdue = allEntries.filter((e) => e.overdue || e.status === "overdue").length;
   const active = allEntries.filter((e) => e.status === "active").length;
+  const highCritical = allEntries.filter((e) => e.residualRisk === "high" || e.residualRisk === "critical").length;
 
-  // Per-status counts for filter badges
   const statusCounts = (Object.keys(RISK_STATUS_LABELS) as RiskStatus[]).reduce<Record<string, number>>(
     (acc, s) => { acc[s] = allEntries.filter((e) => e.status === s).length; return acc; },
     {}
@@ -77,8 +92,9 @@ export default async function RiskRegisterPage({ searchParams }: Props) {
             <p className="section-label">Plan · Stage 1</p>
             <h1>Risk Register</h1>
             <p className="muted">
-              Every requirement, control, frequency, qualified reviewer, and evidence need — feeds the
-              Compliance Calendar and the Predictive Engine.
+              Regulatory-requirement-driven. Risk scores are calculated from the regulation and
+              your current compliance gap — no manual scoring. Feeds the Compliance Calendar and
+              Predictive Engine.
             </p>
           </div>
           <Link className="button-secondary" href="/plan/compliance-calendar">Compliance Calendar →</Link>
@@ -91,22 +107,22 @@ export default async function RiskRegisterPage({ searchParams }: Props) {
           <div className="kpi-card kpi-card--blue">
             <div className="kpi-label">Total Entries</div>
             <div className="kpi-value">{total}</div>
-            <div className="kpi-sub">Requirements in register</div>
+            <div className="kpi-sub">Regulatory requirements tracked</div>
           </div>
-          <div className={`kpi-card ${overdue > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
-            <div className="kpi-label">Overdue</div>
-            <div className="kpi-value">{overdue}</div>
-            <div className="kpi-sub">{overdue > 0 ? "Raises predicted pressure" : "Nothing overdue"}</div>
+          <div className={`kpi-card ${highCritical > 0 ? "kpi-card--red" : "kpi-card--green"}`}>
+            <div className="kpi-label">High / Critical</div>
+            <div className="kpi-value">{highCritical}</div>
+            <div className="kpi-sub">Residual risk — action required</div>
           </div>
           <div className="kpi-card kpi-card--green">
             <div className="kpi-label">Active</div>
             <div className="kpi-value">{active}</div>
-            <div className="kpi-sub">Approved & in calendar</div>
+            <div className="kpi-sub">Approved &amp; in calendar</div>
           </div>
-          <div className="kpi-card kpi-card--amber">
-            <div className="kpi-label">Pending</div>
-            <div className="kpi-value">{total - active - overdue}</div>
-            <div className="kpi-sub">Not yet activated</div>
+          <div className={`kpi-card ${overdue > 0 ? "kpi-card--red" : "kpi-card--amber"}`}>
+            <div className="kpi-label">Overdue</div>
+            <div className="kpi-value">{overdue}</div>
+            <div className="kpi-sub">{overdue > 0 ? "Raises predicted pressure" : "Nothing overdue"}</div>
           </div>
         </section>
 
@@ -125,13 +141,11 @@ export default async function RiskRegisterPage({ searchParams }: Props) {
 
         <nav className="command-center-link-strip" aria-label="Status filter">
           <Link href="/plan/risk-register" className={`button-secondary compact ${!statusFilter ? "active-filter" : ""}`}>
-            All
-            <span className="filter-count-badge">{total}</span>
+            All <span className="filter-count-badge">{total}</span>
           </Link>
           {(Object.keys(RISK_STATUS_LABELS) as RiskStatus[]).map((s) => (
             <Link key={s} href={`/plan/risk-register?status=${s}`} className={`button-secondary compact ${statusFilter === s ? "active-filter" : ""}`}>
-              {RISK_STATUS_LABELS[s]}
-              <span className="filter-count-badge">{statusCounts[s] ?? 0}</span>
+              {RISK_STATUS_LABELS[s]} <span className="filter-count-badge">{statusCounts[s] ?? 0}</span>
             </Link>
           ))}
         </nav>
@@ -139,7 +153,7 @@ export default async function RiskRegisterPage({ searchParams }: Props) {
         <section className="panel">
           <div className="panel-heading">
             <div>
-              <p className="section-label">Register</p>
+              <p className="section-label">Register — sorted by inherent risk (highest first)</p>
               <h2>
                 {entries.length === allEntries.length
                   ? `${total} entr${total !== 1 ? "ies" : "y"}`
@@ -150,8 +164,7 @@ export default async function RiskRegisterPage({ searchParams }: Props) {
           {entries.length === 0 && allEntries.length === 0 ? (
             <div className="empty-state-card">
               <p className="empty-state-title">No register entries yet</p>
-              <p className="muted">Run the Setup Questionnaire to auto-seed entries, or add one below.</p>
-              <Link href="/assess/setup-questionnaire" className="button-secondary compact">Go to Setup Questionnaire</Link>
+              <p className="muted">Add a regulatory requirement below to get started.</p>
             </div>
           ) : entries.length === 0 ? (
             <p className="empty-table-note">No entries match the selected filter. <Link href="/plan/risk-register">Clear filter</Link></p>
@@ -160,15 +173,20 @@ export default async function RiskRegisterPage({ searchParams }: Props) {
               {entries.map((e) => (
                 <article className="action-row" key={e.id}>
                   <div>
-                    <strong>{e.riskItem}</strong>
-                    {e.residualRisk && <span className={RISK_LEVEL_CLASS[e.residualRisk]}>{e.residualRisk}</span>}
+                    <strong>{e.regulation ?? e.riskItem}</strong>
+                    {e.residualRisk && <span className={RISK_LEVEL_CLASS[e.residualRisk]}>Residual: {e.residualRisk}</span>}
+                    {e.inherentRisk && e.inherentRisk !== e.residualRisk && (
+                      <span className={RISK_LEVEL_CLASS[e.inherentRisk]}>Inherent: {e.inherentRisk}</span>
+                    )}
                     <span className={RISK_STATUS_CLASS[e.status]}>{RISK_STATUS_LABELS[e.status]}</span>
                     <small className="muted">
-                      {e.programName ? `${e.programName} · ` : ""}
+                      {e.requirementDetail ? `${e.requirementDetail} · ` : ""}
+                      {e.activity ? `${e.activity} · ` : ""}
+                      {e.complianceGap ? `Gap: ${COMPLIANCE_GAP_LABELS[e.complianceGap]} · ` : ""}
+                      {e.inherentScore != null ? `Score: ${e.inherentScore}→${e.residualScore ?? "?"} · ` : ""}
                       {e.controlType ? `${CONTROL_TYPE_LABELS[e.controlType as ControlType] ?? e.controlType} · ` : ""}
                       {e.frequency ? `${FREQUENCY_LABELS[e.frequency as typeof FREQUENCIES[number]] ?? e.frequency} · ` : ""}
                       {e.qualifiedReviewerName ? `Reviewer: ${e.qualifiedReviewerName} · ` : ""}
-                      {e.evidenceRequired.length ? `Evidence: ${e.evidenceRequired.join(", ")} · ` : ""}
                       CAPA: {e.openCapaCount}
                       {e.dueDate ? ` · Due ${e.dueDate}` : ""}
                     </small>
@@ -189,23 +207,55 @@ export default async function RiskRegisterPage({ searchParams }: Props) {
         </section>
 
         <AiDraftBanner>
-          Changing an entry to Active, Restricted, or Closed with Evidence is a restricted decision — it
-          requires a Qualified Reviewer in the registry. AI cannot set an entry to Active.
+          Changing an entry to Active, Restricted, or Closed with Evidence requires a Qualified Reviewer.
+          AI cannot set an entry to Active.
         </AiDraftBanner>
 
         <section className="panel">
           <div className="panel-heading">
-            <div><p className="section-label">Add entry</p><h2>New risk register entry</h2></div>
+            <div><p className="section-label">Add entry</p><h2>New regulatory risk entry</h2></div>
             <Plus size={22} />
           </div>
+          <p className="muted" style={{ marginBottom: "1rem" }}>
+            Select the regulation and your current compliance gap — inherent and residual risk scores
+            are calculated automatically.
+          </p>
           <form action={createRiskRegisterEntryAction} className="stacked-form">
-            <label>Risk item <span aria-hidden="true">*</span>
-              <input name="riskItem" type="text" placeholder="e.g. BSC annual certification" required />
-            </label>
+            {/* ── Regulatory identity ── */}
             <div className="form-grid">
-              <label>Area<input name="area" type="text" placeholder="e.g. Lab 101" /></label>
-              <label>Process<input name="process" type="text" placeholder="e.g. Cell culture" /></label>
-              <label>Program<input name="programName" type="text" placeholder="e.g. Biosafety" /></label>
+              <label>Regulation <span aria-hidden="true">*</span>
+                <select name="regulation" required defaultValue="">
+                  <option value="" disabled>Select regulation…</option>
+                  {REGULATION_FRAMEWORKS.map((f) => (
+                    <option key={f} value={f}>{f}</option>
+                  ))}
+                </select>
+              </label>
+              <label>Compliance gap <span aria-hidden="true">*</span>
+                <select name="complianceGap" required defaultValue="">
+                  <option value="" disabled>Select gap…</option>
+                  {COMPLIANCE_GAPS.map((g) => (
+                    <option key={g} value={g}>{COMPLIANCE_GAP_LABELS[g]}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <label>Specific requirement / section
+              <input name="requirementDetail" type="text" placeholder='e.g. "Section III-D-3" or "29 CFR 1910.1030(d)(2)"' />
+            </label>
+            <label>Activity covered <span aria-hidden="true">*</span>
+              <input name="activity" type="text" placeholder='e.g. "Cell culture with RG2 organism"' required />
+            </label>
+
+            {/* ── Controls ── */}
+            <div className="form-grid">
+              <label>Control tier (drives residual score)
+                <select name="controlTier" defaultValue="none">
+                  {CONTROL_TIERS.map((t) => (
+                    <option key={t} value={t}>{CONTROL_TIER_LABELS[t]}</option>
+                  ))}
+                </select>
+              </label>
               <label>Control type
                 <select name="controlType" defaultValue="administrative">
                   {CONTROL_TYPES.map((c) => <option key={c} value={c}>{CONTROL_TYPE_LABELS[c]}</option>)}
@@ -216,20 +266,22 @@ export default async function RiskRegisterPage({ searchParams }: Props) {
                   {FREQUENCIES.map((f) => <option key={f} value={f}>{FREQUENCY_LABELS[f]}</option>)}
                 </select>
               </label>
-              <label>Inherent risk
-                <select name="inherentRisk" defaultValue="medium">
-                  {RISK_LEVELS.map((r) => <option key={r} value={r}>{r[0].toUpperCase() + r.slice(1)}</option>)}
-                </select>
-              </label>
-              <label>Residual risk
-                <select name="residualRisk" defaultValue="medium">
-                  {RISK_LEVELS.map((r) => <option key={r} value={r}>{r[0].toUpperCase() + r.slice(1)}</option>)}
-                </select>
-              </label>
             </div>
-            <label>Source basis<input name="sourceBasis" type="text" placeholder="e.g. BMBL / manufacturer instruction" /></label>
-            <label>Control description<textarea name="controlDescription" rows={2} placeholder="What control is required?" /></label>
-            <button className="button-primary" type="submit">Add entry</button>
+            <label>Control description
+              <textarea name="controlDescription" rows={2} placeholder="What control is required?" />
+            </label>
+
+            {/* ── Supplemental ── */}
+            <div className="form-grid">
+              <label>Area<input name="area" type="text" placeholder="e.g. Lab 101" /></label>
+              <label>Process<input name="process" type="text" placeholder="e.g. Cell culture" /></label>
+              <label>Program<input name="programName" type="text" placeholder="e.g. Biosafety" /></label>
+            </div>
+            <label>Source basis
+              <input name="sourceBasis" type="text" placeholder="e.g. BMBL / manufacturer instruction" />
+            </label>
+
+            <button className="button-primary" type="submit">Calculate scores &amp; add entry</button>
           </form>
         </section>
       </div>

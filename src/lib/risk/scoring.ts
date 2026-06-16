@@ -137,6 +137,103 @@ export function riskControlPlanRequired(band: RiskBand): boolean {
   return band !== "low";
 }
 
+// ── Regulatory scoring ──────────────────────────────────────────────────────
+// Inherent risk for a regulatory-requirement-based register entry is calculated
+// from:
+//   • Regulatory consequence severity  (1–5, pre-set per framework)
+//   • Compliance gap score             (1–5, driven by current compliance status)
+// The product feeds directly into bandFromScore / residualScore, so the rest
+// of the scoring pipeline (control effectiveness, residual band) is unchanged.
+
+export type RegulationFramework =
+  | "NIH Guidelines"
+  | "OSHA 1910.1030"
+  | "CDC/USDA Select Agents"
+  | "EPA"
+  | "FDA 21 CFR"
+  | "Internal";
+
+export type ComplianceGap = "compliant" | "minor_gap" | "major_gap" | "non_compliant";
+
+/** Pre-set consequence severity per regulatory framework (1–5). */
+export const REGULATION_SEVERITY: Record<RegulationFramework, RiskScaleValue> = {
+  "CDC/USDA Select Agents": 5, // Criminal penalties, facility shutdown
+  "OSHA 1910.1030":         4, // OSHA enforcement, fines, recordkeeping
+  "NIH Guidelines":         3, // IBC suspension, funding loss
+  "FDA 21 CFR":             3, // Warning letters, consent decrees
+  "EPA":                    3, // Civil penalties, reporting
+  "Internal":               1, // Internal policy only
+};
+
+/** Gap-to-likelihood mapping. Non-compliant = Almost Certain audit finding. */
+export const COMPLIANCE_GAP_SCORE: Record<ComplianceGap, RiskScaleValue> = {
+  compliant:       1,
+  minor_gap:       2,
+  major_gap:       4,
+  non_compliant:   5,
+};
+
+export const COMPLIANCE_GAP_LABELS: Record<ComplianceGap, string> = {
+  compliant:      "Compliant",
+  minor_gap:      "Minor Gap",
+  major_gap:      "Major Gap",
+  non_compliant:  "Non-Compliant",
+};
+
+export const REGULATION_FRAMEWORKS: RegulationFramework[] = [
+  "CDC/USDA Select Agents",
+  "OSHA 1910.1030",
+  "NIH Guidelines",
+  "FDA 21 CFR",
+  "EPA",
+  "Internal",
+];
+
+export type RegulatoryRiskResult = {
+  regulationSeverity: RiskScaleValue;
+  gapScore: RiskScaleValue;
+  inherentScore: number;
+  inherentBand: RiskBand;
+  inherentLevel: RiskLevel;
+  controlTier: ControlEffectivenessTier;
+  controlFactor: number;
+  residualScore: number;
+  residualBand: RiskBand;
+  residualLevel: RiskLevel;
+  riskControlPlanRequired: boolean;
+};
+
+/**
+ * Calculate inherent and residual risk for a regulatory-requirement entry.
+ * Inherent = regulation severity × compliance gap score.
+ * Residual = inherent × control effectiveness factor.
+ */
+export function assessRegulatoryRisk(
+  regulation: RegulationFramework,
+  complianceGap: ComplianceGap,
+  controlTier: ControlEffectivenessTier = "none"
+): RegulatoryRiskResult {
+  const regulationSeverity = REGULATION_SEVERITY[regulation];
+  const gapScore = COMPLIANCE_GAP_SCORE[complianceGap];
+  const iScore = rawScore(regulationSeverity, gapScore);
+  const iBand = bandFromScore(iScore);
+  const rScore = residualScore(iScore, controlTier);
+  const rBand = bandFromScore(rScore);
+  return {
+    regulationSeverity,
+    gapScore,
+    inherentScore: iScore,
+    inherentBand: iBand,
+    inherentLevel: bandToLevel(iBand),
+    controlTier,
+    controlFactor: controlFactor(controlTier),
+    residualScore: rScore,
+    residualBand: rBand,
+    residualLevel: bandToLevel(rBand),
+    riskControlPlanRequired: riskControlPlanRequired(rBand),
+  };
+}
+
 // ── Multi-impact assessment ─────────────────────────────────────────────────
 // The reference Risk Register scores each hazard across multiple impact criteria
 // (Health & Safety, Environment, Compliance, …) and takes the highest as the
