@@ -224,46 +224,7 @@ export default function HazardRegister({
     <div className="psb">
       <style dangerouslySetInnerHTML={{ __html: STYLES }} />
 
-      {/* TOP BAR */}
-      <div className="psb-topbar">
-        <div className="psb-brand">
-          <div className="psb-logo">🛡️</div>
-          <div>
-            <b>PredictSafe BIO</b>
-            <span>Biosafety Intelligence</span>
-          </div>
-        </div>
-        <div className="psb-topright">
-          <div className="psb-pill">🔔 <span style={{ color: '#fca5a5', fontWeight: 700 }}>1</span></div>
-          <div className="psb-pill psb-owner">OWNER</div>
-          <div className="psb-ava">JH</div>
-          <div className="psb-pill" style={{ fontSize: 10.5 }}>john.haldemann@hotmail.com</div>
-          <div className="psb-pill" style={{ padding: '5px 8px' }}>⎋</div>
-        </div>
-      </div>
-
-      <div className="psb-shell">
-        {/* NAV */}
-        <nav className="psb-nav">
-          <div className="psb-navgrp">Assess <span style={{ marginLeft: 'auto' }}>▾</span></div>
-          <div className="psb-navitem">Risk Workbench</div>
-          <div className="psb-navitem">Risk Register</div>
-          <div className="psb-navitem on">Hazard Register</div>
-          <div className="psb-navitem">Exposure Map</div>
-          <div className="psb-navitem">Personnel</div>
-          <div className="psb-navtop">Plan <span className="ch">▸</span></div>
-          <div className="psb-navtop">Operate <span className="ch">▸</span></div>
-          <div className="psb-navtop">Monitor <span className="ch">▸</span></div>
-          <div className="psb-navtop">Workspace <span className="ch">▸</span></div>
-        </nav>
-
-        {/* MAIN */}
-        <main className="psb-main">
-          <div className="psb-connbar">
-            Workspace connected · <b>john.haldemann@hotmail.com</b> ·{' '}
-            <span style={{ color: '#16a34a', fontWeight: 700 }}>OWNER</span>
-          </div>
-
+      <div className="psb-main">
           <div className="psb-head">
             <div>
               <div className="psb-eyebrow">● Assess · Stage 3</div>
@@ -431,7 +392,6 @@ export default function HazardRegister({
             <span><i className="lg" style={{ background: '#f97316' }} /> 7–8 Orange · Toolbox + inspection</span>
             <span><i className="lg" style={{ background: '#ef4444' }} /> 9–10 Red · Consider work stoppage</span>
           </div>
-        </main>
       </div>
     </div>
   );
@@ -477,25 +437,8 @@ const STYLES = `
 .psb *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
 .psb{--w2:#13294d;--w3:#16315c;--wline:#22406e;--wline2:#2c4d80;--wink:#eaf1fb;--wink2:#9fb4d4;--wink3:#6f87ad;
   --cink:#0f2647;--cink2:#475569;--cink3:#94a3b8;--cline:#e2e8f0;--accent:#2563eb;--accent2:#60a5fa;
-  background:#f5f8fc;border-radius:14px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 12px 40px rgba(15,38,71,.08);color:var(--cink);font-size:13px;line-height:1.4}
-.psb-topbar{display:flex;align-items:center;justify-content:space-between;background:#0a1d38;padding:12px 18px}
-.psb-brand{display:flex;align-items:center;gap:10px}
-.psb-logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#1d4ed8,#0891b2);display:flex;align-items:center;justify-content:center;font-size:15px}
-.psb-brand b{font-size:14px;font-weight:700;color:#fff}
-.psb-brand span{display:block;font-size:9.5px;color:#7e96bd;font-weight:500}
-.psb-topright{display:flex;align-items:center;gap:10px}
-.psb-pill{background:#13294d;border:1px solid #2c4d80;border-radius:7px;padding:5px 9px;font-size:11px;color:#9fb4d4;display:flex;align-items:center;gap:6px}
-.psb-owner{background:rgba(34,197,94,.14);border-color:rgba(34,197,94,.4);color:#86efac;font-weight:700;letter-spacing:.04em;font-size:9.5px}
-.psb-ava{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
-.psb-shell{display:flex;min-height:600px}
-.psb-nav{width:182px;background:#fff;border-right:1px solid var(--cline);padding:10px 0;flex-shrink:0}
-.psb-navgrp{font-size:9.5px;letter-spacing:.12em;color:var(--cink3);text-transform:uppercase;padding:11px 16px 4px;display:flex;align-items:center;gap:7px;font-weight:700}
-.psb-navitem{padding:7px 16px 7px 34px;font-size:12px;color:var(--cink2);cursor:pointer}
-.psb-navitem:hover{color:var(--cink);background:#f1f5fb}
-.psb-navitem.on{color:var(--accent);background:linear-gradient(90deg,rgba(37,99,235,.1),transparent);border-left:2px solid var(--accent);padding-left:32px;font-weight:700}
-.psb-navtop{padding:9px 16px;font-size:12.5px;color:var(--cink);font-weight:600;display:flex;align-items:center;gap:8px;cursor:pointer}
-.psb-navtop .ch{margin-left:auto;color:var(--cink3);font-size:10px}
-.psb-main{flex:1;padding:16px 20px;overflow:auto;background:#f5f8fc}
+  color:var(--cink);font-size:13px;line-height:1.4}
+.psb-main{padding:0}
 .psb-connbar{font-size:10.5px;color:var(--cink3);margin-bottom:12px}
 .psb-connbar b{color:var(--cink2);font-weight:600}
 .psb-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:16px}
