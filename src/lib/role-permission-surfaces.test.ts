@@ -6,6 +6,7 @@ const foundationPage = readFileSync(join(process.cwd(), "src/app/foundation/page
 const myWorkPage = readFileSync(join(process.cwd(), "src/app/my-work/page.tsx"), "utf8");
 const documentsPage = readFileSync(join(process.cwd(), "src/app/documents/page.tsx"), "utf8");
 const trainingMatrixPage = readFileSync(join(process.cwd(), "src/app/training-matrix/page.tsx"), "utf8");
+const trainingMatrixComponent = readFileSync(join(process.cwd(), "src/components/TrainingMatrix.tsx"), "utf8");
 const operationsPage = readFileSync(join(process.cwd(), "src/app/operations/page.tsx"), "utf8");
 const adminDemoPage = readFileSync(join(process.cwd(), "src/app/admin/demo/page.tsx"), "utf8");
 const dataLayer = readFileSync(join(process.cwd(), "src/lib/supabase/data.ts"), "utf8");
@@ -23,8 +24,8 @@ describe("role permission surfaces", () => {
 
   it("keeps Foundation and My Work owner controls separate from assigned-member task updates", () => {
     expect(foundationPage).toContain("canManage={adminAccess.isOwner}");
-    expect(foundationPage).toContain("canManage={adminAccess.signedIn}");
-    expect(foundationPage).toContain("canEditAssignment={adminAccess.isOwner}");
+    expect(foundationPage).toContain("isSignedIn: adminAccess.signedIn");
+    expect(foundationPage).toContain("isOwner: adminAccess.isOwner");
     expect(myWorkPage).toContain('requestedView ?? (adminAccess.isOwner ? "all" : "my_open")');
     expect(myWorkPage).toContain("canEditAssignment={adminAccess.isOwner}");
   });
@@ -37,7 +38,7 @@ describe("role permission surfaces", () => {
   });
 
   it("keeps training CRUD owner-gated and admin seeding platform-only", () => {
-    expect(trainingMatrixPage).toContain("Completion must be verified by a qualified reviewer");
+    expect(trainingMatrixComponent).toContain("Completion must be verified by a qualified reviewer");
     // Training CRUD (mark complete, delete, create) is now implemented and owner-gated
     expect(trainingMatrixPage).toContain("adminAccess.isOwner");
     // /admin/* platform utilities are gated to platform staff — owners cannot seed demo data

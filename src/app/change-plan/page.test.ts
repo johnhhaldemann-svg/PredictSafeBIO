@@ -13,6 +13,7 @@ const changePlanService = readFileSync(join(process.cwd(), "src/lib/supabase/cha
 const trainingMatrixService = readFileSync(join(process.cwd(), "src/lib/supabase/training-matrix-service.ts"), "utf8");
 const versionControlPage = readFileSync(join(process.cwd(), "src/app/documents/version-control/page.tsx"), "utf8");
 const trainingMatrixPage = readFileSync(join(process.cwd(), "src/app/training-matrix/page.tsx"), "utf8");
+const trainingMatrixComponent = readFileSync(join(process.cwd(), "src/components/TrainingMatrix.tsx"), "utf8");
 const reviewWorkflow = readFileSync(join(process.cwd(), "src/lib/review-workflow.ts"), "utf8");
 
 describe("command center and change plan", () => {
@@ -88,8 +89,8 @@ describe("command center and change plan", () => {
     expect(platformOutline).toContain('href: "/training-matrix"');
     expect(trainingMatrixPage).toContain("Training Matrix");
     expect(trainingMatrixPage).toContain("getTrainingMatrixSummary");
-    expect(trainingMatrixPage).toContain("document-change refreshers");
-    expect(trainingMatrixPage).toContain("Completion must be verified by a qualified reviewer");
+    expect(trainingMatrixComponent).toContain("document-change refreshers");
+    expect(trainingMatrixComponent).toContain("Completion must be verified by a qualified reviewer");
     expect(dataLayer).toContain("getTrainingMatrixSummary");
     expect(trainingMatrixService).toContain('"training_assignments"');
     expect(trainingMatrixService).toContain('"training_requirements"');
