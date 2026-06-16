@@ -81,7 +81,7 @@ export default async function RiskCommandCenterPage() {
         <LoopNext
           stage="Monitor"
           nextStage="Assess"
-          blurb="Seeing new signals here? Close the loop — feed them into your next BioRisk assessment. Escalate any cell to CAPA from its card below."
+          blurb="Seeing new signals here? Close the loop — feed them into your next risk assessment. Escalate any cell to CAPA from its card below."
           ctaLabel="Run an assessment"
           ctaHref="/workbench"
         />

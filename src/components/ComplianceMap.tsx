@@ -315,7 +315,7 @@ export default function ComplianceMap({
 
             <div className="hero-stats">
               <div className="hstat">
-                <div className="hlabel">BioRisk Index</div>
+                <div className="hlabel">HSE Risk Index</div>
                 <div className="hrow">
                   <span className="hbig" style={{ color: riskColor }}>{bioRisk.score}</span>
                   <span className={`hsev ${riskCls}`}>{bioRisk.level}</span>

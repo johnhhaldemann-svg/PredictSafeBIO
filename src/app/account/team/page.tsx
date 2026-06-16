@@ -19,7 +19,7 @@ const roleMatrix = [
   { feature: "View Inspections",             member: true,  owner: true },
   { feature: "Assigned tasks (update)",      member: true,  owner: true },
   { feature: "Schedule & manage Inspections",member: false, owner: true },
-  { feature: "Risk Assessment & BioRisk",    member: false, owner: true },
+  { feature: "Risk Assessment",              member: false, owner: true },
   { feature: "Compliance Map & Foundation",  member: false, owner: true },
   { feature: "Operations & CAPA",            member: false, owner: true },
   { feature: "Level 2 Evaluation (conduct)", member: false, owner: true },

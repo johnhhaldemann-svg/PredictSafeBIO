@@ -169,7 +169,7 @@ export function NewAssessmentClient() {
         <header className="page-header">
           <div className="page-header-left">
             <p className="section-label">Assess</p>
-            <h1>New BioRisk Assessment</h1>
+            <h1>New Risk Assessment</h1>
           </div>
           <Link className="button-secondary" href="/assessments">
             <ChevronLeft size={15} />
@@ -189,7 +189,7 @@ export function NewAssessmentClient() {
           <section className="panel intake-panel" aria-labelledby="intake-title">
             <div className="panel-heading">
               <div>
-                <p className="section-label">BioRisk Engine</p>
+                <p className="section-label">Predictive Safety Engine</p>
                 <h2 id="intake-title">Assessment Details</h2>
               </div>
               {isAnalyzing && (

@@ -58,7 +58,7 @@ const DEMO_FEED: FeedItem[] = [
 ];
 
 const DEMO_KPIS: ViewKpi[] = [
-  { label: 'BioRisk Score',    value: '81',  sub: 'critical · 2 awaiting review', accent: '#ef4444', valueColor: '#fca5a5' },
+  { label: 'HSE Risk Score',    value: '81',  sub: 'critical · 2 awaiting review', accent: '#ef4444', valueColor: '#fca5a5' },
   { label: 'Audit Readiness',  value: '20%', sub: '3 programs overdue',           accent: '#f59e0b', valueColor: '#fcd34d' },
   { label: 'Needs Action',     value: '9',   sub: 'across all modules',            accent: '#f97316', valueColor: '#fdba74' },
   { label: 'Priority Signals', value: '3',   sub: '1 critical · 2 high · 5 active', accent: '#60a5fa' },
@@ -67,7 +67,7 @@ const DEMO_KPIS: ViewKpi[] = [
 const DEMO_STAGES: ViewStage[] = [
   {
     number: 1, title: 'Assess', question: 'What are my risks?', color: '#ef4444',
-    value: '81', valueLabel: 'Latest BioRisk score', note: '2 awaiting review · 1 critical',
+    value: '81', valueLabel: 'Latest HSE risk score', note: '2 awaiting review · 1 critical',
     subStages: [{ num: 3, label: 'Hazard identification' }, { num: 4, label: 'Risk assessment & prioritization' }],
     cta: { label: 'Open Workbench', href: '/workbench' },
     secondary: { label: 'Hazard Register', href: '/hazards' },
