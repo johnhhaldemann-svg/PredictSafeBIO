@@ -33,8 +33,9 @@
   --green-dk: #3B6D11;
   --orange: #d8661f;
   /* Purple — used by kpi-card--purple, badge--purple, snav-badge--new, ai-bar, new-tag */
-  --purple: #6D28D9;
+  --purple: #7c3aed;
   --purple-bg: #EDE9FE;
+  --purple-lt: #C4B5FD;
   --purple-dk: #4C1D95;
 }
 

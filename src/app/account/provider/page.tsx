@@ -42,10 +42,10 @@ const CREDENTIALS = [
 ];
 
 const STATUS_CONFIG = {
-  pending:  { label: "Under Review",   icon: Clock,        chipClass: "status-needs-review", color: "#d97706", message: "Your profile has been submitted and is awaiting review by our moderation team. This typically takes 1–2 business days." },
-  approved: { label: "Approved",       icon: CheckCircle2, chipClass: "status-current",      color: "#16a34a", message: "Your profile is live in the provider directory. Organizations and administrators can view it." },
-  rejected: { label: "Changes Needed", icon: XCircle,      chipClass: "status-critical",     color: "#dc2626", message: "Your profile requires changes before it can be approved. Please review the notes below and resubmit." },
-  draft:    { label: "Draft",          icon: Clock,        chipClass: "status-unknown",      color: "#6b7280", message: "Your profile has not been submitted yet." },
+  pending:  { label: "Under Review",   icon: Clock,        chipClass: "status-needs-review", color: "var(--amber-dk)", message: "Your profile has been submitted and is awaiting review by our moderation team. This typically takes 1–2 business days." },
+  approved: { label: "Approved",       icon: CheckCircle2, chipClass: "status-current",      color: "var(--green-dk)", message: "Your profile is live in the provider directory. Organizations and administrators can view it." },
+  rejected: { label: "Changes Needed", icon: XCircle,      chipClass: "status-critical",     color: "var(--red)",      message: "Your profile requires changes before it can be approved. Please review the notes below and resubmit." },
+  draft:    { label: "Draft",          icon: Clock,        chipClass: "status-unknown",      color: "var(--muted)",    message: "Your profile has not been submitted yet." },
 };
 
 export default async function ProviderAccountPage({ searchParams }: Props) {
@@ -106,7 +106,7 @@ export default async function ProviderAccountPage({ searchParams }: Props) {
             className="verification-pending-box"
             style={{
               borderLeft: `4px solid ${status.color}`,
-              background: isApproved ? "#f0fdf4" : undefined,
+              background: isApproved ? "var(--green-bg)" : undefined,
             }}
           >
             <StatusIcon size={15} style={{ color: status.color, flexShrink: 0 }} />

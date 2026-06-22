@@ -46,7 +46,7 @@ const PLAN_EMOJI: Record<PlanType, string> = {
 
 const CONTACT_COLORS: Record<string, { bg: string; color: string }> = {
   internal:  { bg: "var(--blue-bg)",   color: "var(--blue)"     },
-  external:  { bg: "#FCEBEB",          color: "var(--red-dk)"   },
+  external:  { bg: "var(--red-bg)",    color: "var(--red-dk)"   },
   emergency: { bg: "var(--amber-bg)",  color: "var(--amber-dk)" },
 };
 
@@ -230,12 +230,12 @@ function quickScore(plan: EmergencyPlan, drills: EmergencyDrill[], contacts: Eme
 // ── Inline style helpers ──────────────────────────────────────────────────────
 
 const NEW_TAG: React.CSSProperties = {
-  fontSize: 9, fontWeight: 800, background: "#EDE9FE", color: "#7C3AED",
+  fontSize: 9, fontWeight: 800, background: "var(--purple-bg)", color: "var(--purple)",
   borderRadius: 8, padding: "1px 6px", marginLeft: 4, verticalAlign: "middle",
 };
 const PURPLE_CHIP: React.CSSProperties = {
-  fontSize: 10, fontWeight: 700, color: "#7C3AED",
-  background: "#EDE9FE", borderRadius: 8, padding: "2px 8px",
+  fontSize: 10, fontWeight: 700, color: "var(--purple)",
+  background: "var(--purple-bg)", borderRadius: 8, padding: "2px 8px",
 };
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -373,7 +373,7 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
         </section>
 
         {/* ── Predictive Engine bar ── */}
-        <div className="ai-context-bar" style={{ background: "#EDE9FE", borderColor: "#C4B5FD", color: "#7C3AED" }}>
+        <div className="ai-context-bar" style={{ background: "var(--purple-bg)", borderColor: "var(--purple-lt)", color: "var(--purple)" }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
             <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
           </svg>
@@ -451,8 +451,8 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
                       title="Open mobile response view"
                       style={{
                         position: "absolute", top: 8, right: 8,
-                        fontSize: 10, fontWeight: 800, color: "#C0392B",
-                        background: "#FECACA", borderRadius: 6, padding: "2px 7px",
+                        fontSize: 10, fontWeight: 800, color: "var(--red-dk)",
+                        background: "var(--red-bg)", borderRadius: 6, padding: "2px 7px",
                         textDecoration: "none", letterSpacing: "0.04em",
                       }}
                     >
@@ -477,12 +477,12 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
         {/* ── "Adding Now" section divider ── */}
         <div style={{
           display: "flex", alignItems: "center", gap: 10, margin: "4px 0",
-          fontSize: 11, fontWeight: 700, color: "#7C3AED",
+          fontSize: 11, fontWeight: 700, color: "var(--purple)",
           letterSpacing: "0.04em", textTransform: "uppercase",
         }}>
-          <div style={{ flex: 1, height: 1, background: "linear-gradient(to right, var(--line), #C4B5FD)" }} />
+          <div style={{ flex: 1, height: 1, background: "linear-gradient(to right, var(--line), var(--purple-lt))" }} />
           Step Builder · Weather Integration · Drill Scheduler · Emergency Contacts
-          <div style={{ flex: 1, height: 1, background: "linear-gradient(to left, var(--line), #C4B5FD)" }} />
+          <div style={{ flex: 1, height: 1, background: "linear-gradient(to left, var(--line), var(--purple-lt))" }} />
         </div>
 
         {/* ── Two-column layout ── */}
@@ -514,7 +514,7 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
                   {complianceChecks.map((c, i) => (
                     <div key={i} style={{
                       padding: "7px 10px", borderRadius: 6,
-                      background: c.pass ? "var(--green-bg)" : "#FEF2F2",
+                      background: c.pass ? "var(--green-bg)" : "var(--red-bg)",
                       border: `1px solid ${c.pass ? "var(--green)" : "var(--red)"}`,
                     }}>
                       <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
@@ -549,7 +549,7 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
                       {selectedPlan.documentUrl ? (
                         <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 10px", borderRadius: 999, fontSize: 10, fontWeight: 800, background: "var(--green-bg)", color: "var(--green-dk)" }}>✓ Attached</span>
                       ) : (
-                        <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 10px", borderRadius: 999, fontSize: 10, fontWeight: 800, background: "#FEF2F2", color: "var(--red-dk)" }}>Missing — required by 29 CFR 1910.38(a)</span>
+                        <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 10px", borderRadius: 999, fontSize: 10, fontWeight: 800, background: "var(--red-bg)", color: "var(--red-dk)" }}>Missing — required by 29 CFR 1910.38(a)</span>
                       )}
                     </h2>
                   </div>
@@ -697,15 +697,15 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
               {(overdueDrillPlans.length > 0 || showWeatherBanner) && (
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "4px 16px 16px" }}>
                   {showWeatherBanner && (
-                    <div style={{ borderRadius: 8, padding: "11px 13px", background: "#EDE9FE", border: "1px solid #C4B5FD" }}>
-                      <div style={{ fontWeight: 700, color: "#7C3AED", fontSize: 12, marginBottom: 4 }}>🔮 Weather alert</div>
+                    <div style={{ borderRadius: 8, padding: "11px 13px", background: "var(--purple-bg)", border: "1px solid var(--purple-lt)" }}>
+                      <div style={{ fontWeight: 700, color: "var(--purple)", fontSize: 12, marginBottom: 4 }}>🔮 Weather alert</div>
                       <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.4 }}>
                         {bannerEvent} active. Review Severe Weather plan shelter-in-place steps and confirm all contacts are reachable.
                       </div>
                     </div>
                   )}
                   {overdueDrillPlans.length > 0 && (
-                    <div style={{ borderRadius: 8, padding: "11px 13px", background: "var(--amber-bg)", border: "1px solid #F6C77E" }}>
+                    <div style={{ borderRadius: 8, padding: "11px 13px", background: "var(--amber-bg)", border: "1px solid var(--amber)" }}>
                       <div style={{ fontWeight: 700, color: "var(--amber-dk)", fontSize: 12, marginBottom: 4 }}>📅 Drill overdue</div>
                       <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.4 }}>
                         {overdueDrillPlans[0].title} drill is {Math.floor((now.getTime() - new Date(overdueDrillPlans[0].nextDrillDate!).getTime()) / 86_400_000)} days past due. OSHA 29 CFR 1910.38 compliance at risk.
@@ -858,7 +858,7 @@ export default async function EmergencyResponsePage({ searchParams }: Props) {
               </div>
 
               {showWeatherBanner && (
-                <div style={{ background: "#7a3f00", padding: "8px 12px", fontSize: 11, color: "#FECF77", display: "flex", alignItems: "center", gap: 7, fontWeight: 600 }}>
+                <div style={{ background: "var(--amber-dk)", padding: "8px 12px", fontSize: 11, color: "var(--amber)", display: "flex", alignItems: "center", gap: 7, fontWeight: 600 }}>
                   ⚠ {liveAlerts.length > 0 ? liveAlerts[0].event : "Severe Weather Watch"} — Plan review triggered
                 </div>
               )}
