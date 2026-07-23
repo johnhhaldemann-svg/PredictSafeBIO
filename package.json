@@ -18,27 +18,27 @@
     "predeploy": "node --env-file=.env.local scripts/pre-deploy-check.mjs"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.104.1",
+    "@anthropic-ai/sdk": "^0.114.0",
     "@react-pdf/renderer": "^4.3.0",
-    "@supabase/ssr": "0.12.0",
-    "@supabase/supabase-js": "2.108.1",
+    "@supabase/ssr": "0.12.3",
+    "@supabase/supabase-js": "2.110.8",
     "docx": "^9.5.1",
-    "lucide-react": "1.17.0",
+    "lucide-react": "1.26.0",
     "mammoth": "^1.9.0",
-    "next": "16.2.9",
+    "next": "16.2.11",
     "pdfjs-dist": "^4.10.38",
-    "react": "19.2.7",
-    "react-dom": "19.2.7",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "server-only": "^0.0.1",
-    "stripe": "22.2.0"
+    "stripe": "22.3.2"
   },
   "devDependencies": {
     "@types/node": "25.9.3",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.2.9",
+    "eslint-config-next": "16.2.11",
     "typescript": "6.0.3",
-    "vitest": "4.1.8"
+    "vitest": "4.1.10"
   }
 }
